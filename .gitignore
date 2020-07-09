@@ -1,0 +1,14 @@
+participantPhotos/*
+pose/data/person_patches/*
+pose/savefolder/*
+*.mp4
+pose/Notes
+*.ipynb
+*.ipynb_checkpoints
+*__pycache__
+*.DS_Store
+bbs/images
+laughter_segments
+fvs/tmp
+fvs/*/*
+fvs/*.pkl
