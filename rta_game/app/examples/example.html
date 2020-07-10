@@ -1,0 +1,123 @@
+<html>
+	<head>
+		<title>My first three.js app</title>
+		<style>
+			body { margin: 0; }
+			canvas { display: block; }
+		</style>
+	</head>
+	<body>
+		<script src="three-js/build/three.js"></script>
+		<script>
+			
+			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+			camera.position.z = 10;
+
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+
+			var scene = new THREE.Scene();
+
+			function makeInstance(geometry, color, x) {
+				const material = new THREE.MeshPhongMaterial({ color });
+
+				const cube = new THREE.Mesh(geometry, material);
+				scene.add(cube);
+
+				cube.position.x = x;
+
+				return cube;
+			}
+
+
+			var geometry = new THREE.BoxGeometry(1, 1, 1);
+			var material = new THREE.MeshPhongMaterial({ color: 0x44aa88 });
+			//var material = new THREE.MeshBasicMaterial( { color: 0x44aa88 } );
+			// var cube = new THREE.Mesh( geometry, material );
+			// scene.add( cube );
+
+			const cubes = [
+				// makeInstance(geometry, 0x44aa88, 0),
+				makeInstance(geometry, 0x8844aa, -2),
+				makeInstance(geometry, 0xaa8844, 2),
+			];
+
+			// var light = new THREE.PointLight(0xffffff, 1, 0);
+			// light.position.set(50, 50, 50);
+			// scene.add(light);
+
+			const light = new THREE.DirectionalLight(0xFFFFFF, 0.2);
+			light.position.set(-1, 2, 4);
+			scene.add(light);
+
+			// var point_light = new THREE.PointLight(0xff0000, 1, 100);
+			// point_light.position.set(1, 0, 0);
+			// scene.add(point_light);
+
+			function simple_led() {
+				const geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
+				const material = new THREE.MeshPhongMaterial({ color: 0xffffff, transparent:false, opacity:1, side: THREE.DoubleSide });
+				const plane = new THREE.Mesh(geometry, material);
+
+				var r_spotlight = new THREE.SpotLight(0xff0000, intensity = 1);
+				r_spotlight.position.set(0, 0, 0.20);
+				r_spotlight.target = plane;
+				plane.add(r_spotlight);
+
+				return plane;
+			}
+
+			function get_led_builder(led_fn) {
+				var led_builder = {
+					width: 1,
+					height: 1,
+					make_led: led_fn
+				};
+				return led_builder;
+			}
+
+			function create_led_strip(num_leds, led_builder) {
+				const geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
+				const material = new THREE.MeshPhongMaterial({ color: 0xffffff, transparent: false, opacity: 1, side: THREE.DoubleSide });
+				const strip = new THREE.Mesh(geometry, material);
+
+				for (i = 0; i < num_leds; i++) {
+					var led = led_builder.make_led();
+					led.position.x = i;
+					strip.add(led);
+				};
+
+				return strip;
+			}
+
+			var led_builder = get_led_builder(simple_led);
+			led_strip1 = create_led_strip(5, led_builder);
+			scene.add(led_strip1);
+
+			led_strip2 = create_led_strip(10, led_builder);
+			led_strip2.position.y = 1.5;
+			scene.add(led_strip2);
+
+			led_strip3 = create_led_strip(10, led_builder);
+			led_strip3.position.y = 3;
+			scene.add(led_strip3);
+
+			function render(time) {
+				time *= 0.001;
+				
+				cubes.forEach((cube, ndx) => {
+					const speed = 1 + ndx * .1;
+					const rot = time * speed;
+					cube.rotation.x = rot;
+					cube.rotation.y = rot;
+				});
+
+				renderer.render( scene, camera );
+				requestAnimationFrame(render);
+			};
+
+			requestAnimationFrame(render);
+		</script>
+	</body>
+</html>
