@@ -1,0 +1,39 @@
+{
+    "name": "Test project",
+    "timelines": [
+        {
+            "url_prefix": "http://localhost:5000/static",
+            "tasks": [
+                {
+                    "type": "video",
+                    "url": "1_cam_3.mp4"
+                },
+                {
+                    "type": "video",
+                    "url": "1_cam_3.mp4"
+                },
+                {
+                    "type": "video",
+                    "url": "1_cam_3.mp4"
+                },
+                {
+                    "type": "video",
+                    "url": "1_cam_3.mp4"
+                }
+            ]
+        },
+        {
+            "url_prefix": "http://localhost:5000/static",
+            "tasks": [
+                {
+                    "type": "video",
+                    "url": "1_cam_3.mp4"
+                },
+                {
+                    "type": "video",
+                    "url": "1_cam_3.mp4"
+                }
+            ]
+        }
+    ]
+}
