@@ -1,6 +1,6 @@
 *__pycache__
-rta_game/node_modules
-rta_game/app/dist
+covfee/node_modules
+covfee/app/dist
 *.DS_Store
 *.wav
 .vscode*
