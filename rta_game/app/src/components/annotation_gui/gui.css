@@ -1,3 +1,9 @@
+.site-layout-content {
+  background: #fff;
+  padding: 24px;
+  min-height: 280px;
+}
+
 /* Annotation feedback */
 .gui-vertical {
     position: relative;
@@ -14,8 +20,8 @@
 
 /*Video container*/
 .video-container {
-    width: 960px;
-    height: 540px;
+    width: 100%;
+    height: auto;
 }
 
 /* Mouse tracker */

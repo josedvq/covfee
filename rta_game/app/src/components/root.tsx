@@ -38,21 +38,13 @@ class Root extends React.Component {
                         <Menu.Item key="2"><Link to="/about">About</Link></Menu.Item>
                     </Menu>
                 </Header>
-                <Layout style={{height: 'calc(100vh - 64px)'}}>
+                <Layout>
                     <Switch>
                         <Route path="/about">
                             <About />
                         </Route>
                         <Route path="/timelines/:timelineId">
                             <TimelineWithRouter />
-                            {/* <Sider width={200} className="site-layout-background">
-
-                            </Sider>
-                            <Layout>
-                                <Content>
-                                    
-                                </Content>
-                            </Layout> */}
                         </Route>
                     </Switch>
                 </Layout>

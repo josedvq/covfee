@@ -1,0 +1,24 @@
+{
+    "name": "CONFLAB",
+    "email": "j.d.vargasquiros@tudelft.nl",
+    "timelines": [
+        {
+            "url_prefix": "http://localhost:5000/static",
+            "tasks": [
+                {
+                    "type": "keypoint",
+                    "media": {
+                        "type": "video",
+                        "url": "pilot.mp4",
+                        "res": [960,540],
+                        "flow_url": "pilot_flow.mp4",
+                        "flow_res": [480, 270],
+                        "mute": true,
+                        "autoplay": true,
+                        "controls": false
+                    }
+                }
+            ]
+        }
+    ]
+}

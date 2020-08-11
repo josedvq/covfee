@@ -14,6 +14,7 @@ class MouseTracker extends React.Component {
     }
 
     public start() {
+        console.log('started')
         this.container.current.onmousemove = (function (e) {
             const data = {
                 't': 'm',
@@ -26,6 +27,10 @@ class MouseTracker extends React.Component {
 
     public stop() {
         this.container.current.onmousemove = null;
+    }
+
+    public getContainer() {
+        return this.container.current
     }
 
     render() {
