@@ -1,0 +1,4 @@
+Flask==1.*
+flask_cors==3.*
+ipywidgets==7.*
+SQLAlchemy==1.*

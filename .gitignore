@@ -8,3 +8,4 @@ rta_game/app/dist
 *nohup.out
 .ipynb_checkpoints*
 *.ipynb
+database.db

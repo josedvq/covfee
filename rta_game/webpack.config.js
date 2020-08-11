@@ -47,54 +47,11 @@ module.exports = [
         externals: {
             "react": "React",
             "react-dom": "ReactDOM",
-            "three": "THREE",
-            "antd": "antd"
+            "antd": "antd",
+            "cv": "cv"
         },
         plugins: [
             new BundleAnalyzerPlugin()
         ]
-    },
-    // widget
-    // {
-    //     mode: 'development',
-    //     entry: './app/src/widget.js',
-    //     resolve: {
-    //         extensions: [".ts", ".tsx", ".jsx", ".js"]
-    //     },
-    //     output: {
-    //         filename: 'index.js',
-    //         path: path.resolve(__dirname, './app/dist'),
-    //         library: 'autolight',
-    //         libraryTarget: 'amd',
-    //         publicPath: 'http://localhost:8080/'
-    //     },
-    //     devServer: {
-    //         contentBase: './app/dist',
-    //         headers: { 'Access-Control-Allow-Origin': '*' },
-    //         port: 8080
-    //     },
-    //     module: {
-    //         rules: [
-    //             {
-    //                 test: /\.tsx?$/,
-    //                 use: 'babel-loader',
-    //                 exclude: /(node_modules|bower_components)/,
-    //             },
-    //             {
-    //                 test: /\.css$/i,
-    //                 use: ['style-loader', 'css-loader'],
-    //             },
-    //             {
-    //                 test: /\.m?js$/,
-    //                 exclude: /(node_modules|bower_components)/,
-    //                 use: [
-    //                     { loader: 'babel-loader' }
-    //                 ]
-    //             },
-    //         ]
-    //     },
-    //     externals: {
-    //         '@jupyter-widgets/base': '@jupyter-widgets/base'
-    //     }
-    // }
+    }
 ];

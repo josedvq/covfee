@@ -25,6 +25,7 @@
     "webpack-fg": "webpack-dev-server --open",
     "webpack-bg": "nohup webpack-dev-server --open >/dev/null 2>&1 &",
     "start": "FLASK_APP=start.py python3 -m flask run",
+    "reload": "python3 utils/db.py reload_projects",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "babel": {
