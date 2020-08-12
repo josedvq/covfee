@@ -6,7 +6,7 @@
             "url_prefix": "http://localhost:5000/static",
             "tasks": [
                 {
-                    "type": "keypoint",
+                    "type": "ContinuousKeypointAnnotationTask",
                     "media": {
                         "type": "video",
                         "url": "pilot.mp4",

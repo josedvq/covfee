@@ -6,7 +6,7 @@
             "url_prefix": "http://localhost:5000/static",
             "tasks": [
                 {
-                    "type": "segment",
+                    "type": "QuestionnaireTask",
                     "form": {
                         "fields": [
                             {
@@ -52,7 +52,7 @@
                     }
                 },
                 {
-                    "type": "segment",
+                    "type": "QuestionnaireTask",
                     "form": {
                         "fields": [
                             {
@@ -101,7 +101,7 @@
                     }
                 },
                 {
-                    "type": "segment",
+                    "type": "QuestionnaireTask",
                     "form": {
                         "fields": [
                             {
@@ -150,7 +150,7 @@
                     }
                 },
                 {
-                    "type": "segment",
+                    "type": "QuestionnaireTask",
                     "form": {
                         "fields": [
                             {
@@ -204,7 +204,7 @@
             "url_prefix": "http://localhost:5000/static",
             "tasks": [
                 {
-                    "type": "segment",
+                    "type": "QuestionnaireTask",
                     "media": {
                         "type": "video",
                         "url": "1_cam_3.mp4",
@@ -214,7 +214,7 @@
                     }
                 },
                 {
-                    "type": "segment",
+                    "type": "QuestionnaireTask",
                     "media": {
                         "type": "video",
                         "url": "1_cam_3.mp4",

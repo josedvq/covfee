@@ -35,3 +35,11 @@ NPM scripts have been set up to run the webpack deb server and the flask server.
 2. In another terminal, run the Flask web server:
 
     npm start
+
+## Developing a custom task
+
+Timelines in covfee are made up of individual tasks. A task must be submitted by the subject / annotator in order to progress to the next task.
+
+Custom tasks or HIT types can be added by specifying the following components:
+
+- Task component, a React component that takes care of 

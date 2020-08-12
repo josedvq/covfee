@@ -1,29 +1,20 @@
-import React from 'react';
-import { 
-    Row, 
-    Col, 
+import React from 'react'
+import {
+    Row,
+    Col,
     Space,
     Divider,
     Button
 } from 'antd';
-import { VideojsPlayer, OpencvFlowPlayer} from './player';
-import { JoystickGUI } from './annotation_gui/joystick';
-import './annotation_gui/gui.css'
-import MouseTracker from './annotation_gui/mouse_tracker'
-import {EventBuffer} from './buffer'
-import videojs from 'video.js';
-import 'video.js/dist/video-js.css';
+import OpencvFlowPlayer from '../players/opencv'
+import '../css/gui.css'
+import MouseTracker from '../input/mouse_tracker'
+import { EventBuffer } from '../buffer'
+import videojs from 'video.js'
+import 'video.js/dist/video-js.css'
 import Constants from '../constants'
-import { Form } from './forms/form'
-
-class Task extends React.Component {
-    public instructions = this.props.instructions
-    public submit_url = this.props.submit_url
-
-    constructor(props: any) {
-        super(props);
-    }
-}
+import { Form } from '../form'
+import Task from './task'
 
 function getFullscreen(element) {
     if (element.requestFullscreen) {
@@ -49,53 +40,14 @@ function closeFullscreen() {
     }
 } 
 
-class SegmentAnnotationTask extends Task {
-
-    private player = React.createRef()
-
-    componentDidMount() {
-    }
-
-    handleSubmit() {
-        this.props.on_submit()
-    }
-
-    render() {
-        const videoJsOptions = {
-            autoplay: true,
-            controls: true,
-            fluid: true,
-            aspectRatio: '16:9',
-            sources: [{
-                src: this.props.media.url,
-                type: 'video/mp4'
-            }]
-        }
-        return <div style={{overflow: 'hidden'}}><Row gutter={16}>
-            <Col span={16}>
-                <VideojsPlayer {...videoJsOptions}></VideojsPlayer>
-            </Col>
-            <Col span={8}>
-                <Form {...this.props.form} on_submit={this.handleSubmit.bind(this)}></Form>
-            </Col>
-        </Row>
-        <Row gutter={16}>
-                <pre>
-                {JSON.stringify(this.props.form, null, 2)}
-                </pre>
-        </Row>
-        </div>
-    }
-}
-
-class KeypointAnnotationTask extends Task {
+class ContinuousKeypointAnnotationTask extends React.Component {
     private state = {
         'paused': true,
-        'mouse_xy': {t: 'm', x: 0, y:0}, // mouse position
+        'mouse_xy': { t: 'm', x: 0, y: 0 }, // mouse position
         'url': this.props.url
     }
     private player = React.createRef()
-    private tracker= React.createRef()
+    private tracker = React.createRef()
     private buffer = new EventBuffer(
         200,
         this.props.url + '/chunk',
@@ -113,7 +65,7 @@ class KeypointAnnotationTask extends Task {
                 case '4':
                 case '5':
                 case '6':
-                    this.player.current.playbackRate(1/parseFloat(e.key))
+                    this.player.current.playbackRate(1 / parseFloat(e.key))
                     break
                 case ' ':
                     this.toggle_play_pause()
@@ -145,7 +97,7 @@ class KeypointAnnotationTask extends Task {
     }
 
     data(data: any) {
-        this.setState({'mouse_xy': data})
+        this.setState({ 'mouse_xy': data })
         this.buffer.data(
             this.player.current.currentTime(),
             data
@@ -157,10 +109,10 @@ class KeypointAnnotationTask extends Task {
     }
 
     toggle_play_pause() {
-        if(this.state.paused) {
+        if (this.state.paused) {
             this.tracker.current.start()
             this.player.current.play()
-            this.setState({paused: false})
+            this.setState({ paused: false })
         } else {
             this.tracker.current.stop()
             this.player.current.pause()
@@ -168,8 +120,8 @@ class KeypointAnnotationTask extends Task {
         }
     }
 
-    handleSubmit() {
-
+    validate() {
+        return true
     }
 
     render() {
@@ -189,40 +141,24 @@ class KeypointAnnotationTask extends Task {
                 res: this.props.media.flow_res,
                 type: 'video/mp4'
             }
-        };
-        return <div style={{ overflow: 'hidden' }}><Row gutter={16}>
-            <Col span={16}>
-                <MouseTracker on_data={this.data.bind(this)} ref={this.tracker}>
-                    <OpencvFlowPlayer
-                        {...playerOptions}
-                        mouse_xy={this.state.mouse_xy}
-                        ref={this.player}>
-                    </OpencvFlowPlayer>
-                </MouseTracker>
-            </Col>
-            <Col span={8}>
-                <Button type="primary" onClick={this.handleSubmit.bind(this)}></Button>
-            </Col>
-        </Row>
+        }
+        return <Task validate={this.validate.bind(this)}>
             <Row gutter={16}>
-                
+                <Col span={16}>
+                    <MouseTracker on_data={this.data.bind(this)} ref={this.tracker}>
+                        <OpencvFlowPlayer
+                            {...playerOptions}
+                            mouse_xy={this.state.mouse_xy}
+                            ref={this.player}>
+                        </OpencvFlowPlayer>
+                    </MouseTracker>
+                </Col>
+                <Col span={8}>
+                    <Task.Submit>Submit</Task.Submit>
+                </Col>
             </Row>
-        </div>
+        </Task>
     }
 }
 
-class ActionAnnotationTask extends Task {
-    state = {
-        url: this.props.url
-    }
-
-    componentDidMount() {
-        
-    }
-
-    render() {
-        return <h1>Continuous annotation</h1>
-    }
-}
-
-export { SegmentAnnotationTask, KeypointAnnotationTask, ActionAnnotationTask }
+export default ContinuousKeypointAnnotationTask

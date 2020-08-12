@@ -3,9 +3,9 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 import { AppContainer } from 'react-hot-loader';
-import RootContainer from './components/root';
+import RootContainer from './root';
 
-const title = 'RTA-GAME annotation tool';
+const title = 'covfee: the continuous video feedback tool';
 
 const render = () => {
     ReactDOM.render(<AppContainer><RootContainer /></AppContainer>, document.getElementById('app'));
@@ -14,8 +14,8 @@ const render = () => {
 render(RootContainer)
 
 if (module.hot) {
-    module.hot.accept('./components/root.tsx', () => {
-        const NextRootContainer = require('./components/root.tsx').default;
+    module.hot.accept('./root.tsx', () => {
+        const NextRootContainer = require('./root.tsx').default;
         render(NextRootContainer);
     })
 }

@@ -12,8 +12,8 @@ import {
 } from 'antd';
 const { Text, Title, Link } = Typography;
 
-import { SegmentAnnotationTask, ActionAnnotationTask, KeypointAnnotationTask} from './task';
-import Constants from '../constants'
+import * as Tasks from './tasks'
+import Constants from './constants'
 
 class Timeline extends React.Component {
     state = {
@@ -127,16 +127,22 @@ class Timeline extends React.Component {
                 }
                 props.url = this.url + '/tasks/' + this.state.curr_task
 
-                switch (props.type) {
-                    case 'segment':
-                        return <SegmentAnnotationTask key={this.state.curr_task} {...props} on_submit={this.handleTaskSubmit.bind(this)}></SegmentAnnotationTask>
-                    case 'keypoint':
-                        return <KeypointAnnotationTask key={this.state.curr_task} {...props}></KeypointAnnotationTask>
-                    case 'action':
-                        return <ActionAnnotationTask key={this.state.curr_task} {...props}></ActionAnnotationTask>
-                    default:
-                        return <Text>Error loading annotation task</Text>
+                if (Tasks.hasOwnProperty(props.type)) {
+                    const taskClass = Tasks[props.type]
+                    return React.createElement(taskClass, { key: this.state.curr_task, ...props }, null)
+                } else {
+                    return <Text>Error loading annotation task</Text>
                 }
+                // switch (props.type) {
+                //     case 'segment':
+                //         return <SegmentAnnotationTask key={this.state.curr_task} {...props} on_submit={this.handleTaskSubmit.bind(this)}></SegmentAnnotationTask>
+                //     case 'keypoint':
+                //         return <KeypointAnnotationTask key={this.state.curr_task} {...props}></KeypointAnnotationTask>
+                //     case 'action':
+                //         return <ActionAnnotationTask key={this.state.curr_task} {...props}></ActionAnnotationTask>
+                //     default:
+                //         
+                // }
 
             case 'sending':
                 return <div class={'site-layout-content'}>
