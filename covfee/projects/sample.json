@@ -1,0 +1,30 @@
+{
+    "name": "Continuous annot sample",
+    "email": "j.d.vargasquiros@tudelft.nl",
+    "timelines": [
+        {
+            "url_prefix": "http://localhost:5000/static",
+            "tasks": [
+                {
+                    "type": "ContinuousKeypointAnnotationTask",
+                    "media": {
+                        "type": "video",
+                        "url": "sample_mp4.mp4",
+                        "res": [
+                            320,
+                            240
+                        ],
+                        "flow_url": "sample_mp4_flow.mp4",
+                        "flow_res": [
+                            320,
+                            240
+                        ],
+                        "mute": true,
+                        "autoplay": true,
+                        "controls": false
+                    }
+                }
+            ]
+        }
+    ]
+}

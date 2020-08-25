@@ -7,10 +7,9 @@ import glob
 from flask import Flask, Response, render_template, request, jsonify, Blueprint, send_from_directory
 from flask_cors import cross_origin, CORS
 from orm import Project, Timeline, Task, Chunk
+from constants import APP_PORT, WEBPACK_URL
 
 app = Flask(__name__, static_folder=None)
-dist_url = 'http://localhost:8080'
-
 engine = create_engine('sqlite:///database.db', echo=True)
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -20,7 +19,7 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 # APP ROUTES
 @app.route('/')
 def main():
-    return render_template('app.html', dist_url=dist_url)
+    return render_template('app.html', dist_url=WEBPACK_URL)
 
 @app.route('/static/<path:filename>')
 def uploaded_file(filename):
@@ -81,4 +80,4 @@ def chunk(tid, kid):
 app.register_blueprint(api, url_prefix='/api')
 
 if __name__ == '__main__':
-    app.run(processes=3)
+    app.run(processes=3, port=APP_PORT)

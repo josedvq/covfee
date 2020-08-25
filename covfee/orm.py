@@ -4,6 +4,8 @@ from sqlalchemy import Column, String, Integer, Binary, Boolean, Date, Table, Fo
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
+from constants import APP_URL, APP_PORT
+
 Base = declarative_base()
 
 # https://auth0.com/blog/sqlalchemy-orm-tutorial-for-python-developers/
@@ -63,8 +65,11 @@ class Timeline(Base):
 
         return timeline_dict
 
+    def get_url(self):
+        return f'{APP_URL}:{APP_PORT:d}/#/timelines/{self.id.hex():s}'
+
     def __str__(self):
-        return f' - id: {self.id.hex():s}\n'
+        return f' - url: {self.get_url()}\n'
 
 class Task(Base):
     __tablename__ = 'tasks'

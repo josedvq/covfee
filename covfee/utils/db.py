@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 from orm import Base, Project, Timeline, Task, Chunk
 from utils.autoparser import subparser, test_parser
-from constants import *
+from constants import DATABASE_PATH, PROJECTS_PATH
 
 engine = create_engine(f'sqlite:///{DATABASE_PATH}')
 Session = sessionmaker(bind=engine)
