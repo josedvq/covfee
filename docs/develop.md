@@ -1,22 +1,23 @@
 The develop environment makes use of a webpack development server for easy testing including hot-reloading.
 
 ## Setup
+Important: this assumes that `python` points to python 3. The best way to ensure this is to use a virtual environment configured to use python3.
 
-To set up a develop environment:
+To install a development setup:
 
 1. cd to the `covfee` folder.
 
 2. Install python dependencies:
 
 ```
-python3 -m pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 3. Install version 12.x of [node.js](https://nodejs.org/en/download/).
 
 4. Install npm dependencies (also from the `covfee` folder):
 ```
-    npm config set -g production false
+    npm config set production false
     npm install
 ```
 5. Create and populate the database with test hits:
