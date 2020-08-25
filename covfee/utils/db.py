@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from orm import Base, Project, Timeline, Task, Chunk
-from autoparser import subparser, test_parser
+from utils.autoparser import subparser, test_parser
 from constants import *
 
 engine = create_engine(f'sqlite:///{DATABASE_PATH}')
