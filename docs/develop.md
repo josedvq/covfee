@@ -52,7 +52,7 @@ ID: eb3f046b10a2892c3ad6215b14815e04f565bd960f490b388ea9d1031827e29a
  - url: http://127.0.0.1:5000/#/timelines/34793139aaf879bb402a137a28d718d14e828e0f24ef476a050ca401bc5d6937
 ```
 
-The continuous annotation sample should work out of the box. Try the URL.
+The continuous annotation project should work out of the box. Try opening the first URL in the web browser. This should display a video for continuous annotation.
 
 ## Developing a custom task
 
@@ -95,6 +95,19 @@ return <Task {...this.props } validate = { this.validate.bind(this) } >
     </Row>
 </Task>
 ```
+
+The props object can be passed as in `<Task {...this.props } `. If you prefer to only pass the necessary props, these are `submit_url` and `onSubmit`. The `validate` will be called when the "Next" button is pressed by the user to submit the task. This method allows you to implement validation functionallity before the result of the task is submitted to the server. It can be used to ensure that the filled-in data is complete and otherwise valid and trigger feedback to the user if the data is incomplete or invalid.
+
+- If the data is invalid, the method should trigger the necessary state changes and return false. Nothing will be submitted to the server.
+- If the data is valid, this method should simply (synchronously) return the result of completing the task. This will be sent to the server as-is and stored in JSON format as the task result. For the Questionnaire task, this is simply the state of the form elements:
+
+```
+validate() {
+    return this.state.form.values
+}
+```
+
+Note that the validate method is not meant to be used for server-side validation. Server-side validation is not supported in the current workflow. Finally, make sure to bind your validate method before passing it to `Task`.
 
 Task components are located in the `covfee/app/src/tasks` folder. Feel free to inspect other examples.
 New task components must be included in the `covfee/app/src/tasks/index.js` file to be visible to the main React app.
