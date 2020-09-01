@@ -77,7 +77,10 @@ class Timeline(db.Model):
         return timeline_dict
 
     def get_url(self):
-        return f'{APP_URL}:{APP_PORT:d}/#/timelines/{self.id.hex():s}'
+        if self.type == 'annotator':
+            return f'{APP_URL}:{APP_PORT:d}/#/continuous-annotation/{self.id.hex():s}'
+        else:
+            return f'{APP_URL}:{APP_PORT:d}/#/timelines/{self.id.hex():s}'
 
     def __str__(self):
         return f' - url: {self.get_url()}\n'
@@ -123,10 +126,6 @@ class Chunk(db.Model):
     def __init__(self, data):
         self.data = data
 
-
-# engine = create_engine(, echo=True)
-# Session = sessionmaker(bind=engine)
-# session = Session()
 
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
