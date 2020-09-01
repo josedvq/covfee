@@ -28,3 +28,56 @@
 .mouse-tracker {
     cursor: crosshair;
 }
+
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,.7);
+  z-index: 2;
+}
+.overlay-off {
+    z-index: 0;
+  }
+
+.video-overlay-nav {
+    position: absolute;
+    width: 100%;
+    top: 50%;
+    margin-top: -20px;
+    text-align: center;
+}
+.video-overlay-nav > button {
+    margin: 0 5px;
+}
+
+.task-group {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+.task-li {
+  display: block;
+  width: 96%;
+  margin: 2%;
+  padding: 5px;
+  border: 1px solid gray;
+  
+  border-radius: 3px;
+}
+.task-li-active {
+  background-color: green;
+}
+.task-li input {
+  width: 50%;
+}
+.task-li .btn {
+  display: inline-block;
+  margin: 0;
+  padding: 4px 11px;
+}
+.task-li .btn:hover {
+  cursor: pointer;
+}

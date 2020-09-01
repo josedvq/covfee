@@ -1,6 +1,7 @@
-import React from 'react';
-import { Layout, Menu, Breadcrumb } from 'antd';
-import { TimelineWithRouter} from './timeline';
+import React from 'react'
+import { Layout, Menu, Breadcrumb } from 'antd'
+import { TimelineWithRouter} from './timeline'
+import { ContinuousAnnotationWithRouter } from './annotation'
 
 import {
     HashRouter as Router,
@@ -9,7 +10,7 @@ import {
     Link,
     useRouteMatch,
     useParams
-} from "react-router-dom";
+} from "react-router-dom"
 
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
@@ -45,6 +46,9 @@ class Root extends React.Component {
                         </Route>
                         <Route path="/timelines/:timelineId">
                             <TimelineWithRouter />
+                        </Route>
+                        <Route path="/continuous-annotation/:timelineId">
+                            <ContinuousAnnotationWithRouter />
                         </Route>
                     </Switch>
                 </Layout>

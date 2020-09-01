@@ -4,6 +4,7 @@
     "timelines": [
         {
             "url_prefix": "http://localhost:5000/static",
+            "type": "timeline",
             "tasks": [
                 {
                     "type": "QuestionnaireTask",
@@ -202,6 +203,7 @@
         },
         {
             "url_prefix": "http://localhost:5000/static",
+            "type": "timeline",
             "tasks": [
                 {
                     "type": "QuestionnaireTask",

@@ -5,19 +5,12 @@ import os
 from hashlib import sha256
 sys.path.append('..')
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from orm import Base, Project, Timeline, Task, Chunk
+from start import db, Project, Timeline, Task, Chunk
 from utils.autoparser import subparser, test_parser
 from constants import DATABASE_PATH, PROJECTS_PATH
 
-engine = create_engine(f'sqlite:///{DATABASE_PATH}')
-Session = sessionmaker(bind=engine)
-session = Session()
-
 def create_tables():
-    Base.metadata.create_all(engine)
+    db.create_all()
 
 def insert_project(fpath):
     with open(fpath, 'r') as f:
@@ -35,8 +28,8 @@ def insert_project(fpath):
     proj_json['timelines'] = timelines
     hash_id = sha256(fpath.encode()).digest()
     project = Project(id=hash_id, **proj_json)
-    session.add(project)
-    session.commit()
+    db.session.add(project)
+    db.session.commit()
 
 @subparser
 def reload_projects():
@@ -73,11 +66,11 @@ def reload_projects():
         proj_json['timelines'] = timelines
         hash_id = sha256(fpath.encode()).digest()
         project = Project(id=hash_id, **proj_json)
-        session.add(project)
+        db.session.add(project)
         projects.append(project)
     
     print('comminting to DB')
-    session.commit()
+    db.session.commit()
     print('done!')
 
     for proj in projects:

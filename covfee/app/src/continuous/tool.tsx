@@ -6,15 +6,14 @@ import {
     Divider,
     Button
 } from 'antd';
+import { ReloadOutlined } from '@ant-design/icons';
 import OpencvFlowPlayer from '../players/opencv'
 import '../css/gui.css'
 import MouseTracker from '../input/mouse_tracker'
 import { EventBuffer } from '../buffer'
-import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
 import Constants from '../constants'
 import { Form } from '../form'
-import Task from './task'
 
 function getFullscreen(element) {
     if (element.requestFullscreen) {
@@ -38,15 +37,15 @@ function closeFullscreen() {
     } else if (document.msExitFullscreen) { /* IE/Edge */
         document.msExitFullscreen();
     }
-} 
+}
 
-class ContinuousKeypointAnnotationTask extends React.Component {
+class ContinuousKeypointAnnotationTool extends React.Component {
     private state = {
         'paused': true,
         'mouse': {
             'xy': { t: 'm', x: 0, y: 0 }, // mouse position
             'valid': false
-        }, 
+        },
         'url': this.props.url
     }
     private player = React.createRef()
@@ -100,19 +99,31 @@ class ContinuousKeypointAnnotationTask extends React.Component {
     }
 
     mouse_data(data: any) {
-        this.setState({ 'mouse': {'xy': data }})
+        this.setState({ 'mouse': { 'xy': data } })
         this.buffer.data(
             this.player.current.currentTime(),
             data
         )
     }
 
-    mouse_active_change(status: boolean){
+    mouse_active_change(status: boolean) {
         this.setState({ 'mouse': { 'valid': status } })
     }
 
     handle_chunk_error() {
         console.log('error submitting buffer!')
+    }
+
+    handleVideoEnded() {
+
+    }
+
+    handleSubmit() {
+        
+    }
+
+    handleRedo() {
+        this.player.current.restart()
     }
 
     toggle_play_pause() {
@@ -149,23 +160,22 @@ class ContinuousKeypointAnnotationTask extends React.Component {
                 type: 'video/mp4'
             }
         }
-        return <Task validate={this.validate.bind(this)}>
-            <Row gutter={16}>
-                <Col span={16}>
-                    <MouseTracker onData={this.mouse_data.bind(this)} onMouseActiveChange={this.mouse_active_change.bind(this)} ref={this.tracker}>
-                        <OpencvFlowPlayer
-                            {...playerOptions}
-                            mouse_xy={this.state.mouse_xy}
-                            ref={this.player}>
-                        </OpencvFlowPlayer>
-                    </MouseTracker>
-                </Col>
-                <Col span={8}>
-                    <Task.Submit>Submit</Task.Submit>
-                </Col>
-            </Row>
-        </Task>
+        return <MouseTracker onData={this.mouse_data.bind(this)} onMouseActiveChange={this.mouse_active_change.bind(this)} ref={this.tracker}>
+                <div className="video-overlay">
+                    <div className="video-overlay-nav">
+                        <Button onClick={this.handleRedo.bind(this)}>Re-do</Button>
+                        <Button onClick={this.handleSubmit.bind(this)} type="primary">Submit</Button>
+                    </div>
+                </div>
+                <OpencvFlowPlayer
+                    {...playerOptions}
+                    mouse={this.state.mouse}
+                    ref={this.player}
+                    onEnded={this.handleVideoEnded.bind(this)}
+                    onSubmit={this.handleSubmit.bind(this)}>
+                </OpencvFlowPlayer>
+            </MouseTracker>
     }
 }
 
-export default ContinuousKeypointAnnotationTask
+export default ContinuousKeypointAnnotationTool

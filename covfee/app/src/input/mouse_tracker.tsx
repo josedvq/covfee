@@ -2,7 +2,8 @@ import React from 'react';
 
 class MouseTracker extends React.Component {
 
-    private container = React.createRef();
+    private container = React.createRef()
+    private videoBorder = React.createRef()
 
     componentDidMount() {
         
@@ -14,15 +15,22 @@ class MouseTracker extends React.Component {
     }
 
     public start() {
-        console.log('started')
-        this.container.current.onmousemove = (function (e) {
+        this.container.current.onmousemove = (function(e) {
             const data = {
                 't': 'm',
                 'x': e.offsetX,
                 'y': e.offsetY
             }
-            this.props.on_data(data)
+            this.props.onData(data)
         }).bind(this)
+
+        this.container.current.onmouseover = (function(e) {
+            this.props.onMouseActiveChange(true)
+        })
+
+        this.container.current.onmouseout = (function (e) {
+            this.props.onMouseActiveChange(false)
+        })
     }
 
     public stop() {
@@ -35,8 +43,10 @@ class MouseTracker extends React.Component {
 
     render() {
         return (
-            <div class='video-container mouse-tracker' ref={this.container}>
-                {this.props.children}
+            <div className={['video-border', this.props.mouseActive ? 'video-border-active' : '']} ref={this.videoBorder}>
+                <div className='video-container mouse-tracker' ref={this.container}>
+                    {this.props.children}
+                </div>
             </div>
         )
     }

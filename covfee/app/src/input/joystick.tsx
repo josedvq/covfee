@@ -54,8 +54,8 @@ class JoystickGUI extends React.Component {
     }
 
     render() {
-        return <div ref={this.container} style={this.props.style} class='gui-vertical'>
-            <div ref={this.indicator} class='gui-indicator' style={{bottom: this.state.position}}></div>
+        return <div ref={this.container} style={this.props.style} className='gui-vertical'>
+            <div ref={this.indicator} className='gui-indicator' style={{bottom: this.state.position}}></div>
         </div>;
     }
 }

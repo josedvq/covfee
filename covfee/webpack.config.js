@@ -37,6 +37,7 @@ module.exports = [
             contentBase: './app/dist',
             headers: { 'Access-Control-Allow-Origin': '*' },
             hot: true,
+            overlay: true,
             inline: true
         },
         output: {

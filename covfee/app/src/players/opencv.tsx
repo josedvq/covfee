@@ -41,9 +41,12 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
         var observer = new ResizeObserver(function(entries) {
             this.rect = entries[0].contentRect
             this.ratio = this.props.flow.res[0] / this.rect.width
-            console.log(this.ratio)
         }.bind(this))
         observer.observe(this.video_tag.current)
+
+        this.video_tag.current.addEventListener('ended', function (e: Event) {
+            this.props.onEnded(e)
+        })
     }
 
     shouldComponentUpdate(nextProps, nextState) {
@@ -53,10 +56,10 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     private processVideo() {
         // start processing.
         this.cap.read(this.frame_flow)
-        const x1 = Math.max(0, this.props.mouse_xy.x * this.ratio - 10)
-        const x2 = Math.min(this.props.mouse_xy.x * this.ratio + 10, this.props.flow.res[0])
-        const y1 = Math.max(0, this.props.mouse_xy.y * this.ratio - 10)
-        const y2 = Math.min(this.props.mouse_xy.y * this.ratio + 10, this.props.flow.res[1])
+        const x1 = Math.max(0, this.props.mouse.xy.x * this.ratio - 10)
+        const x2 = Math.min(this.props.mouse.xy.x * this.ratio + 10, this.props.flow.res[0])
+        const y1 = Math.max(0, this.props.mouse.xy.y * this.ratio - 10)
+        const y2 = Math.min(this.props.mouse.xy.y * this.ratio + 10, this.props.flow.res[1])
 
         const rect = new cv.Rect(x1, y1, x2-x1, y2-y1)
         const roi = this.frame_flow.roi(rect)
@@ -81,6 +84,10 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
         this.video_tag.current.onseeked = undefined
     }
 
+    public restart() {
+        this.video_tag.current.currentTime = 0
+    }
+
     public toggle_play_pause() {
         if(this.req_id)
             this.pause()
@@ -100,10 +107,10 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     //style={{ display: 'none' }}
     render() {
         return <>
-                <video ref={this.video_tag} width="100%" crossorigin="Anonymous" autobuffer preload muted> 
+                <video ref={this.video_tag} width="100%" crossOrigin="Anonymous" preload="auto" muted> 
                     <source src={this.props.video.src} type={"video/mp4"}></source>
                 </video>
-                <video ref={this.flow_tag} width={this.props.flow.res[0]} height={this.props.flow.res[1]} crossorigin="Anonymous" style={{ display: 'none' }} autobuffer preload muted>
+                <video ref={this.flow_tag} width={this.props.flow.res[0]} height={this.props.flow.res[1]} crossOrigin="Anonymous" style={{ display: 'none' }} preload="auto" muted>
                     <source src={this.props.flow.src} type={"video/mp4"}></source>
                 </video>
             </>

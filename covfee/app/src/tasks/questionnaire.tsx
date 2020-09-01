@@ -13,12 +13,28 @@ import {Form} from '../form'
 class QuestionnaireTask extends React.Component {
 
     private player = React.createRef()
-
-    componentDidMount() {
+    public state = {
+        form: {
+            values: [[]],
+            completed: false
+        }
     }
 
-    handleSubmit() {
-        this.props.on_submit()
+    handleChange(values: object) {
+        const has_null = values[0].some((val) => {
+            return val === null
+        })
+
+        this.setState({
+            form: {
+                values: values,
+                completed: !has_null
+            }
+        })
+    }
+
+    validate() {
+        return this.state.form.values
     }
 
     render() {
@@ -32,13 +48,15 @@ class QuestionnaireTask extends React.Component {
                 type: 'video/mp4'
             }]
         }
-        return <Task>
+        //
+        return <Task {...this.props } validate = { this.validate.bind(this) } >
             <Row gutter={16}>
                 <Col span={16}>
                     <VideojsPlayer {...videoJsOptions}></VideojsPlayer>
                 </Col>
                 <Col span={8}>
-                    <Form {...this.props.form} on_submit={this.handleSubmit.bind(this)}></Form>
+                    <Form {...this.props.form} values={this.state.form.values} onChange={this.handleChange.bind(this)}></Form>
+                    <Task.Submit disabled={!this.state.form.completed}></Task.Submit>
                 </Col>
             </Row>
             <Row gutter={16}>

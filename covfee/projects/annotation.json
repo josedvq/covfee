@@ -1,0 +1,36 @@
+{
+    "name": "Annotation tool sample",
+    "email": "j.d.vargasquiros@tudelft.nl",
+    "timelines": [
+        {
+            "type": "annotator",
+            "url_prefix": false,
+            "media": {
+                "type": "video",
+                "url": "http://localhost:5000/static/sample_mp4.mp4",
+                "res": [
+                    320,
+                    240
+                ],
+                "flow_url": "http://localhost:5000/static/sample_mp4_flow.mp4",
+                "flow_res": [
+                    320,
+                    240
+                ],
+                "mute": true,
+                "autoplay": true,
+                "controls": false
+            },
+            "tasks": [
+                {
+                    "type": "ContinuousKeypointAnnotationTask",
+                    "name": "p1_hands"
+                },
+                {
+                    "type": "ContinuousKeypointAnnotationTask",
+                    "name": "p1_shoulder"
+                }
+            ]
+        }
+    ]
+}

@@ -49,8 +49,11 @@
   "license": "ISC",
   "dependencies": {
     "@ant-design/icons": "^4.2.1",
+    "@types/classnames": "^2.2.10",
     "antd": "^4.3.3",
+    "classnames": "^2.2.6",
     "react": "^16.13.1",
+    "react-beautiful-dnd": "^13.0.0",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.2.0",
     "style-loader": "^1.2.1",

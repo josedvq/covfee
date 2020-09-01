@@ -8,7 +8,6 @@ import {
     Col,
     Typography,
     Space,
-    Modal
 } from 'antd';
 const { Text, Title, Link } = Typography;
 
@@ -114,7 +113,7 @@ class Timeline extends React.Component {
     render() {
         switch(this.state.status) {
             case 'loading':
-                return <div class={'site-layout-content'}>
+                return <div className={'site-layout-content'}>
                         <LoadingOutlined />
                     </div>
 
@@ -129,30 +128,23 @@ class Timeline extends React.Component {
 
                 if (Tasks.hasOwnProperty(props.type)) {
                     const taskClass = Tasks[props.type]
-                    return React.createElement(taskClass, { key: this.state.curr_task, ...props }, null)
+                    return React.createElement(taskClass, {
+                        key: this.state.curr_task,
+                        onSubmit: this.handleTaskSubmit.bind(this),
+                        ...props }, null)
                 } else {
                     return <Text>Error loading annotation task</Text>
                 }
-                // switch (props.type) {
-                //     case 'segment':
-                //         return <SegmentAnnotationTask key={this.state.curr_task} {...props} on_submit={this.handleTaskSubmit.bind(this)}></SegmentAnnotationTask>
-                //     case 'keypoint':
-                //         return <KeypointAnnotationTask key={this.state.curr_task} {...props}></KeypointAnnotationTask>
-                //     case 'action':
-                //         return <ActionAnnotationTask key={this.state.curr_task} {...props}></ActionAnnotationTask>
-                //     default:
-                //         
-                // }
 
             case 'sending':
-                return <div class={'site-layout-content'}>
+                return <div className={'site-layout-content'}>
                         <LoadingOutlined />
                     </div>
 
             case 'finished':
                 if(this.state.error) {
                     return <>
-                        <div class={'site-layout-content'}>
+                        <div className={'site-layout-content'}>
                             <Row gutter={16}>
                                 <Col span={24}>
                                     <Space direction="vertical">
@@ -176,7 +168,7 @@ class Timeline extends React.Component {
                         </>
                     }
                     return <>
-                        <div class={'site-layout-content'}>
+                        <div className={'site-layout-content'}>
                             <Row gutter={16}>
                                 <Col span={24}>
                                     <Title level={2}>Thank you!</Title>
