@@ -4,7 +4,6 @@ import { ContinuousAnnotationPlayer} from './base'
 
 // video player using opencv to control playback speed
 class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
-    private player: any
     private video_tag = React.createRef()
     private flow_tag = React.createRef()
     private cap: any
@@ -13,10 +12,8 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     private myStddev: cv.Mat
 
     private req_id: any = false
-    private rect: object
     private ratio: number = 0.5
     private delay: number = 0
-    private multiplier: number = 0.5
 
     componentDidMount() {
 
@@ -81,17 +78,15 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     }
 
     public play() {
-        console.log('play')
         this.video_tag.current.onseeked = () => {
             setTimeout(() => {
                 this.req_id = window.requestAnimationFrame(this.processVideo.bind(this))
-            }, Math.round(this.delay*this.multiplier))
+            }, Math.round(this.delay / this.props.rate))
         }
         this.req_id = window.requestAnimationFrame(this.processVideo.bind(this))
     }
 
     public pause() {
-        console.log('pause')
         window.cancelAnimationFrame(this.req_id)
         this.req_id = false
         this.video_tag.current.onseeked = undefined
@@ -104,7 +99,6 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     }
 
     public currentTime(t: number) {
-        console.log([this.video_tag.current.currentTime, this.flow_tag.current.currentTime])
         if(t !== undefined) {
             this.pause()
             this.video_tag.current.currentTime = t

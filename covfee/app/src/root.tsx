@@ -35,8 +35,7 @@ class Root extends React.Component {
                 <Header className="header">
                     <div className="logo" />
                     <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['2']}>
-                        <Menu.Item key="1"><Link to="/">Annotate</Link></Menu.Item>
-                        <Menu.Item key="2"><Link to="/about">About</Link></Menu.Item>
+                        <Menu.Item key="1" disabled><Link to="/">covfee</Link></Menu.Item>
                     </Menu>
                 </Header>
                 <Layout>

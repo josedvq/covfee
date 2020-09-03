@@ -42,14 +42,17 @@ function closeFullscreen() {
 
 class ContinuousKeypointAnnotationTool extends React.Component {
     private state = {
-        'paused': true,
-        'mouse': {
-            'xy': { t: 'm', x: 0, y: 0 }, // mouse position
-            'valid': false
+        paused: true,
+        occluded: false,
+        mouse: {
+            // 'xy': { t: 'm', x: 0, y: 0 }, // mouse position
+            valid: false
         },
-        'url': this.props.url,
-        'overlay': false
+        url: this.props.url,
+        overlay: false,
+        playbackRateIdx: 6
     }
+    private playbackRates = [1/8, 1/7, 1/6, 1/5, 1/4, 1/3, 1/2, 1, 2, 3, 4]
     private player = React.createRef()
     private tracker = React.createRef()
     private buffer = new EventBuffer(
@@ -61,13 +64,11 @@ class ContinuousKeypointAnnotationTool extends React.Component {
 
     onKeydown (e: Event) {
         switch (e.key) {
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-                this.player.current.playbackRate(1 / parseFloat(e.key))
+            case 'ArrowRight':
+                this.setState({ playbackRateIdx: Math.min(this.state.playbackRateIdx+1, this.playbackRates.length-1) })
+                break
+            case 'ArrowLeft':
+                this.setState({ playbackRateIdx: Math.max(this.state.playbackRateIdx-1, 0) })
                 break
             case ' ':
                 this.togglePlayPause()
@@ -76,13 +77,14 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                 var t1 = Math.max(0, this.player.current.currentTime() - 2)
                 this.player.current.currentTime(t1)
                 break
-            case 'f':
-                getFullscreen(this.tracker.current.getContainer())
-                break
-            case 'z': // => slow down
+            case 'c': // => go back 10s
                 let t2 = Math.max(0, this.player.current.currentTime() - 10)
                 this.player.current.currentTime(t2)
-                // this.player.current.play()
+                break
+            case 'z': // occluded
+                this.setState({occluded: true})
+            case 'f':
+                getFullscreen(this.tracker.current.getContainer())
                 break
             default:
                 break
@@ -107,7 +109,7 @@ class ContinuousKeypointAnnotationTool extends React.Component {
     }
 
     handleMouseData(data: any) {
-        this.setState({ 'mouse': { 'xy': data } })
+        console.log([data.x, data.y])
         this.buffer.data(
             this.player.current.currentTime(),
             data
@@ -115,7 +117,8 @@ class ContinuousKeypointAnnotationTool extends React.Component {
     }
 
     handleMouseActiveChange(status: boolean) {
-        this.setState({ 'mouse': { 'valid': status } })
+        this.setState({ mouse: { valid: status } }, ()=>{
+        })
     }
 
     handleChunkError() {
@@ -174,11 +177,21 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                 type: 'video/mp4'
             }
         }
-        return <MouseTracker 
-                    paused={this.state.paused}
-                    onData={this.handleMouseData.bind(this)} 
-                    onMouseActiveChange={this.handleMouseActiveChange.bind(this)} 
-                    ref={this.tracker}>
+        let pr = this.playbackRates[this.state.playbackRateIdx]
+        let pr_str = ''
+        if(Number.isInteger(pr)) pr_str = pr.toString()
+        else pr_str = pr.toFixed(2)
+
+        return <>
+            <div className="annot-bar">
+                <div className="annot-bar-section">speed: {pr_str}x</div>
+            </div>
+            <MouseTracker 
+                paused={this.state.paused}
+                mouseActive={this.state.mouse.valid}
+                onData={this.handleMouseData.bind(this)} 
+                onMouseActiveChange={this.handleMouseActiveChange.bind(this)} 
+                ref={this.tracker}>
                 <div className={classNames('video-overlay', { 'overlay-off': !this.state.overlay})}>
                     <div className="video-overlay-nav">
                         <Button onClick={this.handleRedo.bind(this)}>Re-do</Button>
@@ -189,11 +202,13 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                     {...playerOptions}
                     paused={this.state.paused}
                     pausePlay={this.handlePausePlay.bind(this)}
+                    rate={this.playbackRates[this.state.playbackRateIdx]}
                     mouse={this.state.mouse}
                     ref={this.player}
                     onEnded={this.handleVideoEnded.bind(this)}>
                 </OpencvFlowPlayer>
             </MouseTracker>
+        </>
     }
 }
 

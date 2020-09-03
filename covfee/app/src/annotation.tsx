@@ -7,16 +7,20 @@ import {
     EyeFilled, 
     EyeInvisibleFilled,
     EditOutlined,
-    CheckCircleOutlined
+    CheckCircleOutlined,
+    BarsOutlined,
+    PictureOutlined
 } from '@ant-design/icons';
 import {
     Row,
     Col,
     Typography,
     Space,
+    Menu,
     Input,
     Button
 } from 'antd';
+import Collapsible from 'react-collapsible'
 import {DragDropContext} from 'react-beautiful-dnd'
 const { Text, Title, Link } = Typography;
 
@@ -123,7 +127,8 @@ class ContinuousAnnotationTool extends React.Component {
         completion_code: false,
         sidebar: {
             taskIds: []
-        }
+        },
+        galleryOpen: false
     }
     timeline: object
     id: number
@@ -277,6 +282,10 @@ class ContinuousAnnotationTool extends React.Component {
         else this.annotToolRef.current.startKeyboardListen()
     }
 
+    handleMenuClick(e: object) {
+        if (e.key == 'gallery') this.setState({galleryOpen: !this.state.galleryOpen})
+    }
+
     render() {
         switch(this.state.status) {
             case 'loading':
@@ -302,14 +311,31 @@ class ContinuousAnnotationTool extends React.Component {
                     ref={this.annotToolRef}
                     {...props}/>
 
-                return <Row gutter={16}>
-                    <Col span={16}>
-                        {task}
-                    </Col>
-                    <Col span={8}>
-                        {sidebar}
-                    </Col>
-                </Row>
+                return <>
+                    <Row>
+                        <Col span={24}>
+                            <Menu onClick={this.handleMenuClick.bind(this)} mode="horizontal" theme="dark">
+                                <Menu.Item key="instructions" icon={<BarsOutlined />}>
+                                    Instructions
+                                </Menu.Item>
+                                <Menu.Item key="gallery" icon={<PictureOutlined />}>
+                                    Gallery
+                                </Menu.Item>
+                            </Menu>
+                            <Collapsible open={this.state.galleryOpen}>
+                                <img src={this.timeline.media.gallery_url} className={"gallery-img"} />
+                            </Collapsible>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col span={16}>
+                            {task}
+                        </Col>
+                        <Col span={8}>
+                            {sidebar}
+                        </Col>
+                    </Row>
+                </>
 
             case 'sending':
                 return <div className={'site-layout-content'}>
