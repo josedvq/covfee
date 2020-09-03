@@ -52,7 +52,9 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     }
 
     private processVideo() {
-        if(this.props.mouse.xy === undefined) {
+        // console.log(this.props.mouse)
+        // console.log([this.video_tag.current.currentTime, this.flow_tag.current.currentTime])
+        if(this.props.mouse === undefined) {
             this.delay = 16
             this.flow_tag.current.seekToNextFrame().then(()=>{
                 this.video_tag.current.seekToNextFrame()
@@ -61,10 +63,10 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
         } else {
             // start processing.
             this.cap.read(this.frame_flow)
-            const x1 = Math.max(0, this.props.mouse.xy.x * this.ratio - 10)
-            const x2 = Math.min(this.props.mouse.xy.x * this.ratio + 10, this.props.flow.res[0])
-            const y1 = Math.max(0, this.props.mouse.xy.y * this.ratio - 10)
-            const y2 = Math.min(this.props.mouse.xy.y * this.ratio + 10, this.props.flow.res[1])
+            const x1 = Math.max(0, this.props.mouse[0] * this.ratio - 10)
+            const x2 = Math.min(this.props.mouse[0] * this.ratio + 10, this.props.flow.res[0])
+            const y1 = Math.max(0, this.props.mouse[1] * this.ratio - 10)
+            const y2 = Math.min(this.props.mouse[1] * this.ratio + 10, this.props.flow.res[1])
 
             const rect = new cv.Rect(x1, y1, x2-x1, y2-y1)
             const roi = this.frame_flow.roi(rect)
@@ -93,7 +95,7 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     }
 
     public restart() {
-        this.video_tag.current.currentTime = 0
+        this.currentTime(0)
         // this.video_tag.current.load()
         setTimeout(() => { this.props.pausePlay(false)}, 1000)
     }

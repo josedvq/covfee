@@ -20,10 +20,8 @@ class ContinuousKeypointAnnotationTool extends React.Component {
     private state = {
         paused: true,
         occluded: false,
-        mouse: {
-            // 'xy': { t: 'm', x: 0, y: 0 }, // mouse position
-            valid: false
-        },
+        mouse_valid: false,
+        mouse: [0,0],
         url: this.props.url,
         overlay: false,
         playbackRateIdx: 6
@@ -37,24 +35,41 @@ class ContinuousKeypointAnnotationTool extends React.Component {
         this.handleChunkError.bind(this)
     )
 
+    componentDidMount() {
+        this.onKeydown = this.onKeydown.bind(this)
+        this.onKeyUp = this.onKeyUp.bind(this)
+        this.startKeyboardListen()
+    }
+
+    componentWillUnmount() {
+        this.stopKeyboardListen()
+    }
+
     onKeydown (e: Event) {
+        if (e.repeat) { return }
         switch (e.key) {
             case 'ArrowRight':
                 this.setState({ playbackRateIdx: Math.min(this.state.playbackRateIdx+1, this.playbackRates.length-1) })
+                this.buffer.data(this.player.current.currentTime(), ['speedup', this.playbackRates[this.state.playbackRateIdx]])
                 break
             case 'ArrowLeft':
                 this.setState({ playbackRateIdx: Math.max(this.state.playbackRateIdx-1, 0) })
+                this.buffer.data(this.player.current.currentTime(), ['speeddown', this.playbackRates[this.state.playbackRateIdx]])
                 break
             case ' ':
+                if (this.state.paused) this.buffer.data(this.player.current.currentTime(), ['play'])
+                else this.buffer.data(this.player.current.currentTime(), ['pause'])
                 this.togglePlayPause()
                 break
             case 'x': // => go back 2s
                 var t1 = Math.max(0, this.player.current.currentTime() - 2)
                 this.player.current.currentTime(t1)
+                this.buffer.data(this.player.current.currentTime(), ['back2s'])
                 break
             case 'c': // => go back 10s
                 let t2 = Math.max(0, this.player.current.currentTime() - 10)
                 this.player.current.currentTime(t2)
+                this.buffer.data(this.player.current.currentTime(), ['back10s'])
                 break
             case 'z': // occluded
                 this.setState({occluded: true})
@@ -63,33 +78,34 @@ class ContinuousKeypointAnnotationTool extends React.Component {
         }
     }
 
+    onKeyUp(e: Event) {
+        switch (e.key) {
+            case 'z':
+                this.setState({ occluded: false })
+                break
+        }
+    }
+
     public startKeyboardListen() {
         document.addEventListener("keydown", this.onKeydown, false)
+        document.addEventListener("keyup", this.onKeyUp, false)
     }
 
     public stopKeyboardListen() {
         document.removeEventListener("keydown", this.onKeydown, false)
+        document.removeEventListener("keyup", this.onKeyUp, false)
     }
 
-    componentDidMount() {
-        this.onKeydown = this.onKeydown.bind(this)
-        this.startKeyboardListen()
-    }
-
-    componentWillUnmount() {
-        this.stopKeyboardListen()
-    }
-
-    handleMouseData(data: any) {
-        console.log([data.x, data.y])
+    handleMouseData(data: any, e: Event) {
         this.buffer.data(
             this.player.current.currentTime(),
-            data
+            [data[0], data[1], this.state.occluded]
         )
+        this.setState({ mouse: [e.offsetX, e.offsetY]})
     }
 
     handleMouseActiveChange(status: boolean) {
-        this.setState({ mouse: { valid: status } }, ()=>{
+        this.setState({ mouse_valid: status }, ()=>{
         })
     }
 
@@ -160,7 +176,8 @@ class ContinuousKeypointAnnotationTool extends React.Component {
             </div>
             <MouseTracker 
                 paused={this.state.paused}
-                mouseActive={this.state.mouse.valid}
+                occluded={this.state.occluded}
+                mouseActive={this.state.mouse_valid}
                 onData={this.handleMouseData.bind(this)} 
                 onMouseActiveChange={this.handleMouseActiveChange.bind(this)} 
                 ref={this.tracker}>

@@ -49,6 +49,9 @@
 .video-border-active {
   background-color: red;
 }
+.video-border-occluded {
+  background-color: blue;
+}
 
 .video-overlay-nav {
     position: absolute;

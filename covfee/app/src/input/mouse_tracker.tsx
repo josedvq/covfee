@@ -42,12 +42,11 @@ class MouseTracker extends React.Component {
     }
 
     handleMouseMove(e: Event) {
-        const data = {
-            't': 'm',
-            'x': e.offsetX / this.resolution[0],
-            'y': e.offsetY / this.resolution[1]
-        }
-        this.props.onData(data)
+        const data = [
+            e.offsetX / this.resolution[0],
+            e.offsetY / this.resolution[1]
+        ]
+        this.props.onData(data, e)
     }
 
     handleMouseOver(e: Event) {
@@ -73,7 +72,12 @@ class MouseTracker extends React.Component {
 
     render() {
         return (
-            <div className={classNames('video-border', (this.props.mouseActive && !this.props.paused) ? 'video-border-active' : '')} ref={this.videoBorder}>
+            <div className={classNames({
+                'video-border': true, 
+                'video-border-active': this.props.mouseActive && !this.props.paused,
+                'video-border-occluded': this.props.mouseActive && !this.props.paused && this.props.occluded
+                })} ref={this.videoBorder}>
+
                 <div className='video-container mouse-tracker' ref={this.container}>
                     {this.props.children}
                 </div>

@@ -43,10 +43,13 @@ class EventBuffer {
     }
 
     public data(timestamp:number, data: object) {
-        this.buffer.push({
-            't': timestamp,
-            'd': data
-        })
+        let payload = [
+            Date.now(),
+            timestamp,
+            data
+        ]
+        console.log(data)
+        this.buffer.push(payload)
         if(this.buffer.length == this.size) {
             this.submit()
         }
