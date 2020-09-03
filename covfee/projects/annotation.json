@@ -7,12 +7,12 @@
             "url_prefix": false,
             "media": {
                 "type": "video",
-                "url": "http://localhost:5000/static/sample_mp4.mp4",
+                "url": "http://localhost:5000/static/sample_mp4_10s.mp4",
                 "res": [
                     320,
                     240
                 ],
-                "flow_url": "http://localhost:5000/static/sample_mp4_flow.mp4",
+                "flow_url": "http://localhost:5000/static/sample_mp4_flow_10s.mp4",
                 "flow_res": [
                     320,
                     240

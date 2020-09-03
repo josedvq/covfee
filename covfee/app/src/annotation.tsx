@@ -32,9 +32,11 @@ class TaskGroup extends React.Component {
                 <Task key={task.id} 
                     id={task.id} 
                     name={task.name} 
-                    active={task.active} 
-                    onActivate={this.props.onChangeActiveTask} />
-                    )}
+                    active={task.id == this.props.curr_task} 
+                    onActivate={this.props.onChangeActiveTask} 
+                    onSubmitName={this.props.onSubmitNewTaskName}
+                    onInputFocus={this.props.onInputFocus}
+                    />)}
             <li><Button type="primary" onClick={this.props.onAddTask}>New Task</Button></li>
         </ol>
     }
@@ -44,28 +46,67 @@ class Task extends React.Component {
     state = {
         editable: false,
         loading: false,
-        name: ''
+        input_text: ''
+    }
+
+    inputRef: Input = React.createRef()
+
+    componentDidMount() {
+        this.setState({
+            input_text: this.props.name
+        }, ()=>{
+            if(this.props.name == '') {
+                this.handleEdit()
+            }
+        })
     }
 
     handleEdit() {
         this.setState({
             editable: true
+        }, () => {
+            this.inputRef.current.focus()
+        })
+    }
+
+    handleInputChange(e) {
+        this.setState({
+            input_text: e.target.value
         })
     }
 
     handleSubmitName() {
-
+        this.props.onSubmitName(this.props.id, this.state.input_text, ()=>{
+            this.setState({
+                editable: false
+            })
+        })
     }
 
     handleActivate() {
         this.props.onActivate(this.props.id)
     }
 
+    handleFocus() {
+        this.props.onInputFocus(true)
+    }
+
+    handleBlur() {
+        this.props.onInputFocus(false)
+    }
+
     render() {
         this.props.name == ''
 
         return <li className={classNames('task-li', { 'task-li-active': this.props.active})}>
-            <Input placeholder="Task Name" disabled={!this.state.editable} value={this.props.name}></Input>
+            <Input 
+                onFocus={this.handleFocus.bind(this)} 
+                onBlur={this.handleBlur.bind(this)} 
+                placeholder="Task Name" 
+                onChange={this.handleInputChange.bind(this)} 
+                disabled={!this.state.editable} 
+                value={this.state.input_text} 
+                ref={this.inputRef}/>
             {this.state.editable
                 ? <Button icon={<CheckCircleOutlined/>} onClick={this.handleSubmitName.bind(this)}></Button>
                 : <Button icon={<EditOutlined />} onClick={this.handleEdit.bind(this)}></Button>}
@@ -87,6 +128,8 @@ class ContinuousAnnotationTool extends React.Component {
     timeline: object
     id: number
     url: string
+
+    annotToolRef: ContinuousAnnotationTool = React.createRef()
 
     componentDidMount() {
         this.id = this.props.match.params.timelineId
@@ -119,19 +162,103 @@ class ContinuousAnnotationTool extends React.Component {
     }
 
     handleTaskSubmit() {
-        
+        console.log('submitting')
+        const url = this.url + '/tasks/' + this.state.curr_task + '/submit'
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({'sucess':true })
+        }
+
+        fetch(url, requestOptions)
+            .then(async response => {
+                const data = await response.json()
+
+                // check for error response
+                if (!response.ok) {
+                    // get error message from body or default to response status
+                    const error = (data && data.message) || response.status
+                    return Promise.reject(error)
+                }
+
+                this.timeline.tasks[data.id] = data
+            })
+            .catch(error => {
+                // this.setState({ error: error.toString(), submitting: false })
+                console.error('There was an error!', error)
+            })
     }
 
     handleChangeActiveTask(taskId: any) {
-        this.timeline.tasks[this.state.curr_task].active = false
         this.setState({
             'curr_task': taskId
         })
-        this.timeline.tasks[taskId].active = true
     }
 
+    handleSubmitNewTaskName(taskId: string, name: string, cb: Function) {
+        if(taskId == 'n') {
+            // adding new task
+            const url = this.url + '/tasks/add'
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'ContinuousKeypointAnnotationTask', name: name })
+            }
+
+            fetch(url, requestOptions)
+                .then(async response => {
+                    const data = await response.json()
+
+                    // check for error response
+                    if (!response.ok) {
+                        // get error message from body or default to response status
+                        const error = (data && data.message) || response.status
+                        return Promise.reject(error)
+                    }
+
+                    delete this.timeline.tasks['n']
+                    this.timeline.tasks[data.id] = data
+                    const newTaskIds = Array.from(this.state.sidebar.taskIds)
+                    newTaskIds.pop()
+                    newTaskIds.push(data.id)
+                    this.setState({ sidebar: { taskIds: newTaskIds } }, () => { cb()})
+                })
+                .catch(error => {
+                    // this.setState({ error: error.toString(), submitting: false })
+                    console.error('There was an error!', error)
+                })
+        } else {
+            // editing existing task
+            const url = this.url + '/tasks/' + taskId + '/edit'
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name })
+            }
+
+            fetch(url, requestOptions)
+                .then(async response => {
+                    const data = await response.json()
+
+                    // check for error response
+                    if (!response.ok) {
+                        // get error message from body or default to response status
+                        const error = (data && data.message) || response.status
+                        return Promise.reject(error)
+                    }
+
+                    this.timeline.tasks[taskId] = data
+                    cb()
+                })
+                .catch(error => {
+                    // this.setState({ error: error.toString(), submitting: false })
+                    console.error('There was an error!', error)
+                })
+        }
+    } 
+
     handleAddTask() {
-        if(!this.timeline.tasks.hasAttribute('n')) {
+        if (!this.timeline.tasks.hasOwnProperty('n')) {
             this.timeline.tasks.n = {id: 'n', name: ''}
             const newTaskIds = Array.from(this.state.sidebar.taskIds)
             newTaskIds.push('n')
@@ -145,6 +272,11 @@ class ContinuousAnnotationTool extends React.Component {
         }
     }
 
+    handleInputFocus(focus: boolean) {
+        if(focus) this.annotToolRef.current.stopKeyboardListen()
+        else this.annotToolRef.current.startKeyboardListen()
+    }
+
     render() {
         switch(this.state.status) {
             case 'loading':
@@ -154,11 +286,21 @@ class ContinuousAnnotationTool extends React.Component {
 
             case 'tasks':
                 const tasks = this.state.sidebar.taskIds.map(taskId => this.timeline.tasks[taskId])
-                const sidebar = <TaskGroup tasks={tasks} onAddTask={this.handleAddTask.bind(this)} onChangeActiveTask={this.handleChangeActiveTask.bind(this)} />
+                const sidebar = <TaskGroup 
+                    tasks={tasks} 
+                    curr_task={this.state.curr_task}
+                    onAddTask={this.handleAddTask.bind(this)} 
+                    onInputFocus={this.handleInputFocus.bind(this)}
+                    onChangeActiveTask={this.handleChangeActiveTask.bind(this)}
+                    onSubmitNewTaskName={this.handleSubmitNewTaskName.bind(this)} />
 
                 let props = this.timeline.tasks[this.state.curr_task]
                 props.media = this.timeline.media
-                let task = <ContinuousKeypointAnnotationTool key={this.state.curr_task} onSubmit={this.handleTaskSubmit.bind(this)} {...props}/>
+                let task = <ContinuousKeypointAnnotationTool 
+                    key={this.state.curr_task} 
+                    onSubmit={this.handleTaskSubmit.bind(this)} 
+                    ref={this.annotToolRef}
+                    {...props}/>
 
                 return <Row gutter={16}>
                     <Col span={16}>

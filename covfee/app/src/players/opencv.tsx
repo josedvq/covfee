@@ -18,10 +18,6 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     private delay: number = 0
     private multiplier: number = 0.5
 
-    constructor(props: any) {
-        super(props);
-    }
-
     componentDidMount() {
 
         function cv_init() {
@@ -44,32 +40,48 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
         }.bind(this))
         observer.observe(this.video_tag.current)
 
-        this.video_tag.current.addEventListener('ended', function (e: Event) {
+        this.video_tag.current.addEventListener('ended', (e: Event) => {
             this.props.onEnded(e)
+            this.pause()
         })
     }
 
-    shouldComponentUpdate(nextProps, nextState) {
-        return false
+    componentDidUpdate(prevProps) {
+        // Typical usage (don't forget to compare props):
+        if (this.props.paused !== prevProps.paused) {
+            if(this.props.paused) this.pause()
+            else this.play()
+        }
     }
 
     private processVideo() {
-        // start processing.
-        this.cap.read(this.frame_flow)
-        const x1 = Math.max(0, this.props.mouse.xy.x * this.ratio - 10)
-        const x2 = Math.min(this.props.mouse.xy.x * this.ratio + 10, this.props.flow.res[0])
-        const y1 = Math.max(0, this.props.mouse.xy.y * this.ratio - 10)
-        const y2 = Math.min(this.props.mouse.xy.y * this.ratio + 10, this.props.flow.res[1])
+        if(this.props.mouse.xy === undefined) {
+            this.delay = 16
+            this.flow_tag.current.seekToNextFrame().then(()=>{
+                this.video_tag.current.seekToNextFrame()
+            })
+            
+        } else {
+            // start processing.
+            this.cap.read(this.frame_flow)
+            const x1 = Math.max(0, this.props.mouse.xy.x * this.ratio - 10)
+            const x2 = Math.min(this.props.mouse.xy.x * this.ratio + 10, this.props.flow.res[0])
+            const y1 = Math.max(0, this.props.mouse.xy.y * this.ratio - 10)
+            const y2 = Math.min(this.props.mouse.xy.y * this.ratio + 10, this.props.flow.res[1])
 
-        const rect = new cv.Rect(x1, y1, x2-x1, y2-y1)
-        const roi = this.frame_flow.roi(rect)
-        cv.meanStdDev(roi, this.myMean, this.myStddev)
-        this.delay = this.myMean.doubleAt(0, 0)
-        this.flow_tag.current.seekToNextFrame()
-        this.video_tag.current.seekToNextFrame()
+            const rect = new cv.Rect(x1, y1, x2-x1, y2-y1)
+            const roi = this.frame_flow.roi(rect)
+            cv.meanStdDev(roi, this.myMean, this.myStddev)
+            this.delay = this.myMean.doubleAt(0, 0)
+            this.flow_tag.current.seekToNextFrame().then(()=>{
+                this.video_tag.current.seekToNextFrame()
+            })
+            
+        }
     }
 
     public play() {
+        console.log('play')
         this.video_tag.current.onseeked = () => {
             setTimeout(() => {
                 this.req_id = window.requestAnimationFrame(this.processVideo.bind(this))
@@ -79,6 +91,7 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     }
 
     public pause() {
+        console.log('pause')
         window.cancelAnimationFrame(this.req_id)
         this.req_id = false
         this.video_tag.current.onseeked = undefined
@@ -86,17 +99,19 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
 
     public restart() {
         this.video_tag.current.currentTime = 0
+        // this.video_tag.current.load()
+        setTimeout(() => { this.props.pausePlay(false)}, 1000)
     }
 
-    public toggle_play_pause() {
-        if(this.req_id)
+    public currentTime(t: number) {
+        console.log([this.video_tag.current.currentTime, this.flow_tag.current.currentTime])
+        if(t !== undefined) {
             this.pause()
-        else
-            this.play()
-    }
-
-    public currentTime() {
-        return this.video_tag.current.currentTime
+            this.video_tag.current.currentTime = t
+            this.flow_tag.current.currentTime = t
+            // setTimeout(this.play.bind(this), 1000)
+        }
+        else return this.video_tag.current.currentTime
     }
     
     // wrap the player in a div with a `data-vjs-player` attribute

@@ -14,6 +14,7 @@ import { EventBuffer } from '../buffer'
 import 'video.js/dist/video-js.css'
 import Constants from '../constants'
 import { Form } from '../form'
+import classNames from 'classnames'
 
 function getFullscreen(element) {
     if (element.requestFullscreen) {
@@ -46,59 +47,66 @@ class ContinuousKeypointAnnotationTool extends React.Component {
             'xy': { t: 'm', x: 0, y: 0 }, // mouse position
             'valid': false
         },
-        'url': this.props.url
+        'url': this.props.url,
+        'overlay': false
     }
     private player = React.createRef()
     private tracker = React.createRef()
     private buffer = new EventBuffer(
-        200,
+        1000,
         this.props.url + '/chunk',
-        this.handle_chunk_error.bind(this)
+        this.handleChunkError.bind(this)
     )
-    private on_keydown: object;
+    private boundOnKeyDown: Function;
+
+    onKeydown (e: Event) {
+        switch (e.key) {
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+                this.player.current.playbackRate(1 / parseFloat(e.key))
+                break
+            case ' ':
+                this.togglePlayPause()
+                break
+            case 'x': // => go back 2s
+                var t1 = Math.max(0, this.player.current.currentTime() - 2)
+                this.player.current.currentTime(t1)
+                break
+            case 'f':
+                getFullscreen(this.tracker.current.getContainer())
+                break
+            case 'z': // => slow down
+                let t2 = Math.max(0, this.player.current.currentTime() - 10)
+                this.player.current.currentTime(t2)
+                // this.player.current.play()
+                break
+            default:
+                break
+        }
+    }
+
+    public startKeyboardListen() {
+        document.addEventListener("keydown", this.boundOnKeyDown, false)
+    }
+
+    public stopKeyboardListen() {
+        document.removeEventListener("keydown", this.boundOnKeyDown, false)
+    }
 
     componentDidMount() {
-        // key bindings
-        this.on_keydown = (function (e) {
-            switch (e.key) {
-                case '1':
-                case '2':
-                case '3':
-                case '4':
-                case '5':
-                case '6':
-                    this.player.current.playbackRate(1 / parseFloat(e.key))
-                    break
-                case ' ':
-                    this.toggle_play_pause()
-                    break
-                case 'x': // => go back 2s
-                    var t1 = Math.max(0, this.player.current.currentTime() - 2)
-                    this.player.current.currentTime(t1)
-                    // this.player.current.play()
-                    break
-                case 'f':
-                    console.log('fullscreen')
-                    getFullscreen(this.tracker.current.getContainer())
-                    break
-                case 'z': // => slow down
-                    let t2 = Math.max(0, this.player.current.currentTime() - 10)
-                    this.player.current.currentTime(t2)
-                    // this.player.current.play()
-                    break
-                default:
-                    break
-            }
-        }).bind(this)
-
-        document.addEventListener("keydown", this.on_keydown, false);
+        this.boundOnKeyDown = this.onKeydown.bind(this)
+        this.startKeyboardListen()
     }
 
     componentWillUnmount() {
-        document.removeEventListener("keydown", this.on_keydown, false);
+        this.stopKeyboardListen()
     }
 
-    mouse_data(data: any) {
+    handleMouseData(data: any) {
         this.setState({ 'mouse': { 'xy': data } })
         this.buffer.data(
             this.player.current.currentTime(),
@@ -106,36 +114,42 @@ class ContinuousKeypointAnnotationTool extends React.Component {
         )
     }
 
-    mouse_active_change(status: boolean) {
+    handleMouseActiveChange(status: boolean) {
         this.setState({ 'mouse': { 'valid': status } })
     }
 
-    handle_chunk_error() {
+    handleChunkError() {
         console.log('error submitting buffer!')
     }
 
     handleVideoEnded() {
-
+        this.setState({
+            overlay: true,
+            paused: true
+        })
     }
 
     handleSubmit() {
-        
+        this.props.onSubmit()
     }
 
     handleRedo() {
-        this.player.current.restart()
+        this.setState({
+            overlay: false
+        }, ()=>{
+            this.player.current.restart()
+        })
+        
     }
 
-    toggle_play_pause() {
-        if (this.state.paused) {
-            this.tracker.current.start()
-            this.player.current.play()
-            this.setState({ paused: false })
-        } else {
-            this.tracker.current.stop()
-            this.player.current.pause()
-            this.setState({ paused: true })
-        }
+    togglePlayPause() {
+        this.setState({paused: !this.state.paused})
+    }
+
+    handlePausePlay(pause: boolean) {
+        this.setState({
+            paused: pause
+        })
     }
 
     validate() {
@@ -160,8 +174,12 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                 type: 'video/mp4'
             }
         }
-        return <MouseTracker onData={this.mouse_data.bind(this)} onMouseActiveChange={this.mouse_active_change.bind(this)} ref={this.tracker}>
-                <div className="video-overlay">
+        return <MouseTracker 
+                    paused={this.state.paused}
+                    onData={this.handleMouseData.bind(this)} 
+                    onMouseActiveChange={this.handleMouseActiveChange.bind(this)} 
+                    ref={this.tracker}>
+                <div className={classNames('video-overlay', { 'overlay-off': !this.state.overlay})}>
                     <div className="video-overlay-nav">
                         <Button onClick={this.handleRedo.bind(this)}>Re-do</Button>
                         <Button onClick={this.handleSubmit.bind(this)} type="primary">Submit</Button>
@@ -169,10 +187,11 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                 </div>
                 <OpencvFlowPlayer
                     {...playerOptions}
+                    paused={this.state.paused}
+                    pausePlay={this.handlePausePlay.bind(this)}
                     mouse={this.state.mouse}
                     ref={this.player}
-                    onEnded={this.handleVideoEnded.bind(this)}
-                    onSubmit={this.handleSubmit.bind(this)}>
+                    onEnded={this.handleVideoEnded.bind(this)}>
                 </OpencvFlowPlayer>
             </MouseTracker>
     }

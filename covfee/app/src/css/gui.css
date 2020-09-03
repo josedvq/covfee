@@ -39,8 +39,8 @@
   z-index: 2;
 }
 .overlay-off {
-    z-index: 0;
-  }
+    display:none;
+}
 
 .video-overlay-nav {
     position: absolute;

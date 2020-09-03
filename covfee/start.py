@@ -177,34 +177,40 @@ def timeline_submit(tid):
 @api.route('/timelines/<tid>/tasks/add', methods=['POST'])
 def task_add(tid):
     timeline = db.session.query(Timeline).get(bytes.fromhex(tid))
-    task = Task(*request.json)
+    task = Task(**request.json)
     timeline.tasks.append(task)
     db.session.commit()
     return jsonify(task.as_dict())
 
 # edits an existing task
+@api.route('/timelines/<tid>/tasks/<kid>/edit', methods=['POST'])
+def task_edit(tid, kid):
+    task = db.session.query(Task).get(int(kid))
+    task.name = request.json['name']
+    db.session.commit()
+    return jsonify(task.as_dict())
+
+# deletes an existing task
 @api.route('/timelines/<tid>/tasks/<kid>/delete')
 def task_delete(tid, kid):
-    timeline = db.session.query(Timeline).get(bytes.fromhex(tid))
-    timeline.tasks[int(kid)].delete()
+    task = db.session.query(Task).get(int(kid))
+    task.delete()
     db.session.commit()
     return json.dumps({'success': True}), 204
 
 # receives a task answer
 @api.route('/timelines/<tid>/tasks/<kid>/submit', methods=['POST'])
 def task_submit(tid, kid):
-    timeline = db.session.query(Timeline).get(bytes.fromhex(tid))
-    task = timeline.tasks[int(kid)]
+    task = db.session.query(Task).get(int(kid))
     task.response = request.json
     db.session.commit()
-    return jsonify({'msg': "Stored successfully"}), 201
+    return jsonify(task.as_dict())
 
 # CHUNK
 # receives a chunk of user interaction data
 @api.route('/timelines/<tid>/tasks/<kid>/chunk', methods=['POST'])
 def chunk(tid, kid):
-    timeline = db.session.query(Timeline).get(bytes.fromhex(tid))
-    task = timeline.tasks[int(kid)]
+    task = db.session.query(Task).get(int(kid))
     chunk = Chunk(request.json)
     task.chunks.append(chunk)
     db.session.commit()
