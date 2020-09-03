@@ -3,21 +3,32 @@
     "email": "j.d.vargasquiros@tudelft.nl",
     "timelines": [
         {
-            "url_prefix": "http://localhost:5000/static",
-            "type": "timeline",
+            "type": "annotator",
+            "url_prefix": false,
+            "media": {
+                "type": "video",
+                "url": "http://localhost:5000/static/pilot.mp4",
+                "res": [
+                    960,
+                    540
+                ],
+                "flow_url": "http://localhost:5000/static/pilot_flow.mp4",
+                "flow_res": [
+                    480,
+                    270
+                ],
+                "mute": true,
+                "controls": false,
+                "gallery_url": "http://localhost:5000/static/imgs/collage1.png"
+            },
             "tasks": [
                 {
                     "type": "ContinuousKeypointAnnotationTask",
-                    "media": {
-                        "type": "video",
-                        "url": "pilot.mp4",
-                        "res": [960,540],
-                        "flow_url": "pilot_flow.mp4",
-                        "flow_res": [480, 270],
-                        "mute": true,
-                        "autoplay": true,
-                        "controls": false
-                    }
+                    "name": "p1_hands"
+                },
+                {
+                    "type": "ContinuousKeypointAnnotationTask",
+                    "name": "p1_shoulder"
                 }
             ]
         }
