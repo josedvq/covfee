@@ -28,6 +28,30 @@ import ContinuousKeypointAnnotationTool from './continuous/tool'
 import Constants from './constants'
 import classNames from 'classnames'
 
+function getFullscreen(element) {
+    if (element.requestFullscreen) {
+        return element.requestFullscreen()
+    } else if (element.mozRequestFullScreen) {
+        return element.mozRequestFullScreen()
+    } else if (element.webkitRequestFullscreen) {
+        return element.webkitRequestFullscreen()
+    } else if (element.msRequestFullscreen) {
+        return element.msRequestFullscreen()
+    }
+}
+
+function closeFullscreen() {
+    if (document.exitFullscreen) {
+        return document.exitFullscreen()
+    } else if (document.mozCancelFullScreen) { /* Firefox */
+        return document.mozCancelFullScreen()
+    } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+        return document.webkitExitFullscreen()
+    } else if (document.msExitFullscreen) { /* IE/Edge */
+        return document.msExitFullscreen()
+    }
+}
+
 class TaskGroup extends React.Component {
 
     render() {
@@ -128,15 +152,20 @@ class ContinuousAnnotationTool extends React.Component {
         sidebar: {
             taskIds: []
         },
-        galleryOpen: false
+        galleryOpen: false,
+        fullscreen: false
     }
     timeline: object
     id: number
     url: string
 
+    container = React.createRef()
     annotToolRef: ContinuousAnnotationTool = React.createRef()
 
     componentDidMount() {
+        this.onKeydown = this.onKeydown.bind(this)
+        document.addEventListener("keydown", this.onKeydown, false)
+
         this.id = this.props.match.params.timelineId
         this.url = Constants.api_url + '/timelines/' + this.id
 
@@ -164,6 +193,31 @@ class ContinuousAnnotationTool extends React.Component {
                     });
                 }
             )
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener("keydown", this.onKeydown, false)
+    }
+
+    onKeydown(e: Event) {
+        const tagName = e.target.tagName.toLowerCase()
+        if(['input', 'textarea', 'select', 'button'].includes(tagName)) return
+        
+        switch (e.key) {
+            case 'f':
+                if(!this.state.fullscreen) {
+                    getFullscreen(this.container.current).then(()=>{
+                        this.setState({fullscreen: true})
+                    })
+                } else {
+                    closeFullscreen().then(() => {
+                        this.setState({ fullscreen: false })
+                    })
+                }
+                break
+            default:
+                break
+        }
     }
 
     handleTaskSubmit() {
@@ -311,7 +365,7 @@ class ContinuousAnnotationTool extends React.Component {
                     ref={this.annotToolRef}
                     {...props}/>
 
-                return <>
+                return <div className="tool-container" ref={this.container}>
                     <Row>
                         <Col span={24}>
                             <Menu onClick={this.handleMenuClick.bind(this)} mode="horizontal" theme="dark">
@@ -335,7 +389,8 @@ class ContinuousAnnotationTool extends React.Component {
                             {sidebar}
                         </Col>
                     </Row>
-                </>
+                    {/* <p>{JSON.stringify(this.timeline)}</p> */}
+                </div>
 
             case 'sending':
                 return <div className={'site-layout-content'}>

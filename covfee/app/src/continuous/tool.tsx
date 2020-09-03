@@ -16,30 +16,6 @@ import Constants from '../constants'
 import { Form } from '../form'
 import classNames from 'classnames'
 
-function getFullscreen(element) {
-    if (element.requestFullscreen) {
-        element.requestFullscreen();
-    } else if (element.mozRequestFullScreen) {
-        element.mozRequestFullScreen();
-    } else if (element.webkitRequestFullscreen) {
-        element.webkitRequestFullscreen();
-    } else if (element.msRequestFullscreen) {
-        element.msRequestFullscreen();
-    }
-}
-
-function closeFullscreen() {
-    if (document.exitFullscreen) {
-        document.exitFullscreen();
-    } else if (document.mozCancelFullScreen) { /* Firefox */
-        document.mozCancelFullScreen();
-    } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
-        document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) { /* IE/Edge */
-        document.msExitFullscreen();
-    }
-}
-
 class ContinuousKeypointAnnotationTool extends React.Component {
     private state = {
         paused: true,
@@ -60,7 +36,6 @@ class ContinuousKeypointAnnotationTool extends React.Component {
         this.props.url + '/chunk',
         this.handleChunkError.bind(this)
     )
-    private boundOnKeyDown: Function;
 
     onKeydown (e: Event) {
         switch (e.key) {
@@ -83,24 +58,21 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                 break
             case 'z': // occluded
                 this.setState({occluded: true})
-            case 'f':
-                getFullscreen(this.tracker.current.getContainer())
-                break
             default:
                 break
         }
     }
 
     public startKeyboardListen() {
-        document.addEventListener("keydown", this.boundOnKeyDown, false)
+        document.addEventListener("keydown", this.onKeydown, false)
     }
 
     public stopKeyboardListen() {
-        document.removeEventListener("keydown", this.boundOnKeyDown, false)
+        document.removeEventListener("keydown", this.onKeydown, false)
     }
 
     componentDidMount() {
-        this.boundOnKeyDown = this.onKeydown.bind(this)
+        this.onKeydown = this.onKeydown.bind(this)
         this.startKeyboardListen()
     }
 
