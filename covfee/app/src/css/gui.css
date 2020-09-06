@@ -19,14 +19,25 @@
 }
 
 /*Video container*/
-.video-container {
+.mouse-tracker {
+  width: 100%;
+  padding: 5px;
+  background-color: gray;
+}
+.mouse-tracker > .video-container {
     width: 100%;
     height: auto;
+    cursor: crosshair;
+}
+.mouse-tracker.mouse-tracker-active {
+  background-color: red;
+}
+.mouse-tracker.mouse-tracker-occluded {
+  background-color: blue;
 }
 
-/* Mouse tracker */
-.mouse-tracker {
-    cursor: crosshair;
+.mouse-tracker.mouse-tracker-occluded > .video-container {
+  cursor: progress;
 }
 
 .video-overlay {
@@ -41,17 +52,8 @@
 .overlay-off {
     display:none;
 }
-.video-border {
-  width: 100%;
-  padding: 5px;
-  background-color: gray;
-}
-.video-border-active {
-  background-color: red;
-}
-.video-border-occluded {
-  background-color: blue;
-}
+
+
 
 .video-overlay-nav {
     position: absolute;
@@ -67,12 +69,12 @@
 .task-group {
   list-style-type: none;
   margin: 0;
-  padding: 0;
+  padding: 2%;
 }
 .task-li {
   display: block;
-  width: 96%;
-  margin: 2%;
+  width: 100%;
+  margin: 2% 0;
   padding: 5px;
   border: 1px solid gray;
   
@@ -92,6 +94,10 @@
 .task-li .btn:hover {
   cursor: pointer;
 }
+.task-add-btn{
+  width: 96%;
+  margin: 2%;
+}
 
 /* Gallery img */
 .gallery-img {
@@ -105,9 +111,14 @@
   background-color: black;
   color: #f5f5f5;
 }
-.annot-bar-section{
+.annot-bar-section, .annot-bar-header{
   display: inline-block;
   padding: 5px 15px;
+  font-size:0.8em;
+  border-right: 1px solid #363636;
+}
+.annot-bar-header {
+  font-size: 1em;
 }
 
 .tool-container {

@@ -4,9 +4,10 @@ import {
     Col,
     Space,
     Divider,
-    Button
+    Button,
+    Modal
 } from 'antd';
-import { ReloadOutlined } from '@ant-design/icons';
+import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import OpencvFlowPlayer from '../players/opencv'
 import '../css/gui.css'
 import MouseTracker from '../input/mouse_tracker'
@@ -19,26 +20,47 @@ import classNames from 'classnames'
 class ContinuousKeypointAnnotationTool extends React.Component {
     private state = {
         paused: true,
+        
         occluded: false,
         mouse_valid: false,
         mouse: [0,0],
-        url: this.props.url,
-        overlay: false,
-        playbackRateIdx: 6
+        playbackRateIdx: 6,
+        duration: 0,
+        currentTime: 0,
+        overlay: {
+            visible: false,
+            submitted: false,
+            submitting: false,
+        },
+        errorModal: {
+            visible: false,
+            message: '',
+            loading: false
+        }
     }
     private playbackRates = [1/8, 1/7, 1/6, 1/5, 1/4, 1/3, 1/2, 1, 2, 3, 4]
     private player = React.createRef()
     private tracker = React.createRef()
-    private buffer = new EventBuffer(
-        1000,
-        this.props.url + '/chunk',
-        this.handleChunkError.bind(this)
-    )
+    private buffer: EventBuffer
 
     componentDidMount() {
         this.onKeydown = this.onKeydown.bind(this)
-        this.onKeyUp = this.onKeyUp.bind(this)
         this.startKeyboardListen()
+
+        this.setState({
+            overlay: { 
+                ...this.state.overlay, 
+                visible: (this.props.numSubmissions > 0), 
+                submitted: (this.props.numSubmissions > 0)
+            }
+        })
+
+        this.buffer = new EventBuffer(
+            100,
+            this.props.url + '/chunk',
+            this.props.numSubmissions,
+            this.handleBufferError.bind(this)
+        )
     }
 
     componentWillUnmount() {
@@ -46,7 +68,11 @@ class ContinuousKeypointAnnotationTool extends React.Component {
     }
 
     onKeydown (e: Event) {
-        if (e.repeat) { return }
+        if (e.repeat) {
+            e.preventDefault()
+            e.stopPropagation()
+            return 
+        }
         switch (e.key) {
             case 'ArrowRight':
                 this.setState({ playbackRateIdx: Math.min(this.state.playbackRateIdx+1, this.playbackRates.length-1) })
@@ -57,6 +83,7 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                 this.buffer.data(this.player.current.currentTime(), ['speeddown', this.playbackRates[this.state.playbackRateIdx]])
                 break
             case ' ':
+                e.preventDefault()
                 if (this.state.paused) this.buffer.data(this.player.current.currentTime(), ['play'])
                 else this.buffer.data(this.player.current.currentTime(), ['pause'])
                 this.togglePlayPause()
@@ -72,10 +99,16 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                 this.buffer.data(this.player.current.currentTime(), ['back10s'])
                 break
             case 'z': // occluded
-                this.setState({occluded: true})
+                this.toggleOcclusion()
+                break
             default:
                 break
         }
+    }
+
+    private toggleOcclusion() {
+        this.setState({ occluded: !this.state.occluded }, ()=>{})
+        
     }
 
     onKeyUp(e: Event) {
@@ -88,12 +121,12 @@ class ContinuousKeypointAnnotationTool extends React.Component {
 
     public startKeyboardListen() {
         document.addEventListener("keydown", this.onKeydown, false)
-        document.addEventListener("keyup", this.onKeyUp, false)
+        // document.addEventListener("keyup", this.onKeyUp, false)
     }
 
     public stopKeyboardListen() {
         document.removeEventListener("keydown", this.onKeydown, false)
-        document.removeEventListener("keyup", this.onKeyUp, false)
+        // document.removeEventListener("keyup", this.onKeyUp, false)
     }
 
     handleMouseData(data: any, e: Event) {
@@ -109,24 +142,71 @@ class ContinuousKeypointAnnotationTool extends React.Component {
         })
     }
 
-    handleChunkError() {
-        console.log('error submitting buffer!')
+    handleVideoLoad = (vid) => {
+        this.setState({
+            duration: vid.duration
+        })
     }
 
     handleVideoEnded() {
         this.setState({
-            overlay: true,
+            overlay: {
+                visible: true,
+                submitted: false,
+                submitting: false
+            },
             paused: true
         })
     }
 
     handleSubmit() {
-        this.props.onSubmit()
+        this.setState({ overlay: {
+            ...this.state.overlay, 
+            submitting: true 
+        }})
+
+        const url = this.props.url + '/submit'
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 'sucess': true })
+        }
+
+        fetch(url, requestOptions)
+            .then(async response => {
+                const data = await response.json()
+
+                // check for error response
+                if (!response.ok) {
+                    // get error message from body or default to response status
+                    const error = (data && data.message) || response.status
+                    return Promise.reject(error)
+                }
+                console.log(data)
+
+                this.props.onSubmit(data)
+                this.setState({ overlay: {
+                    ...this.state.overlay,
+                    submitting: false,
+                    submitted: true
+                }})
+            })
+            .catch(error => {
+                // this.setState({ error: error.toString(), submitting: false })
+                console.error('There was an error!', error)
+                this.setState({ overlay: {
+                    ...this.state.overlay,
+                    submitting: false
+                }})
+            })
     }
 
     handleRedo() {
         this.setState({
-            overlay: false
+            overlay: {
+                ...this.state.overlay,
+                visible: false
+            }
         }, ()=>{
             this.player.current.restart()
         })
@@ -134,7 +214,10 @@ class ContinuousKeypointAnnotationTool extends React.Component {
     }
 
     togglePlayPause() {
-        this.setState({paused: !this.state.paused})
+        this.setState({
+            paused: !this.state.paused,
+            currentTime: this.player.current.currentTime()
+        })
     }
 
     handlePausePlay(pause: boolean) {
@@ -145,6 +228,41 @@ class ContinuousKeypointAnnotationTool extends React.Component {
 
     validate() {
         return true
+    }
+
+    handleBufferError(msg: string) {
+        this.handlePausePlay(true)
+        this.setState({
+            errorModal: {
+                visible: true,
+                message: msg
+            }
+        })
+    }
+
+    handleErrorOk = () => {
+        const modalMessage = 'Attempting to submit. The window will be closed if successful.'
+        this.setState({
+            errorModal: {
+                visible: true,
+                message: modalMessage,
+                loading: true
+            }
+        })
+
+        this.buffer.attemptBufferSubmit()
+        this.buffer.awaitQueueClear(5000).then(() => {
+            this.setState({ errorModal: { visible: false, loading: false } })
+        }).catch(()=>{
+            this.setState({ errorModal: {
+                visible: true,
+                message: modalMessage + ' Unable to send the data. Please communicate with the organizers if the problems persist.', 
+                loading: false } })
+        })
+    }
+
+    handleErrorCancel = () => {
+        this.setState({ errorModal: { visible: false } })
     }
 
     render() {
@@ -172,7 +290,9 @@ class ContinuousKeypointAnnotationTool extends React.Component {
 
         return <>
             <div className="annot-bar">
-                <div className="annot-bar-section">speed: {pr_str}x</div>
+                <div className="annot-bar-header">{this.props.taskName}</div>
+                <div className="annot-bar-section"><CaretRightOutlined /> {pr_str}x</div>
+                {this.state.paused ? <div className="annot-bar-section"><ClockCircleOutlined /> {this.state.currentTime.toFixed(1)} / {this.state.duration.toFixed(1)}</div> : <></>}
             </div>
             <MouseTracker 
                 paused={this.state.paused}
@@ -181,10 +301,10 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                 onData={this.handleMouseData.bind(this)} 
                 onMouseActiveChange={this.handleMouseActiveChange.bind(this)} 
                 ref={this.tracker}>
-                <div className={classNames('video-overlay', { 'overlay-off': !this.state.overlay})}>
+                <div className={classNames('video-overlay', { 'overlay-off': !this.state.overlay.visible})}>
                     <div className="video-overlay-nav">
                         <Button onClick={this.handleRedo.bind(this)}>Re-do</Button>
-                        <Button onClick={this.handleSubmit.bind(this)} type="primary">Submit</Button>
+                        <Button onClick={this.handleSubmit.bind(this)} type="primary" disabled={this.state.overlay.submitted} loading={this.state.overlay.submitting}>Submit</Button>
                     </div>
                 </div>
                 <OpencvFlowPlayer
@@ -194,9 +314,21 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                     rate={this.playbackRates[this.state.playbackRateIdx]}
                     mouse={this.state.mouse}
                     ref={this.player}
-                    onEnded={this.handleVideoEnded.bind(this)}>
+                    onEnded={this.handleVideoEnded.bind(this)}
+                    onLoad={this.handleVideoLoad}>
                 </OpencvFlowPlayer>
             </MouseTracker>
+            <Modal
+                title="Error"
+                visible={this.state.errorModal.visible}
+                confirmLoading={this.state.errorModal.loading}
+                onOk={this.handleErrorOk}
+                onCancel={this.handleErrorCancel}
+                cancelButtonProps={{ disabled: true }}
+                okButtonProps={{}}
+            >
+                <p>{this.state.errorModal.message}</p>
+            </Modal>
         </>
     }
 }

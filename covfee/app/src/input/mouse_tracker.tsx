@@ -73,12 +73,12 @@ class MouseTracker extends React.Component {
     render() {
         return (
             <div className={classNames({
-                'video-border': true, 
-                'video-border-active': this.props.mouseActive && !this.props.paused,
-                'video-border-occluded': this.props.mouseActive && !this.props.paused && this.props.occluded
+                'mouse-tracker': true, 
+                'mouse-tracker-active': this.props.mouseActive && !this.props.paused,
+                'mouse-tracker-occluded': this.props.mouseActive && !this.props.paused && this.props.occluded
                 })} ref={this.videoBorder}>
 
-                <div className='video-container mouse-tracker' ref={this.container}>
+                <div className='video-container' ref={this.container}>
                     {this.props.children}
                 </div>
             </div>

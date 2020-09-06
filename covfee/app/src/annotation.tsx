@@ -9,7 +9,8 @@ import {
     EditOutlined,
     CheckCircleOutlined,
     BarsOutlined,
-    PictureOutlined
+    PictureOutlined,
+    PlusCircleOutlined
 } from '@ant-design/icons';
 import {
     Row,
@@ -65,7 +66,7 @@ class TaskGroup extends React.Component {
                     onSubmitName={this.props.onSubmitNewTaskName}
                     onInputFocus={this.props.onInputFocus}
                     />)}
-            <li><Button type="primary" onClick={this.props.onAddTask}>New Task</Button></li>
+            <li><Button type="primary" block="true" onClick={this.props.onAddTask} icon={<PlusCircleOutlined />}>New Task</Button></li>
         </ol>
     }
 }
@@ -153,7 +154,8 @@ class ContinuousAnnotationTool extends React.Component {
             taskIds: []
         },
         galleryOpen: false,
-        fullscreen: false
+        fullscreen: false,
+        submittingTask: false
     }
     timeline: object
     id: number
@@ -220,32 +222,8 @@ class ContinuousAnnotationTool extends React.Component {
         }
     }
 
-    handleTaskSubmit() {
-        console.log('submitting')
-        const url = this.url + '/tasks/' + this.state.curr_task + '/submit'
-        const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({'sucess':true })
-        }
-
-        fetch(url, requestOptions)
-            .then(async response => {
-                const data = await response.json()
-
-                // check for error response
-                if (!response.ok) {
-                    // get error message from body or default to response status
-                    const error = (data && data.message) || response.status
-                    return Promise.reject(error)
-                }
-
-                this.timeline.tasks[data.id] = data
-            })
-            .catch(error => {
-                // this.setState({ error: error.toString(), submitting: false })
-                console.error('There was an error!', error)
-            })
+    handleTaskSubmit(data: object) {
+        this.timeline.tasks[data.id] = data
     }
 
     handleChangeActiveTask(taskId: any) {
@@ -358,9 +336,12 @@ class ContinuousAnnotationTool extends React.Component {
                     onSubmitNewTaskName={this.handleSubmitNewTaskName.bind(this)} />
 
                 let props = this.timeline.tasks[this.state.curr_task]
+                props.url = this.url + '/tasks/' + props.id
                 props.media = this.timeline.media
                 let task = <ContinuousKeypointAnnotationTool 
+                    taskName={this.timeline.tasks[this.state.curr_task].name}
                     key={this.state.curr_task} 
+                    submitting={this.state.submittingTask}
                     onSubmit={this.handleTaskSubmit.bind(this)} 
                     ref={this.annotToolRef}
                     {...props}/>
@@ -382,21 +363,15 @@ class ContinuousAnnotationTool extends React.Component {
                         </Col>
                     </Row>
                     <Row>
-                        <Col span={16}>
+                        <Col span={20}>
                             {task}
                         </Col>
-                        <Col span={8}>
+                        <Col span={4}>
                             {sidebar}
                         </Col>
                     </Row>
                     {/* <p>{JSON.stringify(this.timeline)}</p> */}
                 </div>
-
-            case 'sending':
-                return <div className={'site-layout-content'}>
-                        <LoadingOutlined />
-                    </div>
-
             default:
                 return
 

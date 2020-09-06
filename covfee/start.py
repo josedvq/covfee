@@ -94,18 +94,18 @@ class Task(db.Model):
     type = db.Column(db.String)
     name = db.Column(db.String)
     media = db.Column(db.JSON)
-    submitted = db.Column(db.Boolean)
+    numSubmissions = db.Column(db.Integer)
     form = db.Column(db.JSON)
     response = db.Column(db.JSON)
 
     chunks = db.relationship("Chunk", backref='task')
 
-    def __init__(self, type, name=None, media=None, form=None, submitted=False):
+    def __init__(self, type, name=None, media=None, form=None, numSubmissions=0):
         self.type = type
         self.name = name
         self.media = media
         self.form = form
-        self.submitted = submitted
+        self.numSubmissions = numSubmissions
 
     def as_dict(self):
        task_dict = {c.name: getattr(self, c.name)
@@ -114,17 +114,19 @@ class Task(db.Model):
        return task_dict
 
 # represents a chunk of a task
-
-
 class Chunk(db.Model):
     __tablename__ = 'chunks'
 
     id = db.Column(db.Integer, primary_key=True)
+    index = db.Column(db.Integer)
     task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'))
+    submission = db.Column(db.Integer)
     data = db.Column(db.JSON)
 
-    def __init__(self, data):
+    def __init__(self, index, data, submission=None):
+        self.index = index
         self.data = data
+        self.submission = submission
 
 
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
@@ -202,6 +204,7 @@ def task_delete(tid, kid):
 @api.route('/timelines/<tid>/tasks/<kid>/submit', methods=['POST'])
 def task_submit(tid, kid):
     task = db.session.query(Task).get(int(kid))
+    task.numSubmissions += 1
     task.response = request.json
     db.session.commit()
     return jsonify(task.as_dict())
@@ -211,7 +214,7 @@ def task_submit(tid, kid):
 @api.route('/timelines/<tid>/tasks/<kid>/chunk', methods=['POST'])
 def chunk(tid, kid):
     task = db.session.query(Task).get(int(kid))
-    chunk = Chunk(request.json)
+    chunk = Chunk(**request.json)
     task.chunks.append(chunk)
     db.session.commit()
     return jsonify({'msg': "Stored successfully"}), 201

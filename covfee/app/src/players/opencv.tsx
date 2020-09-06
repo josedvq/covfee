@@ -30,12 +30,17 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
         } else {
             cv_init.bind(this)()
         }
-        
-        var observer = new ResizeObserver(function(entries) {
+
+        // update rect and ratio when the resolution changes
+        let observer = new ResizeObserver(function (entries) {
             this.rect = entries[0].contentRect
             this.ratio = this.props.flow.res[0] / this.rect.width
         }.bind(this))
         observer.observe(this.video_tag.current)
+
+        this.video_tag.current.addEventListener('loadedmetadata', (e: Event) => {
+            this.props.onLoad(this.video_tag.current)
+        })
 
         this.video_tag.current.addEventListener('ended', (e: Event) => {
             this.props.onEnded(e)
@@ -97,7 +102,7 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     public restart() {
         this.currentTime(0)
         // this.video_tag.current.load()
-        setTimeout(() => { this.props.pausePlay(false)}, 1000)
+        // setTimeout(() => { this.props.pausePlay(false)}, 1000)
     }
 
     public currentTime(t: number) {
@@ -109,7 +114,7 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
         }
         else return this.video_tag.current.currentTime
     }
-    
+
     // wrap the player in a div with a `data-vjs-player` attribute
     // so videojs won't create additional wrapper in the DOM
     // see https://github.com/videojs/video.js/pull/3856

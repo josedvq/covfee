@@ -32,12 +32,12 @@ class Root extends React.Component {
     render() {
         return <Router>
             <Layout>
-                <Header className="header">
+                {/* <Header className="header">
                     <div className="logo" />
                     <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['2']}>
                         <Menu.Item key="1" disabled><Link to="/">covfee</Link></Menu.Item>
                     </Menu>
-                </Header>
+                </Header> */}
                 <Layout>
                     <Switch>
                         <Route path="/about">
