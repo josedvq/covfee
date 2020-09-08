@@ -134,7 +134,7 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 # APP ROUTES
 @app.route('/')
 def main():
-    return render_template('app.html', api_url=API_URL, bundle_url=BUNDLE_URL)
+    return render_template('app.html', api_url=API_URL, static_url=STATIC_URL, bundle_url=BUNDLE_URL)
 
 @app.route('/static/<path:filename>')
 def uploaded_file(filename):
