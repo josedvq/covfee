@@ -6,18 +6,18 @@
             "type": "annotator",
             "media": {
                 "type": "video",
-                "url": "static/pilot.mp4",
+                "url": "pilot.mp4",
                 "res": [
                     960,
                     540
                 ],
-                "flow_url": "static/pilot_flow.mp4",
+                "flow_url": "pilot_flow.mp4",
                 "flow_res": [
                     480,
                     270
                 ],
                 "mute": true,
-                "gallery_url": "static/imgs/collage1.png"
+                "gallery_url": "imgs/collage1.png"
             },
             "tasks": [
                 {
