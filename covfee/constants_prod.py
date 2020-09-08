@@ -1,7 +1,8 @@
 ENVIRONMENT = 'production'
 PROJECTS_PATH = 'projects'
 DATABASE_PATH = 'database.db'
-APP_URL = 'http://127.0.0.1:8000'
-APP_PORT = 5000
+APP_URL = 'http://helix.ewi.tudelft.nl/covfee'
+STATIC_URL = 'http://helix.ewi.tudelft.nl/covfee-static'
+APP_PORT = 80
 API_URL = APP_URL + '/api'
-BUNDLE_URL = APP_URL + '/static/bundle.js'
+BUNDLE_URL = STATIC_URL + '/bundle.js'
