@@ -57,8 +57,6 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     }
 
     private processVideo() {
-        // console.log(this.props.mouse)
-        // console.log([this.video_tag.current.currentTime, this.flow_tag.current.currentTime])
         if(this.props.mouse === undefined) {
             this.delay = 16
             this.flow_tag.current.seekToNextFrame().then(()=>{
@@ -101,16 +99,13 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
 
     public restart() {
         this.currentTime(0)
-        // this.video_tag.current.load()
-        // setTimeout(() => { this.props.pausePlay(false)}, 1000)
     }
 
     public currentTime(t: number) {
         if(t !== undefined) {
-            this.pause()
+            this.props.pausePlay(true)
             this.video_tag.current.currentTime = t
             this.flow_tag.current.currentTime = t
-            // setTimeout(this.play.bind(this), 1000)
         }
         else return this.video_tag.current.currentTime
     }

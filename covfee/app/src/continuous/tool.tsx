@@ -19,7 +19,6 @@ import classNames from 'classnames'
 class ContinuousKeypointAnnotationTool extends React.Component {
     private state = {
         paused: true,
-        
         occluded: false,
         mouse_valid: false,
         mouse: [0,0],
