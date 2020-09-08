@@ -7,7 +7,10 @@ sys.path.append('..')
 
 from start import db, Project, Timeline, Task, Chunk
 from utils.autoparser import subparser, test_parser
-from constants import DATABASE_PATH, PROJECTS_PATH
+if os.environ['COVFEE_ENV'] == 'production':
+    from constants_prod import *
+else:
+    from constants_dev import *
 
 def create_tables():
     db.create_all()
@@ -59,6 +62,11 @@ def reload_projects():
             tasks = list()
             for task_json in timeline_json['tasks']:
                 tasks.append(Task(**task_json))
+            if 'media' in timeline_json:
+                for k, v in timeline_json['media'].items():
+                    if k[-3:] == 'url' and v[:4] != 'http':
+                        timeline_json['media'][k] = APP_URL + '/' + v
+                        print(timeline_json['media'][k])
             timeline_json['tasks'] = tasks
             hash_id = sha256(f'{fpath}_{i:d}'.encode()).digest()
             timelines.append(Timeline(id=hash_id, **timeline_json))

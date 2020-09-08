@@ -10,7 +10,6 @@ import OpencvFlowPlayer from '../players/opencv'
 import '../css/gui.css'
 import MouseTracker from '../input/mouse_tracker'
 import { EventBuffer } from '../buffer'
-import Constants from '../constants'
 import { Form } from '../form'
 import Task from './task'
 
