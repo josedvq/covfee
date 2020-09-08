@@ -11,8 +11,10 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__, static_folder=None)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 db = SQLAlchemy(app)
-from constants import APP_URL, APP_PORT, WEBPACK_URL
-
+if os.environ['COVFEE_ENV'] == 'production':
+    from constants_prod import *
+else:
+    from constants_dev import *
 
 class Project(db.Model):
     __tablename__ = 'projects'
@@ -47,16 +49,14 @@ class Timeline(db.Model):
     id = db.Column(db.Binary, primary_key=True)
     type = db.Column(db.String)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
-    url_prefix = db.Column(db.String)
     media = db.Column(db.JSON)
     tasks = db.relationship("Task", backref='timeline')
     submitted = db.Column(db.Boolean)
 
-    def __init__(self, id, type, url_prefix, tasks, media=None, submitted=False):
+    def __init__(self, id, type, tasks, media=None, submitted=False):
         self.id = id
         self.type = type
         self.media = media
-        self.url_prefix = url_prefix
         self.tasks = tasks
         self.submitted = submitted
 
@@ -78,9 +78,9 @@ class Timeline(db.Model):
 
     def get_url(self):
         if self.type == 'annotator':
-            return f'{APP_URL}:{APP_PORT:d}/#/continuous-annotation/{self.id.hex():s}'
+            return f'{APP_URL}/#/continuous-annotation/{self.id.hex():s}'
         else:
-            return f'{APP_URL}:{APP_PORT:d}/#/timelines/{self.id.hex():s}'
+            return f'{APP_URL}/#/timelines/{self.id.hex():s}'
 
     def __str__(self):
         return f' - url: {self.get_url()}\n'
@@ -134,11 +134,10 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 # APP ROUTES
 @app.route('/')
 def main():
-    return render_template('app.html', dist_url=WEBPACK_URL)
+    return render_template('app.html', api_url=API_URL, bundle_url=BUNDLE_URL)
 
 @app.route('/static/<path:filename>')
 def uploaded_file(filename):
-    print('jere')
     return send_from_directory('static', filename,
                             conditional=True)
 

@@ -22,11 +22,9 @@ import {
     Button
 } from 'antd';
 import Collapsible from 'react-collapsible'
-import {DragDropContext} from 'react-beautiful-dnd'
 const { Text, Title, Link } = Typography;
 
 import ContinuousKeypointAnnotationTool from './continuous/tool'
-import Constants from './constants'
 import classNames from 'classnames'
 
 function getFullscreen(element) {

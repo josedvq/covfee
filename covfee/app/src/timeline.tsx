@@ -12,7 +12,6 @@ import {
 const { Text, Title, Link } = Typography;
 
 import * as Tasks from './tasks'
-import Constants from './constants'
 
 class Timeline extends React.Component {
     state = {

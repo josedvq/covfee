@@ -29,7 +29,7 @@ module.exports = {
     },
     output: {
         filename: 'bundle.js',
-        path: path.resolve(__dirname, 'app/dist'),
+        path: path.resolve(__dirname, 'static'),
         publicPath: 'http://localhost:8080/'
     },
     externals: {

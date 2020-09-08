@@ -3,7 +3,6 @@
     "email": "j.d.vargasquiros@tudelft.nl",
     "timelines": [
         {
-            "url_prefix": "http://localhost:5000/static",
             "type": "timeline",
             "tasks": [
                 {
@@ -202,7 +201,6 @@
             ]
         },
         {
-            "url_prefix": "http://localhost:5000/static",
             "type": "timeline",
             "tasks": [
                 {

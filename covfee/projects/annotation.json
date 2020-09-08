@@ -4,16 +4,14 @@
     "timelines": [
         {
             "type": "annotator",
-            "url_prefix": false,
-            
             "media": {
                 "type": "video",
-                "url": "http://localhost:5000/static/sample_mp4_10s.mp4",
+                "url": "static/sample_mp4_10s.mp4",
                 "res": [
                     320,
                     240
                 ],
-                "flow_url": "http://localhost:5000/static/sample_mp4_flow_10s.mp4",
+                "flow_url": "static/sample_mp4_flow_10s.mp4",
                 "flow_res": [
                     320,
                     240
@@ -21,7 +19,7 @@
                 "mute": true,
                 "autoplay": true,
                 "controls": false,
-                "gallery_url": "http://localhost:5000/static/imgs/collage1.png"
+                "gallery_url": "static/imgs/collage1.png"
             },
             "tasks": [
                 {
