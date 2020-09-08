@@ -65,7 +65,7 @@ def reload_projects():
             if 'media' in timeline_json:
                 for k, v in timeline_json['media'].items():
                     if k[-3:] == 'url' and v[:4] != 'http':
-                        timeline_json['media'][k] = APP_URL + '/' + v
+                        timeline_json['media'][k] = STATIC_URL + '/' + v
                         print(timeline_json['media'][k])
             timeline_json['tasks'] = tasks
             hash_id = sha256(f'{fpath}_{i:d}'.encode()).digest()
