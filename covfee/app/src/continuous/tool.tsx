@@ -24,6 +24,7 @@ class ContinuousKeypointAnnotationTool extends React.Component {
         playbackRateIdx: 6,
         duration: 0,
         currentTime: 0,
+        currentFrame: 0,
         overlay: {
             visible: false,
             submitted: false,
@@ -127,8 +128,9 @@ class ContinuousKeypointAnnotationTool extends React.Component {
     }
 
     handleMouseData(data: any, e: Event) {
+        const frame = this.player.current.currentFrame()
         this.buffer.data(
-            this.player.current.currentTime(),
+            frame,
             [data[0], data[1], this.state.occluded]
         )
         this.setState({ mouse: [e.offsetX, e.offsetY]})
@@ -211,15 +213,14 @@ class ContinuousKeypointAnnotationTool extends React.Component {
     }
 
     togglePlayPause() {
-        this.setState({
-            paused: !this.state.paused,
-            currentTime: this.player.current.currentTime()
-        })
+        this.handlePausePlay(!this.state.paused)
     }
 
     handlePausePlay(pause: boolean) {
         this.setState({
-            paused: pause
+            paused: pause,
+            currentTime: this.player.current.currentTime(),
+            currentFrame: this.player.current.currentFrame()
         })
     }
 
@@ -265,10 +266,7 @@ class ContinuousKeypointAnnotationTool extends React.Component {
     render() {
         const playerOptions = {
             muted: true,
-            autoplay: false,
-            controls: false,
-            fluid: true,
-            aspectRatio: '16:9',
+            fps: this.props.media.fps,
             video: {
                 src: this.props.media.url,
                 res: this.props.media.res,
@@ -290,6 +288,7 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                 <div className="annot-bar-header">{this.props.taskName}</div>
                 <div className="annot-bar-section"><CaretRightOutlined /> {pr_str}x</div>
                 {this.state.paused ? <div className="annot-bar-section"><ClockCircleOutlined /> {this.state.currentTime.toFixed(1)} / {this.state.duration.toFixed(1)}</div> : <></>}
+                {this.state.paused ? <div className="annot-bar-section">frame {this.state.currentFrame}</div> : <></>}
             </div>
             <MouseTracker 
                 paused={this.state.paused}

@@ -6,16 +6,17 @@
             "type": "annotator",
             "media": {
                 "type": "video",
-                "url": "pilot.mp4",
+                "url": "51f55ed77b0a320b9d0fd942cb21197542e75e5c.mp4",
                 "res": [
                     960,
                     540
                 ],
-                "flow_url": "pilot_flow.mp4",
+                "flow_url": "51f55ed77b0a320b9d0fd942cb21197542e75e5c-flow.mp4",
                 "flow_res": [
                     480,
                     270
                 ],
+                "fps": 59.94,
                 "mute": true,
                 "gallery_url": "imgs/collage1.png"
             },
