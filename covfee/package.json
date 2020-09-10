@@ -26,9 +26,10 @@
     "webpack-fg": "webpack-dev-server --open --config webpack.dev.js",
     "webpack-bg": "nohup webpack-dev-server --open >/dev/null 2>&1 &",
     "start": "COVFEE_ENV=development FLASK_APP=start.py python -m flask run",
-    "start-production": "COVFEE_ENV=production gunicorn start:app",
+    "start-prod": "COVFEE_ENV=production gunicorn start:app",
     "build": "webpack --config webpack.prod.js",
-    "reload": "python -m utils.db reload_projects",
+    "reload": "COVFEE_ENV=development python -m utils.db reload_projects",
+    "reload-prod": "COVFEE_ENV=production python -m utils.db reload_projects",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "babel": {

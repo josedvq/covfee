@@ -14,6 +14,8 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     private req_id: any = false
     private ratio: number = 0.5
     private delay: number = 0
+    private fps = 59.94
+    private frame = 0
 
     componentDidMount() {
 
@@ -60,7 +62,9 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
         if(this.props.mouse === undefined) {
             this.delay = 16
             this.flow_tag.current.seekToNextFrame().then(()=>{
-                this.video_tag.current.seekToNextFrame()
+                this.video_tag.current.seekToNextFrame().then(()=>{
+                    this.frame += 1
+                })
             })
             
         } else {
@@ -76,7 +80,9 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
             cv.meanStdDev(roi, this.myMean, this.myStddev)
             this.delay = this.myMean.doubleAt(0, 0)
             this.flow_tag.current.seekToNextFrame().then(()=>{
-                this.video_tag.current.seekToNextFrame()
+                this.video_tag.current.seekToNextFrame().then(()=>{
+                    this.frame += 1
+                })
             })
             
         }
@@ -99,15 +105,24 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
 
     public restart() {
         this.currentTime(0)
+        this.frame = 0
     }
 
     public currentTime(t: number) {
         if(t !== undefined) {
-            this.props.pausePlay(true)
             this.video_tag.current.currentTime = t
             this.flow_tag.current.currentTime = t
+            this.frame = Math.round(t * this.props.fps)
+            this.props.pausePlay(true) // pause the video
         }
         else return this.video_tag.current.currentTime
+    }
+
+    public currentFrame(t: number) {
+        if (t !== undefined) {
+            this.currentTime(t / this.props.fps)
+        }
+        else return this.frame
     }
 
     // wrap the player in a div with a `data-vjs-player` attribute

@@ -16,6 +16,7 @@
                     320,
                     240
                 ],
+                "fps": 59.94,
                 "mute": true,
                 "autoplay": true,
                 "controls": false,
