@@ -54,11 +54,14 @@ class EventBuffer {
         })
     }   
 
-    public attemptBufferSubmit() {
+    public attemptBufferSubmit(flush = false) {
+        const statusToSubmit = ['filled', 'error']
+        if (flush) statusToSubmit.push('filling')
         for (let i = 0; i < this.queue.length; i++) {
             if (this.queue[i] === undefined) continue
             // 'filled' should only happen for one buffer, multiple may be in 'error' state
-            if (this.queue[i].status == 'filled' || this.queue[i].status == 'error')
+            
+            if (statusToSubmit.includes(this.queue[i].status))
                 this.submitBuffer(i)
         }
     }
@@ -67,11 +70,12 @@ class EventBuffer {
         return Promise.race([
             new Promise((resolve, reject)=>{
                 setInterval(() => {
+                    let foundErrored = false
                     this.queue.forEach((el)=>{
                         if(el === undefined) return
-                        if(el.status == 'error' || el.status == 'submitting') reject()
-                        resolve()
+                        if (el.status == 'error' || el.status == 'submitting') foundErrored = true
                     })
+                    if (!foundErrored) resolve()
                 }, 3000);
             }),
             new Promise((_, reject) =>
