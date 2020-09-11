@@ -4,6 +4,7 @@
     "timelines": [
         {
             "type": "annotator",
+            "repeat": 10,
             "media": {
                 "type": "video",
                 "url": "51f55ed77b0a320b9d0fd942cb21197542e75e5c.mp4",

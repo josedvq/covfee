@@ -54,7 +54,7 @@ class ContinuousKeypointAnnotationTool extends React.Component {
         })
 
         this.buffer = new EventBuffer(
-            100,
+            2000,
             this.props.url + '/chunk',
             this.props.numSubmissions,
             this.handleBufferError.bind(this)
@@ -164,40 +164,50 @@ class ContinuousKeypointAnnotationTool extends React.Component {
             submitting: true 
         }})
 
-        const url = this.props.url + '/submit'
-        const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 'sucess': true })
-        }
+        this.buffer.attemptBufferSubmit(true)
 
-        fetch(url, requestOptions)
-            .then(async response => {
-                const data = await response.json()
+        this.buffer.awaitQueueClear(3000).then(()=>{
+            const url = this.props.url + '/submit'
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 'sucess': true })
+            }
 
-                // check for error response
-                if (!response.ok) {
-                    // get error message from body or default to response status
-                    const error = (data && data.message) || response.status
+            return fetch(url, requestOptions)
+                .then(async response => {
+                    const data = await response.json()
+
+                    // check for error response
+                    if (!response.ok) {
+                        // get error message from body or default to response status
+                        const error = (data && data.message) || response.status
+                        
+                    }
+                    console.log(data)
+
+                    this.props.onSubmit(data)
+                    this.setState({ overlay: {
+                        ...this.state.overlay,
+                        submitting: false,
+                        submitted: true
+                    }})
+                })
+                .catch(error => {
                     return Promise.reject(error)
-                }
-                console.log(data)
-
-                this.props.onSubmit(data)
-                this.setState({ overlay: {
+                    // this.setState({ error: error.toString(), submitting: false })
+                })
+        }).catch((error)=>{
+            this.setState({
+                overlay: {
                     ...this.state.overlay,
                     submitting: false,
-                    submitted: true
-                }})
+                    error: 'There was an error submitting the task. Please try again, or contact the admin if the problem persists.'
+                }
             })
-            .catch(error => {
-                // this.setState({ error: error.toString(), submitting: false })
-                console.error('There was an error!', error)
-                this.setState({ overlay: {
-                    ...this.state.overlay,
-                    submitting: false
-                }})
-            })
+            console.error('There was an error submitting the task!', error)
+            // console.error('There was an error flushing the queue!', error)
+        })
     }
 
     handleRedo() {

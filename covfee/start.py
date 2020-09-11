@@ -1,5 +1,3 @@
-# from sqlalchemy.orm import sessionmaker
-# from sqlalchemy import create_engine
 import json
 import os
 import glob
@@ -7,136 +5,30 @@ from hashlib import sha256
 
 from flask import Flask, Response, render_template, request, jsonify, Blueprint, send_from_directory
 from flask_cors import cross_origin, CORS
-from flask_sqlalchemy import SQLAlchemy
-app = Flask(__name__, static_folder=None)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-db = SQLAlchemy(app)
+
+from orm import db, Project, Timeline, Task, Chunk
 if os.environ['COVFEE_ENV'] == 'production':
     from constants_prod import *
 else:
     from constants_dev import *
 
-class Project(db.Model):
-    __tablename__ = 'projects'
+def create_app():
+    app = Flask(__name__, static_folder=None)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+    db.init_app(app)
+    app.register_blueprint(frontend, url_prefix='/')
+    app.register_blueprint(api, url_prefix='/api')
+    cors = CORS(app, resources={r"/*": {"origins": "*"}})
+    return app
 
-    id = db.Column(db.Binary, primary_key=True)
-    name = db.Column(db.String)
-    email = db.Column(db.String)
-    timelines = db.relationship("Timeline", backref="project")
-
-    def __init__(self, id, name, email, timelines):
-        self.id = id
-        self.name = name
-        self.email = email
-        self.timelines = timelines
-
-    def as_dict(self):
-       project_dict = {c.name: getattr(self, c.name)
-                       for c in self.__table__.columns}
-       project_dict['id'] = project_dict['id'].hex()
-       return project_dict
-
-    def __str__(self):
-        txt = f'{self.name}\nID: {self.id.hex():s}\n'
-        for tl in self.timelines:
-            txt += str(tl)
-        return txt
-
-
-class Timeline(db.Model):
-    __tablename__ = 'timelines'
-
-    id = db.Column(db.Binary, primary_key=True)
-    type = db.Column(db.String)
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
-    media = db.Column(db.JSON)
-    tasks = db.relationship("Task", backref='timeline')
-    submitted = db.Column(db.Boolean)
-
-    def __init__(self, id, type, tasks, media=None, submitted=False):
-        self.id = id
-        self.type = type
-        self.media = media
-        self.tasks = tasks
-        self.submitted = submitted
-
-    def as_dict(self, with_tasks=False):
-        timeline_dict = {c.name: getattr(self, c.name)
-                         for c in self.__table__.columns}
-        if with_tasks:
-            timeline_dict['tasks'] = {task.id: task.as_dict()
-                                      for task in self.tasks}
-        timeline_dict['id'] = timeline_dict['id'].hex()
-        timeline_dict['project'] = self.project.as_dict()
-        del timeline_dict['project_id']
-
-        if self.submitted:
-            timeline_dict['completion_code'] = sha256(
-                (self.id.hex() + '2208').encode()).digest().hex()[:12]
-
-        return timeline_dict
-
-    def get_url(self):
-        if self.type == 'annotator':
-            return f'{APP_URL}/#/continuous-annotation/{self.id.hex():s}'
-        else:
-            return f'{APP_URL}/#/timelines/{self.id.hex():s}'
-
-    def __str__(self):
-        return f' - url: {self.get_url()}\n'
-
-
-class Task(db.Model):
-    __tablename__ = 'tasks'
-
-    id = db.Column(db.Integer, primary_key=True)
-    timeline_id = db.Column(db.Integer, db.ForeignKey('timelines.id'))
-    type = db.Column(db.String)
-    name = db.Column(db.String)
-    media = db.Column(db.JSON)
-    numSubmissions = db.Column(db.Integer)
-    form = db.Column(db.JSON)
-    response = db.Column(db.JSON)
-
-    chunks = db.relationship("Chunk", backref='task')
-
-    def __init__(self, type, name=None, media=None, form=None, numSubmissions=0):
-        self.type = type
-        self.name = name
-        self.media = media
-        self.form = form
-        self.numSubmissions = numSubmissions
-
-    def as_dict(self):
-       task_dict = {c.name: getattr(self, c.name)
-                    for c in self.__table__.columns}
-       task_dict['timeline_id'] = task_dict['timeline_id'].hex()
-       return task_dict
-
-# represents a chunk of a task
-class Chunk(db.Model):
-    __tablename__ = 'chunks'
-
-    id = db.Column(db.Integer, primary_key=True)
-    index = db.Column(db.Integer)
-    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'))
-    submission = db.Column(db.Integer)
-    data = db.Column(db.JSON)
-
-    def __init__(self, index, data, submission=None):
-        self.index = index
-        self.data = data
-        self.submission = submission
-
-
-cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 # APP ROUTES
-@app.route('/')
+frontend = Blueprint('frontend', __name__)
+@frontend.route('/')
 def main():
     return render_template('app.html', api_url=API_URL, static_url=STATIC_URL, bundle_url=BUNDLE_URL)
 
-@app.route('/static/<path:filename>')
+@frontend.route('/static/<path:filename>')
 def uploaded_file(filename):
     return send_from_directory('static', filename,
                             conditional=True)
@@ -218,7 +110,6 @@ def chunk(tid, kid):
     db.session.commit()
     return jsonify({'msg': "Stored successfully"}), 201
 
-app.register_blueprint(api, url_prefix='/api')
-
 if __name__ == '__main__':
+    app = create_app()
     app.run(processes=3, port=APP_PORT)

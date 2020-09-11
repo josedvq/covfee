@@ -25,7 +25,7 @@
   "scripts": {
     "webpack-fg": "webpack-dev-server --open --config webpack.dev.js",
     "webpack-bg": "nohup webpack-dev-server --open >/dev/null 2>&1 &",
-    "start": "COVFEE_ENV=development FLASK_APP=start.py python -m flask run",
+    "start": "COVFEE_ENV=development FLASK_APP=start:create_app python -m flask run",
     "start-prod": "COVFEE_ENV=production gunicorn start:app",
     "build": "webpack --config webpack.prod.js",
     "reload": "COVFEE_ENV=development python -m utils.db reload_projects",
