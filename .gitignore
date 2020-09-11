@@ -7,5 +7,4 @@ covfee/app/dist
 *package-lock.json
 *nohup.out
 .ipynb_checkpoints*
-*.ipynb
 database.db
