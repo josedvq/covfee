@@ -12,9 +12,9 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     private myStddev: cv.Mat
 
     private req_id: any = false
+    private timeout_id: any = false
     private ratio: number = 0.5
     private delay: number = 0
-    private fps = 59.94
     private frame = 0
 
     componentDidMount() {
@@ -59,10 +59,12 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     }
 
     private processVideo() {
-        if(this.props.mouse === undefined) {
+        const mouse = this.props.getMousePosition()
+        if(mouse === undefined) {
             this.delay = 16
             this.flow_tag.current.seekToNextFrame().then(()=>{
                 this.video_tag.current.seekToNextFrame().then(()=>{
+                    this.props.onFrame(this.frame)
                     this.frame += 1
                 })
             })
@@ -70,10 +72,10 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
         } else {
             // start processing.
             this.cap.read(this.frame_flow)
-            const x1 = Math.max(0, this.props.mouse[0] * this.ratio - 10)
-            const x2 = Math.min(this.props.mouse[0] * this.ratio + 10, this.props.flow.res[0])
-            const y1 = Math.max(0, this.props.mouse[1] * this.ratio - 10)
-            const y2 = Math.min(this.props.mouse[1] * this.ratio + 10, this.props.flow.res[1])
+            const x1 = Math.max(0, mouse[0] * this.ratio - 10)
+            const x2 = Math.min(mouse[0] * this.ratio + 10, this.props.flow.res[0])
+            const y1 = Math.max(0, mouse[1] * this.ratio - 10)
+            const y2 = Math.min(mouse[1] * this.ratio + 10, this.props.flow.res[1])
 
             const rect = new cv.Rect(x1, y1, x2-x1, y2-y1)
             const roi = this.frame_flow.roi(rect)
@@ -81,6 +83,7 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
             this.delay = this.myMean.doubleAt(0, 0)
             this.flow_tag.current.seekToNextFrame().then(()=>{
                 this.video_tag.current.seekToNextFrame().then(()=>{
+                    this.props.onFrame(this.frame)
                     this.frame += 1
                 })
             })
@@ -90,7 +93,7 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
 
     public play() {
         this.video_tag.current.onseeked = () => {
-            setTimeout(() => {
+            this.timeout_id = setTimeout(() => {
                 this.req_id = window.requestAnimationFrame(this.processVideo.bind(this))
             }, Math.round(this.delay / this.props.rate))
         }
@@ -98,6 +101,10 @@ class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
     }
 
     public pause() {
+        if(this.timeout_id) {
+            clearTimeout(this.timeout_id)
+            this.timeout_id = false
+        }
         window.cancelAnimationFrame(this.req_id)
         this.req_id = false
         this.video_tag.current.onseeked = undefined

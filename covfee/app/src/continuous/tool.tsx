@@ -20,7 +20,6 @@ class ContinuousKeypointAnnotationTool extends React.Component {
         paused: true,
         occluded: false,
         mouse_valid: false,
-        mouse: [0,0],
         playbackRateIdx: 6,
         duration: 0,
         currentTime: 0,
@@ -40,6 +39,8 @@ class ContinuousKeypointAnnotationTool extends React.Component {
     private player = React.createRef()
     private tracker = React.createRef()
     private buffer: EventBuffer
+    private mouse = [0,0]
+    private mouse_normalized = [0,0]
 
     componentDidMount() {
         this.onKeydown = this.onKeydown.bind(this)
@@ -74,27 +75,28 @@ class ContinuousKeypointAnnotationTool extends React.Component {
         switch (e.key) {
             case 'ArrowRight':
                 this.setState({ playbackRateIdx: Math.min(this.state.playbackRateIdx+1, this.playbackRates.length-1) })
-                this.buffer.data(this.player.current.currentTime(), ['speedup', this.playbackRates[this.state.playbackRateIdx]])
+                this.buffer.data(this.player.current.currentFrame(), ['speedup', this.playbackRates[this.state.playbackRateIdx]])
                 break
             case 'ArrowLeft':
                 this.setState({ playbackRateIdx: Math.max(this.state.playbackRateIdx-1, 0) })
-                this.buffer.data(this.player.current.currentTime(), ['speeddown', this.playbackRates[this.state.playbackRateIdx]])
+                this.buffer.data(this.player.current.currentFrame(), ['speeddown', this.playbackRates[this.state.playbackRateIdx]])
                 break
             case ' ':
                 e.preventDefault()
-                if (this.state.paused) this.buffer.data(this.player.current.currentTime(), ['play'])
-                else this.buffer.data(this.player.current.currentTime(), ['pause'])
-                this.togglePlayPause()
+                this.togglePlayPause(()=>{
+                    if (!this.state.paused) this.buffer.data(this.player.current.currentFrame(), ['play'])
+                    else this.buffer.data(this.player.current.currentFrame(), ['pause'])
+                })
                 break
             case 'x': // => go back 2s
                 var t1 = Math.max(0, this.player.current.currentTime() - 2)
                 this.player.current.currentTime(t1)
-                this.buffer.data(this.player.current.currentTime(), ['back2s'])
+                this.buffer.data(this.player.current.currentFrame(), ['back2s'])
                 break
             case 'c': // => go back 10s
                 let t2 = Math.max(0, this.player.current.currentTime() - 10)
                 this.player.current.currentTime(t2)
-                this.buffer.data(this.player.current.currentTime(), ['back10s'])
+                this.buffer.data(this.player.current.currentFrame(), ['back10s'])
                 break
             case 'z': // occluded
                 this.toggleOcclusion()
@@ -119,21 +121,19 @@ class ContinuousKeypointAnnotationTool extends React.Component {
 
     public startKeyboardListen() {
         document.addEventListener("keydown", this.onKeydown, false)
-        // document.addEventListener("keyup", this.onKeyUp, false)
     }
 
     public stopKeyboardListen() {
         document.removeEventListener("keydown", this.onKeydown, false)
-        // document.removeEventListener("keyup", this.onKeyUp, false)
     }
 
     handleMouseData(data: any, e: Event) {
-        const frame = this.player.current.currentFrame()
-        this.buffer.data(
-            frame,
-            [data[0], data[1], this.state.occluded]
-        )
-        this.setState({ mouse: [e.offsetX, e.offsetY]})
+        this.mouse = [e.offsetX, e.offsetY]
+        this.mouse_normalized = data
+    }
+
+    getMousePosition = ()=>{
+        return this.mouse
     }
 
     handleMouseActiveChange(status: boolean) {
@@ -145,6 +145,13 @@ class ContinuousKeypointAnnotationTool extends React.Component {
         this.setState({
             duration: vid.duration
         })
+    }
+
+    handleFrame = (frame: number) => {
+        this.buffer.data(
+            frame,
+            [...this.mouse_normalized, this.state.mouse_valid ? 1 : 0, this.state.occluded ? 1 : 0]
+        )
     }
 
     handleVideoEnded() {
@@ -184,7 +191,6 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                         const error = (data && data.message) || response.status
                         
                     }
-                    console.log(data)
 
                     this.props.onSubmit(data)
                     this.setState({ overlay: {
@@ -195,7 +201,6 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                 })
                 .catch(error => {
                     return Promise.reject(error)
-                    // this.setState({ error: error.toString(), submitting: false })
                 })
         }).catch((error)=>{
             this.setState({
@@ -206,7 +211,6 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                 }
             })
             console.error('There was an error submitting the task!', error)
-            // console.error('There was an error flushing the queue!', error)
         })
     }
 
@@ -222,16 +226,16 @@ class ContinuousKeypointAnnotationTool extends React.Component {
         
     }
 
-    togglePlayPause() {
-        this.handlePausePlay(!this.state.paused)
+    togglePlayPause(cb: Function) {
+        this.handlePausePlay(!this.state.paused, cb)
     }
 
-    handlePausePlay(pause: boolean) {
+    handlePausePlay(pause: boolean, cb:Function) {
         this.setState({
             paused: pause,
             currentTime: this.player.current.currentTime(),
             currentFrame: this.player.current.currentFrame()
-        })
+        }, ()=>{if(cb) cb()})
     }
 
     validate() {
@@ -318,10 +322,12 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                     paused={this.state.paused}
                     pausePlay={this.handlePausePlay.bind(this)}
                     rate={this.playbackRates[this.state.playbackRateIdx]}
-                    mouse={this.state.mouse}
+                    getMousePosition={this.getMousePosition}
+                    // mouse={this.state.mouse}
                     ref={this.player}
                     onEnded={this.handleVideoEnded.bind(this)}
-                    onLoad={this.handleVideoLoad}>
+                    onLoad={this.handleVideoLoad}
+                    onFrame={this.handleFrame}>
                 </OpencvFlowPlayer>
             </MouseTracker>
             <Modal

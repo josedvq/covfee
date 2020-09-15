@@ -10,7 +10,9 @@ module.exports = merge(common, {
         headers: { 'Access-Control-Allow-Origin': '*' },
         hot: true,
         overlay: true,
-        inline: true
+        inline: true,
+        port: 8085,
+        open: false
     },
     plugins: [
         new BundleAnalyzerPlugin()
