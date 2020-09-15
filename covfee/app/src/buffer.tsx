@@ -104,12 +104,12 @@ class EventBuffer {
     }
 
     public data(timestamp:number, data: object) {
-        let payload = [
+        let payload = [2,
             Date.now(),
             timestamp,
-            data
+            ...data
         ]
-        // console.log(data)
+        console.log(payload)
         this.queue[this.currBuffer].buffer.push(payload)
         if(this.queue[this.currBuffer].buffer.length == this.size) {
             this.handleBufferFilled()
