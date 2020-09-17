@@ -4,9 +4,9 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
 if os.environ['COVFEE_ENV'] == 'production':
-    from covfee.constants_prod import *
+    from constants_prod import *
 else:
-    from covfee.constants_dev import *
+    from constants_dev import *
 db = SQLAlchemy()
 
 def bind_app():
