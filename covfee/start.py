@@ -6,11 +6,11 @@ from hashlib import sha256
 from flask import Flask, Response, render_template, request, jsonify, Blueprint, send_from_directory
 from flask_cors import cross_origin, CORS
 
-from orm import db, Project, Timeline, Task, Chunk
+from covfee.orm import db, Project, Timeline, Task, Chunk
 if os.environ['COVFEE_ENV'] == 'production':
-    from constants_prod import *
+    from covfee.constants_prod import *
 else:
-    from constants_dev import *
+    from covfee.constants_dev import *
 
 def create_app():
     app = Flask(__name__, static_folder=None)

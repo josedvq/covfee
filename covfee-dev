@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+export COVFEE_ENV=development
+export FLASK_ENV=development
+export FLASK_APP=covfee/start
+python -m flask run
