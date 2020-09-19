@@ -9,7 +9,7 @@ import covfee.config
 db = SQLAlchemy()
 app = Flask(__name__)
 app.config.from_object('covfee.config')
-app.config.from_json(os.path.join(os.getcwd(), 'covfee.config.json'), silent=True)
+app.config.from_pyfile(os.path.join(os.getcwd(), 'covfee.config.py'), silent=True)
 app.app_context().push()
 db.init_app(app)
 

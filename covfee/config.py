@@ -1,5 +1,4 @@
 import os
-ENVIRONMENT = 'development'
 
 # URL where the app is available at
 APP_URL = 'http://127.0.0.1:5000'
