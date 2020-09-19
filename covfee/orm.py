@@ -1,22 +1,17 @@
 import os
+import json
+from hashlib import sha256
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+import covfee.config
 
-if os.environ['COVFEE_ENV'] == 'production':
-    from constants_prod import *
-else:
-    from constants_dev import *
 db = SQLAlchemy()
-
-def bind_app():
-    app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'isolation_level': "READ UNCOMMITTED"}
-    app.app_context().push()
-    db.init_app(app)
-    return db
-
+app = Flask(__name__)
+app.config.from_object('covfee.config')
+app.config.from_json(os.path.join(os.getcwd(), 'covfee.config.json'), silent=True)
+app.app_context().push()
+db.init_app(app)
 
 class Project(db.Model):
     __tablename__ = 'projects'
@@ -38,7 +33,7 @@ class Project(db.Model):
        project_dict['id'] = project_dict['id'].hex()
        return project_dict
 
-    def showinfo(self):
+    def info(self):
         txt = f'{self.name}\nID: {self.id.hex():s}\n'
         for tl in self.timelines:
             txt += tl.showinfo()
@@ -49,6 +44,44 @@ class Project(db.Model):
         for tl in self.timelines:
             txt += str(tl)
         return txt
+
+    @staticmethod
+    def from_dict(proj_dict: dict):
+        proj_json = json.dumps(proj_dict)
+        timelines = list()
+        for i, timeline_dict in enumerate(proj_dict['timelines']):
+            num_timelines = timeline_dict.get('repeat', 1)
+            if 'repeat' in timeline_dict:
+                del timeline_dict['repeat']
+
+            # insert multiple timelines according to the repeat param
+            for j in range(num_timelines):
+                timeline = timeline_dict.copy()
+                tasks = list()
+                for task_dict in timeline['tasks']:
+                    tasks.append(Task(**task_dict))
+                if 'media' in timeline:
+                    for k, v in timeline['media'].items():
+                        if k[-3:] == 'url' and v[:4] != 'http':
+                            timeline['media'][k] = app.config['MEDIA_URL'] + '/' + v
+                timeline['tasks'] = tasks
+                hash_id = sha256(f'{proj_json}_{i:d}_{j:d}'.encode()).digest()
+                timelines.append(Timeline(id=hash_id, **timeline))
+
+        proj_dict['timelines'] = timelines
+        hash_id = sha256(json.dumps(proj_json).encode()).digest()
+        project = Project(id=hash_id, **proj_dict)
+        return project
+
+    @staticmethod
+    def from_json(fpath: str):
+        '''
+        Loads a project into ORM objects from a project json file.
+        '''
+        with open(fpath, 'r') as f:
+            proj_dict = json.load(f)
+
+        return Project.from_dict(proj_dict)
 
 
 class Timeline(db.Model):
@@ -86,12 +119,12 @@ class Timeline(db.Model):
 
     def get_url(self):
         if self.type == 'annotator':
-            return f'{APP_URL}/#/continuous-annotation/{self.id.hex():s}'
+            return f'{app.config["APP_URL"]}/#/continuous-annotation/{self.id.hex():s}'
         else:
-            return f'{APP_URL}/#/timelines/{self.id.hex():s}'
+            return f'{app.config["APP_URL"]}/#/timelines/{self.id.hex():s}'
 
     def get_api_url(self):
-        return f'{API_URL}/timelines/{self.id.hex():s}'
+        return f'{app.config["API_URL"]}/timelines/{self.id.hex():s}'
 
     def showinfo(self):
         return f' - url: {self.get_url()}\n - api: {self.get_api_url()}\n'

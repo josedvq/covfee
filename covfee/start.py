@@ -6,16 +6,9 @@ from hashlib import sha256
 from flask import Flask, Response, render_template, request, jsonify, Blueprint, send_from_directory
 from flask_cors import cross_origin, CORS
 
-from orm import db, Project, Timeline, Task, Chunk
-if os.environ['COVFEE_ENV'] == 'production':
-    from constants_prod import *
-else:
-    from constants_dev import *
+from covfee.orm import app, db, Project, Timeline, Task, Chunk
 
 def create_app():
-    app = Flask(__name__, static_folder=None)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-    db.init_app(app)
     app.register_blueprint(frontend, url_prefix='/')
     app.register_blueprint(api, url_prefix='/api')
     cors = CORS(app, resources={r"/*": {"origins": "*"}})
@@ -26,12 +19,19 @@ def create_app():
 frontend = Blueprint('frontend', __name__)
 @frontend.route('/')
 def main():
-    return render_template('app.html', api_url=API_URL, static_url=STATIC_URL, bundle_url=BUNDLE_URL)
+    return render_template('app.html', api_url=app.config['API_URL'], static_url=app.config['STATIC_URL'], bundle_url=app.config['BUNDLE_URL'])
 
 @frontend.route('/static/<path:filename>')
-def uploaded_file(filename):
-    return send_from_directory('static', filename,
+def static_file(filename):
+    return send_from_directory(app.config['STATIC_PATH'], filename,
                             conditional=True)
+
+
+@frontend.route('/media/<path:filename>')
+def media_file(filename):
+    print(app.config['MEDIA_PATH'])
+    return send_from_directory(app.config['MEDIA_PATH'], filename,
+                               conditional=True)
 
 # API ROUTES
 api = Blueprint('api', __name__)
@@ -111,5 +111,5 @@ def chunk(tid, kid):
     return jsonify({'msg': "Stored successfully"}), 201
 
 if __name__ == '__main__':
-    app = create_app()
-    app.run(processes=3, port=APP_PORT)
+    myapp = create_app()
+    myapp.run(processes=3)

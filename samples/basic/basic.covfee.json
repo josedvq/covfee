@@ -1,0 +1,26 @@
+{
+    "name": "Example project",
+    "email": "example@example.com",
+    "timelines": [{
+        "type": "timeline",
+        "tasks": [{
+            "type": "QuestionnaireTask",
+            "media": {
+                "type": "video",
+                "url": "1_cam_3.mp4",
+                "mute": true,
+                "autoplay": true,
+                "controls": false
+            },
+            "form": {
+                "fields": [{
+                    "prompt": "Does the person in the video laugh?",
+                    "input": {
+                        "type": "radio",
+                        "options": ["yes", "no"]
+                    }
+                }]
+            }
+        }]
+    }]
+}
