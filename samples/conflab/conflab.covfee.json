@@ -1,0 +1,36 @@
+{
+    "name": "CONFLAB",
+    "email": "j.d.vargasquiros@tudelft.nl",
+    "timelines": [
+        {
+            "type": "annotator",
+            "repeat": 10,
+            "media": {
+                "type": "video",
+                "url": "51f55ed77b0a320b9d0fd942cb21197542e75e5c.mp4",
+                "res": [
+                    960,
+                    540
+                ],
+                "flow_url": "51f55ed77b0a320b9d0fd942cb21197542e75e5c-flow.mp4",
+                "flow_res": [
+                    480,
+                    270
+                ],
+                "fps": 59.94,
+                "mute": true,
+                "gallery_url": "collage1.png"
+            },
+            "tasks": [
+                {
+                    "type": "ContinuousKeypointAnnotationTask",
+                    "name": "p1_hands"
+                },
+                {
+                    "type": "ContinuousKeypointAnnotationTask",
+                    "name": "p1_shoulder"
+                }
+            ]
+        }
+    ]
+}

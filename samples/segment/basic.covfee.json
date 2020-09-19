@@ -1,0 +1,47 @@
+{
+    "name": "Example project",
+    "email": "example@example.com",
+    "timelines": [
+        {
+            "type": "timeline",
+            "tasks": [
+                {
+                    "type": "QuestionnaireTask",
+                    "form": {
+                        "fields": [
+                            {
+                                "prompt": "Does the person in the video laugh?",
+                                "input": {
+                                    "type": "radio",
+                                    "options": ["yes", "no"]
+                                }
+                            },
+                            {
+                                "prompt": "What is the intensity of the laugh?",
+                                "input": {
+                                    "type": "radio",
+                                    "options": [
+                                        "1",
+                                        "2",
+                                        "3",
+                                        "4",
+                                        "5",
+                                        "6",
+                                        "7"
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "media": {
+                        "type": "video",
+                        "url": "1_cam_3.mp4",
+                        "mute": true,
+                        "autoplay": true,
+                        "controls": false
+                    }
+                }
+            ]
+        }
+    ]
+}
