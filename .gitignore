@@ -8,3 +8,4 @@ covfee/app/dist
 *nohup.out
 .ipynb_checkpoints*
 database.db
+covfee.egg-info

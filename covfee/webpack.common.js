@@ -4,6 +4,7 @@ const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPl
 
 
 module.exports = {
+    context: __dirname,
     entry: ['./app/src/index.js'],
     resolve: {
         extensions: [".ts", ".tsx", ".jsx", ".js"]
@@ -11,20 +12,15 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.tsx?$/,
-                use: 'babel-loader',
+                test: /\.(tsx|js)$/,
+                use: ['babel-loader'],
                 exclude: /(node_modules|bower_components)/,
             },
             {
                 test: /\.css$/i,
                 exclude: /(node_modules|bower_components)/,
                 use: ['style-loader', 'css-loader'],
-            },
-            {
-                test: /\.m?js$/,
-                exclude: /(node_modules|bower_components)/,
-                use: 'babel-loader'
-            },
+            }
         ]
     },
     output: {
