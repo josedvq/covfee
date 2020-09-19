@@ -20,8 +20,12 @@ def create_subparser_from_func(subparsers, f):
 
         required = default is None
 
-        parser.add_argument('--'+name, required=required,
+        if dtype == bool and default == False:
+            parser.add_argument('--'+name, action='store_true')
+        else:
+            parser.add_argument('--'+name, required=required,
                             default=default, type=dtype)
+
     return parser
 
 def test_parser(glob):

@@ -2,5 +2,5 @@
 
 export COVFEE_ENV=development
 export FLASK_ENV=development
-export FLASK_APP=covfee/start
-python -m flask run
+export FLASK_APP=covfee.start:create_app
+python3 -m flask run

@@ -35,12 +35,11 @@ setup(
         'install': Install,
         'develop': Develop
     },
-    scripts=['./webpack-fg', './covfee-dev'],
+    scripts=['./covfee-dev', './covfee/utils/mkcovfee'],
     entry_points={
         'console_scripts': [
-            'covfee-dev:'
-            'covfee=snek:main',
-        ],
+            'webpack_fg = covfee.webpack_wrapper:start'
+        ]
     },
     install_requires=[
         'Flask == 1.*',
