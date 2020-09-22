@@ -1,4 +1,5 @@
 import ContinuousKeypointAnnotationTask from './continuous_keypoint'
 import QuestionnaireTask from './questionnaire'
+import Task from './task'
 
-export { ContinuousKeypointAnnotationTask, QuestionnaireTask}
+export { Task, ContinuousKeypointAnnotationTask, QuestionnaireTask}

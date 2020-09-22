@@ -12,6 +12,7 @@ import {
 const { Text, Title, Link } = Typography;
 
 import * as Tasks from './tasks'
+import * as CustomTasks from 'CustomTasks'
 
 class Timeline extends React.Component {
     state = {
@@ -40,15 +41,16 @@ class Timeline extends React.Component {
                         })
                     } else {
                         // go to the task after the last completed task.
-                        let new_idx = 0
-                        timeline.tasks.forEach((task, index) => {
-                            if(task.submitted){
-                                new_idx = index
+                        let new_key = Object.keys(timeline.tasks)[0]
+                        for(let key in timeline.tasks) {
+                            if(timeline.tasks[key].numSubmissions > 0) {
+                                new_key = key
                             }
-                        })
+                        }
+
                         this.setState({
                             status: 'tasks',
-                            curr_task: new_idx
+                            curr_task: new_key
                         })
                     }
                 },
@@ -118,12 +120,10 @@ class Timeline extends React.Component {
 
             case 'tasks':
                 const props = this.timeline.tasks[this.state.curr_task]
-                props.media.url = this.timeline.url_prefix + '/' + props.media.url
-                props.media.flow_url = this.timeline.url_prefix + '/' + props.media.flow_url
                 if(props.form) {
-                    props.form.submit_url = this.url + '/tasks/' + this.state.curr_task + '/submit'
+                    props.form.submit_url = this.url + '/tasks/' + props.id + '/submit'
                 }
-                props.url = this.url + '/tasks/' + this.state.curr_task
+                props.url = this.url + '/tasks/' + props.id
 
                 if (Tasks.hasOwnProperty(props.type)) {
                     const taskClass = Tasks[props.type]
@@ -131,6 +131,13 @@ class Timeline extends React.Component {
                         key: this.state.curr_task,
                         onSubmit: this.handleTaskSubmit.bind(this),
                         ...props }, null)
+                } else if (CustomTasks.hasOwnProperty(props.type)) {
+                    const taskClass = CustomTasks[props.type]
+                    return React.createElement(taskClass, {
+                        key: this.state.curr_task,
+                        onSubmit: this.handleTaskSubmit.bind(this),
+                        ...props
+                    }, null)
                 } else {
                     return <Text>Error loading annotation task</Text>
                 }
