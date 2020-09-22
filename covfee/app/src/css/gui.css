@@ -26,6 +26,7 @@
 }
 .mouse-tracker > .video-container {
     width: 100%;
+    max-height: calc(100vh - 60px);
     height: auto;
     cursor: crosshair;
 }

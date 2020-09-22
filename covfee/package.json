@@ -32,22 +32,6 @@
     "reload-prod": "COVFEE_ENV=production python -m utils.db reload_projects",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "babel": {
-    "presets": [
-      "@babel/preset-react",
-      "@babel/preset-typescript",
-      [
-        "@babel/preset-env",
-        {
-          "modules": false
-        }
-      ]
-    ],
-    "plugins": [
-      "@babel/plugin-proposal-class-properties",
-      "react-hot-loader/babel"
-    ]
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -57,7 +41,6 @@
     "antd": "^4.3.3",
     "classnames": "^2.2.6",
     "react": "^16.13.1",
-    "react-beautiful-dnd": "^13.0.0",
     "react-collapsible": "^2.8.0",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.2.0",

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useContext} from 'react'
 import {
     Button,
     Alert
@@ -76,7 +76,6 @@ const Submit = (props) => {
     </TaskContext.Consumer>
 
 }
-Submit.contextType = TaskContext
+Task.Submit = Submit
 
-Task.Submit = Submit;
 export default Task

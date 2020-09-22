@@ -1,5 +1,6 @@
 *__pycache__
 covfee/node_modules
+covfee/alias.json
 covfee/app/dist
 *.DS_Store
 *.wav

@@ -60,10 +60,6 @@ class Project(db.Model):
                 tasks = list()
                 for task_dict in timeline['tasks']:
                     tasks.append(Task(**task_dict))
-                if 'media' in timeline:
-                    for k, v in timeline['media'].items():
-                        if k[-3:] == 'url' and v[:4] != 'http':
-                            timeline['media'][k] = app.config['MEDIA_URL'] + '/' + v
                 timeline['tasks'] = tasks
                 hash_id = sha256(f'{proj_json}_{i:d}_{j:d}'.encode()).digest()
                 timelines.append(Timeline(id=hash_id, **timeline))
@@ -97,9 +93,16 @@ class Timeline(db.Model):
     def __init__(self, id, type, tasks, media=None, submitted=False):
         self.id = id
         self.type = type
-        self.media = media
         self.tasks = tasks
         self.submitted = submitted
+
+        # fix URLs
+        if media is not None:
+            for k, v in media.items():
+                if k[-3:] == 'url' and v[:4] != 'http':
+                    media[k] = app.config['MEDIA_URL'] + '/' + v
+
+        self.media = media
 
     def as_dict(self, with_tasks=False):
         timeline_dict = {c.name: getattr(self, c.name)
@@ -144,6 +147,7 @@ class Task(db.Model):
     timeline_id = db.Column(db.Integer, db.ForeignKey('timelines.id'))
     type = db.Column(db.String)
     name = db.Column(db.String)
+    text = db.Column(db.String)
     media = db.Column(db.JSON)
     numSubmissions = db.Column(db.Integer)
     form = db.Column(db.JSON)
@@ -151,12 +155,20 @@ class Task(db.Model):
 
     chunks = db.relationship("Chunk", backref='task')
 
-    def __init__(self, type, name=None, media=None, form=None, numSubmissions=0):
+    def __init__(self, type, name=None, text=None, media=None, form=None, numSubmissions=0):
         self.type = type
         self.name = name
-        self.media = media
+        self.text = text
         self.form = form
         self.numSubmissions = numSubmissions
+
+        # fix URLs
+        if media is not None:
+            for k, v in media.items():
+                if k[-3:] == 'url' and v[:4] != 'http':
+                    media[k] = app.config['MEDIA_URL'] + '/' + v
+
+        self.media = media
 
     def as_dict(self):
        task_dict = {c.name: getattr(self, c.name)

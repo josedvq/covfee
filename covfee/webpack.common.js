@@ -1,5 +1,7 @@
 const path = require('path');
+const alias = require('./alias.json')
 const webpack = require('webpack');
+const { isObjectLiteralElement } = require('typescript');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 
@@ -7,14 +9,34 @@ module.exports = {
     context: __dirname,
     entry: ['./app/src/index.js'],
     resolve: {
-        extensions: [".ts", ".tsx", ".jsx", ".js"]
+        extensions: [".ts", ".tsx", ".jsx", ".js"],
+        // merge alias.json with the local config.
+        'alias': Object.assign({
+            'Tasks': path.resolve(__dirname, 'app/src/tasks'),
+        }, alias)
     },
     module: {
         rules: [
             {
-                test: /\.(tsx|js)$/,
-                use: ['babel-loader'],
+                test: /\.(jsx|tsx|js|ts)$/,
+                loader: require.resolve('babel-loader'),
                 exclude: /(node_modules|bower_components)/,
+                options: {
+                    presets: [
+                        require.resolve("@babel/preset-typescript"),
+                        [
+                            require.resolve("@babel/preset-env"),
+                            {
+                                "modules": false
+                            }
+                        ],
+                        require.resolve("@babel/preset-react")
+                    ],
+                    plugins: [
+                        require.resolve("@babel/plugin-proposal-class-properties"),
+                        require.resolve("react-hot-loader/babel")
+                    ]
+                }
             },
             {
                 test: /\.css$/i,
@@ -26,7 +48,7 @@ module.exports = {
     output: {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'static'),
-        publicPath: 'http://localhost:8080/'
+        publicPath: 'http://localhost:8085/'
     },
     externals: {
         "react": "React",
