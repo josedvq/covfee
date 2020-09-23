@@ -35,10 +35,13 @@ setup(
         'install': Install,
         'develop': Develop
     },
-    scripts=['./covfee-dev', './covfee/utils/mkcovfee'],
+    scripts=['./covfee-dev', './covfee-prod', './covfee/utils/mkcovfee'],
     entry_points={
         'console_scripts': [
-            'webpack_fg = covfee.webpack_wrapper:start'
+            'covfee-webpack = covfee.webpack_wrapper:start',
+            'covfee-build = covfee.webpack_wrapper:build',
+            'covfee-env-production = covfee.webpack_wrapper:set_env_prod',
+            'covfee-env-development = covfee.webpack_wrapper:set_env_dev'
         ]
     },
     install_requires=[

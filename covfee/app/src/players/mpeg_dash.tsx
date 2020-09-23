@@ -1,8 +1,7 @@
+import React from 'react'
 import { ReconciliationFilled } from "@ant-design/icons";
 
-import { ContinuousAnnotationPlayer } from './base'
-
-class MpegDashPlayer extends ContinuousAnnotationPlayer {
+class MpegDashPlayer extends React.PureComponent {
     private player: any;
 
     componentDidMount() {

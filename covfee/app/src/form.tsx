@@ -11,7 +11,7 @@ import {
 
 class Form extends React.Component {
     
-    handle_change(idx: number, fieldset_values: Array<any>) {
+    handleChange = (idx: number, fieldset_values: Array<any>) => {
         let new_state = this.props.values.slice()
         new_state[idx] = fieldset_values
         this.props.onChange(new_state)
@@ -19,7 +19,12 @@ class Form extends React.Component {
 
     render() {
         return <>
-            <Fieldset idx={0} fields={this.props.fields} values={this.props.values[0]} on_change={this.handle_change.bind(this)}></Fieldset>
+            <Fieldset 
+                idx={0} 
+                disabled={this.props.disabled}
+                fields={this.props.fields} 
+                values={this.props.values[0]} 
+                onChange={this.handleChange}></Fieldset>
             </>
     }
 }
@@ -27,19 +32,25 @@ class Form extends React.Component {
 class Fieldset extends React.Component {
     componentDidMount() {
         const initial_state = new Array(this.props.fields.length).fill(null);
-        this.props.on_change(this.props.idx, initial_state)
+        this.props.onChange(this.props.idx, initial_state)
     }
 
-    handle_change(idx: number, new_val: any) {
+    handleChange = (idx: number, new_val: any) => {
         let new_state = this.props.values.slice()
         new_state[idx] = new_val
-        this.props.on_change(this.props.idx, new_state)
+        this.props.onChange(this.props.idx, new_state)
     }
 
     render() {
         const elems = []
         for (const [index, spec] of this.props.fields.entries()) {
-            elems.push(<Field key={index} idx={index} spec={spec} value={this.props.values[index]} on_change={this.handle_change.bind(this)}></Field>)
+            elems.push(<Field 
+                key={index} 
+                idx={index}
+                disabled={this.props.disabled}
+                spec={spec} 
+                value={this.props.values[index]} 
+                onChange={this.handleChange}></Field>)
         }
         return <>
             <List itemLayout='vertical'>
@@ -50,8 +61,8 @@ class Fieldset extends React.Component {
 }
 
 class Field extends React.Component {
-    handle_change(e: any) {
-        this.props.on_change(this.props.idx, e.target.value)
+    handleChange = (e: any) => {
+        this.props.onChange(this.props.idx, e.target.value)
     }
 
     render() {
@@ -60,7 +71,11 @@ class Field extends React.Component {
         let input = null
         switch (this.props.spec.input.type) {
             case 'radio':
-                input = <MyRadio options={this.props.spec.input.options} value={this.props.value} on_change={this.handle_change.bind(this)}/>
+                input = <MyRadio 
+                    options={this.props.spec.input.options} 
+                    value={this.props.value}
+                    disabled={this.props.disabled}
+                    onChange={this.handleChange}/>
                 break
             default:
                 input = <p>Unimplemented</p>
@@ -73,9 +88,12 @@ class Field extends React.Component {
 function MyRadio(props) {
     const items = []
     for (const [index, text] of props.options.entries()) {
-        items.push(<Radio.Button key={index} value={index} onChange={props.on_change}>{text}</Radio.Button>)
+        items.push(<Radio.Button 
+            key={index} 
+            value={index}
+            onChange={props.onChange}>{text}</Radio.Button>)
     }
-    return <Radio.Group value={props.value} buttonStyle="solid">
+    return <Radio.Group value={props.value} disabled={props.disabled} buttonStyle="solid">
         {items}
     </Radio.Group>
 }

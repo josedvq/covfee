@@ -14,7 +14,6 @@ def create_app():
     cors = CORS(app, resources={r"/*": {"origins": "*"}})
     return app
 
-
 # APP ROUTES
 frontend = Blueprint('frontend', __name__)
 @frontend.route('/')

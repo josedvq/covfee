@@ -1,7 +1,7 @@
 import React, {useContext} from 'react'
 import {
     Button,
-    Alert
+    Alert,
 } from 'antd';
 
 // This creates the "Task Context" i.e. an object containing a Provider and a Consumer component
@@ -70,7 +70,7 @@ const Submit = (props) => {
                     showIcon
                 />
             }
-            return <Button type="primary" onClick={context.onSubmit} loading={context.submitting} {...props}>Next</Button>
+        return <Button type="primary" onClick={context.onSubmit} loading={context.submitting} {...props}>{props.text}</Button>
             {error}
         }}
     </TaskContext.Consumer>
