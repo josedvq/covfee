@@ -1,5 +1,11 @@
 import React from 'react'
-import { Layout, Menu, Breadcrumb } from 'antd'
+import { 
+    Layout, 
+    Menu, 
+    Breadcrumb,
+    Typography
+} from 'antd'
+const { Title, Paragraph, Text } = Typography;
 import { TimelineWithRouter} from './timeline'
 import { ContinuousAnnotationWithRouter } from './annotation'
 
@@ -13,7 +19,7 @@ import {
 } from "react-router-dom"
 
 const { SubMenu } = Menu;
-const { Header, Content, Sider } = Layout;
+const { Header, Footer, Content, Sider } = Layout;
 
 function About() {
     return <h2>About</h2>;
@@ -51,6 +57,11 @@ class Root extends React.Component {
                         </Route>
                     </Switch>
                 </Layout>
+                <Footer>
+                    <Text style={{float: 'right'}}>
+                        Experiment developed with <a href="https://github.com/josedvq/covfee">covfee</a>
+                    </Text>
+                </Footer>
             </Layout>
         </Router>
     }

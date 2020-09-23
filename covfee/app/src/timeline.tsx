@@ -40,17 +40,28 @@ class Timeline extends React.Component {
                             completion_code: timeline.completion_code
                         })
                     } else {
-                        // go to the task after the last completed task.
-                        let new_key = Object.keys(timeline.tasks)[0]
-                        for(let key in timeline.tasks) {
-                            if(timeline.tasks[key].numSubmissions > 0) {
-                                new_key = key
+                        // convert tasks dict to array
+                        var tasks = Object.keys(timeline.tasks).map(function (key) {
+                            return timeline.tasks[key]
+                        })
+                        timeline.tasks = tasks
+                        let new_idx = 0
+                        timeline.tasks.forEach((el, idx) => {
+                            if (el.numSubmissions > 0) {
+                                new_idx = idx + 1
                             }
-                        }
+                        })
+                        // go to the task after the last completed task.
+                        // let new_key = Object.keys(timeline.tasks)[0]
+                        // for(let key in timeline.tasks) {
+                        //     if(timeline.tasks[key].numSubmissions > 0) {
+                        //         new_key = key
+                        //     }
+                        // }
 
                         this.setState({
                             status: 'tasks',
-                            curr_task: new_key
+                            curr_task: new_idx
                         })
                     }
                 },
@@ -120,10 +131,8 @@ class Timeline extends React.Component {
 
             case 'tasks':
                 const props = this.timeline.tasks[this.state.curr_task]
-                if(props.form) {
-                    props.form.submit_url = this.url + '/tasks/' + props.id + '/submit'
-                }
                 props.url = this.url + '/tasks/' + props.id
+                props.submit_url = props.url + '/submit'
 
                 if (Tasks.hasOwnProperty(props.type)) {
                     const taskClass = Tasks[props.type]

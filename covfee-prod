@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+export FLASK_ENV=production
+export FLASK_APP=covfee.start:create_app
+gunicorn covfee.start:create_app

@@ -1,9 +1,8 @@
+import React from 'react'
 import cv from 'cv'
 
-import { ContinuousAnnotationPlayer} from './base'
-
 // video player using opencv to control playback speed
-class OpencvFlowPlayer extends ContinuousAnnotationPlayer {
+class OpencvFlowPlayer extends React.PureComponent {
     private video_tag = React.createRef()
     private flow_tag = React.createRef()
     private cap: any

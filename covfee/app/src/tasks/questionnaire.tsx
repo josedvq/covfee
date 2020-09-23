@@ -7,7 +7,7 @@ import {
     Button
 } from 'antd';
 import VideojsPlayer from '../players/videojs'
-import Task from './task'
+import {Task} from 'Tasks'
 import {Form} from '../form'
 
 class QuestionnaireTask extends React.Component {
@@ -16,30 +16,41 @@ class QuestionnaireTask extends React.Component {
     public state = {
         form: {
             values: [[]],
-            completed: false
+            completed: false,
+            disabled: true
         }
     }
 
-    handleChange(values: object) {
+    handleChange = (values: object) => {
         const has_null = values[0].some((val) => {
             return val === null
         })
 
         this.setState({
             form: {
+                ...this.state.form,
                 values: values,
                 completed: !has_null
             }
         })
     }
 
-    validate() {
+    handleVideoEnded = () => {
+        this.setState({
+            form: {
+                ...this.state.form,
+                disabled: false
+            }
+        })
+    }
+
+    validate = () => {
         return this.state.form.values
     }
 
     render() {
-        const videoJsOptions = {
-            autoplay: true,
+        const mediaOptions = {
+            autoplay: false,
             controls: true,
             fluid: true,
             aspectRatio: '16:9',
@@ -49,14 +60,17 @@ class QuestionnaireTask extends React.Component {
             }]
         }
         //
-        return <Task {...this.props } validate = { this.validate.bind(this) } >
+        return <Task {...this.props } validate = { this.validate } >
             <Row gutter={16}>
                 <Col span={16}>
-                    <VideojsPlayer {...videoJsOptions}></VideojsPlayer>
+                    <VideojsPlayer {...mediaOptions} onEnded={this.handleVideoEnded}></VideojsPlayer>
                 </Col>
                 <Col span={8}>
-                    <Form {...this.props.form} values={this.state.form.values} onChange={this.handleChange.bind(this)}></Form>
-                    <Task.Submit disabled={!this.state.form.completed}></Task.Submit>
+                    <Form {...this.props.form} 
+                        values={this.state.form.values} 
+                        disabled={this.state.form.disabled} 
+                        onChange={this.handleChange}></Form>
+                    <Task.Submit disabled={!this.state.form.completed} text="Next"/>
                 </Col>
             </Row>
             <Row gutter={16}>
