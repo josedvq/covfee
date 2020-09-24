@@ -30,7 +30,10 @@
     "build": "webpack --config webpack.prod.js",
     "reload": "COVFEE_ENV=development python -m utils.db reload_projects",
     "reload-prod": "COVFEE_ENV=production python -m utils.db reload_projects",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docz:dev": "docz dev --config docz/doczrc.js",
+    "docz:build": "docz build",
+    "docz:serve": "docz build && docz serve"
   },
   "keywords": [],
   "author": "",

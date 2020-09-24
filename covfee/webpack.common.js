@@ -13,6 +13,8 @@ module.exports = {
         // merge alias.json with the local config.
         'alias': Object.assign({
             'Tasks': path.resolve(__dirname, 'app/src/tasks'),
+            'Players': path.resolve(__dirname, 'app/src/players'),
+            'Input': path.resolve(__dirname, 'app/src/input')
         }, alias)
     },
     module: {

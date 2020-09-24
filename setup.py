@@ -47,7 +47,6 @@ setup(
     install_requires=[
         'Flask == 1.*',
         'flask_cors == 3.*',
-        'ipywidgets == 7.*',
         'SQLAlchemy == 1.*',
         'Flask-SQLAlchemy == 2.*',
         'gunicorn == 20.*'
