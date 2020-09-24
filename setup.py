@@ -10,7 +10,6 @@ class Install(install):
     def run(self):
         import subprocess
         subprocess.check_call(['npm', 'install', '--prefix', 'covfee'])
-        subprocess.check_call(['./node_modules/.bin/webpack', '-p'])
         install.run(self)
 
 
