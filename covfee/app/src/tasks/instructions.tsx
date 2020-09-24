@@ -5,7 +5,8 @@ import {
     Space,
     Divider,
     Button
-} from 'antd';
+} from 'antd'
+import Task from 'Tasks/task'
 
 class InstructionsTask extends React.Component {
 

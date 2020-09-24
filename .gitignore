@@ -10,3 +10,4 @@ covfee/app/dist
 .ipynb_checkpoints*
 database.db
 covfee.egg-info
+covfee/.docz

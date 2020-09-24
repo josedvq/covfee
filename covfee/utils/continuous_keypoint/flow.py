@@ -18,8 +18,6 @@ def compute_flow(video_path: str, flow_path: str, width: int):
 
     flow_res = (width, int(width * video_res[1] / video_res[0]))
 
-    print((video_res, flow_res))
-
     fourcc = cv2.VideoWriter_fourcc(*'H264')
     out = cv2.VideoWriter(flow_path, fourcc, frame_rate, flow_res, 0)
 
@@ -29,8 +27,6 @@ def compute_flow(video_path: str, flow_path: str, width: int):
         of = pixelwise_movement(prev_frame, frame, max_value=0.4, res=flow_res)
         out.write(of)
         prev_frame = frame
-        k = cv2.waitKeyEx(5)
-        cv2.imshow('frame', of)
     out.write(of)  # repeat the last frame to have the same number
 
     cap.release()
