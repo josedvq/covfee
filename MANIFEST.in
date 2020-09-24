@@ -1,0 +1,5 @@
+include covfee/*
+exclude covfee/package-lock.json
+recursive-include covfee/app *
+recursive-include covfee/static *
+recursive-include covfee/templates *
