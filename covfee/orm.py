@@ -18,6 +18,7 @@ app.app_context().push()
 db.init_app(app)
 
 class Project(db.Model):
+    """ Represents a set of timelines which make up an experiment or annotation project """
     __tablename__ = 'projects'
 
     id = db.Column(db.Binary, primary_key=True)
@@ -85,6 +86,7 @@ class Project(db.Model):
 
 
 class Timeline(db.Model):
+    """ Represents a set of tasks to be completed by one subject, ie. a HIT """
     __tablename__ = 'timelines'
 
     id = db.Column(db.Binary, primary_key=True)
@@ -145,6 +147,7 @@ class Timeline(db.Model):
 
 
 class Task(db.Model):
+    """ Represents a single task, like eg. annotating one video """
     __tablename__ = 'tasks'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -188,6 +191,7 @@ class Task(db.Model):
 
 # represents a chunk of a task
 class Chunk(db.Model):
+    """ Represents a chunk of data, in response to a task. Used for continuous tasks that must persist data chunks. """
     __tablename__ = 'chunks'
 
     id = db.Column(db.Integer, primary_key=True)
