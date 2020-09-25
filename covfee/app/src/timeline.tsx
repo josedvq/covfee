@@ -167,7 +167,7 @@ class Timeline extends React.Component {
                                         <Text>Something went wrong when sending the task to the server.
                                             Please try again in a few minutes.
                                             If the issue persists please email 
-                                            <Link href={'mailto:' + this.timeline.project.email}> {this.timeline.project.email}</Link>
+                                            <a href={'mailto:' + this.timeline.project.email}> {this.timeline.project.email}</a>
                                         </Text>
                                     </Space>
                                 </Col>

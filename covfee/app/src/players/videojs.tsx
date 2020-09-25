@@ -1,5 +1,6 @@
 import React from 'react'
 import videojs from 'video.js'
+import 'video.js/dist/video-js.css'
 
 // video.js player from the docs: https://github.com/videojs/video.js/blob/master/docs/guides/react.md
 class VideojsPlayer extends React.PureComponent {
@@ -72,7 +73,6 @@ class VideojsPlayer extends React.PureComponent {
 
     // use `ref` to give Video JS a reference to the video DOM element: https://reactjs.org/docs/refs-and-the-dom
     render() {
-        console.log('render')
         return (
             <div data-vjs-player>
                 <video ref={node => this.videoNode = node} className="video-js"></video>
