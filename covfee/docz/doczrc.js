@@ -5,34 +5,10 @@ export default {
     public: 'static',
     htmlContext: {
         head: {
-            raw: ['<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"><script src="https://unpkg.com/antd@4.3.3/dist/antd.min.js"/>'],
-            links: [{
-                    rel: 'stylesheet',
-                    href: '//vjs.zencdn.net/7.8.2/video-js.min.css'
-                },
-                {
-                    rel: 'stylesheet',
-                    href: 'https://unpkg.com/antd@4.3.3/dist/antd.min.css'
-                }
-            ]
+            // raw: ['<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"><script src="https://unpkg.com/antd@4.3.3/dist/antd.min.js"/>'],
         },
         footer: {
-            scripts: [{
-                    src: 'https://unpkg.com/react@16/umd/react.development.js'
-                },
-                {
-                    src: 'https://unpkg.com/react-dom@16/umd/react-dom.development.js'
-                },
-                {
-                    src: 'https://unpkg.com/antd@4.3.3/dist/antd.min.js'
-                },
-                {
-                    src: '//vjs.zencdn.net/7.8.2/video.min.js'
-                },
-                {
-                    src: '/static/opencv.js'
-                }
-            ],
+           
         }
     },
     menu: [

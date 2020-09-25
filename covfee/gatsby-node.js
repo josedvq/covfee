@@ -5,15 +5,13 @@ exports.onCreateWebpackConfig = args => {
         resolve: {
             modules: [path.resolve(__dirname, '../src'), 'node_modules'],
             alias: {
-                'Tasks': path.resolve(__dirname, '../app/src/tasks')
-                // 'Players': path.resolve(__dirname, '../app/src/tasks'),
-                // 'Input': path.resolve(__dirname, '../app/src/tasks')
+                'Tasks': path.resolve(__dirname, '../app/src/tasks'),
+                'Players': path.resolve(__dirname, '../app/src/players'),
+                'Input': path.resolve(__dirname, '../app/src/input')
             }
         },
         externals: {
-            "antd": "antd",
-            "cv": "cv",
-            "video.js": "videojs"
+            "cv": "cv"
         }
     })
 }

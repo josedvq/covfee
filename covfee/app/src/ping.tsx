@@ -43,7 +43,7 @@ class PingModal extends React.Component {
                 Something went wrong when sending the task to the server.
                 Please try again in a few minutes.
                 If the issue persists please email
-                    <Link href={'mailto:' + this.props.email}> {this.props.email}</Link>
+                    <a href={'mailto:' + this.props.email}> {this.props.email}</a>
                 </Text>
                 <Button type='primary' onClick={this.handleRetry.bind(this)}></Button>
             </Modal >
