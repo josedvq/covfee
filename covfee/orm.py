@@ -1,5 +1,6 @@
 import os
 import json
+import copy
 from hashlib import sha256
 
 from flask import Flask
@@ -52,14 +53,17 @@ class Project(db.Model):
 
     @staticmethod
     def from_dict(proj_dict: dict):
-        proj_json = json.dumps(proj_dict)
+        proj_dict = copy.deepcopy(proj_dict)
+        project = copy.deepcopy(proj_dict)
+        proj_json = json.dumps(project)
         timelines = list()
-        for i, timeline_dict in enumerate(proj_dict['timelines']):
+        for i, timeline_dict in enumerate(project['timelines']):
             num_timelines = timeline_dict.get('repeat', 1)
             if 'repeat' in timeline_dict:
                 del timeline_dict['repeat']
 
             # insert multiple timelines according to the repeat param
+            timeline_urls = []
             for j in range(num_timelines):
                 timeline = timeline_dict.copy()
                 tasks = list()
@@ -67,12 +71,15 @@ class Project(db.Model):
                     tasks.append(Task(**task_dict))
                 timeline['tasks'] = tasks
                 hash_id = sha256(f'{proj_json}_{i:d}_{j:d}'.encode()).digest()
-                timelines.append(Timeline(id=hash_id, **timeline))
+                timeline = Timeline(id=hash_id, **timeline)
+                timeline_urls.append(timeline.get_url())
+                timelines.append(timeline)
+            proj_dict['timelines'][i]['urls'] = timeline_urls
 
-        proj_dict['timelines'] = timelines
+        project['timelines'] = timelines
         hash_id = sha256(json.dumps(proj_json).encode()).digest()
-        project = Project(id=hash_id, **proj_dict)
-        return project
+        project = Project(id=hash_id, **project)
+        return project, proj_dict
 
     @staticmethod
     def from_json(fpath: str):
