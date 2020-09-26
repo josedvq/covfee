@@ -1,31 +1,40 @@
 import os
 import json
 
-def start():
+def prepare():
     covfee_path = os.path.dirname(os.path.realpath(__file__))
 
-    # add custom tasks folder to package.json, and write file back
+    custom_tasks_path = os.path.join(os.getcwd(), 'covfee_tasks')
+
+    if not os.path.exists(custom_tasks_path):
+        os.mkdir(custom_tasks_path)
+
+    # create a javascript custom tasks module if it does not exist
+    fpaths = [os.path.join(custom_tasks_path, fname)
+              for fname in ['index.js', 'index.jsx', 'index.ts', 'index.tsx']]
+
+    fpaths_exist = [os.path.exists(fpath) for fpath in fpaths]
+    if not any(fpaths_exist):
+        with open(fpaths[0], 'w') as fh:
+            fh.write('export {}')
+
     alias = {
-        'CustomTasks': os.path.join(os.getcwd(), 'covfee_tasks')
-    }    
+        'CustomTasks': custom_tasks_path
+    }
 
     with open(os.path.join(covfee_path, 'alias.json'), 'w') as outfile:
         json.dump(alias, outfile, indent=2)
 
+def start():
+    
+    prepare()
+    
     # run the dev server
     os.chdir(covfee_path)
     os.system(f'./node_modules/.bin/webpack-dev-server --config ./webpack.dev.js')
 
 def build():
-    covfee_path = os.path.dirname(os.path.realpath(__file__))
-
-    # add custom tasks folder to package.json, and write file back
-    alias = {
-        'CustomTasks': os.path.join(os.getcwd(), 'covfee_tasks')
-    }
-
-    with open(os.path.join(covfee_path, 'alias.json'), 'w') as outfile:
-        json.dump(alias, outfile, indent=2)
+    prepare()
 
     # run the dev server
     os.chdir(covfee_path)

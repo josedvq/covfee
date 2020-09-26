@@ -3,6 +3,7 @@
 import sys
 import glob
 import os
+import json
 
 from flask import Flask
 
@@ -13,7 +14,7 @@ def create_tables():
     db.create_all()
 
 @subparser
-def json(fpath, force: bool=False):
+def from_json(fpath, force: bool=False, save_json: str=''):
     dbpath = app.config['DATABASE_PATH']
     if force:
         try:
@@ -22,15 +23,16 @@ def json(fpath, force: bool=False):
         except OSError:
             pass
     create_tables()
-    project = Project.from_json(fpath)
+    project, project_dict = Project.from_json(fpath)
     db.session.add(project)
     db.session.commit()
     print(project.info())
 
+    if save_json != '':
+        json.dump(project_dict, open(save_json, 'w'), indent=2)
+
 @subparser
 def load_samples():
-    
-
     try:
         print('creating tables')
         create_tables()
