@@ -1,23 +1,73 @@
-import React from 'react'
+import * as React from 'react'
 import {
     Row,
     Col,
     Space,
-    Divider,
-    Button
 } from 'antd'
+import 'antd/dist/antd.css'
+import marked from 'marked'
 import Task from 'Tasks/task'
 
-class InstructionsTask extends React.Component {
+export interface InstructionsTaskProps {
+    /**
+    * A text or Markdown/HTML string containing the experiment instructions.
+    */
+    html?: string,
+    /**
+    * A URL to a Markdown (.md) document containing experiment instructions.
+    */
+    url?: string
+}
+
+export interface InstructionsTaskState {
+    html: string,
+    error: string
+}
+class InstructionsTask extends React.Component<InstructionsTaskProps, InstructionsTaskState> {
+    
+    static defaultProps: InstructionsTaskProps = {
+        html: undefined,
+        url: undefined
+    }
+
+    state: InstructionsTaskState = {
+        html: '',
+        error: ''
+    }
+
+    componentDidMount() {
+        if(this.props.url !== undefined) {
+            fetch(this.props.url)
+            .then(res => res.text())
+            .then(
+                (doc) => {
+                    this.setState({
+                        html: marked(doc)
+                    })
+                },
+                (error) => {
+                    this.setState({
+                        error: `Error reading file ${this.props.url}`
+                    });
+                }
+            )
+        } else {
+            this.setState({
+                html: marked(this.props.html)
+            })
+        }
+    }
 
     render() {
         return <Task validate={()=>{return true}}>
             <Row gutter={16}>
-                <Col span={16}>
-                    {this.props.text}
+                <Col span={24}>
+                    <div dangerouslySetInnerHTML={{ __html: this.state.html}}></div>
                 </Col>
-                <Col span={8}>
-                    <Task.Submit>Next</Task.Submit>
+            </Row>
+            <Row>
+                <Col span={24}>
+                    <Task.Submit text="Next"></Task.Submit>
                 </Col>
             </Row>
         </Task>

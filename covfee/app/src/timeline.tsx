@@ -9,6 +9,7 @@ import {
     Typography,
     Space,
 } from 'antd';
+import 'antd/dist/antd.css'
 const { Text, Title, Link } = Typography;
 
 import * as Tasks from './tasks'
