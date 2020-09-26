@@ -5,7 +5,7 @@ export default {
     public: 'static',
     htmlContext: {
         head: {
-            // raw: ['<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"><script src="https://unpkg.com/antd@4.3.3/dist/antd.min.js"/>'],
+            
         },
         footer: {
            

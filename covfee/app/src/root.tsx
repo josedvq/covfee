@@ -5,6 +5,8 @@ import {
     Breadcrumb,
     Typography
 } from 'antd'
+import 'antd/dist/antd.css'
+
 const { Title, Paragraph, Text } = Typography;
 import { TimelineWithRouter} from './timeline'
 import { ContinuousAnnotationWithRouter } from './annotation'
