@@ -30,6 +30,7 @@ def start():
     prepare()
     
     # run the dev server
+    covfee_path = os.path.dirname(os.path.realpath(__file__))
     os.chdir(covfee_path)
     os.system(f'./node_modules/.bin/webpack-dev-server --config ./webpack.dev.js')
 
@@ -37,6 +38,7 @@ def build():
     prepare()
 
     # run the dev server
+    covfee_path = os.path.dirname(os.path.realpath(__file__))
     os.chdir(covfee_path)
     os.system(f'./node_modules/.bin/webpack --config ./webpack.dev.js')
 
