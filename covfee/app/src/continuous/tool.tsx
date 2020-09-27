@@ -1,18 +1,13 @@
 import React from 'react'
 import {
-    Row,
-    Col,
-    Space,
-    Divider,
     Button,
     Modal
 } from 'antd';
 import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import OpencvFlowPlayer from '../players/opencv'
+import OpencvFlowPlayer from 'Players/opencv'
 import '../css/gui.css'
-import MouseTracker from '../input/mouse_tracker'
+import MouseTracker from 'Input/mouse_tracker'
 import { EventBuffer } from '../buffer'
-import { Form } from '../form'
 import classNames from 'classnames'
 
 class ContinuousKeypointAnnotationTool extends React.Component {
@@ -33,6 +28,10 @@ class ContinuousKeypointAnnotationTool extends React.Component {
             visible: false,
             message: '',
             loading: false
+        },
+        reverseCount: {
+            visible: false,
+            count: 0
         }
     }
     private playbackRates = [1/8, 1/7, 1/6, 1/5, 1/4, 1/3, 1/2, 1, 2, 3, 4]
@@ -41,9 +40,9 @@ class ContinuousKeypointAnnotationTool extends React.Component {
     private buffer: EventBuffer
     private mouse = [0,0]
     private mouse_normalized = [0,0]
+    private reverseCountTimerId: number = null
 
     componentDidMount() {
-        this.onKeydown = this.onKeydown.bind(this)
         this.startKeyboardListen()
 
         this.setState({
@@ -66,7 +65,7 @@ class ContinuousKeypointAnnotationTool extends React.Component {
         this.stopKeyboardListen()
     }
 
-    onKeydown (e: Event) {
+    handleKeydown = (e: Event) => {
         if (e.repeat) {
             e.preventDefault()
             e.stopPropagation()
@@ -83,19 +82,18 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                 break
             case ' ':
                 e.preventDefault()
-                this.togglePlayPause(()=>{
-                    if (!this.state.paused) this.buffer.data(this.player.current.currentFrame(), ['play'])
-                    else this.buffer.data(this.player.current.currentFrame(), ['pause'])
-                })
+                if (this.state.paused) this.buffer.data(this.player.current.currentFrame(), ['play'])
+                else this.buffer.data(this.player.current.currentFrame(), ['pause'])
+                this.togglePlayPause()
                 break
             case 'x': // => go back 2s
-                var t1 = Math.max(0, this.player.current.currentTime() - 2)
-                this.player.current.currentTime(t1)
+                const t1 = Math.max(0, this.player.current.currentTime() - 2)
+                this.goto(t1)
                 this.buffer.data(this.player.current.currentFrame(), ['back2s'])
                 break
             case 'c': // => go back 10s
-                let t2 = Math.max(0, this.player.current.currentTime() - 10)
-                this.player.current.currentTime(t2)
+                const t2 = Math.max(0, this.player.current.currentTime() - 10)
+                this.goto(t2)
                 this.buffer.data(this.player.current.currentFrame(), ['back10s'])
                 break
             case 'z': // occluded
@@ -111,7 +109,49 @@ class ContinuousKeypointAnnotationTool extends React.Component {
         
     }
 
-    onKeyUp(e: Event) {
+    private startReverseCount = () => {
+        this.setState({
+            reverseCount: {
+                visible: true,
+                count: 3
+            }
+        })
+
+        this.reverseCountTimerId = setInterval(() => {
+            if (this.state.reverseCount.count == 1) {
+                // play the video
+                this.cancelReverseCount()
+                this.handlePausePlay(false, () => { })
+            } else {
+                this.setState({
+                    reverseCount: {
+                        ...this.state.reverseCount,
+                        count: this.state.reverseCount.count - 1
+                    }
+                })
+            }
+        }, 800)
+    }
+
+    private cancelReverseCount = (cb?: Function) => {
+        if(this.reverseCountTimerId != null) {
+            clearInterval(this.reverseCountTimerId)
+            this.reverseCountTimerId = null
+        }
+        this.setState({
+            reverseCount: {
+                ...this.state.reverseCount,
+                visible: false,
+            }
+        }, ()=>{if(cb) cb()})
+    }
+
+    private goto(time: number) {
+        this.player.current.currentTime(time)
+        this.cancelReverseCount(this.startReverseCount)
+    }
+
+    handleKeyUp = (e: Event) => {
         switch (e.key) {
             case 'z':
                 this.setState({ occluded: false })
@@ -120,11 +160,11 @@ class ContinuousKeypointAnnotationTool extends React.Component {
     }
 
     public startKeyboardListen() {
-        document.addEventListener("keydown", this.onKeydown, false)
+        document.addEventListener("keydown", this.handleKeydown, false)
     }
 
     public stopKeyboardListen() {
-        document.removeEventListener("keydown", this.onKeydown, false)
+        document.removeEventListener("keydown", this.handleKeydown, false)
     }
 
     handleMouseData(data: any, e: Event) {
@@ -189,7 +229,6 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                     if (!response.ok) {
                         // get error message from body or default to response status
                         const error = (data && data.message) || response.status
-                        
                     }
 
                     this.props.onSubmit(data)
@@ -226,11 +265,19 @@ class ContinuousKeypointAnnotationTool extends React.Component {
         
     }
 
-    togglePlayPause(cb: Function) {
-        this.handlePausePlay(!this.state.paused, cb)
+    togglePlayPause() {
+        if(this.state.paused) {
+            if(this.state.reverseCount.visible) {
+                this.cancelReverseCount()
+            } else {
+                this.startReverseCount()
+            }
+        } else {
+            this.handlePausePlay(true)
+        }
     }
 
-    handlePausePlay(pause: boolean, cb:Function) {
+    handlePausePlay = (pause: boolean, cb?:Function) => {
         this.setState({
             paused: pause,
             currentTime: this.player.current.currentTime(),
@@ -303,6 +350,7 @@ class ContinuousKeypointAnnotationTool extends React.Component {
                 <div className="annot-bar-section"><CaretRightOutlined /> {pr_str}x</div>
                 {this.state.paused ? <div className="annot-bar-section"><ClockCircleOutlined /> {this.state.currentTime.toFixed(1)} / {this.state.duration.toFixed(1)}</div> : <></>}
                 {this.state.paused ? <div className="annot-bar-section">frame {this.state.currentFrame}</div> : <></>}
+                {this.state.reverseCount.visible ? <div className="annot-bar-section" style={{'color': 'red'}}>{this.state.reverseCount.count}</div> : <></>}
             </div>
             <MouseTracker 
                 paused={this.state.paused}
