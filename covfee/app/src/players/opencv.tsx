@@ -1,11 +1,29 @@
-import React from 'react'
+import * as React from 'react'
 import cv from 'cv'
 
 // video player using opencv to control playback speed
-class OpencvFlowPlayer extends React.PureComponent {
-    private video_tag = React.createRef()
-    private flow_tag = React.createRef()
-    private cap: any
+interface Props {
+    paused: boolean,
+    rate: number,
+    fps: number,
+    onLoad: Function,
+    onFrame: Function,
+    onEnded: Function,
+    pausePlay: Function,
+    getMousePosition: Function,
+    video: {
+        src: string,
+        res: Array<number>
+    },
+    flow: {
+        src: string,
+        res: Array<number>
+    }
+}
+class OpencvFlowPlayer extends React.PureComponent<Props> {
+    private video_tag = React.createRef<HTMLVideoElement>()
+    private flow_tag = React.createRef<HTMLVideoElement>()
+    private cap: cv.VideoCapture
     private frame_flow: cv.Mat
     private myMean: cv.Mat
     private myStddev: cv.Mat
@@ -14,7 +32,8 @@ class OpencvFlowPlayer extends React.PureComponent {
     private timeout_id: any = false
     private ratio: number = 0.5
     private delay: number = 0
-    private frame = 0
+    private frame: number = 0
+    private rect: DOMRect = null
 
     componentDidMount() {
 
@@ -33,10 +52,10 @@ class OpencvFlowPlayer extends React.PureComponent {
         }
 
         // update rect and ratio when the resolution changes
-        let observer = new ResizeObserver(function (entries) {
+        let observer = new ResizeObserver((entries) => {
             this.rect = entries[0].contentRect
             this.ratio = this.props.flow.res[0] / this.rect.width
-        }.bind(this))
+        })
         observer.observe(this.video_tag.current)
 
         this.video_tag.current.addEventListener('loadedmetadata', (e: Event) => {
@@ -49,7 +68,7 @@ class OpencvFlowPlayer extends React.PureComponent {
         })
     }
 
-    componentDidUpdate(prevProps) {
+    componentDidUpdate(prevProps: Props) {
         // Typical usage (don't forget to compare props):
         if (this.props.paused !== prevProps.paused) {
             if(this.props.paused) this.pause()
@@ -92,7 +111,7 @@ class OpencvFlowPlayer extends React.PureComponent {
 
     public play() {
         this.video_tag.current.onseeked = () => {
-            this.timeout_id = setTimeout(() => {
+            this.timeout_id = window.setTimeout(() => {
                 this.req_id = window.requestAnimationFrame(this.processVideo.bind(this))
             }, Math.round(this.delay / this.props.rate))
         }
@@ -114,7 +133,7 @@ class OpencvFlowPlayer extends React.PureComponent {
         this.frame = 0
     }
 
-    public currentTime(t: number) {
+    public currentTime(t?: number) {
         if(t !== undefined) {
             this.video_tag.current.currentTime = t
             this.flow_tag.current.currentTime = t
@@ -124,7 +143,7 @@ class OpencvFlowPlayer extends React.PureComponent {
         else return this.video_tag.current.currentTime
     }
 
-    public currentFrame(t: number) {
+    public currentFrame(t?: number) {
         if (t !== undefined) {
             this.currentTime(t / this.props.fps)
         }

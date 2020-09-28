@@ -1,10 +1,16 @@
-import React from 'react'
+import * as React from 'react'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
 
+interface Props {
+    onPlay: Function,
+    onPause: Function,
+    onEnded: Function
+}
 // video.js player from the docs: https://github.com/videojs/video.js/blob/master/docs/guides/react.md
-class VideojsPlayer extends React.PureComponent {
-    private player: any;
+class VideojsPlayer extends React.PureComponent<Props> {
+    private player: any
+    private videoNode = React.createRef<HTMLVideoElement>()
 
     componentDidMount() {
         // instantiate Video.js
@@ -13,19 +19,19 @@ class VideojsPlayer extends React.PureComponent {
         });
 
         if (this.props.onPlay) {
-            this.player.on('play', (e) => {
+            this.player.on('play', (e: Event) => {
                 this.props.onPlay(e)
             })
         }
 
         if (this.props.onPause) {
-            this.player.on('pause', (e) => {
+            this.player.on('pause', (e: Event) => {
                 this.props.onPause(e)
             })
         }
 
         if (this.props.onEnded) {
-            this.player.on('ended', (e) => {
+            this.player.on('ended', (e: Event) => {
                 this.props.onEnded(e)
             })
         }
@@ -58,7 +64,7 @@ class VideojsPlayer extends React.PureComponent {
         }
     }
 
-    componentWillReceiveProps(newProps) {
+    componentWillReceiveProps(newProps: Props) {
         // When a user moves from one title to the next, the VideoPlayer component will not be unmounted,
         // instead its properties will be updated with the details of the new video. In this case,
         // we can update the src of the existing player with the new video URL.
@@ -75,7 +81,7 @@ class VideojsPlayer extends React.PureComponent {
     render() {
         return (
             <div data-vjs-player>
-                <video ref={node => this.videoNode = node} className="video-js"></video>
+                <video ref={this.videoNode} className="video-js"></video>
             </div>
         )
     }
