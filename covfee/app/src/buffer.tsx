@@ -33,9 +33,9 @@ class EventBuffer {
         Promise.race([
             fetch(this.url, requestOptions),
             new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('timeout')), 3000)
+                window.setTimeout(() => reject(new Error('timeout')), 3000)
             )
-        ]).then(async response => {
+        ]).then(async (response: Response) => {
             const data = await response.json()
 
             // check for error response
@@ -69,7 +69,7 @@ class EventBuffer {
     public async awaitQueueClear(timeout: number) {
         return Promise.race([
             new Promise((resolve, reject)=>{
-                setInterval(() => {
+                window.setInterval(() => {
                     let foundErrored = false
                     this.queue.forEach((el)=>{
                         if(el === undefined) return
@@ -79,7 +79,7 @@ class EventBuffer {
                 }, 3000);
             }),
             new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('timeout')), timeout)
+                window.setTimeout(() => reject(new Error('timeout')), timeout)
             )
         ])
     }
@@ -96,14 +96,12 @@ class EventBuffer {
             if (elem !== undefined) numNonSubmittedBuffers += 1
         })
 
-        // console.log(this.queue)
-
         if (numNonSubmittedBuffers > 5) {
             this.onError('Unable to submit results to the server. Annotations cannot be saved.')
         }
     }
 
-    public data(timestamp:number, data: object) {
+    public data(timestamp:number, data: Array<any>) {
         let payload = [2,
             Date.now(),
             timestamp,

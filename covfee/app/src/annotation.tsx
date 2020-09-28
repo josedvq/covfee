@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react'
 import { withRouter } from 'react-router'
 import {
     LoadingOutlined, 
@@ -24,10 +24,10 @@ import {
 import Collapsible from 'react-collapsible'
 const { Text, Title, Link } = Typography;
 
-import ContinuousKeypointAnnotationTool from './continuous/tool'
+import ContinuousKeypointTask from './tasks/continuous_keypoint'
 import classNames from 'classnames'
 
-function getFullscreen(element) {
+function getFullscreen(element: HTMLElement) {
     if (element.requestFullscreen) {
         return element.requestFullscreen()
     } else if (element.mozRequestFullScreen) {
@@ -76,7 +76,7 @@ class Task extends React.Component {
         input_text: ''
     }
 
-    inputRef: Input = React.createRef()
+    inputRef = React.createRef<Input>()
 
     componentDidMount() {
         this.setState({
@@ -160,7 +160,7 @@ class ContinuousAnnotationTool extends React.Component {
     url: string
 
     container = React.createRef()
-    annotToolRef: ContinuousAnnotationTool = React.createRef()
+    annotToolRef = React.createRef<ContinuousAnnotationTool>()
 
     componentDidMount() {
         this.onKeydown = this.onKeydown.bind(this)
@@ -336,7 +336,7 @@ class ContinuousAnnotationTool extends React.Component {
                 let props = this.timeline.tasks[this.state.curr_task]
                 props.url = this.url + '/tasks/' + props.id
                 props.media = this.timeline.media
-                let task = <ContinuousKeypointAnnotationTool 
+                let task = <ContinuousKeypointTask 
                     taskName={this.timeline.tasks[this.state.curr_task].name}
                     key={this.state.curr_task} 
                     submitting={this.state.submittingTask}
@@ -368,7 +368,6 @@ class ContinuousAnnotationTool extends React.Component {
                             {sidebar}
                         </Col>
                     </Row>
-                    {/* <p>{JSON.stringify(this.timeline)}</p> */}
                 </div>
             default:
                 return

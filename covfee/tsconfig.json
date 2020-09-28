@@ -5,6 +5,12 @@
         "removeComments": true,
         "preserveConstEnums": true,
         "sourceMap": true,
-        "jsx": "react"
+        "jsx": "react",
+        "baseUrl": "./",
+        "paths": {
+            "Input/*": ["app/src/input/*"],
+            "Players/*": ["app/src/players/*"],
+            "Tasks/*": ["app/src/tasks/*"]
+        }
     }
 }
