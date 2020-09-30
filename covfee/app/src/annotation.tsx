@@ -26,6 +26,7 @@ const { Text, Title, Link } = Typography;
 
 import ContinuousKeypointTask from './tasks/continuous_keypoint'
 import classNames from 'classnames'
+const Constants = require('./constants.json')
 
 function getFullscreen(element: HTMLElement) {
     if (element.requestFullscreen) {

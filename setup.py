@@ -34,21 +34,24 @@ setup(
         'install': Install,
         'develop': Develop
     },
-    scripts=['./covfee-dev', './covfee-prod', './covfee/utils/mkcovfee'],
+    scripts=['./covfee-dev', './covfee-prod'],
     entry_points={
         'console_scripts': [
-            'covfee-webpack = covfee.webpack_wrapper:start',
-            'covfee-build = covfee.webpack_wrapper:build',
-            'covfee-env-production = covfee.webpack_wrapper:set_env_prod',
-            'covfee-env-development = covfee.webpack_wrapper:set_env_dev'
+            'covfee-init = covfee.commands:make_db',
+            'covfee-webpack = covfee.commands:start',
+            'covfee-build = covfee.commands:build',
+            'covfee-env-production = covfee.commands:set_env_prod',
+            'covfee-env-development = covfee.commands:set_env_dev',
+            'covfee-mkuser = covfee.commands:make_user'
         ]
     },
     install_requires=[
         'Flask == 1.*',
         'flask_cors == 3.*',
-        'SQLAlchemy == 1.*',
         'Flask-SQLAlchemy == 2.*',
-        'gunicorn == 20.*'
+        'gunicorn == 20.*',
+        'flask-jwt-extended == 3.*',
+        'click ==  7.*'
     ],
     python_requires='>=3.6'
 )

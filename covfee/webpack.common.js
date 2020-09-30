@@ -7,7 +7,15 @@ const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPl
 
 module.exports = {
     context: __dirname,
-    entry: ['./app/src/index.js'],
+    entry: {
+        main: './app/src/index.js',
+        admin: './app/src/admin/index.js'
+    },
+    output: {
+        filename: '[name].js',
+        path: path.resolve(__dirname, 'static'),
+        publicPath: 'http://localhost:8085/'
+    },
     resolve: {
         extensions: [".ts", ".tsx", ".jsx", ".js"],
         // merge alias.json with the local config.
@@ -45,11 +53,6 @@ module.exports = {
                 use: ['style-loader', 'css-loader']
             }
         ]
-    },
-    output: {
-        filename: 'bundle.js',
-        path: path.resolve(__dirname, 'static'),
-        publicPath: 'http://localhost:8085/'
     },
     externals: {
         "react": "React",
