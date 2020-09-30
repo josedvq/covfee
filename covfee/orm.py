@@ -1,7 +1,7 @@
 import os
 import json
 import copy
-from hashlib import sha256
+from hashlib import sha256, pbkdf2_hmac
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -17,6 +17,25 @@ else:
     app.config.from_pyfile(os.path.join(os.getcwd(), 'covfee.production.config.py'))
 app.app_context().push()
 db.init_app(app)
+
+
+class User(db.Model):
+    """ Represents a covfee user """
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String)
+    password = db.Column(db.Binary)
+    roles = db.Column(db.JSON)
+
+    def __init__(self, username: str, password: str, roles: list = ['user']):
+        self.username = username
+        self.password = User.password_hash(password)
+        self.roles = roles
+
+    @staticmethod
+    def password_hash(password: str):
+        return pbkdf2_hmac('sha256', password.encode(), app.config['JWT_SECRET_KEY'].encode(), 10000)
 
 class Project(db.Model):
     """ Represents a set of timelines which make up an experiment or annotation project """

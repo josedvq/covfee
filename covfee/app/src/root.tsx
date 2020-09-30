@@ -8,8 +8,10 @@ import {
 import 'antd/dist/antd.css'
 
 const { Title, Paragraph, Text } = Typography;
+import { LoginWithRouter} from './login'
 import { TimelineWithRouter} from './timeline'
 import { ContinuousAnnotationWithRouter } from './annotation'
+import UserContext from './user'
 
 import {
     HashRouter as Router,
@@ -39,32 +41,37 @@ class Root extends React.Component {
 
     render() {
         return <Router>
-            <Layout>
-                <Header className="header">
-                    <div className="logo" />
-                    <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['2']}>
-                        <Menu.Item key="1" disabled><Link to="/">covfee</Link></Menu.Item>
-                    </Menu>
-                </Header>
+            <UserContext>
                 <Layout>
-                    <Switch>
-                        <Route path="/about">
-                            <About />
-                        </Route>
-                        <Route path="/timelines/:timelineId">
-                            <TimelineWithRouter />
-                        </Route>
-                        <Route path="/continuous-annotation/:timelineId">
-                            <ContinuousAnnotationWithRouter />
-                        </Route>
-                    </Switch>
+                    <Header className="header">
+                        <div className="logo" />
+                        <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['2']}>
+                            <Menu.Item key="1" disabled><Link to="/">covfee</Link></Menu.Item>
+                        </Menu>
+                    </Header>
+                    <Layout>
+                        <Switch>
+                            <Route path="/about">
+                                <About />
+                            </Route>
+                            <Route path="/login">
+                                <LoginWithRouter />
+                            </Route>
+                            <Route path="/timelines/:timelineId">
+                                <TimelineWithRouter />
+                            </Route>
+                            <Route path="/continuous-annotation/:timelineId">
+                                <ContinuousAnnotationWithRouter />
+                            </Route>
+                        </Switch>
+                    </Layout>
+                    <Footer>
+                        <Text style={{float: 'right'}}>
+                            Experiment developed with <a href="https://github.com/josedvq/covfee">covfee</a>
+                        </Text>
+                    </Footer>
                 </Layout>
-                <Footer>
-                    <Text style={{float: 'right'}}>
-                        Experiment developed with <a href="https://github.com/josedvq/covfee">covfee</a>
-                    </Text>
-                </Footer>
-            </Layout>
+            </UserContext>
         </Router>
     }
 }

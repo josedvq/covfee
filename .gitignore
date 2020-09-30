@@ -1,7 +1,7 @@
 *__pycache__
 covfee/node_modules
 covfee/alias.json
-covfee/app/dist
+covfee/app/src/constants.json
 *.DS_Store
 *.wav
 .vscode*
@@ -11,3 +11,4 @@ covfee/app/dist
 database.db
 covfee.egg-info
 covfee/.docz
+samples/*/database.covfee.db

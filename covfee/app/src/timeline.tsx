@@ -14,6 +14,7 @@ const { Text, Title, Link } = Typography;
 
 import * as Tasks from './tasks'
 import * as CustomTasks from 'CustomTasks'
+const Constants = require('./constants.json')
 
 class Timeline extends React.Component {
     state = {
@@ -52,13 +53,6 @@ class Timeline extends React.Component {
                                 new_idx = idx + 1
                             }
                         })
-                        // go to the task after the last completed task.
-                        // let new_key = Object.keys(timeline.tasks)[0]
-                        // for(let key in timeline.tasks) {
-                        //     if(timeline.tasks[key].numSubmissions > 0) {
-                        //         new_key = key
-                        //     }
-                        // }
 
                         this.setState({
                             status: 'tasks',
