@@ -9,8 +9,6 @@ import 'antd/dist/antd.css'
 
 const { Title, Paragraph, Text } = Typography;
 import { LoginWithRouter} from './login'
-import { TimelineWithRouter} from './timeline'
-import { ContinuousAnnotationWithRouter } from './annotation'
 import UserContext from './user'
 
 import {
@@ -18,9 +16,8 @@ import {
     Switch,
     Route,
     Link,
-    useRouteMatch,
-    useParams
 } from "react-router-dom"
+import {HITWithRouter} from './hit'
 
 const { SubMenu } = Menu;
 const { Header, Footer, Content, Sider } = Layout;
@@ -31,10 +28,6 @@ function About() {
 
 class Root extends React.Component {
     state: any
-
-    constructor(props: any) {
-        super(props);
-    }
 
     componentDidMount() {
     }
@@ -57,11 +50,8 @@ class Root extends React.Component {
                             <Route path="/login">
                                 <LoginWithRouter />
                             </Route>
-                            <Route path="/timelines/:timelineId">
-                                <TimelineWithRouter />
-                            </Route>
-                            <Route path="/continuous-annotation/:timelineId">
-                                <ContinuousAnnotationWithRouter />
+                            <Route path="/hits/:hitId">
+                                <HITWithRouter/>
                             </Route>
                         </Switch>
                     </Layout>

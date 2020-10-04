@@ -1,32 +1,30 @@
 import * as React from 'react'
-import { withRouter } from 'react-router'
 import {
-    LoadingOutlined, 
-    PropertySafetyFilled, 
-    CheckCircleFilled, 
     EyeFilled, 
-    EyeInvisibleFilled,
     EditOutlined,
     CheckCircleOutlined,
     BarsOutlined,
     PictureOutlined,
     PlusCircleOutlined
-} from '@ant-design/icons';
+} from '@ant-design/icons'
 import {
     Row,
     Col,
     Typography,
-    Space,
     Menu,
     Input,
-    Button
+    Button, 
+    Modal
 } from 'antd';
 import Collapsible from 'react-collapsible'
-const { Text, Title, Link } = Typography;
+const { Text, Title, Link } = Typography
 
 import ContinuousKeypointTask from './tasks/continuous_keypoint'
 import classNames from 'classnames'
 const Constants = require('./constants.json')
+import {throwBadResponse} from './utils'
+import { TaskSpec } from 'Tasks/task'
+import { EventBuffer } from './buffer';
 
 function getFullscreen(element: HTMLElement) {
     if (element.requestFullscreen) {
@@ -52,7 +50,7 @@ function closeFullscreen() {
     }
 }
 
-class TaskGroup extends React.Component {
+class TaskGroup extends React.Component<any, {}> {
 
     render() {
         return <ol className={'task-group'}>
@@ -60,12 +58,12 @@ class TaskGroup extends React.Component {
                 <Task key={task.id} 
                     id={task.id} 
                     name={task.name} 
-                    active={task.id == this.props.curr_task} 
+                    active={task.id == this.props.currTask} 
                     onActivate={this.props.onChangeActiveTask} 
                     onSubmitName={this.props.onSubmitNewTaskName}
                     onInputFocus={this.props.onInputFocus}
                     />)}
-            <li><Button type="primary" block="true" onClick={this.props.onAddTask} icon={<PlusCircleOutlined />}>New Task</Button></li>
+            <li><Button type="primary" block={true} onClick={this.props.onAddTask} icon={<PlusCircleOutlined />}>New Task</Button></li>
         </ol>
     }
 }
@@ -89,7 +87,7 @@ class Task extends React.Component {
         })
     }
 
-    handleEdit() {
+    handleEdit = () => {
         this.setState({
             editable: true
         }, () => {
@@ -97,29 +95,28 @@ class Task extends React.Component {
         })
     }
 
-    handleInputChange(e) {
+    handleInputChange = (e) => {
         this.setState({
             input_text: e.target.value
         })
     }
 
-    handleSubmitName() {
-        this.props.onSubmitName(this.props.id, this.state.input_text, ()=>{
-            this.setState({
-                editable: false
-            })
+    handleSubmitName = () => {
+        this.setState({
+            editable: false
         })
+        this.props.onSubmitName(this.props.id, this.state.input_text, ()=>{})
     }
 
-    handleActivate() {
+    handleActivate = () => {
         this.props.onActivate(this.props.id)
     }
 
-    handleFocus() {
+    handleFocus = () => {
         this.props.onInputFocus(true)
     }
 
-    handleBlur() {
+    handleBlur = () => {
         this.props.onInputFocus(false)
     }
 
@@ -128,79 +125,93 @@ class Task extends React.Component {
 
         return <li className={classNames('task-li', { 'task-li-active': this.props.active})}>
             <Input 
-                onFocus={this.handleFocus.bind(this)} 
-                onBlur={this.handleBlur.bind(this)} 
+                onFocus={this.handleFocus} 
+                onBlur={this.handleBlur} 
                 placeholder="Task Name" 
-                onChange={this.handleInputChange.bind(this)} 
+                onChange={this.handleInputChange} 
                 disabled={!this.state.editable} 
                 value={this.state.input_text} 
                 ref={this.inputRef}/>
             {this.state.editable
-                ? <Button icon={<CheckCircleOutlined/>} onClick={this.handleSubmitName.bind(this)}></Button>
-                : <Button icon={<EditOutlined />} onClick={this.handleEdit.bind(this)}></Button>}
-            <Button icon={<EyeFilled />} onClick={this.handleActivate.bind(this)}></Button>
+                ? <Button icon={<CheckCircleOutlined/>} onClick={this.handleSubmitName}></Button>
+                : <Button icon={<EditOutlined />} onClick={this.handleEdit}></Button>}
+            <Button icon={<EyeFilled />} onClick={this.handleActivate}></Button>
         </li>
     }
 }
 
-class ContinuousAnnotationTool extends React.Component {
-    state = {
-        status: 'loading',
-        curr_task: 0,
-        error: false,
-        completion_code: false,
+interface AnnotationProps {
+    type: string,
+    id: string,
+    media: object,
+    project: object,
+    submitted: boolean,
+    tasks: { [key: string]: TaskSpec }
+}
+
+interface AnnotationState {
+    currTask: string,
+    error: string,
+    completionCode: string,
+    sidebar: {
+        taskIds: Array<string>
+    },
+    galleryOpen: boolean,
+    fullscreen: boolean,
+    submittingTask: boolean,
+    errorModal: {
+        visible: boolean,
+        message: string,
+        loading: boolean
+    }
+}
+class Annotation extends React.Component<AnnotationProps, AnnotationState> {
+    state:AnnotationState = {
+        currTask: '0',
+        error: null,
+        completionCode: null,
         sidebar: {
             taskIds: []
         },
         galleryOpen: false,
         fullscreen: false,
-        submittingTask: false
+        submittingTask: false,
+        errorModal: {
+            visible: false,
+            message: '',
+            loading: false
+        }
     }
-    timeline: object
-    id: number
     url: string
+    tasks: { [key: string]: TaskSpec}
+    buffer: EventBuffer
+    container = React.createRef<HTMLDivElement>()
+    annotToolRef = React.createRef<ContinuousKeypointTask>()
 
-    container = React.createRef()
-    annotToolRef = React.createRef<ContinuousAnnotationTool>()
+    constructor(props: AnnotationProps) {
+        super(props)
+        // copy props into tasks
+        this.url = Constants.api_url + '/instances/' + this.props.id
+        this.tasks = this.props.tasks
+        this.state = {
+            ...this.state,
+            currTask: Object.keys(this.tasks)[0],
+            sidebar: {
+                taskIds: Object.keys(this.tasks)
+            }
+        }
+        this.startNewBuffer()        
+    }
 
     componentDidMount() {
-        this.onKeydown = this.onKeydown.bind(this)
-        document.addEventListener("keydown", this.onKeydown, false)
-
-        this.id = this.props.match.params.timelineId
-        this.url = Constants.api_url + '/timelines/' + this.id
-
-        fetch(this.url)
-            .then(res => res.json())
-            .then(
-                (timeline) => {
-                    this.timeline = timeline;
-                    console.log(timeline)
-                    // get the task IDs
-                    const taskIds = Object.keys(timeline.tasks)
-
-                    this.setState({
-                        status: 'tasks',
-                        curr_task: taskIds[0],
-                        sidebar: {
-                            'taskIds': taskIds
-                        }
-                    })
-                },
-                (error) => {
-                    this.setState({
-                        status: 'error',
-                        error
-                    });
-                }
-            )
+        document.addEventListener("keydown", this.handleKeydown, false)
     }
 
     componentWillUnmount() {
-        document.removeEventListener("keydown", this.onKeydown, false)
+        document.removeEventListener("keydown", this.handleKeydown, false)
     }
 
-    onKeydown(e: Event) {
+    handleKeydown = (e: KeyboardEvent) => {
         const tagName = e.target.tagName.toLowerCase()
         if(['input', 'textarea', 'select', 'button'].includes(tagName)) return
         
@@ -221,17 +232,44 @@ class ContinuousAnnotationTool extends React.Component {
         }
     }
 
-    handleTaskSubmit(data: object) {
-        this.timeline.tasks[data.id] = data
-    }
+    handleTaskSubmit = (taskResult: any) => {
+        // first send all the chunks in the buffer
+        this.buffer.attemptBufferSubmit(true)
 
-    handleChangeActiveTask(taskId: any) {
-        this.setState({
-            'curr_task': taskId
+        // then submit the task
+        return this.buffer.awaitQueueClear(3000).then(() => {
+            const url = this.url + '/tasks/' + this.tasks[this.state.currTask].id + '/submit'
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(taskResult)
+            }
+
+            return fetch(url, requestOptions)
+                .then(throwBadResponse)
+                .then((data)=>{
+                    this.tasks[data.id] = data
+                }).catch(error=>{
+                    console.error('There was an error submitting the task!', error)
+                })
         })
     }
 
-    handleSubmitNewTaskName(taskId: string, name: string, cb: Function) {
+    handleChangeActiveTask = (taskId: string) => {
+        this.setState({
+            currTask: taskId
+        }, this.startNewBuffer)
+    }
+
+    startNewBuffer = () => {
+        const taskId = this.tasks[this.state.currTask].id
+        this.buffer = new EventBuffer(
+            2000,
+            this.url + '/tasks/' + taskId + '/chunk',
+            this.handleBufferError)
+    }
+
+    handleSubmitNewTaskName = (taskId: string, name: string, cb: Function) => {
         if(taskId == 'n') {
             // adding new task
             const url = this.url + '/tasks/add'
@@ -242,22 +280,17 @@ class ContinuousAnnotationTool extends React.Component {
             }
 
             fetch(url, requestOptions)
-                .then(async response => {
-                    const data = await response.json()
-
-                    // check for error response
-                    if (!response.ok) {
-                        // get error message from body or default to response status
-                        const error = (data && data.message) || response.status
-                        return Promise.reject(error)
-                    }
-
-                    delete this.timeline.tasks['n']
-                    this.timeline.tasks[data.id] = data
+                .then(throwBadResponse)
+                .then(data => {
+                    delete this.tasks['n']
+                    this.tasks[data.id] = data
                     const newTaskIds = Array.from(this.state.sidebar.taskIds)
                     newTaskIds.pop()
                     newTaskIds.push(data.id)
-                    this.setState({ sidebar: { taskIds: newTaskIds } }, () => { cb()})
+                    this.setState({
+                        currTask: this.state.currTask == 'n' ? data.id : this.state.currTask,
+                        sidebar: { taskIds: newTaskIds } 
+                    }, () => { cb()})
                 })
                 .catch(error => {
                     // this.setState({ error: error.toString(), submitting: false })
@@ -265,7 +298,7 @@ class ContinuousAnnotationTool extends React.Component {
                 })
         } else {
             // editing existing task
-            const url = this.url + '/tasks/' + taskId + '/edit'
+            const url = Constants.api_url + '/tasks/' + taskId + '/edit'
             const requestOptions = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -273,17 +306,9 @@ class ContinuousAnnotationTool extends React.Component {
             }
 
             fetch(url, requestOptions)
-                .then(async response => {
-                    const data = await response.json()
-
-                    // check for error response
-                    if (!response.ok) {
-                        // get error message from body or default to response status
-                        const error = (data && data.message) || response.status
-                        return Promise.reject(error)
-                    }
-
-                    this.timeline.tasks[taskId] = data
+                .then(throwBadResponse)
+                .then(data => {
+                    this.tasks[taskId] = data
                     cb()
                 })
                 .catch(error => {
@@ -293,9 +318,9 @@ class ContinuousAnnotationTool extends React.Component {
         }
     } 
 
-    handleAddTask() {
-        if (!this.timeline.tasks.hasOwnProperty('n')) {
-            this.timeline.tasks.n = {id: 'n', name: ''}
+    handleAddTask = () => {
+        if (!this.tasks.hasOwnProperty('n')) {
+            this.tasks.n = {id: 'n', name: ''}
             const newTaskIds = Array.from(this.state.sidebar.taskIds)
             newTaskIds.push('n')
             this.setState({
@@ -308,75 +333,117 @@ class ContinuousAnnotationTool extends React.Component {
         }
     }
 
-    handleInputFocus(focus: boolean) {
+    handleInputFocus = (focus: boolean) => {
         if(focus) this.annotToolRef.current.stopKeyboardListen()
         else this.annotToolRef.current.startKeyboardListen()
     }
 
-    handleMenuClick(e: object) {
+    handleMenuClick = (e: object) => {
         if (e.key == 'gallery') this.setState({galleryOpen: !this.state.galleryOpen})
     }
 
+    handleBufferError = (msg: string) => {
+        this.handlePausePlay(true)
+        this.setState({
+            errorModal: {
+                ...this.state.errorModal,
+                visible: true,
+                message: msg
+            }
+        })
+    }
+
+    handleErrorOk = () => {
+        const modalMessage = 'Attempting to submit. The window will be closed if successful.'
+        this.setState({
+            errorModal: {
+                visible: true,
+                message: modalMessage,
+                loading: true
+            }
+        })
+
+        this.buffer.attemptBufferSubmit()
+        this.buffer.awaitQueueClear(5000).then(() => {
+            this.setState({ errorModal: { ...this.state.errorModal, visible: false, loading: false } })
+        }).catch(() => {
+            this.setState({
+                errorModal: {
+                    visible: true,
+                    message: modalMessage + ' Unable to send the data. Please communicate with the organizers if the problems persist.',
+                    loading: false
+                }
+            })
+        })
+    }
+
+    handleErrorCancel = () => {
+        this.setState({
+            errorModal: {
+                ...this.state.errorModal,
+                visible: false
+            }
+        })
+    }
+
     render() {
-        switch(this.state.status) {
-            case 'loading':
-                return <div className={'site-layout-content'}>
-                        <LoadingOutlined />
-                    </div>
+        const tasks = this.state.sidebar.taskIds.map(taskId => this.tasks[taskId])
+        const sidebar = <TaskGroup 
+            tasks={tasks} 
+            currTask={this.state.currTask}
+            onAddTask={this.handleAddTask} 
+            onInputFocus={this.handleInputFocus}
+            onChangeActiveTask={this.handleChangeActiveTask}
+            onSubmitNewTaskName={this.handleSubmitNewTaskName} />
 
-            case 'tasks':
-                const tasks = this.state.sidebar.taskIds.map(taskId => this.timeline.tasks[taskId])
-                const sidebar = <TaskGroup 
-                    tasks={tasks} 
-                    curr_task={this.state.curr_task}
-                    onAddTask={this.handleAddTask.bind(this)} 
-                    onInputFocus={this.handleInputFocus.bind(this)}
-                    onChangeActiveTask={this.handleChangeActiveTask.bind(this)}
-                    onSubmitNewTaskName={this.handleSubmitNewTaskName.bind(this)} />
+        let props = this.tasks[this.state.currTask]
+        props.url = this.url + '/tasks/' + props.id
+        props.media = this.props.media
+        let task = <ContinuousKeypointTask 
+            taskName={this.tasks[this.state.currTask].name}
+            buffer={this.buffer.data}
+            key={this.state.currTask} 
+            onSubmit={this.handleTaskSubmit} 
+            ref={this.annotToolRef}
+            {...props}/>
 
-                let props = this.timeline.tasks[this.state.curr_task]
-                props.url = this.url + '/tasks/' + props.id
-                props.media = this.timeline.media
-                let task = <ContinuousKeypointTask 
-                    taskName={this.timeline.tasks[this.state.curr_task].name}
-                    key={this.state.curr_task} 
-                    submitting={this.state.submittingTask}
-                    onSubmit={this.handleTaskSubmit.bind(this)} 
-                    ref={this.annotToolRef}
-                    {...props}/>
-
-                return <div className="tool-container" ref={this.container}>
-                    <Row>
-                        <Col span={24}>
-                            <Menu onClick={this.handleMenuClick.bind(this)} mode="horizontal" theme="dark">
-                                <Menu.Item key="instructions" icon={<BarsOutlined />}>
-                                    Instructions
-                                </Menu.Item>
-                                <Menu.Item key="gallery" icon={<PictureOutlined />}>
-                                    Gallery
-                                </Menu.Item>
-                            </Menu>
-                            <Collapsible open={this.state.galleryOpen}>
-                                <img src={this.timeline.media.gallery_url} className={"gallery-img"} />
-                            </Collapsible>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col span={20}>
-                            {task}
-                        </Col>
-                        <Col span={4}>
-                            {sidebar}
-                        </Col>
-                    </Row>
-                </div>
-            default:
-                return
-
-        }
+        return <div className="tool-container" ref={this.container}>
+            <Row>
+                <Col span={24}>
+                    <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark">
+                        <Menu.Item key="instructions" icon={<BarsOutlined />}>
+                            Instructions
+                        </Menu.Item>
+                        <Menu.Item key="gallery" icon={<PictureOutlined />}>
+                            Gallery
+                        </Menu.Item>
+                    </Menu>
+                    <Collapsible open={this.state.galleryOpen}>
+                        <img src={this.props.media.gallery_url} className={"gallery-img"} />
+                    </Collapsible>
+                </Col>
+            </Row>
+            <Row>
+                <Col span={20}>
+                    {task}
+                </Col>
+                <Col span={4}>
+                    {sidebar}
+                </Col>
+            </Row>
+            <Modal
+                title="Error"
+                visible={this.state.errorModal.visible}
+                confirmLoading={this.state.errorModal.loading}
+                onOk={this.handleErrorOk}
+                onCancel={this.handleErrorCancel}
+                cancelButtonProps={{ disabled: true }}
+                okButtonProps={{}}
+            >
+                <p>{this.state.errorModal.message}</p>
+            </Modal>
+        </div>
     }
 }
 
-const ContinuousAnnotationWithRouter = withRouter(ContinuousAnnotationTool);
-
-export { ContinuousAnnotationWithRouter }
+export default Annotation

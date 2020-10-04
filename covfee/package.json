@@ -18,6 +18,7 @@
     "@types/video.js": "^7.3.11",
     "awesome-typescript-loader": "^5.2.1",
     "babel-loader": "^8.1.0",
+    "babel-plugin-typescript-to-proptypes": "^1.4.1",
     "css-loader": "^3.6.0",
     "docz": "^2.3.1",
     "raw-loader": "^4.0.1",

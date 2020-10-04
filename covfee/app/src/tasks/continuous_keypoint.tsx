@@ -7,15 +7,13 @@ import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined } from '@ant-de
 import OpencvFlowPlayer from 'Players/opencv'
 import '../css/gui.css'
 import MouseTracker from 'Input/mouse_tracker'
-import { EventBuffer } from '../buffer'
 import classNames from 'classnames'
 
 interface Props {
     taskName: string,
-    numSubmissions: number,
-    url: string
     media: object,
-    onSubmit: Function
+    onSubmit: Function,
+    buffer: Function
 }
 interface State {
     paused: boolean,
@@ -29,11 +27,6 @@ interface State {
         visible: boolean,
         submitted: boolean,
         submitting: boolean
-    },
-    errorModal: {
-        visible: boolean,
-        message: string,
-        loading: boolean
     },
     reverseCount: {
         visible: boolean,
@@ -54,11 +47,6 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
             submitted: false,
             submitting: false,
         },
-        errorModal: {
-            visible: false,
-            message: '',
-            loading: false
-        },
         reverseCount: {
             visible: false,
             count: 0
@@ -67,28 +55,25 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
     private playbackRates = [1/8, 1/7, 1/6, 1/5, 1/4, 1/3, 1/2, 1, 2, 3, 4]
     private player = React.createRef<OpencvFlowPlayer>()
     private tracker = React.createRef<MouseTracker>()
-    private buffer: EventBuffer
     private mouse = [0,0]
     private mouse_normalized = [0,0]
     private reverseCountTimerId: number = null
 
-    componentDidMount() {
-        this.startKeyboardListen()
+    constructor(props: Props) {
+        super(props)
 
-        this.setState({
+        this.state = {
+            ...this.state,
             overlay: { 
                 ...this.state.overlay, 
-                visible: (this.props.numSubmissions > 0), 
-                submitted: (this.props.numSubmissions > 0)
+                visible: (props.numSubmissions > 0), 
+                submitted: (props.numSubmissions > 0)
             }
-        })
+        }
+    }
 
-        this.buffer = new EventBuffer(
-            2000,
-            this.props.url + '/chunk',
-            this.props.numSubmissions,
-            this.handleBufferError
-        )
+    componentDidMount() {
+        this.startKeyboardListen()
     }
 
     componentWillUnmount() {
@@ -104,27 +89,27 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
         switch (e.key) {
             case 'ArrowRight':
                 this.setState({ playbackRateIdx: Math.min(this.state.playbackRateIdx+1, this.playbackRates.length-1) })
-                this.buffer.data(this.player.current.currentFrame(), ['speedup', this.playbackRates[this.state.playbackRateIdx]])
+                this.props.buffer(this.player.current.currentFrame(), ['speedup', this.playbackRates[this.state.playbackRateIdx]])
                 break
             case 'ArrowLeft':
                 this.setState({ playbackRateIdx: Math.max(this.state.playbackRateIdx-1, 0) })
-                this.buffer.data(this.player.current.currentFrame(), ['speeddown', this.playbackRates[this.state.playbackRateIdx]])
+                this.props.buffer(this.player.current.currentFrame(), ['speeddown', this.playbackRates[this.state.playbackRateIdx]])
                 break
             case ' ':
                 e.preventDefault()
-                if (this.state.paused) this.buffer.data(this.player.current.currentFrame(), ['play'])
-                else this.buffer.data(this.player.current.currentFrame(), ['pause'])
+                if (this.state.paused) this.props.buffer(this.player.current.currentFrame(), ['play'])
+                else this.props.buffer(this.player.current.currentFrame(), ['pause'])
                 this.togglePlayPause()
                 break
             case 'x': // => go back 2s
                 const t1 = Math.max(0, this.player.current.currentTime() - 2)
                 this.goto(t1)
-                this.buffer.data(this.player.current.currentFrame(), ['back2s'])
+                this.props.buffer(this.player.current.currentFrame(), ['back2s'])
                 break
             case 'c': // => go back 10s
                 const t2 = Math.max(0, this.player.current.currentTime() - 10)
                 this.goto(t2)
-                this.buffer.data(this.player.current.currentFrame(), ['back10s'])
+                this.props.buffer(this.player.current.currentFrame(), ['back10s'])
                 break
             case 'z': // occluded
                 this.toggleOcclusion()
@@ -189,11 +174,11 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
         }
     }
 
-    public startKeyboardListen = () => {
+    startKeyboardListen = () => {
         document.addEventListener("keydown", this.handleKeydown, false)
     }
 
-    public stopKeyboardListen = () => {
+    stopKeyboardListen = () => {
         document.removeEventListener("keydown", this.handleKeydown, false)
     }
 
@@ -218,7 +203,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
     }
 
     handleFrame = (frame: number) => {
-        this.buffer.data(
+        this.props.buffer(
             frame,
             [...this.mouse_normalized, this.state.mouse_valid ? 1 : 0, this.state.occluded ? 1 : 0]
         )
@@ -241,44 +226,21 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
             submitting: true 
         }})
 
-        this.buffer.attemptBufferSubmit(true)
-
-        this.buffer.awaitQueueClear(3000).then(()=>{
-            const url = this.props.url + '/submit'
-            const requestOptions = {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 'sucess': true })
-            }
-
-            return fetch(url, requestOptions)
-                .then(async response => {
-                    const data = await response.json()
-
-                    // check for error response
-                    if (!response.ok) {
-                        // get error message from body or default to response status
-                        const error = (data && data.message) || response.status
-                    }
-
-                    this.props.onSubmit(data)
-                    this.setState({ overlay: {
-                        ...this.state.overlay,
-                        submitting: false,
-                        submitted: true
-                    }})
-                })
-                .catch(error => {
-                    return Promise.reject(error)
-                })
-        }).catch((error)=>{
+        this.props.onSubmit({ success: true }).then(() => {
+            this.setState({
+                overlay: {
+                    ...this.state.overlay,
+                    submitting: false,
+                    submitted: true
+                }
+            })
+        }).catch((error) => {
             this.setState({
                 overlay: {
                     ...this.state.overlay,
                     submitting: false
                 }
             })
-            console.error('There was an error submitting the task!', error)
         })
     }
 
@@ -318,43 +280,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
         return true
     }
 
-    handleBufferError = (msg: string) => {
-        this.handlePausePlay(true)
-        this.setState({
-            errorModal: {
-                ...this.state.errorModal,
-                visible: true,
-                message: msg
-            }
-        })
-    }
-
-    handleErrorOk = () => {
-        const modalMessage = 'Attempting to submit. The window will be closed if successful.'
-        this.setState({
-            errorModal: {
-                visible: true,
-                message: modalMessage,
-                loading: true
-            }
-        })
-
-        this.buffer.attemptBufferSubmit()
-        this.buffer.awaitQueueClear(5000).then(() => {
-            this.setState({ errorModal: { ...this.state.errorModal, visible: false, loading: false } })
-        }).catch(()=>{
-            this.setState({ errorModal: {
-                visible: true,
-                message: modalMessage + ' Unable to send the data. Please communicate with the organizers if the problems persist.', 
-                loading: false } })
-        })
-    }
-
-    handleErrorCancel = () => {
-        this.setState({ errorModal: {
-            ...this.state.errorModal,
-             visible: false } })
-    }
+    
 
     render() {
         const playerOptions = {
@@ -410,17 +336,6 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
                     onFrame={this.handleFrame}>
                 </OpencvFlowPlayer>
             </MouseTracker>
-            <Modal
-                title="Error"
-                visible={this.state.errorModal.visible}
-                confirmLoading={this.state.errorModal.loading}
-                onOk={this.handleErrorOk}
-                onCancel={this.handleErrorCancel}
-                cancelButtonProps={{ disabled: true }}
-                okButtonProps={{}}
-            >
-                <p>{this.state.errorModal.message}</p>
-            </Modal>
         </>
     }
 }

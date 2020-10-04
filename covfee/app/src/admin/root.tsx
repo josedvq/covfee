@@ -2,7 +2,6 @@ import * as React from 'react'
 import {
     Layout,
     Menu,
-    Breadcrumb,
     Typography
 } from 'antd'
 import 'antd/dist/antd.css'
@@ -14,12 +13,15 @@ import {
     Switch,
     Route,
     Link,
-    useRouteMatch,
-    useParams
 } from "react-router-dom"
 
 const { SubMenu } = Menu;
 const { Header, Footer, Content, Sider } = Layout;
+
+import UserContext from '../user'
+import AdminProject from './project'
+import AdminHIT from './hit'
+import AdminHeader from './header'
 
 class Root extends React.Component {
     state: any
@@ -33,24 +35,29 @@ class Root extends React.Component {
 
     render() {
         return <Router>
-            <Layout>
-                <Header className="header">
-                    <div className="logo" />
-                    <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['2']}>
-                        <Menu.Item key="1" disabled><Link to="/">covfee</Link></Menu.Item>
-                    </Menu>
-                </Header>
+            <UserContext>
                 <Layout>
-                    <Switch>
-                        
-                    </Switch>
+                    <AdminHeader/>
+                    <Layout>
+                        <Switch>
+                            <Route path="/">
+                                <AdminProject />
+                            </Route>
+                            <Route path="/projects/:projectId">
+                                <AdminProject />
+                            </Route>
+                            <Route path="/timelines/:timelineId">
+                                <AdminHIT />
+                            </Route>
+                        </Switch>
+                    </Layout>
+                    <Footer>
+                        <Text style={{ float: 'right' }}>
+                            <a href="https://github.com/josedvq/covfee">covfee</a>
+                        </Text>
+                    </Footer>
                 </Layout>
-                <Footer>
-                    <Text style={{ float: 'right' }}>
-                        Experiment developed with <a href="https://github.com/josedvq/covfee">covfee</a>
-                    </Text>
-                </Footer>
-            </Layout>
+            </UserContext>
         </Router>
     }
 }
