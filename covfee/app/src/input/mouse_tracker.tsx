@@ -8,14 +8,6 @@ class MouseTracker extends React.Component {
 
     private resolution: Array<number>
 
-    constructor(props: object) {
-        super(props)
-        this.handleMouseMove = this.handleMouseMove.bind(this)
-        this.handleMouseOver = this.handleMouseOver.bind(this)
-        this.handleMouseOut = this.handleMouseOut.bind(this)
-        this.handleResize = this.handleResize.bind(this)
-    }
-
     componentDidMount() {
         this.container.current.addEventListener('mouseover', this.handleMouseOver)
         this.container.current.addEventListener('mouseout', this.handleMouseOut)
@@ -37,11 +29,11 @@ class MouseTracker extends React.Component {
         window.removeEventListener('resize', this.handleResize)
     }
 
-    handleResize(e: Event) {
+    handleResize = (e: Event) => {
         this.resolution = [this.container.current.offsetWidth, this.container.current.offsetHeight]
     }
 
-    handleMouseMove(e: Event) {
+    handleMouseMove = (e: MouseEvent) => {
         const data = [
             e.offsetX / this.resolution[0],
             e.offsetY / this.resolution[1]
@@ -49,24 +41,24 @@ class MouseTracker extends React.Component {
         this.props.onData(data, e)
     }
 
-    handleMouseOver(e: Event) {
+    handleMouseOver = (e: Event) => {
         this.props.onMouseActiveChange(true)
     }
 
-    handleMouseOut(e: Event) {
+    handleMouseOut = (e: Event) => {
         this.props.onMouseActiveChange(false)
     }
 
-    public start() {
+    start() {
         this.resolution = [this.container.current.offsetWidth, this.container.current.offsetHeight]
         this.container.current.addEventListener('mousemove', this.handleMouseMove)
     }
 
-    public stop() {
+    stop() {
         this.container.current.removeEventListener('mousemove', this.handleMouseMove)
     }
 
-    public getContainer() {
+    getContainer() {
         return this.container.current
     }
 
@@ -86,4 +78,4 @@ class MouseTracker extends React.Component {
     }
 }
 
-export default MouseTracker;
+export default MouseTracker

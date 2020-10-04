@@ -3,7 +3,7 @@
     "email": "j.d.vargasquiros@tudelft.nl",
     "timelines": [
         {
-            "type": "annotator",
+            "type": "annotation",
             "repeat": 10,
             "media": {
                 "type": "video",

@@ -1,6 +1,7 @@
 import * as React from 'react'
 import userContext from './userContext'
 const Constants = require('./constants.json')
+import { fetcher, throwBadResponse, getCookieValue} from './utils'
 
 interface LoginInfo {
     username: string,
@@ -23,26 +24,53 @@ class UserContext extends React.Component<Props, UserState> {
         loginTime: null
     }
 
-    refreshPromise: Promise<void>
+    refreshPromise: Promise<Response>
+    timeoutId: number
 
     constructor(props: Props) {
         super(props)
+        const ls = JSON.parse(localStorage.getItem('user'))
+        if (ls != null) {
+            this.state = {
+                username: ls.username,
+                loginTime: ls.loginTime,
+                logged: true
+            }
+        }
+    }
+
+    scheduleRefresh = (minutes: number = 10) => {
+        this.timeoutId = setTimeout(()=>{
+            this.refresh()
+            this.scheduleRefresh(10)
+        }, 1000 * 60 * minutes) // 10 minutes
     }
 
     componentDidMount() {
         // read user info from localStorage
         const ls = JSON.parse(localStorage.getItem('user'))
         if (ls != null) {
-            // request a refresh token
+            // user is probably logged in, refresh JWT
             this.refreshPromise = this.refresh()
-            this.refreshPromise.then(() => {
-                this.setState({
-                    logged: true,
-                    username: ls.username,
-                    loginTime: ls.loginTime
-                })
-            }).catch(console.error)
+            this.refreshPromise.then(response=>{
+                if (!response.ok) {
+                    // user has been logged out
+                    this.state = {
+                        username: null,
+                        loginTime: null,
+                        logged: false
+                    }
+                    localStorage.removeItem('user')
+                }
+                // user is logged in
+                // refresh every 10 mins
+                this.scheduleRefresh(10)
+            }).catch(()=>{
+                // error reaching the server, try again later
+                this.scheduleRefresh(1)
+            })
         } else {
+            // user is not logged in
             this.refreshPromise = Promise.resolve()
         }
     }
@@ -55,12 +83,8 @@ class UserContext extends React.Component<Props, UserState> {
             body: JSON.stringify(info)
         }
 
-        let res = fetch(url, requestOptions).then((response) => {
-            if (!response.ok) {
-                throw Error(response.statusText)
-            }
-            return response.json()
-        })
+        let res = fetcher(url, requestOptions)
+            .then(throwBadResponse)
 
         res
         .then(data=>{
@@ -83,30 +107,29 @@ class UserContext extends React.Component<Props, UserState> {
 
     private refresh = () => {
         const url = Constants.auth_url + '/refresh'
-        const requestOptions = {
+        let options = {
             method: 'POST'
         }
 
-        return fetch(url, requestOptions).then((response) => {
-            if (!response.ok) {
-                throw Error(response.statusText)
+        // add the CSRF token
+        const cookie = getCookieValue('csrf_refresh_token')
+        if (cookie != null) {
+            options.headers = {
+                'X-CSRF-TOKEN': cookie
             }
-            return response.json()
-        })
+        }
+
+        return fetch(url, options)
     }
 
-    public logout = (info: LoginInfo) => {
+    public logout = () => {
         const url = Constants.auth_url + '/logout'
         const requestOptions = {
             method: 'POST'
         }
 
-        let p = fetch(url, requestOptions).then((response) => {
-            if (!response.ok) {
-                throw Error(response.statusText)
-            }
-            return response.json()
-        })
+        let p = fetch(url, requestOptions)
+            .then(throwBadResponse)
         
         p.then(()=>{
             localStorage.removeItem('user')

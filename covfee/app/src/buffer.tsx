@@ -1,34 +1,32 @@
 class EventBuffer {
     public numBuffers = 0 // num of filled buffers
-    private queue = [{status: 'filling', buffer: []}]
+    public queue = [{status: 'filling', buffer: []}]
 
     private currBuffer = 0
 
     private size: number
     private url: string
-    private submission: number
     private onError: any
 
-    constructor(size: number, url: string, submission: number, onError: any) {
+    constructor(size: number, url: string, onError: any) {
+        this.queue = [{ status: 'filling', buffer: [] }]
         this.size = size
         this.url = url
-        this.submission = submission
         this.onError = onError
     }
 
-    private moveToNextBuffer() {
+    moveToNextBuffer = () => {
         this.queue[this.currBuffer].status = 'filled'
         this.queue.push({ status: 'filling', buffer: [] })
         this.currBuffer += 1
     }
 
-    private submitBuffer(idx: number) {
+    submitBuffer = (idx: number) => {
         this.queue[idx].status = 'submitting'
-        // console.log({ index: idx, data: this.queue[idx].buffer })
         const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ index: idx, submission: this.submission, data: this.queue[idx].buffer})
+            body: JSON.stringify({ index: idx, data: this.queue[idx].buffer})
         }
         Promise.race([
             fetch(this.url, requestOptions),
@@ -54,7 +52,7 @@ class EventBuffer {
         })
     }   
 
-    public attemptBufferSubmit(flush = false) {
+    attemptBufferSubmit = (flush = false) => {
         const statusToSubmit = ['filled', 'error']
         if (flush) statusToSubmit.push('filling')
         for (let i = 0; i < this.queue.length; i++) {
@@ -66,7 +64,7 @@ class EventBuffer {
         }
     }
 
-    public async awaitQueueClear(timeout: number) {
+    awaitQueueClear = async (timeout: number) => {
         return Promise.race([
             new Promise((resolve, reject)=>{
                 window.setInterval(() => {
@@ -84,7 +82,7 @@ class EventBuffer {
         ])
     }
 
-    private handleBufferFilled() {
+    handleBufferFilled = () => {
         // move the pointer to the next buffer
         this.moveToNextBuffer()
 
@@ -92,7 +90,6 @@ class EventBuffer {
 
         let numNonSubmittedBuffers = 0
         this.queue.forEach((elem)=>{
-            console.log(elem)
             if (elem !== undefined) numNonSubmittedBuffers += 1
         })
 
@@ -101,13 +98,12 @@ class EventBuffer {
         }
     }
 
-    public data(timestamp:number, data: Array<any>) {
+    data = (timestamp:number, data: Array<any>) => {
         let payload = [2,
             Date.now(),
             timestamp,
             ...data
         ]
-        console.log(payload)
         this.queue[this.currBuffer].buffer.push(payload)
         if(this.queue[this.currBuffer].buffer.length == this.size) {
             this.handleBufferFilled()

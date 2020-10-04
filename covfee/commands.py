@@ -5,7 +5,7 @@ import json
 
 import click
 
-from covfee.orm import app, db, Project, Timeline, Task, Chunk, User
+from covfee.orm import app, db, Project, HIT, Task, Chunk, User
 
 # DATABASE CREATION
 def create_tables():
@@ -21,11 +21,11 @@ def prepare():
 
     # create a JSON file with constants for the front-end
     app_constants = {
+        'app_url': app.config['APP_URL'],
+        'admin_url': app.config['ADMIN_URL'],
         'api_url': app.config['API_URL'],
-        'auth_url': app.config['AUTH_URL'],
-        'admin_url': app.config['ADMIN_URL']
+        'auth_url': app.config['AUTH_URL']    
     }
-    print(app_constants)
     constants_path = os.path.join(covfee_path, 'app/src/constants.json')
     json.dump(app_constants, open(constants_path, 'w'), indent=2)
 
@@ -60,13 +60,13 @@ def make_db(force, json, save):
         except OSError:
             pass
     create_tables()
-    project, project_dict = Project.from_json(json)
+    project = Project.from_json(json)
     db.session.add(project)
     db.session.commit()
     print(project.info())
 
-    if save is not None:
-        json.dump(project_dict, open(save, 'w'), indent=2)
+    # if save is not None:
+    #     json.dump(project_dict, open(save, 'w'), indent=2)
 
 @click.command()
 def make_user():
