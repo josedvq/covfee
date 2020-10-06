@@ -19,6 +19,9 @@ STATIC_URL = f'{BASE_URL}/static'
 MEDIA_PATH = os.path.join(os.getcwd(), 'media')
 MEDIA_URL = f'{BASE_URL}/media'
 
+# for temporary (download) files
+TMP_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'tmp')
+
 # database configurations
 DATABASE_PATH = f'{os.path.join(os.getcwd(), "database.covfee.db")}'
 SQLALCHEMY_DATABASE_URI = f'sqlite:///{DATABASE_PATH}'

@@ -171,6 +171,6 @@ class HIT extends React.Component<any, HITState> {
     }
 }
 
-const HITWithRouter = withRouter(HIT);
+const HITWithRouter = withRouter(HIT)
 
 export { HITSpec, HITWithRouter}

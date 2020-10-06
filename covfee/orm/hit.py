@@ -1,6 +1,10 @@
+import shutil
+import os
+
 from .orm import db, app
 from .task import Task
 from hashlib import sha256
+from .task import TaskResponse
 
 hits_tasks = db.Table('hits_tasks',
     db.Column('hit_id', db.Integer, db.ForeignKey('hits.id'), primary_key=True),
@@ -64,13 +68,18 @@ class HIT(db.Model):
             instances=instances,
             submitted=False)
 
-    def as_dict(self, with_project=True, with_tasks=False):
+    def as_dict(self, with_project=True, with_tasks=False, with_instances=False, with_instance_tasks=False):
         hit_dict = {c.name: getattr(self, c.name)
                     for c in self.__table__.columns}
+        hit_dict['id'] = hit_dict['id'].hex()
+
         if with_tasks:
             hit_dict['tasks'] = {task.id: task.as_dict()
                                  for task in self.tasks}
-        hit_dict['id'] = hit_dict['id'].hex()
+
+        if with_instances:
+            hit_dict['instances'] = [instance.as_dict(
+                with_tasks=with_instance_tasks) for instance in self.instances]
 
         if with_project:
             hit_dict['project'] = self.project.as_dict()
@@ -98,8 +107,8 @@ class HITInstance(db.Model):
 
     id = db.Column(db.Binary, primary_key=True)
     hit_id = db.Column(db.Integer, db.ForeignKey('hits.id'))
-    tasks = db.relationship(
-        "Task", secondary=hitistances_tasks, backref='hitinstance')
+    tasks = db.relationship("Task", secondary=hitistances_tasks, backref='hitinstance')
+    responses = db.relationship("TaskResponse", backref='hitinstance', lazy='dynamic')
     submitted = db.Column(db.Boolean)
 
     def __init__(self, id, tasks, submitted=False):
@@ -127,10 +136,10 @@ class HITInstance(db.Model):
             tasks=tasks
         )
 
-    def as_dict(self, with_tasks=False):
+    def as_dict(self, with_tasks=False, with_responses=False):
         instance_dict = {c.name: getattr(self, c.name)
                          for c in self.__table__.columns}
-        hit_dict = self.hit.as_dict()
+        hit_dict = self.hit.as_dict(with_tasks=with_tasks)
         instance_dict['id'] = instance_dict['id'].hex()
         instance_dict['hit_id'] = instance_dict['hit_id'].hex()
 
@@ -138,11 +147,38 @@ class HITInstance(db.Model):
         instance_dict = {**hit_dict, **instance_dict}
 
         if with_tasks:
-            instance_dict['tasks'] = {task.id: task.as_dict()
-                                      for task in self.tasks}
+            # join instance and HIT tasks
+
+            instance_tasks = {task.id: task.as_dict() for task in self.tasks}
+            instance_dict['tasks'] = {**instance_tasks, **hit_dict['tasks']}
+
+            if with_responses:
+                for task_id, task in instance_dict['tasks'].items():
+                    # query the latest response
+                    lastResponse = self.responses.filter_by(
+                        task_id=task_id).order_by(TaskResponse.index.desc()).first()
+                    if lastResponse is None:
+                        instance_dict['tasks'][task_id]['response'] = None
+                    else:
+                        instance_dict['tasks'][task_id]['response'] = lastResponse.as_dict()
 
         if self.submitted:
             instance_dict['completion_code'] = sha256(
                 (self.id.hex() + app.config['COVFEE_SALT']).encode()).digest().hex()[:12]
 
         return instance_dict
+
+    def make_json_download(self):
+        # create a folder to store all the files
+        dirpath = os.path.join(app.config['TMP_PATH'], self.id.hex())
+        if os.path.exists(dirpath) and os.path.isdir(dirpath):
+            shutil.rmtree(dirpath)
+
+        os.mkdir(dirpath)
+
+        # go over all responses to this HIT instance
+        for response in self.responses:
+            response.write_json(dirpath)
+
+        shutil.make_archive(os.path.join(app.config['TMP_PATH'], 'download'), 'zip', dirpath)
+

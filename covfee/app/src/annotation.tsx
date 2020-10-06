@@ -5,7 +5,7 @@ import {
     CheckCircleOutlined,
     BarsOutlined,
     PictureOutlined,
-    PlusCircleOutlined
+    PlusCircleOutlined, LoadingOutlined
 } from '@ant-design/icons'
 import {
     Row,
@@ -22,7 +22,7 @@ const { Text, Title, Link } = Typography
 import ContinuousKeypointTask from './tasks/continuous_keypoint'
 import classNames from 'classnames'
 const Constants = require('./constants.json')
-import {throwBadResponse} from './utils'
+import {fetcher, throwBadResponse} from './utils'
 import { TaskSpec } from 'Tasks/task'
 import { EventBuffer } from './buffer';
 
@@ -151,6 +151,7 @@ interface AnnotationProps {
 
 interface AnnotationState {
     currTask: string,
+    loadingTask: boolean,
     error: string,
     completionCode: string,
     sidebar: {
@@ -163,11 +164,22 @@ interface AnnotationState {
         visible: boolean,
         message: string,
         loading: boolean
-    }
+    },
+    overlay: {
+        visible: boolean,
+        submitted: boolean,
+        submitting: boolean
+    },
+    replay: {
+        dataIndex: number,
+        enabled: boolean
+    },
+    currKey: number
 }
 class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     state:AnnotationState = {
         currTask: '0',
+        loadingTask: true,
         error: null,
         completionCode: null,
         sidebar: {
@@ -180,31 +192,44 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             visible: false,
             message: '',
             loading: false
-        }
+        },
+        overlay: {
+            visible: false,
+            submitted: false,
+            submitting: false,
+        },
+        replay: {
+            enabled: false,
+            dataIndex: 0
+        },
+        currKey: 0 // for re-mounting components
     }
     url: string
     tasks: { [key: string]: TaskSpec}
     buffer: EventBuffer
     container = React.createRef<HTMLDivElement>()
-    annotToolRef = React.createRef<ContinuousKeypointTask>()
+    taskRef = React.createRef<ContinuousKeypointTask>()
+
+    replayIndex = 0
 
     constructor(props: AnnotationProps) {
         super(props)
         // copy props into tasks
         this.url = Constants.api_url + '/instances/' + this.props.id
         this.tasks = this.props.tasks
+        
         this.state = {
             ...this.state,
-            currTask: Object.keys(this.tasks)[0],
             sidebar: {
                 taskIds: Object.keys(this.tasks)
             }
-        }
-        this.startNewBuffer()        
+        }        
     }
 
     componentDidMount() {
         document.addEventListener("keydown", this.handleKeydown, false)
+        const taskId = Object.keys(this.tasks)[0]
+        this.handleChangeActiveTask(taskId)
     }
 
     componentWillUnmount() {
@@ -232,12 +257,103 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         }
     }
 
-    handleTaskSubmit = (taskResult: any) => {
-        // first send all the chunks in the buffer
-        this.buffer.attemptBufferSubmit(true)
+    handleChangeActiveTask = (taskId: string) => {
+        
+        // IMPORTANT: order matters here
+        // buffer must be created before the render triggered by setState
+        this.startNewBuffer(taskId)
+        this.replayIndex = 0
+        // if the task has previous responses, query them
+        if(this.tasks[taskId].response != null) {
+            this.setState({ loadingTask: true })
+            const url = this.url + '/tasks/' + taskId + '/responses?' + new URLSearchParams({
+                'with_chunk_data': '1'
+            })
+            fetcher(url)
+                .then(throwBadResponse)
+                .then((data) => {
+                    this.tasks[taskId].response = data
+                    this.setState({ 
+                        loadingTask: false, 
+                        currTask: taskId,
+                        overlay: {
+                            ...this.state.overlay,
+                            visible: (this.tasks[taskId].response != null),
+                            submitted: (this.tasks[taskId].response != null)
+                        },
+                        currKey: this.state.currKey + 1
+                    })
+                    
+                }).catch(error => {
+                    console.error('There was an error querying for data!', error)
+                })
+        } else {
+            this.setState({
+                currTask: taskId,
+                overlay: {
+                    ...this.state.overlay,
+                    visible: false,
+                    submitted: false
+                },
+                currKey: this.state.currKey + 1
+            })
+        }   
+    }
 
-        // then submit the task
-        return this.buffer.awaitQueueClear(3000).then(() => {
+    startNewBuffer = (taskId: string) => {
+        // const taskId = this.tasks[this.state.currTask].id
+        this.buffer = new EventBuffer(
+            2000,
+            this.url + '/tasks/' + taskId + '/chunk',
+            this.handleBufferError)
+    }
+    
+
+    // Overlay actions
+    handleTaskReplay = () => {
+        this.setState({
+            overlay: {
+                ...this.state.overlay,
+                visible: false
+            },
+            replay: {
+                ...this.state.replay,
+                enabled: true
+            },
+            currKey: this.state.currKey + 1
+        }, () => {
+            this.replayIndex = 0
+            // this.taskRef.current.replay()
+        })
+    }
+
+    handleTaskRedo = () => {
+        this.startNewBuffer(this.state.currTask)
+        this.setState({
+            overlay: {
+                ...this.state.overlay,
+                visible: false
+            },
+            replay: {
+                ...this.state.replay,
+                enabled: false
+            },
+            currKey: this.state.currKey + 1
+        }, () => {
+            // this.taskRef.current.redo()
+        })
+    }
+
+    handleTaskSubmit = (taskResult: any) => {
+        this.setState({
+            overlay: {
+                ...this.state.overlay,
+                submitting: true
+            }
+        })
+        // wait for the buffer queue to be sent
+        this.buffer.attemptBufferSubmit(true)
+        this.buffer.awaitQueueClear(3000).then(() => {
             const url = this.url + '/tasks/' + this.tasks[this.state.currTask].id + '/submit'
             const requestOptions = {
                 method: 'POST',
@@ -245,28 +361,36 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                 body: JSON.stringify(taskResult)
             }
 
-            return fetch(url, requestOptions)
-                .then(throwBadResponse)
-                .then((data)=>{
-                    this.tasks[data.id] = data
-                }).catch(error=>{
-                    console.error('There was an error submitting the task!', error)
-                })
+            // now send the task results
+            return fetch(url, requestOptions)   
+        }).then(throwBadResponse)
+        .then((data) => {
+            this.setState({
+                overlay: {
+                    ...this.state.overlay,
+                    submitting: false,
+                    submitted: true
+                }
+            })
+        }).catch((error) => {
+            console.error('There was an error submitting the task!', error)
+            this.setState({
+                overlay: {
+                    ...this.state.overlay,
+                    submitting: false
+                }
+            })
         })
     }
 
-    handleChangeActiveTask = (taskId: string) => {
+    handleTaskEnd = () => {
         this.setState({
-            currTask: taskId
-        }, this.startNewBuffer)
-    }
-
-    startNewBuffer = () => {
-        const taskId = this.tasks[this.state.currTask].id
-        this.buffer = new EventBuffer(
-            2000,
-            this.url + '/tasks/' + taskId + '/chunk',
-            this.handleBufferError)
+            overlay: {
+                visible: true,
+                submitted: false,
+                submitting: false
+            }
+        })
     }
 
     handleSubmitNewTaskName = (taskId: string, name: string, cb: Function) => {
@@ -276,7 +400,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             const requestOptions = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'ContinuousKeypointAnnotationTask', name: name })
+                body: JSON.stringify({ type: 'ContinuousKeypointTask', name: name })
             }
 
             fetch(url, requestOptions)
@@ -334,14 +458,15 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     }
 
     handleInputFocus = (focus: boolean) => {
-        if(focus) this.annotToolRef.current.stopKeyboardListen()
-        else this.annotToolRef.current.startKeyboardListen()
+        if(focus) this.taskRef.current.stopKeyboardListen()
+        else this.taskRef.current.startKeyboardListen()
     }
 
     handleMenuClick = (e: object) => {
         if (e.key == 'gallery') this.setState({galleryOpen: !this.state.galleryOpen})
     }
 
+    // Buffer error handling
     handleBufferError = (msg: string) => {
         this.handlePausePlay(true)
         this.setState({
@@ -386,6 +511,25 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         })
     }
 
+    // replay logic
+    getNextReplayAction = () => {
+        this.replayIndex += 1
+        return this.getCurrReplayAction()
+    }
+
+    getCurrReplayAction = () => {
+        const response = this.tasks[this.state.currTask].response
+        if (response == null ||
+            response.chunk_data == null) {
+            return null
+        }
+
+        if (this.replayIndex < response.chunk_data.length)
+            return response.chunk_data[this.replayIndex]
+        else
+            return null
+    }
+
     render() {
         const tasks = this.state.sidebar.taskIds.map(taskId => this.tasks[taskId])
         const sidebar = <TaskGroup 
@@ -396,16 +540,35 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             onChangeActiveTask={this.handleChangeActiveTask}
             onSubmitNewTaskName={this.handleSubmitNewTaskName} />
 
-        let props = this.tasks[this.state.currTask]
-        props.url = this.url + '/tasks/' + props.id
-        props.media = this.props.media
-        let task = <ContinuousKeypointTask 
-            taskName={this.tasks[this.state.currTask].name}
-            buffer={this.buffer.data}
-            key={this.state.currTask} 
-            onSubmit={this.handleTaskSubmit} 
-            ref={this.annotToolRef}
-            {...props}/>
+        let task = null
+        if (this.state.loadingTask) {
+            task = <LoadingOutlined/>
+        } else {
+            let props = this.tasks[this.state.currTask]
+            props.url = this.url + '/tasks/' + props.id
+            props.media = this.props.media
+
+            task = <div className={classNames('task-container')}>
+                <div className={classNames('task-overlay', { 'task-overlay-off': !this.state.overlay.visible})}>
+                    <div className="task-overlay-nav">
+                        <Button onClick={this.handleTaskReplay}>Replay</Button>
+                        <Button onClick={this.handleTaskRedo}>Re-do</Button>
+                        <Button onClick={this.handleTaskSubmit} type="primary" disabled={this.state.overlay.submitted} loading={this.state.overlay.submitting}>Submit</Button>
+                    </div>
+                </div>
+                <ContinuousKeypointTask 
+                    taskName={this.tasks[this.state.currTask].name}
+                    replayMode={this.state.replay.enabled}
+                    getNextReplayAction={this.getNextReplayAction}
+                    getCurrReplayAction={this.getCurrReplayAction}
+                    buffer={this.buffer.data}
+                    key={this.state.currKey} 
+                    onEnd={this.handleTaskEnd} 
+                    ref={this.taskRef}
+                    {...props}/>
+            </div>
+            
+        }
 
         return <div className="tool-container" ref={this.container}>
             <Row>
