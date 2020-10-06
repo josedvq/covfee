@@ -23,11 +23,11 @@
             },
             "tasks": [
                 {
-                    "type": "ContinuousKeypointAnnotationTask",
+                    "type": "ContinuousKeypointTask",
                     "name": "p1_hands"
                 },
                 {
-                    "type": "ContinuousKeypointAnnotationTask",
+                    "type": "ContinuousKeypointTask",
                     "name": "p1_shoulder"
                 }
             ]

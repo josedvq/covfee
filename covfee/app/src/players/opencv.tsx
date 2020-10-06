@@ -30,14 +30,14 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
 
     private req_id: any = false
     private timeout_id: any = false
+    private rect: DOMRectReadOnly
     private ratio: number = 0.5
     private delay: number = 0
     private frame: number = 0
-    private rect: DOMRect = null
 
     componentDidMount() {
 
-        function cv_init() {
+        const cv_init = () => {
             this.frame_flow = new cv.Mat(this.props.flow.res[1], this.props.flow.res[0], cv.CV_8UC4)
             this.myMean = new cv.Mat(1, 4, cv.CV_64F)
             this.myStddev = new cv.Mat(1, 4, cv.CV_64F)
@@ -46,12 +46,12 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
 
         // check if cv is already runtime-ready
         if (cv.Mat == undefined) {
-            cv['onRuntimeInitialized'] = cv_init.bind(this)
+            cv['onRuntimeInitialized'] = cv_init
         } else {
-            cv_init.bind(this)()
+            cv_init()
         }
 
-        // update rect and ratio when the resolution changes
+        // update the ratio of flow_res / video_res
         let observer = new ResizeObserver((entries) => {
             this.rect = entries[0].contentRect
             this.ratio = this.props.flow.res[0] / this.rect.width
@@ -76,9 +76,9 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
         }
     }
 
-    private processVideo() {
-        const mouse = this.props.getMousePosition()
-        if(mouse === undefined) {
+    processVideo = () => {
+        const mouse_normalized = this.props.getMousePosition()
+        if(mouse_normalized === undefined) {
             this.delay = 16
             this.flow_tag.current.seekToNextFrame().then(()=>{
                 this.video_tag.current.seekToNextFrame().then(()=>{
@@ -88,6 +88,7 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
             })
             
         } else {
+            const mouse = [mouse_normalized[0] * this.rect.width, mouse_normalized[0] * this.rect.height]
             // start processing.
             this.cap.read(this.frame_flow)
             const x1 = Math.max(0, mouse[0] * this.ratio - 10)
@@ -112,10 +113,10 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
     public play() {
         this.video_tag.current.onseeked = () => {
             this.timeout_id = window.setTimeout(() => {
-                this.req_id = window.requestAnimationFrame(this.processVideo.bind(this))
+                this.req_id = window.requestAnimationFrame(this.processVideo)
             }, Math.round(this.delay / this.props.rate))
         }
-        this.req_id = window.requestAnimationFrame(this.processVideo.bind(this))
+        this.req_id = window.requestAnimationFrame(this.processVideo)
     }
 
     public pause() {
@@ -130,7 +131,6 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
 
     public restart() {
         this.currentTime(0)
-        this.frame = 0
     }
 
     public currentTime(t?: number) {

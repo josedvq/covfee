@@ -1,4 +1,8 @@
+import json
+
 from .orm import db, app
+from .. import tasks
+import os
 
 class Task(db.Model):
     """ Represents a single task, like eg. annotating one video """
@@ -8,6 +12,7 @@ class Task(db.Model):
     type = db.Column(db.String)
     name = db.Column(db.String)
     props = db.Column(db.JSON)
+    responses = db.relationship("TaskResponse", backref='task')
     # backref hit
     # backref hitinstance
 
@@ -59,21 +64,41 @@ class TaskResponse(db.Model):
         self.data = data
         self.chunks = chunks
 
-    def as_dict(self):
+    def as_dict(self, with_chunk_data=False):
         response_dict = {c.name: getattr(self, c.name)
             for c in self.__table__.columns}
 
+        response_dict['hitinstance_id'] = response_dict['hitinstance_id'].hex()
+        if with_chunk_data:
+            response_dict['chunk_data'] = self.aggregate()
+
         return response_dict
+
+    def aggregate(self):
+        if hasattr(tasks, self.task.type):
+            task_class = getattr(tasks, self.task.type)
+            data = [chunk.data for chunk in self.chunks]
+            return task_class.aggregate_chunks(data)
+        else:
+            return None
+
+    def write_json(self, dirpath):
+        fpath = os.path.join(dirpath, f'{self.task.name}.json')
+        json.dump(self.data, open(fpath,'w'))
+
+
+db.Index('taskresponse_index', TaskResponse.task_id,
+      TaskResponse.hitinstance_id, TaskResponse.index)
 
 # represents a chunk of task response (for continuous responses)
 class Chunk(db.Model):
     """ Represents a chunk of or partial task response"""
     __tablename__ = 'chunks'
 
-    id = db.Column(db.Integer, primary_key=True)
     # for order-keeping of the chunks
-    index = db.Column(db.Integer)
-    taskresponse_id = db.Column(db.Integer, db.ForeignKey('taskresponses.id'))
+    index = db.Column(db.Integer, primary_key=True)
+    taskresponse_id = db.Column(db.Integer, db.ForeignKey(
+        'taskresponses.id'), primary_key=True)
     data = db.Column(db.JSON)
 
     def __init__(self, index, data, submission=None):

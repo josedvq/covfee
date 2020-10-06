@@ -1,20 +1,30 @@
 import * as React from 'react'
 import classNames from 'classnames'
 
-class MouseTracker extends React.Component {
+interface Props {
+    disable: boolean
+    paused: boolean
+    mouseActive: boolean
+    occluded: boolean
+    onData: Function
+    onMouseActiveChange: Function
+}
+class MouseTracker extends React.Component<Props> {
 
-    private container = React.createRef()
-    private videoBorder = React.createRef()
+    private container = React.createRef<HTMLDivElement>()
+    private videoBorder = React.createRef<HTMLDivElement>()
 
     private resolution: Array<number>
 
     componentDidMount() {
+        if(this.props.disable) return
+
         this.container.current.addEventListener('mouseover', this.handleMouseOver)
         this.container.current.addEventListener('mouseout', this.handleMouseOut)
         window.addEventListener('resize', this.handleResize)
     }
 
-    componentDidUpdate(prevProps: object) {
+    componentDidUpdate(prevProps: Props) {
         if (this.props.paused !== prevProps.paused) {
             if (this.props.paused) this.stop()
             else this.start()
@@ -50,6 +60,8 @@ class MouseTracker extends React.Component {
     }
 
     start() {
+        if(this.props.disable) return
+        
         this.resolution = [this.container.current.offsetWidth, this.container.current.offsetHeight]
         this.container.current.addEventListener('mousemove', this.handleMouseMove)
     }
@@ -69,7 +81,6 @@ class MouseTracker extends React.Component {
                 'mouse-tracker-active': this.props.mouseActive && !this.props.paused,
                 'mouse-tracker-occluded': this.props.mouseActive && !this.props.paused && this.props.occluded
                 })} ref={this.videoBorder}>
-
                 <div className='video-container' ref={this.container}>
                     {this.props.children}
                 </div>

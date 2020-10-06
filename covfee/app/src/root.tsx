@@ -36,12 +36,6 @@ class Root extends React.Component {
         return <Router>
             <UserContext>
                 <Layout>
-                    <Header className="header">
-                        <div className="logo" />
-                        <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['2']}>
-                            <Menu.Item key="1" disabled><Link to="/">covfee</Link></Menu.Item>
-                        </Menu>
-                    </Header>
                     <Layout>
                         <Switch>
                             <Route path="/about">

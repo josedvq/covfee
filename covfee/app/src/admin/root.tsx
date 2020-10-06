@@ -40,14 +40,14 @@ class Root extends React.Component {
                     <AdminHeader/>
                     <Layout>
                         <Switch>
-                            <Route path="/">
-                                <AdminProject />
+                            <Route path="/hits/:hitId">
+                                <AdminHIT />
                             </Route>
                             <Route path="/projects/:projectId">
                                 <AdminProject />
                             </Route>
-                            <Route path="/timelines/:timelineId">
-                                <AdminHIT />
+                            <Route path="/">
+                                <AdminProject />
                             </Route>
                         </Switch>
                     </Layout>

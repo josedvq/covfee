@@ -5,7 +5,6 @@ function getCookieValue(a: string) {
 
 function fetcher(input: RequestInfo, options?: RequestInit) {
     const cookie = getCookieValue('csrf_access_token')
-    console.log(cookie)
     const newOptions = { ...options}
     if(cookie != null) {
         newOptions.headers = {

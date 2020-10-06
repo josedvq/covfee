@@ -7,13 +7,17 @@ import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined } from '@ant-de
 import OpencvFlowPlayer from 'Players/opencv'
 import '../css/gui.css'
 import MouseTracker from 'Input/mouse_tracker'
+import MouseVisualizer from 'Input/mouse_visualizer'
 import classNames from 'classnames'
 
 interface Props {
     taskName: string,
-    media: object,
-    onSubmit: Function,
-    buffer: Function
+    media: any,
+    onEnd: Function, // should be called when the task ends
+    buffer: Function,
+    replayMode: boolean,
+    getCurrReplayAction: Function,
+    getNextReplayAction: Function
 }
 interface State {
     paused: boolean,
@@ -23,14 +27,12 @@ interface State {
     duration: number,
     currentTime: number,
     currentFrame: number,
-    overlay: {
-        visible: boolean,
-        submitted: boolean,
-        submitting: boolean
-    },
     reverseCount: {
         visible: boolean,
         count: number
+    },
+    replayMode: {
+        data: Array<number>
     }
 }
 class ContinuousKeypointTask extends React.Component<Props, State> {
@@ -42,42 +44,44 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
         duration: 0,
         currentTime: 0,
         currentFrame: 0,
-        overlay: {
-            visible: false,
-            submitted: false,
-            submitting: false,
-        },
         reverseCount: {
             visible: false,
             count: 0
+        },
+        replayMode: {
+            data: null
         }
     }
     private playbackRates = [1/8, 1/7, 1/6, 1/5, 1/4, 1/3, 1/2, 1, 2, 3, 4]
     private player = React.createRef<OpencvFlowPlayer>()
     private tracker = React.createRef<MouseTracker>()
-    private mouse = [0,0]
     private mouse_normalized = [0,0]
     private reverseCountTimerId: number = null
 
-    constructor(props: Props) {
-        super(props)
-
-        this.state = {
-            ...this.state,
-            overlay: { 
-                ...this.state.overlay, 
-                visible: (props.numSubmissions > 0), 
-                submitted: (props.numSubmissions > 0)
-            }
-        }
-    }
-
     componentDidMount() {
-        this.startKeyboardListen()
+        document.addEventListener("keydown", this.handleKeydown, false)
     }
 
     componentWillUnmount() {
-        this.stopKeyboardListen()
+        document.removeEventListener("keydown", this.handleKeydown, false)
+    }
+
+    speedup = () => {
+        this.setState({ playbackRateIdx: Math.min(this.state.playbackRateIdx + 1, this.playbackRates.length - 1) })
+    }
+
+    speeddown = () => {
+        this.setState({ playbackRateIdx: Math.max(this.state.playbackRateIdx - 1, 0) })
+    }
+
+    back2s = () => {
+        const t1 = Math.max(0, this.player.current.currentTime() - 2)
+        this.goto(t1)
+    }
+
+    back10s = () => {
+        const t2 = Math.max(0, this.player.current.currentTime() - 10)
+        this.goto(t2)
     }
 
     handleKeydown = (e: KeyboardEvent) => {
@@ -88,11 +92,11 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
         }
         switch (e.key) {
             case 'ArrowRight':
-                this.setState({ playbackRateIdx: Math.min(this.state.playbackRateIdx+1, this.playbackRates.length-1) })
+                this.speedup()
                 this.props.buffer(this.player.current.currentFrame(), ['speedup', this.playbackRates[this.state.playbackRateIdx]])
                 break
             case 'ArrowLeft':
-                this.setState({ playbackRateIdx: Math.max(this.state.playbackRateIdx-1, 0) })
+                this.speeddown()
                 this.props.buffer(this.player.current.currentFrame(), ['speeddown', this.playbackRates[this.state.playbackRateIdx]])
                 break
             case ' ':
@@ -102,17 +106,15 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
                 this.togglePlayPause()
                 break
             case 'x': // => go back 2s
-                const t1 = Math.max(0, this.player.current.currentTime() - 2)
-                this.goto(t1)
+                this.back2s()
                 this.props.buffer(this.player.current.currentFrame(), ['back2s'])
                 break
             case 'c': // => go back 10s
-                const t2 = Math.max(0, this.player.current.currentTime() - 10)
-                this.goto(t2)
+                this.back10s()
                 this.props.buffer(this.player.current.currentFrame(), ['back10s'])
                 break
             case 'z': // occluded
-                this.toggleOcclusion()
+                if(!this.props.replayMode) this.toggleOcclusion()
                 break
             default:
                 break
@@ -120,45 +122,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
     }
 
     private toggleOcclusion = () => {
-        this.setState({ occluded: !this.state.occluded }, ()=>{})
-        
-    }
-
-    private startReverseCount = () => {
-        this.setState({
-            reverseCount: {
-                visible: true,
-                count: 3
-            }
-        })
-
-        this.reverseCountTimerId = window.setInterval(() => {
-            if (this.state.reverseCount.count == 1) {
-                // play the video
-                this.cancelReverseCount()
-                this.handlePausePlay(false, () => { })
-            } else {
-                this.setState({
-                    reverseCount: {
-                        ...this.state.reverseCount,
-                        count: this.state.reverseCount.count - 1
-                    }
-                })
-            }
-        }, 800)
-    }
-
-    private cancelReverseCount = (cb?: Function) => {
-        if(this.reverseCountTimerId != null) {
-            window.clearInterval(this.reverseCountTimerId)
-            this.reverseCountTimerId = null
-        }
-        this.setState({
-            reverseCount: {
-                ...this.state.reverseCount,
-                visible: false,
-            }
-        }, ()=>{if(cb) cb()})
+        this.setState({ occluded: !this.state.occluded })
     }
 
     private goto = (time: number) => {
@@ -166,97 +130,93 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
         this.cancelReverseCount(this.startReverseCount)
     }
 
-    handleKeyUp = (e: KeyboardEvent) => {
-        switch (e.key) {
-            case 'z':
-                this.setState({ occluded: false })
-                break
-        }
-    }
-
-    startKeyboardListen = () => {
-        document.addEventListener("keydown", this.handleKeydown, false)
-    }
-
-    stopKeyboardListen = () => {
-        document.removeEventListener("keydown", this.handleKeydown, false)
-    }
-
-    handleMouseData = (data: any, e: MouseEvent) => {
-        this.mouse = [e.offsetX, e.offsetY]
+    // stores mouse data sent by the mouse tracker
+    handleMouseData = (data: any) => {
+        // this.mouse = [e.offsetX, e.offsetY]
         this.mouse_normalized = data
     }
 
+    // used by the flow player to get the mouse position
     getMousePosition = () => {
-        return this.mouse
+        return this.mouse_normalized
     }
 
     handleMouseActiveChange = (status: boolean) => {
-        this.setState({ mouse_valid: status }, ()=>{
-        })
+        this.setState({ mouse_valid: status })
     }
 
-    handleVideoLoad = (vid) => {
-        this.setState({
-            duration: vid.duration
-        })
+    handleVideoLoad = (vid:HTMLVideoElement) => {
+        this.setState({duration: vid.duration})
     }
 
+    // Replaying logic
+    // Takes care of replaying an annotation given a log
+
+    // writes mouse position to the buffer on every frame
     handleFrame = (frame: number) => {
-        this.props.buffer(
-            frame,
-            [...this.mouse_normalized, this.state.mouse_valid ? 1 : 0, this.state.occluded ? 1 : 0]
-        )
+        if(this.props.replayMode) {
+            this.replayUntilFrame(frame)
+        } else {
+            this.props.buffer(
+                frame,
+                [...this.mouse_normalized, this.state.mouse_valid ? 1 : 0, this.state.occluded ? 1 : 0]
+            )
+        }
+    }
+
+    // recreate annotation (replay mode) until the given frame
+    replayUntilFrame = (frame: number) => {
+        let action = this.props.getCurrReplayAction()
+
+        while (action != null && action[2] <= frame) {
+            this.replayAction(action)
+            action = this.props.getNextReplayAction()
+        }
+    }
+
+    replayAction = (action: Array<any>) => {
+        
+        if(typeof action[3] == 'number') {
+            this.mouse_normalized = [action[3], action[4]]
+            this.setState({
+                replayMode: {
+                    ...this.state.replayMode,
+                    data: [action[3], action[4]]
+                }
+            })
+            return
+        }
+        switch(action[1]) {
+            case 'speedup': 
+                this.speedup()
+                break
+            case 'speeddown':
+                this.speeddown()
+                break
+            case 'back2s':
+                this.back2s()
+                break
+            case 'back10s':
+                this.back10s()
+                break
+            default:
+        }
     }
 
     handleVideoEnded = () => {
         this.setState({
-            overlay: {
-                visible: true,
-                submitted: false,
-                submitting: false
-            },
             paused: true
-        })
-    }
-
-    handleSubmit = () => {
-        this.setState({ overlay: {
-            ...this.state.overlay, 
-            submitting: true 
-        }})
-
-        this.props.onSubmit({ success: true }).then(() => {
-            this.setState({
-                overlay: {
-                    ...this.state.overlay,
-                    submitting: false,
-                    submitted: true
-                }
-            })
-        }).catch((error) => {
-            this.setState({
-                overlay: {
-                    ...this.state.overlay,
-                    submitting: false
-                }
-            })
-        })
-    }
-
-    handleRedo = () => {
-        this.setState({
-            overlay: {
-                ...this.state.overlay,
-                visible: false
-            }
         }, ()=>{
-            this.player.current.restart()
+            this.props.onEnd({success: true})
         })
-        
-    }
+    } 
 
     togglePlayPause = () => {
+        if(this.props.replayMode) {
+            // play immediately in replay mode
+            return this.handlePausePlay(!this.state.paused)
+        }
+
         if(this.state.paused) {
             if(this.state.reverseCount.visible) {
                 this.cancelReverseCount()
@@ -268,16 +228,49 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
         }
     }
 
-    handlePausePlay = (pause: boolean, cb?:Function) => {
+    handlePausePlay = (pause: boolean, cb?: Function) => {
         this.setState({
             paused: pause,
             currentTime: this.player.current.currentTime(),
             currentFrame: this.player.current.currentFrame()
-        }, ()=>{if(cb) cb()})
+        }, () => { if (cb) cb() })
     }
 
-    validate = () => {
-        return true
+    startReverseCount = () => {
+        this.setState({
+            reverseCount: {
+                visible: true,
+                count: 3
+            }
+        })
+
+        this.reverseCountTimerId = window.setInterval(() => {
+            if (this.state.reverseCount.count == 1) {
+                // play the video
+                this.cancelReverseCount()
+                this.handlePausePlay(false)
+            } else {
+                this.setState({
+                    reverseCount: {
+                        ...this.state.reverseCount,
+                        count: this.state.reverseCount.count - 1
+                    }
+                })
+            }
+        }, 800)
+    }
+
+    cancelReverseCount = (cb?: Function) => {
+        if (this.reverseCountTimerId != null) {
+            window.clearInterval(this.reverseCountTimerId)
+            this.reverseCountTimerId = null
+        }
+        this.setState({
+            reverseCount: {
+                ...this.state.reverseCount,
+                visible: false,
+            }
+        }, () => { if (cb) cb() })
     }
 
     
@@ -310,31 +303,28 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
                 {this.state.paused ? <div className="annot-bar-section">frame {this.state.currentFrame}</div> : <></>}
                 {this.state.reverseCount.visible ? <div className="annot-bar-section" style={{'color': 'red'}}>{this.state.reverseCount.count}</div> : <></>}
             </div>
-            <MouseTracker 
+            <MouseTracker
+                disable={this.props.replayMode} // disable mouse tracking in replay mode
                 paused={this.state.paused}
                 occluded={this.state.occluded}
                 mouseActive={this.state.mouse_valid}
                 onData={this.handleMouseData} 
                 onMouseActiveChange={this.handleMouseActiveChange} 
                 ref={this.tracker}>
-                <div className={classNames('video-overlay', { 'overlay-off': !this.state.overlay.visible})}>
-                    <div className="video-overlay-nav">
-                        <Button onClick={this.handleRedo}>Re-do</Button>
-                        <Button onClick={this.handleSubmit} type="primary" disabled={this.state.overlay.submitted} loading={this.state.overlay.submitting}>Submit</Button>
-                    </div>
-                </div>
-                <OpencvFlowPlayer
-                    {...playerOptions}
-                    paused={this.state.paused}
-                    pausePlay={this.handlePausePlay}
-                    rate={this.playbackRates[this.state.playbackRateIdx]}
-                    getMousePosition={this.getMousePosition}
-                    // mouse={this.state.mouse}
-                    ref={this.player}
-                    onEnded={this.handleVideoEnded}
-                    onLoad={this.handleVideoLoad}
-                    onFrame={this.handleFrame}>
-                </OpencvFlowPlayer>
+                
+                <MouseVisualizer data={this.state.replayMode.data}>
+                    <OpencvFlowPlayer
+                        {...playerOptions}
+                        paused={this.state.paused}
+                        pausePlay={this.handlePausePlay}
+                        rate={this.playbackRates[this.state.playbackRateIdx]}
+                        getMousePosition={this.getMousePosition}
+                        ref={this.player}
+                        onEnded={this.handleVideoEnded}
+                        onLoad={this.handleVideoLoad}
+                        onFrame={this.handleFrame}>
+                        </OpencvFlowPlayer>
+                </MouseVisualizer>
             </MouseTracker>
         </>
     }

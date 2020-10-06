@@ -18,6 +18,35 @@
     background-color: green;
 }
 
+/* Task Overlay */
+.task-container {
+  width: 100%;
+}
+
+.task-overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, .7);
+  z-index: 2;
+}
+
+.task-overlay-off {
+  display: none;
+}
+
+.task-overlay-nav {
+  position: absolute;
+  width: 100%;
+  top: 50%;
+  margin-top: -20px;
+  text-align: center;
+}
+
+.video-overlay-nav>button {
+  margin: 0 5px;
+}
+
 /*Video container*/
 .mouse-tracker {
   width: 100%;
@@ -25,6 +54,7 @@
   background-color: gray;
 }
 .mouse-tracker > .video-container {
+    position: relative;
     width: 100%;
     max-height: calc(100vh - 60px);
     height: auto;
@@ -41,27 +71,18 @@
   cursor: progress;
 }
 
-.video-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
+/* Mouse visualization component */
+.mouse-visualizer {
+  position: relative;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,.7);
-  z-index: 2;
 }
-.overlay-off {
-    display:none;
-}
-.video-overlay-nav {
-    position: absolute;
-    width: 100%;
-    top: 50%;
-    margin-top: -20px;
-    text-align: center;
-}
-.video-overlay-nav > button {
-    margin: 0 5px;
+.mouse-visualizer > .mouse-visualizer-pointer {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: red;
+  border-radius: 50%;
 }
 
 .task-group {
