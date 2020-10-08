@@ -92,7 +92,7 @@ class HIT(db.Model):
         return hit_dict
 
     def showinfo(self):
-        s = [instance.get_api_url() + '\n' + instance.get_url()
+        s = [instance.get_url() + '\n - ' + instance.get_api_url() + '\n'
              for instance in self.instances]
         return '\n'.join(s)
 
