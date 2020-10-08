@@ -21,6 +21,7 @@ def prepare():
 
     # create a JSON file with constants for the front-end
     app_constants = {
+        'env': app.config['FLASK_ENV'],
         'app_url': app.config['APP_URL'],
         'admin_url': app.config['ADMIN_URL'],
         'api_url': app.config['API_URL'],

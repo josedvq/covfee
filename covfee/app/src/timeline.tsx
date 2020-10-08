@@ -8,7 +8,7 @@ const { Text, Title, Link } = Typography;
 import * as Tasks from './tasks'
 import * as CustomTasks from 'CustomTasks'
 const Constants = require('./constants.json')
-import { throwBadResponse } from './utils'
+import { myerror, throwBadResponse } from './utils'
 import { TaskSpec} from 'Tasks/task'
 
 interface TimelineState{
@@ -65,7 +65,7 @@ class Timeline extends React.Component<TimelineProps, TimelineState> {
                 })
             }
         }).catch(error=>{
-            console.error('There was an error submitting the task!', error)
+            myerror('Error submitting the task.', error)
         })    
     }
 

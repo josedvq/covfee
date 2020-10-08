@@ -166,3 +166,10 @@ a.header-covfee {
   display: inline-block;
   margin-right: 0.5em;
 }
+
+/*GUI elements */
+.spinner {
+  text-align: center;
+  padding: 2em;
+  margin: 2em 0;
+}

@@ -22,7 +22,7 @@ const { Text, Title, Link } = Typography
 import ContinuousKeypointTask from './tasks/continuous_keypoint'
 import classNames from 'classnames'
 const Constants = require('./constants.json')
-import {fetcher, throwBadResponse} from './utils'
+import {myerror, fetcher, throwBadResponse} from './utils'
 import { TaskSpec } from 'Tasks/task'
 import { Buffer, EventBuffer, DummyBuffer } from './buffer';
 
@@ -295,7 +295,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                 })
 
             }).catch(error => {
-                console.error('There was an error querying for data!', error)
+                myerror('Error fetching task response.', error)
             })
     }
 
@@ -379,7 +379,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                 }
             })
         }).catch((error) => {
-            console.error('There was an error submitting the task!', error)
+            myerror('Error submitting the task.', error)
             this.setState({
                 overlay: {
                     ...this.state.overlay,
@@ -424,7 +424,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                 })
                 .catch(error => {
                     // this.setState({ error: error.toString(), submitting: false })
-                    console.error('There was an error!', error)
+                    myerror('Error creating the new task.', error)
                 })
         } else {
             // editing existing task
@@ -443,7 +443,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                 })
                 .catch(error => {
                     // this.setState({ error: error.toString(), submitting: false })
-                    console.error('There was an error!', error)
+                    myerror('Error creating the new task.', error)
                 })
         }
     } 
@@ -459,7 +459,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                 }
             })
         } else {
-            console.log('must finish creating firts.')
+            myerror('Please finish creating the existing tasks.')
         }
     }
 

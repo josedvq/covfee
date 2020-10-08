@@ -51,7 +51,6 @@ class EventBuffer extends Buffer {
 
             // success
             this.queue[idx] = undefined
-            console.log('submitted buffer '+idx)
         })
         .catch(error => {
             this.queue[idx].status = 'error'
