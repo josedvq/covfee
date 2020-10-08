@@ -19,11 +19,11 @@ else:
 
 # apply extended config
 app.config.update(
-    APP_URL= ap.config['BASE_URL'] + '/#',
-    ADMIN_URL= ap.config['BASE_URL'] + '/admin#',
-    API_URL= ap.config['BASE_URL'] + '/api',
-    AUTH_URL= ap.config['BASE_URL'] + '/auth',
-    STATIC_URL= ap.config['BASE_URL'] + '/static'
+    APP_URL= app.config['BASE_URL'] + '/#',
+    ADMIN_URL= app.config['BASE_URL'] + '/admin#',
+    API_URL= app.config['BASE_URL'] + '/api',
+    AUTH_URL= app.config['BASE_URL'] + '/auth',
+    STATIC_URL= app.config['BASE_URL'] + '/static'
 )
         
 app.app_context().push()
