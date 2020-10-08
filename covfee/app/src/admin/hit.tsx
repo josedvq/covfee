@@ -4,7 +4,7 @@ import { withRouter } from 'react-router'
 import { LoadingOutlined } from '@ant-design/icons'
 
 const Constants = require('../constants.json')
-import { fetcher, throwBadResponse } from '../utils'
+import { fetcher, myerror, throwBadResponse } from '../utils'
 
 
 class InstanceList extends React.Component {
@@ -78,7 +78,7 @@ class AdminHIT extends React.Component {
                 
             })
             .catch(error => {
-                console.error('error loading projects', error)
+                myerror('error loading projects', error)
             })
     }
 

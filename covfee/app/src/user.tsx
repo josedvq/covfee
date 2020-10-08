@@ -1,7 +1,7 @@
 import * as React from 'react'
 import userContext from './userContext'
 const Constants = require('./constants.json')
-import { fetcher, throwBadResponse, getCookieValue} from './utils'
+import { fetcher, throwBadResponse, getCookieValue, myerror} from './utils'
 
 interface LoginInfo {
     username: string,
@@ -138,7 +138,9 @@ class UserContext extends React.Component<Props, UserState> {
                 username: null,
                 loginTime: null
             })
-        }).catch(console.error)
+        }).catch(error=>{
+            myerror('Error in logging out', error)
+        })
 
         return p
     }

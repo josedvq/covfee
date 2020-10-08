@@ -3,7 +3,7 @@ import {
     Menu,
     Select,
     Typography,
-    Table
+    Table, Empty
 } from 'antd'
 import {
     Link,
@@ -14,7 +14,7 @@ const { Option } = Select
 import 'antd/dist/antd.css'
 import {HITSpec} from '../hit'
 const Constants = require('../constants.json')
-import { fetcher, throwBadResponse } from '../utils'
+import { myerror, fetcher, throwBadResponse } from '../utils'
 import { IdcardFilled, LoadingOutlined } from '@ant-design/icons'
 
 class InstanceListAsync extends React.Component {
@@ -46,13 +46,13 @@ class InstanceListAsync extends React.Component {
                 this.setState({ loading: false })
             })
             .catch(error => {
-                console.error('error loading projects', error)
+                myerror('Error loading instances.', error)
             })
     }
 
     render() {
         if(this.state.loading)
-            return <LoadingOutlined/>
+            return <div style={{textAlign: 'center'}}><LoadingOutlined /></div>
         else
             return <InstanceList instances={this.hit.instances} />
     }
@@ -180,6 +180,7 @@ class AdminProject extends React.Component<Props, State> {
                     })
                 } else {
                     this.projects = projects
+                    
                     this.setState({
                         status: 'ready',
                         currProject: 0
@@ -188,7 +189,7 @@ class AdminProject extends React.Component<Props, State> {
                 }
             })
             .catch(error => {
-                console.error('error loading projects', error)
+                myerror('Error loading projects.', error)
             })
     }
 
@@ -213,7 +214,7 @@ class AdminProject extends React.Component<Props, State> {
                 })
             })
             .catch(error => {
-                console.error('error fetching project', error)
+                myerror('error fetching project details', error)
             })
     }
 
@@ -229,7 +230,7 @@ class AdminProject extends React.Component<Props, State> {
                         Ooops!
                     </Title>
                     <Paragraph>
-                        There are no projects to show.
+                        <Empty description="There are no projects to show."/>
                     </Paragraph>
                 </>
             case 'ready':
