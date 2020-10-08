@@ -123,7 +123,7 @@ class HITList extends React.Component<HITListProps> {
                 title: 'Type',
                 dataIndex: 'type',
                 defaultSortOrder: 'descend',
-                sorter: (a, b) => a.firstname.localeCompare(b.firstname),
+                sorter: (a, b) => a.toString().localeCompare(b.toString()),
             },
             {
                 title: 'Instances',
@@ -135,7 +135,7 @@ class HITList extends React.Component<HITListProps> {
                 title: 'Submitted',
                 dataIndex: 'submitted',
                 defaultSortOrder: 'descend',
-                sorter: (a, b) => a.firstname.localeCompare(b.firstname),
+                sorter: (a, b) => a.toString().localeCompare(b.toString()),
             }
         ]
 

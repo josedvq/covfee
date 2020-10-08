@@ -23,7 +23,8 @@ app.config.update(
     ADMIN_URL= app.config['BASE_URL'] + '/admin#',
     API_URL= app.config['BASE_URL'] + '/api',
     AUTH_URL= app.config['BASE_URL'] + '/auth',
-    STATIC_URL= app.config['BASE_URL'] + '/static'
+    STATIC_URL= app.config['BASE_URL'] + '/static',
+    MEDIA_URL= app.config['BASE_URL'] + '/media'
 )
         
 app.app_context().push()
