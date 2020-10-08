@@ -23,6 +23,7 @@
     "docz": "^2.3.1",
     "raw-loader": "^4.0.1",
     "react-hot-loader": "^4.12.21",
+    "svg-url-loader": "^6.0.0",
     "ts-loader": "^7.0.5",
     "typescript": "^3.9.5",
     "webpack": "^4.44.2",

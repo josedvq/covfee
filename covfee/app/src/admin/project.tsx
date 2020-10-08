@@ -42,7 +42,6 @@ class InstanceListAsync extends React.Component {
         fetcher(url)
             .then(throwBadResponse)
             .then((hit) => {
-                console.log(hit)
                 this.hit = hit
                 this.setState({ loading: false })
             })
@@ -75,7 +74,7 @@ class InstanceList extends React.Component {
             {
                 title: 'ID',
                 dataIndex: 'id',
-                render: id => <Link to={'/hits/' + id}>{id.substring(0, 16)}</Link>
+                render: id => <a href={Constants.app_url + '/hits/' + id} target="blank">{id.substring(0, 16)}</a>
             },
             {
                 title: 'Tasks',
@@ -118,7 +117,7 @@ class HITList extends React.Component<HITListProps> {
             {
                 title: 'ID',
                 dataIndex: 'id',
-                render: id => <Link to={'/hits/' + id}>{id.substring(0, 16)}</Link>
+                render: id => id.substring(0, 16)
             },
             {
                 title: 'Type',
