@@ -20,11 +20,9 @@ def create_app():
     
     return app
 
-
 # APP ROUTES
 frontend = Blueprint('frontend', __name__,
-    template_folder=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates'),
-    static_url_path='static')
+    template_folder=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates'))
 
 
 @frontend.route('/')
@@ -44,10 +42,10 @@ def admin():
                            bundle_url=app.config['ADMIN_BUNDLE_URL'])
 
 
-# @frontend.route('/static/<path:filename>')
-# def static_file(filename):
-#     return send_from_directory(app.config['STATIC_PATH'], filename,
-#                                conditional=True)
+@frontend.route('/static/<path:filename>')
+def static_file(filename):
+    return send_from_directory(app.config['STATIC_PATH'], filename,
+                               conditional=True)
 
 
 @frontend.route('/media/<path:filename>')
