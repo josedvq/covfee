@@ -2,7 +2,8 @@ import * as React from 'react'
 import classNames from 'classnames'
 
 interface Props {
-    data: Array<number>
+    data?: Array<number>
+    disable: boolean
 }
 
 class MouseVisualizer extends React.Component<Props> {
@@ -15,9 +16,13 @@ class MouseVisualizer extends React.Component<Props> {
         let observer = new ResizeObserver((entries) => {
             this.rect = entries[0].contentRect
         })
-        observer.observe(this.container.current)
+
+        if(!this.props.disable) observer.observe(this.container.current)
     }
     render() {
+        // do not render to save cycles when disabled
+        if(this.props.disable) return this.props.children
+
         let pos = [0,0]
         if(this.props.data != null) {
             pos = [

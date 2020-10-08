@@ -269,7 +269,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             this.fetchTaskResponse(taskId)
         } else {
         // no previous responses, prepare task
-            this.handleTaskReplay()
+            this.loadTaskForAnnotation(taskId)
         }   
     }
 
@@ -313,9 +313,10 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     
 
     // Overlay actions
-    handleTaskReplay = () => {
-        this.startNewBuffer(this.state.currTask, true)
+    loadTaskForReplay = (taskId: string) => {
+        this.startNewBuffer(taskId, true)
         this.setState({
+            currTask: taskId,
             loadingTask: false,
             overlay: {
                 ...this.state.overlay,
@@ -331,9 +332,11 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         })
     }
 
-    handleTaskRedo = () => {
+    loadTaskForAnnotation = (taskId: string) => {
         this.startNewBuffer(this.state.currTask)
         this.setState({
+            currTask: taskId,
+            loadingTask: false,
             overlay: {
                 ...this.state.overlay,
                 visible: false
@@ -344,6 +347,14 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             },
             currKey: this.state.currKey + 1
         })
+    }
+
+    handleTaskReplay = () => {
+        this.loadTaskForReplay(this.state.currTask)
+    } 
+
+    handleTaskRedo = () => {
+        this.loadTaskForAnnotation(this.state.currTask)
     }
 
     handleTaskSubmit = (taskResult: any) => {
@@ -423,7 +434,6 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                     }, () => { cb()})
                 })
                 .catch(error => {
-                    // this.setState({ error: error.toString(), submitting: false })
                     myerror('Error creating the new task.', error)
                 })
         } else {
@@ -442,7 +452,6 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                     cb()
                 })
                 .catch(error => {
-                    // this.setState({ error: error.toString(), submitting: false })
                     myerror('Error creating the new task.', error)
                 })
         }

@@ -312,7 +312,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
                 onMouseActiveChange={this.handleMouseActiveChange} 
                 ref={this.tracker}>
                 
-                <MouseVisualizer data={this.state.replayMode.data}>
+                <MouseVisualizer disable={!this.props.replayMode} data={this.state.replayMode.data}>
                     <OpencvFlowPlayer
                         {...playerOptions}
                         paused={this.state.paused}
