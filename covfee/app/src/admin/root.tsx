@@ -22,16 +22,9 @@ import UserContext from '../user'
 import AdminProject from './project'
 import AdminHIT from './hit'
 import AdminHeader from './header'
+import '../css/gui.css'
 
 class Root extends React.Component {
-    state: any
-
-    constructor(props: any) {
-        super(props);
-    }
-
-    componentDidMount() {
-    }
 
     render() {
         return <Router>

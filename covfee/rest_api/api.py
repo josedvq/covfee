@@ -136,6 +136,7 @@ def response(iid, kid):
 # task kid may or may not be associated to instance iid
 @api.route('/instances/<iid>/tasks/<kid>/submit', methods=['POST'])
 def response_submit(iid, kid):
+    with_chunk_data = request.args.get('with_chunk_data', True)
     lastResponse = TaskResponse.query.filter_by(
         hitinstance_id=bytes.fromhex(iid), task_id=int(kid)).order_by(TaskResponse.index.desc()).first()
 
@@ -145,7 +146,7 @@ def response_submit(iid, kid):
         lastResponse.submitted = True
 
         db.session.commit()
-        return jsonify(lastResponse.as_dict())
+        return jsonify(lastResponse.as_dict(with_chunk_data=with_chunk_data))
 
     if lastResponse is None:
         response_index = 0  # first response
@@ -162,7 +163,7 @@ def response_submit(iid, kid):
         submitted=True)
 
     db.session.commit()
-    return jsonify(response.as_dict())
+    return jsonify(response.as_dict(with_chunk_data=with_chunk_data))
         
 
 # receive a chunk of a response, for continuous responses

@@ -1,4 +1,9 @@
-class EventBuffer {
+abstract class Buffer {
+    abstract async awaitQueueClear(timeout: number) : Promise<unknown>
+    abstract data(timestamp: number, data: Array<any>): void
+}
+
+class EventBuffer extends Buffer {
     public numBuffers = 0 // num of filled buffers
     public queue = [{status: 'filling', buffer: []}]
 
@@ -9,6 +14,7 @@ class EventBuffer {
     private onError: any
 
     constructor(size: number, url: string, onError: any) {
+        super()
         this.queue = [{ status: 'filling', buffer: [] }]
         this.size = size
         this.url = url
@@ -111,4 +117,14 @@ class EventBuffer {
     }
 }
 
-export { EventBuffer }
+class DummyBuffer extends Buffer {
+    awaitQueueClear = async (timeout: number) => {
+        return Promise.resolve()
+    }
+
+    data = (timestamp: number, data: Array<any>) => {
+        return
+    }
+}
+
+export { Buffer, EventBuffer, DummyBuffer }

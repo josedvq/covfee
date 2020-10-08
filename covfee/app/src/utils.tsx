@@ -15,11 +15,15 @@ function fetcher(input: RequestInfo, options?: RequestInit) {
     return fetch(input, newOptions)
 }
 
-const throwBadResponse = (response: any) => {
+const throwBadResponse = async (response: any) => {
     if (!response.ok) {
+        const data = await response.json()
+        if(data.hasOwnProperty('msg')) {
+            throw Error(data.msg)
+        }
         throw Error(response.statusText)
     }
-    return response.json()
+    return await response.json()
 }
 
 export { fetcher, getCookieValue, throwBadResponse}

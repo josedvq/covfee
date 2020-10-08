@@ -7,30 +7,29 @@ import {
     Button,
     Layout,
     Row,
-    Col
+    Col, Alert
 } from 'antd'
 import 'antd/dist/antd.css'
 import userContext from './userContext'
 const Constants = require('./constants.json')
+import CovfeeLogo from './art/logo.svg'
+import './css/gui.css'
 
 class Login extends React.Component {
-    state: any
-
-    constructor(props: any) {
-        super(props);
+    state = {
+        error: null,
+        submitting: false,
     }
 
-    componentDidMount() {
-    }
+    handleFormSubmit = (values: object) => {
+        this.setState({ submitting: true })
 
-    handleFinish = (values: object) => {
         this.context.login(values)
             .then(data => {
                 window.location.replace(Constants.admin_url)
             })
             .catch(error => {
-                // this.setState({ error: error.toString(), submitting: false })
-                console.error('There was an error!', error)
+                this.setState({ error: error.toString(), submitting: false })
             })
     }
 
@@ -45,11 +44,14 @@ class Login extends React.Component {
 
         return <Row style={{marginTop: '40px'}}>
             <Col xs={{span: 16, offset: 4}} lg={{span: 8, offset: 8}}>
+                <div className={'covfee-banner'}>
+                    <img src={CovfeeLogo} width={70}/> covfee
+                </div>
                 <Form
                 {...layout}
                 name="basic"
                 initialValues={{ remember: true }}
-                onFinish={this.handleFinish}>
+                onFinish={this.handleFormSubmit}>
                     <Form.Item
                         label="Username"
                         name="username"
@@ -66,9 +68,15 @@ class Login extends React.Component {
                         <Input.Password />
                     </Form.Item>
 
+                    {
+                    (this.state.error != null) ?
+                    <Alert message={this.state.error} type="error" style={{marginBottom: '1em'}} showIcon /> :
+                    <></>
+                    }
+                    
                     <Form.Item {...tailLayout}>
                         <Button type="primary" htmlType="submit">
-                            Submit
+                            Log in
                         </Button>
                     </Form.Item>
                 </Form>

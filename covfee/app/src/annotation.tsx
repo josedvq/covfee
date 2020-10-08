@@ -24,7 +24,7 @@ import classNames from 'classnames'
 const Constants = require('./constants.json')
 import {fetcher, throwBadResponse} from './utils'
 import { TaskSpec } from 'Tasks/task'
-import { EventBuffer } from './buffer';
+import { Buffer, EventBuffer, DummyBuffer } from './buffer';
 
 function getFullscreen(element: HTMLElement) {
     if (element.requestFullscreen) {
@@ -178,7 +178,7 @@ interface AnnotationState {
 }
 class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     state:AnnotationState = {
-        currTask: '0',
+        currTask: null,
         loadingTask: true,
         error: null,
         completionCode: null,
@@ -206,7 +206,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     }
     url: string
     tasks: { [key: string]: TaskSpec}
-    buffer: EventBuffer
+    buffer: Buffer
     container = React.createRef<HTMLDivElement>()
     taskRef = React.createRef<ContinuousKeypointTask>()
 
@@ -220,16 +220,18 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         
         this.state = {
             ...this.state,
+            currTask: Object.keys(this.tasks)[0],
             sidebar: {
                 taskIds: Object.keys(this.tasks)
             }
         }        
+        this.buffer = new DummyBuffer()
     }
 
     componentDidMount() {
         document.addEventListener("keydown", this.handleKeydown, false)
-        const taskId = Object.keys(this.tasks)[0]
-        this.handleChangeActiveTask(taskId)
+        // run fetches that update state
+        this.handleChangeActiveTask(this.state.currTask)
     }
 
     componentWillUnmount() {
@@ -258,50 +260,51 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     }
 
     handleChangeActiveTask = (taskId: string) => {
-        
         // IMPORTANT: order matters here
         // buffer must be created before the render triggered by setState
-        this.startNewBuffer(taskId)
+        
         this.replayIndex = 0
         // if the task has previous responses, query them
         if(this.tasks[taskId].response != null) {
-            this.setState({ loadingTask: true })
-            const url = this.url + '/tasks/' + taskId + '/responses?' + new URLSearchParams({
-                'with_chunk_data': '1'
-            })
-            fetcher(url)
-                .then(throwBadResponse)
-                .then((data) => {
-                    this.tasks[taskId].response = data
-                    this.setState({ 
-                        loadingTask: false, 
-                        currTask: taskId,
-                        overlay: {
-                            ...this.state.overlay,
-                            visible: (this.tasks[taskId].response != null),
-                            submitted: (this.tasks[taskId].response != null)
-                        },
-                        currKey: this.state.currKey + 1
-                    })
-                    
-                }).catch(error => {
-                    console.error('There was an error querying for data!', error)
-                })
+            this.fetchTaskResponse(taskId)
         } else {
-            this.setState({
-                currTask: taskId,
-                overlay: {
-                    ...this.state.overlay,
-                    visible: false,
-                    submitted: false
-                },
-                currKey: this.state.currKey + 1
-            })
+        // no previous responses, prepare task
+            this.handleTaskReplay()
         }   
     }
 
-    startNewBuffer = (taskId: string) => {
-        // const taskId = this.tasks[this.state.currTask].id
+    fetchTaskResponse = (taskId: string) => {
+        this.setState({ loadingTask: true })
+        const url = this.url + '/tasks/' + taskId + '/responses?' + new URLSearchParams({
+            'with_chunk_data': '1'
+        })
+        fetcher(url)
+            .then(throwBadResponse)
+            .then((data) => {
+                this.tasks[taskId].response = data
+                // this.startNewBuffer(taskId)
+                this.setState({
+                    loadingTask: false,
+                    currTask: taskId,
+                    overlay: {
+                        ...this.state.overlay,
+                        visible: (this.tasks[taskId].response != null),
+                        submitted: (this.tasks[taskId].response != null)
+                    },
+                    currKey: this.state.currKey + 1
+                })
+
+            }).catch(error => {
+                console.error('There was an error querying for data!', error)
+            })
+    }
+
+    startNewBuffer = (taskId: string, dummy: boolean = false) => {
+        if (dummy) {
+            this.buffer = new DummyBuffer()
+            return
+        }
+
         this.buffer = new EventBuffer(
             2000,
             this.url + '/tasks/' + taskId + '/chunk',
@@ -311,7 +314,9 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
 
     // Overlay actions
     handleTaskReplay = () => {
+        this.startNewBuffer(this.state.currTask, true)
         this.setState({
+            loadingTask: false,
             overlay: {
                 ...this.state.overlay,
                 visible: false
@@ -323,7 +328,6 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             currKey: this.state.currKey + 1
         }, () => {
             this.replayIndex = 0
-            // this.taskRef.current.replay()
         })
     }
 
@@ -339,8 +343,6 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                 enabled: false
             },
             currKey: this.state.currKey + 1
-        }, () => {
-            // this.taskRef.current.redo()
         })
     }
 
@@ -354,7 +356,10 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         // wait for the buffer queue to be sent
         this.buffer.attemptBufferSubmit(true)
         this.buffer.awaitQueueClear(3000).then(() => {
-            const url = this.url + '/tasks/' + this.tasks[this.state.currTask].id + '/submit'
+            const url = this.url + '/tasks/' + this.tasks[this.state.currTask].id + '/submit?' + new URLSearchParams({
+                'with_chunk_data': '1'
+            })
+
             const requestOptions = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -364,7 +369,8 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             // now send the task results
             return fetch(url, requestOptions)   
         }).then(throwBadResponse)
-        .then((data) => {
+        .then(data => {
+            this.tasks[this.state.currTask].response = data
             this.setState({
                 overlay: {
                     ...this.state.overlay,
@@ -541,22 +547,30 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             onSubmitNewTaskName={this.handleSubmitNewTaskName} />
 
         let task = null
+        let overlay = null
         if (this.state.loadingTask) {
+            overlay = <></>
             task = <LoadingOutlined/>
         } else {
             let props = this.tasks[this.state.currTask]
             props.url = this.url + '/tasks/' + props.id
             props.media = this.props.media
 
-            task = <div className={classNames('task-container')}>
-                <div className={classNames('task-overlay', { 'task-overlay-off': !this.state.overlay.visible})}>
+            overlay = <div className={classNames('task-container')}>
+                <div className={classNames('task-overlay', { 'task-overlay-off': !this.state.overlay.visible })}>
                     <div className="task-overlay-nav">
                         <Button onClick={this.handleTaskReplay}>Replay</Button>
                         <Button onClick={this.handleTaskRedo}>Re-do</Button>
-                        <Button onClick={this.handleTaskSubmit} type="primary" disabled={this.state.overlay.submitted} loading={this.state.overlay.submitting}>Submit</Button>
+                        <Button onClick={this.handleTaskSubmit} 
+                            type="primary" 
+                            disabled={this.state.overlay.submitted || this.state.replay.enabled} 
+                            loading={this.state.overlay.submitting}
+                            >Submit</Button>
                     </div>
                 </div>
-                <ContinuousKeypointTask 
+            </div>
+
+            task = <ContinuousKeypointTask 
                     taskName={this.tasks[this.state.currTask].name}
                     replayMode={this.state.replay.enabled}
                     getNextReplayAction={this.getNextReplayAction}
@@ -566,7 +580,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                     onEnd={this.handleTaskEnd} 
                     ref={this.taskRef}
                     {...props}/>
-            </div>
+            
             
         }
 
@@ -588,6 +602,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             </Row>
             <Row>
                 <Col span={20}>
+                    {overlay}
                     {task}
                 </Col>
                 <Col span={4}>
