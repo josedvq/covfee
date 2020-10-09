@@ -155,8 +155,9 @@ class HITInstance(db.Model):
             if with_responses:
                 for task_id, task in instance_dict['tasks'].items():
                     # query the latest response
+                    # only include submitted responses
                     lastResponse = self.responses.filter_by(
-                        task_id=task_id).order_by(TaskResponse.index.desc()).first()
+                        task_id=task_id, submitted=True).order_by(TaskResponse.index.desc()).first()
                     if lastResponse is None:
                         instance_dict['tasks'][task_id]['response'] = None
                     else:
