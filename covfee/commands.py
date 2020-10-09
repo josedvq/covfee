@@ -4,6 +4,7 @@ import glob
 import json
 
 import click
+from pathlib import Path
 
 from covfee.orm import app, db, Project, HIT, Task, Chunk, User
 
@@ -25,8 +26,9 @@ def prepare():
         'app_url': app.config['APP_URL'],
         'admin_url': app.config['ADMIN_URL'],
         'api_url': app.config['API_URL'],
-        'auth_url': app.config['AUTH_URL']    
+        'auth_url': app.config['AUTH_URL']  
     }
+
     constants_path = os.path.join(covfee_path, 'app/src/constants.json')
     json.dump(app_constants, open(constants_path, 'w'), indent=2)
 
@@ -50,8 +52,8 @@ def prepare():
 @click.command()
 @click.option("--force", is_flag=True, help="Specify to overwrite existing databases.")
 @click.option("--save", default=None, help="JSON file for outputing the specification including URLs.")
-@click.argument("json")
-def make_db(force, json, save):
+@click.argument("file_or_folder")
+def make_db(force, file_or_folder, save):
     dbpath = app.config['DATABASE_PATH']
     if force:
         try:
@@ -61,10 +63,20 @@ def make_db(force, json, save):
         except OSError:
             pass
     create_tables()
-    project = Project.from_json(json)
-    db.session.add(project)
+
+    json_files = []
+    if os.path.isdir(file_or_folder):
+        for json_path in Path(file_or_folder).rglob('*.covfee.json'):
+            json_files.append(json_path)
+    else:
+        json_files.append(file_or_folder)
+        
+    for json_file in json_files:
+        project = Project.from_json(json_file)
+        db.session.add(project)
+        print(project.info())
+
     db.session.commit()
-    print(project.info())
 
     # if save is not None:
     #     json.dump(project_dict, open(save, 'w'), indent=2)
