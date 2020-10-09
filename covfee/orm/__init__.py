@@ -18,13 +18,13 @@ else:
         os.getcwd(), 'covfee.production.config.py'))
 
 # apply extended config
+
 app.config.update(
     APP_URL= app.config['BASE_URL'] + '/#',
     ADMIN_URL= app.config['BASE_URL'] + '/admin#',
     API_URL= app.config['BASE_URL'] + '/api',
     AUTH_URL= app.config['BASE_URL'] + '/auth',
-    STATIC_URL= app.config['BASE_URL'] + '/static',
-    MEDIA_URL= app.config['BASE_URL'] + '/media'
+    STATIC_URL= app.config['BASE_URL'] + '/static'
 )
         
 app.app_context().push()
