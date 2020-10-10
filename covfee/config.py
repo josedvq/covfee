@@ -12,6 +12,8 @@ STATIC_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static'
 
 # for project media
 MEDIA_PATH = os.path.join(os.getcwd(), 'media')
+MEDIA_URL = BASE_URL + '/media'
+MEDIA_SERVER = True
 
 # for temporary (download) files
 TMP_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'tmp')
@@ -35,7 +37,7 @@ JWT_TOKEN_LOCATION = ['cookies']
 # to the refresh endpoint. Technically this is optional, but it is in
 # your best interest to not send additional cookies in the request if
 # they aren't needed.
-JWT_ACCESS_COOKIE_PATH = '/'
-JWT_REFRESH_COOKIE_PATH = '/auth/refresh'
+# JWT_ACCESS_COOKIE_PATH = '/'
+# JWT_REFRESH_COOKIE_PATH = '/auth/refresh'
 JWT_SECRET_KEY = 'CHANGE_ME'
 JWT_COOKIE_CSRF_PROTECT = False

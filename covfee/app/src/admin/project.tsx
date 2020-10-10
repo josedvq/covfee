@@ -15,7 +15,7 @@ import 'antd/dist/antd.css'
 import {HITSpec} from '../hit'
 const Constants = require('../constants.json')
 import { myerror, fetcher, throwBadResponse } from '../utils'
-import { IdcardFilled, LoadingOutlined } from '@ant-design/icons'
+import { IdcardFilled, LoadingOutlined, RightOutlined } from '@ant-design/icons'
 
 class InstanceListAsync extends React.Component {
     state = {
@@ -74,13 +74,14 @@ class InstanceList extends React.Component {
             {
                 title: 'ID',
                 dataIndex: 'id',
-                render: id => <a href={Constants.app_url + '/hits/' + id} target="blank">{id.substring(0, 16)}</a>
+                render: id => <a href={Constants.app_url + '/hits/' + id} target="blank"><RightOutlined /> {id.substring(0, 16)}</a>
             },
             {
                 title: 'Tasks',
                 dataIndex: 'tasks',
                 defaultSortOrder: 'descend',
                 sorter: (a, b) => a-b,
+                render: tasks => 'tasks: '+tasks
             },
             {
                 title: 'Data',
@@ -89,7 +90,14 @@ class InstanceList extends React.Component {
             }
         ]
 
-        return <Table dataSource={data} columns={columns} size="small" pagination={false} indentSize={45}/>
+        return <Table 
+            dataSource={data} 
+            style={{marginLeft: '2em'}}
+            columns={columns} 
+            size="small" 
+            pagination={false} 
+            showHeader={false} 
+            indentSize={15}/>
     }
 }
 
@@ -108,6 +116,7 @@ class HITList extends React.Component<HITListProps> {
                 key: hit.id,
                 id: hit.id,
                 type: hit.type,
+                name: hit.name,
                 instances: hit.instances.length,
                 submitted: hit.submitted
             }
@@ -115,9 +124,10 @@ class HITList extends React.Component<HITListProps> {
 
         const columns: ColumnsType<any> = [
             {
-                title: 'ID',
-                dataIndex: 'id',
-                render: id => id.substring(0, 16)
+                title: 'HIT',
+                dataIndex: 'name',
+                defaultSortOrder: 'descend',
+                sorter: (a, b) => a.toString().localeCompare(b.toString()),
             },
             {
                 title: 'Type',
@@ -234,7 +244,10 @@ class AdminProject extends React.Component<Props, State> {
                     </Paragraph>
                 </>
             case 'ready':
-                const select = <Select value={this.state.currProject} onChange={this.handleProjectChange} style={{ width: 120 }}>
+                const select = <Select 
+                    value={this.state.currProject} 
+                    onChange={this.handleProjectChange} 
+                    style={{ width: 240 }}>
                     {this.projects.map((p, index) => {
                         return <Option key={index} value={index}>{p.name}</Option>
                     })}
@@ -249,7 +262,9 @@ class AdminProject extends React.Component<Props, State> {
                 
 
                 return <>
-                    {select}
+                    <div style={{margin: '2em 1em'}}>
+                        Project: {select}
+                    </div>
                     {hits}
                 </>
             default:
