@@ -288,8 +288,8 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                     currTask: taskId,
                     overlay: {
                         ...this.state.overlay,
-                        visible: (this.tasks[taskId].response != null),
-                        submitted: (this.tasks[taskId].response != null)
+                        visible: true,
+                        submitted: true
                     },
                     currKey: this.state.currKey + 1
                 })

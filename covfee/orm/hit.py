@@ -180,9 +180,15 @@ class HITInstance(db.Model):
 
         os.mkdir(dirpath)
 
-        # go over all responses to this HIT instance
-        for response in self.responses:
+        # go over all submitted responses to this HIT instance
+        responses = self.responses.filter_by(submitted=True).all()
+
+        if len(responses) == 0:
+            return None
+
+        for response in responses:
             response.write_json(dirpath)
 
         shutil.make_archive(os.path.join(app.config['TMP_PATH'], 'download'), 'zip', dirpath)
+        return 'download.zip'
 
