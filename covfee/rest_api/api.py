@@ -73,8 +73,8 @@ def instance_download(iid):
     instance = db.session.query(HITInstance).get(bytes.fromhex(iid))
     if instance is None:
         return jsonify({'msg': 'not found'}), 404
-    instance.make_json_download()
-    return send_from_directory(app.config['TMP_PATH'], 'download.zip', as_attachment=True)
+    fname = instance.make_json_download()
+    return send_from_directory(app.config['TMP_PATH'], fname, as_attachment=True)
 
 # TASKS
 
