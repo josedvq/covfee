@@ -333,7 +333,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     }
 
     loadTaskForAnnotation = (taskId: string) => {
-        this.startNewBuffer(this.state.currTask)
+        this.startNewBuffer(taskId)
         this.setState({
             currTask: taskId,
             loadingTask: false,
