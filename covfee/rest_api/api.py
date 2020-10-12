@@ -12,6 +12,13 @@ def jsonify_or_404(res, **kwargs):
     else:
         return jsonify(res.as_dict(**kwargs))
 
+@app.teardown_request
+def teardown_request(exception):
+    print('tearing down')
+    if exception:
+        db.session.rollback()
+    db.session.remove()
+
 # return all projects
 @api.route('/projects')
 @admin_required
@@ -63,7 +70,7 @@ def instance_submit(iid):
     if instance is None:
         return jsonify({'msg': 'invalid instance'}), 400
     instance.submitted = True
-    db.session.commit()
+    
     return jsonify(instance.as_dict(with_tasks=True))
 
 
