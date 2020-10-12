@@ -471,11 +471,6 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         }
     }
 
-    handleInputFocus = (focus: boolean) => {
-        if(focus) this.taskRef.current.stopKeyboardListen()
-        else this.taskRef.current.startKeyboardListen()
-    }
-
     handleMenuClick = (e: object) => {
         if (e.key == 'gallery') this.setState({galleryOpen: !this.state.galleryOpen})
     }

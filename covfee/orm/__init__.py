@@ -38,7 +38,5 @@ app.config.update(
     JWT_REFRESH_COOKIE_PATH=os.path.join(app_path, 'auth/refresh')
 )
 
-print(app.config)
-        
 app.app_context().push()
 db.init_app(app)
