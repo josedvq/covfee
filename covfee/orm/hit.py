@@ -20,17 +20,17 @@ class HIT(db.Model):
 
     id = db.Column(db.Binary, primary_key=True)
     type = db.Column(db.String)
-    # name = db.Column(db.String)
+    name = db.Column(db.String)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
     media = db.Column(db.JSON)
     instances = db.relationship("HITInstance", backref='hit')
     tasks = db.relationship("Task", secondary=hits_tasks, backref='hit')
     submitted = db.Column(db.Boolean)
 
-    def __init__(self, id, type, media=None, tasks=[], instances=[], submitted=False):
+    def __init__(self, id, type, name, media=None, tasks=[], instances=[], submitted=False):
         self.id = id
         self.type = type
-        # self.name = name
+        self.name = name
         self.tasks = tasks
         self.instances = instances
         self.submitted = submitted

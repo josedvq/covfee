@@ -19,10 +19,9 @@ import {
 import Collapsible from 'react-collapsible'
 const { Text, Title, Link } = Typography
 
-import ContinuousKeypointTask from './tasks/continuous_keypoint'
 import classNames from 'classnames'
 const Constants = require('./constants.json')
-import {myerror, fetcher, throwBadResponse} from './utils'
+import { myerror, fetcher, throwBadResponse, getTaskClass} from './utils'
 import { TaskSpec } from 'Tasks/task'
 import { Buffer, EventBuffer, DummyBuffer } from './buffer';
 
@@ -208,7 +207,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     tasks: { [key: string]: TaskSpec}
     buffer: Buffer
     container = React.createRef<HTMLDivElement>()
-    taskRef = React.createRef<ContinuousKeypointTask>()
+    taskRef = React.createRef<React.Component>()
 
     replayIndex = 0
 
@@ -579,18 +578,19 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                 </div>
             </div>
 
-            task = <ContinuousKeypointTask 
-                    taskName={this.tasks[this.state.currTask].name}
-                    replayMode={this.state.replay.enabled}
-                    getNextReplayAction={this.getNextReplayAction}
-                    getCurrReplayAction={this.getCurrReplayAction}
-                    buffer={this.buffer.data}
-                    key={this.state.currKey} 
-                    onEnd={this.handleTaskEnd} 
-                    ref={this.taskRef}
-                    {...props}/>
-            
-            
+            const taskClass = getTaskClass(props.type)
+            task = React.createElement(taskClass, {
+                key: this.state.currKey,
+                taskName: this.tasks[this.state.currTask].name,
+                replayMode: this.state.replay.enabled,
+                getNextReplayAction: this.getNextReplayAction,
+                getCurrReplayAction: this.getCurrReplayAction,
+                buffer: this.buffer.data,
+                onEnd: this.handleTaskEnd,
+                ref: this.taskRef,
+                onSubmit: this.handleTaskSubmit,
+                ...props
+            }, null)            
         }
 
         return <div className="tool-container" ref={this.container}>

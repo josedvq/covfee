@@ -1,4 +1,7 @@
 import {message} from 'antd'
+
+import * as Tasks from './tasks'
+import * as CustomTasks from 'CustomTasks'
 const Constants = require('./constants.json')
 
 // read a cookie in the browser
@@ -44,4 +47,16 @@ const throwBadResponse = async (response: any) => {
     return await response.json()
 }
 
-export { fetcher, myerror, getCookieValue, throwBadResponse}
+const getTaskClass = (type: string) => {
+    if (Tasks.hasOwnProperty(type)) {
+        const taskClass = Tasks[type]
+        return taskClass
+    } else if (CustomTasks.hasOwnProperty(type)) {
+        const taskClass = CustomTasks[type]
+        return taskClass
+    } else {
+        return null
+    }
+}
+
+export { fetcher, myerror, getTaskClass, getCookieValue, throwBadResponse}
