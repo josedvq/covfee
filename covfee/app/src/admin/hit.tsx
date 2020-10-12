@@ -6,7 +6,6 @@ import { LoadingOutlined } from '@ant-design/icons'
 const Constants = require('../constants.json')
 import { fetcher, myerror, throwBadResponse } from '../utils'
 
-
 class InstanceList extends React.Component {
     render() {
         const data = this.props.instances.map((instance, index) => {
