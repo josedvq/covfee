@@ -260,7 +260,8 @@ class Continuous1DTask extends React.Component<Props, State> {
                 <Col span={4}>
                     <OneDIntensityFeedback 
                         intensity={this.state.intensity}
-                        setIntensity={this.setIntensity}/>
+                        setIntensity={this.setIntensity}
+                        keys={['ArrowUp', 'ArrowRight']}/>
                 </Col>
             </Row>
             

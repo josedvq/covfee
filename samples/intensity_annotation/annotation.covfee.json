@@ -18,11 +18,7 @@
                     320,
                     240
                 ],
-                "fps": 59.94,
-                "mute": true,
-                "autoplay": true,
-                "controls": false,
-                "gallery_url": "imgs/collage1.png"
+                "fps": 59.94
             },
             "tasks": [
                 {
