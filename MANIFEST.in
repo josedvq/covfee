@@ -1,5 +1,7 @@
-include covfee/*
-exclude covfee/package-lock.json
+include covfee/*.js covfee/*.json
+exclude covfee/alias.json
 recursive-include covfee/app *
 recursive-include covfee/static *
 recursive-include covfee/templates *
+
+global-exclude package-lock.json .DS_Store

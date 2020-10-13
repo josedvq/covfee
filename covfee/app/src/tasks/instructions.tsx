@@ -6,7 +6,6 @@ import {
 } from 'antd'
 import 'antd/dist/antd.css'
 import marked from 'marked'
-import Task from 'Tasks/task'
 
 export interface InstructionsTaskProps {
     /**
@@ -59,7 +58,7 @@ class InstructionsTask extends React.Component<InstructionsTaskProps, Instructio
     }
 
     render() {
-        return <Task validate={()=>{return true}}>
+        return <>
             <Row gutter={16}>
                 <Col span={24}>
                     <div dangerouslySetInnerHTML={{ __html: this.state.html}}></div>
@@ -67,10 +66,10 @@ class InstructionsTask extends React.Component<InstructionsTaskProps, Instructio
             </Row>
             <Row>
                 <Col span={24}>
-                    <Task.Submit text="Next"></Task.Submit>
+                    
                 </Col>
             </Row>
-        </Task>
+        </>
     }
 }
 

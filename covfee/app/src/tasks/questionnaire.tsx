@@ -2,13 +2,10 @@ import * as React from 'react'
 import {
     Row,
     Col,
-    Space,
-    Divider,
     Button
 } from 'antd';
 import VideojsPlayer from '../players/videojs'
-import {Task} from 'Tasks'
-import {Form} from '../form'
+import {Form} from 'Input/form'
 
 class QuestionnaireTask extends React.Component {
 
@@ -60,7 +57,7 @@ class QuestionnaireTask extends React.Component {
             }]
         }
         //
-        return <Task {...this.props } validate = { this.validate } >
+        return <>
             <Row gutter={16}>
                 <Col span={16}>
                     <VideojsPlayer {...mediaOptions} onEnded={this.handleVideoEnded}></VideojsPlayer>
@@ -78,7 +75,7 @@ class QuestionnaireTask extends React.Component {
                     {JSON.stringify(this.props.form, null, 2)}
                 </pre>
             </Row>
-        </Task>
+        </>
     }
 }
 

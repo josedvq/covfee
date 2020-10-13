@@ -576,14 +576,16 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             const taskClass = getTaskClass(props.type)
             task = React.createElement(taskClass, {
                 key: this.state.currKey,
-                taskName: this.tasks[this.state.currTask].name,
-                replayMode: this.state.replay.enabled,
-                getNextReplayAction: this.getNextReplayAction,
-                getCurrReplayAction: this.getCurrReplayAction,
+                ref: this.taskRef,
+
+                // Annotation task props
                 buffer: this.buffer.data,
                 onEnd: this.handleTaskEnd,
-                ref: this.taskRef,
-                onSubmit: this.handleTaskSubmit,
+
+                // Replayable task props
+                replayMode: this.state.replay.enabled,
+                getNextReplayAction: this.getNextReplayAction,
+                getCurrReplayAction: this.getCurrReplayAction,                
                 ...props
             }, null)            
         }

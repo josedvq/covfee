@@ -11,12 +11,17 @@ This document contains instructions for installing covfee locally, to test it or
 
 1. Install version 12.x of [node.js](https://nodejs.org/en/download/). Make sure that the `npm` command is available in your terminal.
 
-2. Clone this repository and install the python packege with pip:
+2. Clone this repository and install covfee using pip:
 
 ```
 git clone git@github.com:josedvq/covfee.git
 cd covfee
 python3 -m pip install .
+```
+
+3. Install Javascript dependencies:
+```
+covfee-installjs
 ```
 
 ### Getting started
@@ -93,4 +98,54 @@ ID: c721d8b7f0722ae0f575a8725609e46b1e9421e125dcfa471dc5ebd14e188fb1
 This will contain in general one URL per hit. These are the URLs that you should send to your workers or collaborators. Try opening the first URL in your browser! This should display the HIT you described.
 
 ## Developing custom tasks
-See [developing a custom task](docs/custom_task.md).
+
+We have tried to make the process of developing a custom annotation task as simple as possible. However, development of custom tasks requires at least a basic understanding of Javascript, and [React](https://reactjs.org/). Some useful resources to quickly get started:
+
+- [Official React tutorial](https://reactjs.org/tutorial/tutorial.html)
+
+
+Custom tasks or HIT types can be added by implementing a React component meeting a few conditions. To be valid, task components must meet these conditions:
+
+1. Be a valid React component, by inheriting from `React.Component`.
+
+2. Return a `Task` component from its render() method, and pass its props and `validate` method to it. For example, the Questionnaire task includes:
+
+```
+import Task from './task'
+...
+return <Task {...this.props } validate = { this.validate.bind(this) } >
+    <Row gutter={16}>
+        <Col span={16}>
+            <VideojsPlayer {...videoJsOptions}></VideojsPlayer>
+        </Col>
+        <Col span={8}>
+            <Form {...this.props.form} values={this.state.form.values} onChange={this.handleChange.bind(this)}></Form>
+            <Task.Submit disabled={!this.state.form.completed}></Task.Submit>
+        </Col>
+    </Row>
+    <Row gutter={16}>
+        <pre>
+            {JSON.stringify(this.props.form, null, 2)}
+        </pre>
+    </Row>
+</Task>
+```
+
+The `props` object can be passed as in `<Task {...this.props } `. If you prefer to only pass the necessary props, these are `submit_url` and `onSubmit`. The `validate` will be called when the "Next" button is pressed by the user to submit the task. This method allows you to implement validation functionallity before the result of the task is submitted to the server. It can be used to ensure that the filled-in data is complete and otherwise valid and trigger feedback to the user if the data is incomplete or invalid.
+
+- If the data is invalid, the method should trigger the necessary state changes and return false. Nothing will be submitted to the server.
+- If the data is valid, this method should simply (synchronously) return the result of completing the task. This will be sent to the server as-is and stored in JSON format as the task result. For the Questionnaire task, this is simply the state of the form elements:
+
+```
+validate() {
+    return this.state.form.values
+}
+```
+
+Note that the validate method is not meant to be used for server-side validation. Server-side validation is not supported in the current workflow. Finally, make sure to bind your validate method before passing it to `Task`.
+
+Task components are located in the `covfee/app/src/tasks` folder. Feel free to inspect other examples.
+New task components must be included in the `covfee/app/src/tasks/index.js` file to be visible to the main React app.
+
+## Changing covfee
+If you wish to change the source code of the backend or make changes to the frontend that are not supported by a custom task, see the [Development guide](docs/development.md).

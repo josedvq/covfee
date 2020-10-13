@@ -2,6 +2,7 @@ import os
 import sys
 import glob
 import json
+import subprocess
 
 import click
 from pathlib import Path
@@ -127,3 +128,8 @@ def set_env_dev():
 def set_env_prod():
     return set_env('production')
 
+
+@click.command()
+def install_js():
+    fpath = os.path.dirname(os.path.realpath(__file__))
+    subprocess.check_call(['npm', 'install', '--prefix', fpath])

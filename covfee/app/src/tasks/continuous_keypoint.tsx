@@ -11,7 +11,7 @@ import MouseVisualizer from 'Input/mouse_visualizer'
 import classNames from 'classnames'
 
 interface Props {
-    taskName: string,
+    name: string,
     media: any,
     onEnd: Function, // should be called when the task ends
     buffer: Function,
@@ -297,7 +297,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
 
         return <>
             <div className="annot-bar">
-                <div className="annot-bar-header">{this.props.taskName}</div>
+                <div className="annot-bar-header">{this.props.name}</div>
                 <div className="annot-bar-section"><CaretRightOutlined /> {pr_str}x</div>
                 {this.state.paused ? <div className="annot-bar-section"><ClockCircleOutlined /> {this.state.currentTime.toFixed(1)} / {this.state.duration.toFixed(1)}</div> : <></>}
                 {this.state.paused ? <div className="annot-bar-section">frame {this.state.currentFrame}</div> : <></>}
