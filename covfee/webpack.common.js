@@ -70,5 +70,8 @@ module.exports = {
         "antd": "antd",
         "cv": "cv",
         "video.js": "videojs"
+    },
+    node: {
+        fs: 'empty'
     }
 }

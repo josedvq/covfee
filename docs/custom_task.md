@@ -11,7 +11,7 @@ The development environment makes use of a webpack development server for a more
 
 1. Install version 12.x of [node.js](https://nodejs.org/en/download/). Make sure that the `npm` command is available in your terminal.
 
-2. Clone this repository and install the python packege with pip, in editable mode. This allows that the changes to the source code immediately affect all the local installations of the package.
+2. Clone this repository and install the python package with pip, in editable mode. This allows that the changes to the source code immediately affect all the local installations of the package.
 
 ```
 git clone git@github.com:josedvq/covfee.git
@@ -22,73 +22,95 @@ python3 -m pip install -e .
 3. Create an app database. We will use one of the samples for now:
 
 cd samples/basic
-mkcovfee json --fpath basic.covfee.json
+covfee-maker .
 
-4. Fire up webpack:
+4. From the same folder, start webpack:
 ```
-webpack_fb
+covfee-webpack
 ```
 In development mode, webpack serves the front-end code of covfee. That will include the Javascript code of your custom task. Webpack is configured for hot reloading meaning the results will refresh in your browser whenever you make changes to the code. Javascript errors may appear in this terminal or in the browser.
 
-5. In another terminal, start the flask server in dev mode:
+5. In another terminal, in the same folder, start the flask server in dev mode:
 ```
 covfee-dev
 ```
 
 You can now open the HIT link as explained in the main [README](../README.md)
 
-And that's it. The next section explains how to code a custom task in Javascript.
+And that's it! The next section explains how to code a custom task in Javascript.
 
 ## Custom tasks
-
-Timelines in covfee are made up of individual tasks / HITs. Examples of tasks are:
-
-- Picking a single label for a video
-- Picking multiple labels for a video
-- Answering a personality test or survey
-- Continuously annotating a video for arousal
-
-A task must be submitted by the subject / annotator in order to progress to the next task in the timeline. Timelines may have a single task.
 
 Custom tasks or HIT types can be added by implementing a React component meeting a few conditions. To be valid, task components must meet these conditions:
 
 1. Be a valid React component, by inheriting from `React.Component`.
 
-2. Return a `Task` component from its render() method, and pass its props and `validate` method to it. For example, the Questionnaire task includes:
+2. Covfee takes care of data submission and storage, but your task needs to output the result of the task, ie. the user-provided feedback. This can be, for example, the answer to a form, or the location of the mouse over time. Normally it is enough for you to store the state of the task in the `state` or a class attribute and pass it to the `onSubmit` props method one the task is finished. It is therefore left to you to determine when the task is finished and the data valid. Once `onSubmit` is called, covfee takes control and advances to the next task in the timeline, or lets the user switch to a different one in the annotation environment.
+
+### A first task 
+This will walk you through the process of creating a simple covfee task.
+
+We will start by importing the `Form` component, which, quite simply, creates simple forms from a specification. We will also make use of the video.js player to play the videos, and we need to import React and antd for the layout. All these imports look like:
 
 ```
-import Task from './task'
-...
-return <Task {...this.props } validate = { this.validate.bind(this) } >
-    <Row gutter={16}>
-        <Col span={16}>
-            <VideojsPlayer {...videoJsOptions}></VideojsPlayer>
-        </Col>
-        <Col span={8}>
-            <Form {...this.props.form} values={this.state.form.values} onChange={this.handleChange.bind(this)}></Form>
-            <Task.Submit disabled={!this.state.form.completed}></Task.Submit>
-        </Col>
-    </Row>
-    <Row gutter={16}>
-        <pre>
-            {JSON.stringify(this.props.form, null, 2)}
-        </pre>
-    </Row>
-</Task>
+import * as React from 'react'
+import {
+    Row,
+    Col,
+    Button
+} from 'antd';
+import VideojsPlayer from '../players/videojs'
+import {Form} from 'Input/form'
 ```
 
-The `props` object can be passed as in `<Task {...this.props } `. If you prefer to only pass the necessary props, these are `submit_url` and `onSubmit`. The `validate` will be called when the "Next" button is pressed by the user to submit the task. This method allows you to implement validation functionallity before the result of the task is submitted to the server. It can be used to ensure that the filled-in data is complete and otherwise valid and trigger feedback to the user if the data is incomplete or invalid.
-
-- If the data is invalid, the method should trigger the necessary state changes and return false. Nothing will be submitted to the server.
-- If the data is valid, this method should simply (synchronously) return the result of completing the task. This will be sent to the server as-is and stored in JSON format as the task result. For the Questionnaire task, this is simply the state of the form elements:
-
+Next, we will create our task component:
 ```
-validate() {
-    return this.state.form.values
+class FirstTask extends React.Component {
+
+    public state = {
+        values: [[]]
+    }
+
+    handleChange = (values: object) => {
+        const has_null = values[0].some((val) => {
+            return val === null
+        })
+
+        this.setState({
+            values: values,
+        })
+    }
+
+    handleSubmit = () => {
+        this.props.onSubmit(this.state.values)
+    }
+
+    render() {
+        const mediaOptions = {
+            autoplay: false,
+            controls: true,
+            fluid: true,
+            aspectRatio: '16:9',
+            sources: [{
+                src: this.props.media.url,
+                type: 'video/mp4'
+            }]
+        }
+        return <>
+            <Row>
+                <Col span={16}>
+                    <VideojsPlayer {...mediaOptions} onEnded={this.handleVideoEnded}></VideojsPlayer>
+                </Col>
+                <Col span={8}>
+                    <Form {...this.props.form} 
+                        values={this.state.form.values} 
+                        onChange={this.handleChange}></Form>
+                    <Button onClick={this.handleSubmit}>Submit</Button>
+                </Col>
+            </Row>
+        </>
+    }
 }
 ```
 
-Note that the validate method is not meant to be used for server-side validation. Server-side validation is not supported in the current workflow. Finally, make sure to bind your validate method before passing it to `Task`.
-
-Task components are located in the `covfee/app/src/tasks` folder. Feel free to inspect other examples.
-New task components must be included in the `covfee/app/src/tasks/index.js` file to be visible to the main React app.
+Task components are located in the `covfee/app/src/tasks` folder. This is the place to start if you wish to implement your own task.

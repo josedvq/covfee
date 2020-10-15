@@ -1,3 +1,4 @@
+import os
 from setuptools.command.build_py import build_py
 from setuptools.command.install import install
 from setuptools.command.develop import develop
@@ -6,11 +7,24 @@ from setuptools import find_packages, setup
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+
+class NPMInstall(build_py):
+    def run(self):
+        import subprocess
+        print('npm install')
+        print(os.getcwd())
+        subprocess.check_call(['npm', 'install', '--prefix', 'covfee'])
+        build_py.run(self)
+        print(os.getcwd())
+
 class Install(install):
     def run(self):
         import subprocess
+        print('install')
+        print(os.getcwd())
         subprocess.check_call(['npm', 'install', '--prefix', 'covfee'])
         install.run(self)
+        print(os.getcwd())
 
 
 class Develop(develop):
@@ -30,13 +44,10 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    cmdclass={
-        'install': Install,
-        'develop': Develop
-    },
     scripts=['./covfee-dev', './covfee-prod'],
     entry_points={
         'console_scripts': [
+            'covfee-installjs = covfee.commands:install_js',
             'covfee-init = covfee.commands:make_db',
             'covfee-webpack = covfee.commands:start',
             'covfee-build = covfee.commands:build',
@@ -51,7 +62,8 @@ setup(
         'Flask-SQLAlchemy == 2.*',
         'gunicorn == 20.*',
         'flask-jwt-extended == 3.*',
-        'click ==  7.*'
+        'click ==  7.*',
+        'pandas == 1.*'
     ],
     python_requires='>=3.6'
 )

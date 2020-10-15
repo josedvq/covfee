@@ -13,3 +13,5 @@ database.db
 covfee.egg-info
 covfee/.docz
 samples/*/database.covfee.db
+samples/*/covfee_tasks/index.js
+samples/conflab/media/*

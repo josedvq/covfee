@@ -1,0 +1,31 @@
+{
+    "name": "Continuous annot sample",
+    "email": "j.d.vargasquiros@tudelft.nl",
+    "hits": [
+        {
+            "type": "annotation",
+            "name": "1D annotation sample",
+            "repeat": 2,
+            "media": {
+                "type": "video",
+                "url": "sample_mp4_10s.mp4",
+                "res": [
+                    320,
+                    240
+                ],
+                "flow_url": "sample_mp4_flow_10s.mp4",
+                "flow_res": [
+                    320,
+                    240
+                ],
+                "fps": 59.94
+            },
+            "tasks": [
+                {
+                    "type": "Continuous1DTask",
+                    "name": "Sample"
+                }
+            ]
+        }
+    ]
+}

@@ -5,10 +5,10 @@ import {
 import 'antd/dist/antd.css'
 const { Text, Title, Link } = Typography;
 
-import * as Tasks from './tasks'
-import * as CustomTasks from 'CustomTasks'
+
 const Constants = require('./constants.json')
-import { myerror, throwBadResponse } from './utils'
+import {myerror, throwBadResponse } from './utils'
+import { getTaskClass} from './task_utils'
 import { TaskSpec} from 'Tasks/task'
 
 interface TimelineState{
@@ -73,22 +73,11 @@ class Timeline extends React.Component<TimelineProps, TimelineState> {
         const props = this.tasks[this.state.currTask]
         props.url = this.url + '/tasks/' + props.id
 
-        if (Tasks.hasOwnProperty(props.type)) {
-            const taskClass = Tasks[props.type]
-            return React.createElement(taskClass, {
-                key: this.state.currTask,
-                onSubmit: this.handleTaskSubmit,
-                ...props }, null)
-        } else if (CustomTasks.hasOwnProperty(props.type)) {
-            const taskClass = CustomTasks[props.type]
-            return React.createElement(taskClass, {
-                key: this.state.currTask,
-                onSubmit: this.handleTaskSubmit,
-                ...props
-            }, null)
-        } else {
-            return <Text>Error loading annotation task</Text>
-        }    
+        const taskClass = getTaskClass(props.type)
+        return React.createElement(taskClass, {
+            key: this.state.currTask,
+            onSubmit: this.handleTaskSubmit,
+            ...props }, null)
     }
 }
 

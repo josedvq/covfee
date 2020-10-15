@@ -1,4 +1,5 @@
 import {message} from 'antd'
+
 const Constants = require('./constants.json')
 
 // read a cookie in the browser
@@ -17,6 +18,10 @@ function myerror(msg: string, error?: any) {
         console.error(error)
         message.error(error.stack, 0)
     }
+}
+
+function myinfo(msg: string) {
+    message.info(msg)
 }
 
 // fetch wrapper that appends the csrf_access_token cookie for authentication
@@ -44,4 +49,4 @@ const throwBadResponse = async (response: any) => {
     return await response.json()
 }
 
-export { fetcher, myerror, getCookieValue, throwBadResponse}
+export { fetcher, myerror, myinfo, getCookieValue, throwBadResponse}

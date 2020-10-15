@@ -1,0 +1,42 @@
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/addon-docs/blocks'
+import ContinuousKeypointTask from './continuous_keypoint'
+import {TaskVisualizer} from '../docs'
+
+# Continuous Keypoint Task
+
+<Meta title="Tasks / Continuous Keypoint" component={ContinuousKeypointTask} />
+
+export const Template = (args) => <TaskVisualizer {...args } />
+
+The continuous keypoint task was created for annotation of keypoints in a video. In the original application these keypoints corresponded to extremities of people in a social interaction. The task makes use of an optical flow video to play the video slower when the mouse cursor is close to moving parts, to aid annotators in the process. Skeletal keypoints were annotated one-by-one continuously, instead of traditional frame-based annotation in which some image frames are annotated to then be interpolated. In general, this task is especially useful when the target keypoint are visible for long periods of time.
+
+## Basic
+
+Let's define a story for our `Badge` component:
+
+export const taskSpec = {
+    "type": "ContinuousKeypointTask",
+    "media": {
+        "type": "video",
+        "url": "sample_mp4_10s.mp4",
+        "res": [
+            320,
+            240
+        ],
+        "flow_url": "sample_mp4_flow_10s.mp4",
+        "flow_res": [
+            320,
+            240
+        ],
+        "fps": 59.94,
+        "mute": true,
+        "autoplay": true,
+        "controls": false,
+        "gallery_url": "imgs/collage1.png"
+    }
+}
+
+<TaskVisualizer task={taskSpec}/>
+
+## Props
+<ArgsTable of={ContinuousKeypointTask}/>

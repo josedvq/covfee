@@ -19,10 +19,10 @@ import {
 import Collapsible from 'react-collapsible'
 const { Text, Title, Link } = Typography
 
-import ContinuousKeypointTask from './tasks/continuous_keypoint'
 import classNames from 'classnames'
 const Constants = require('./constants.json')
-import {myerror, fetcher, throwBadResponse} from './utils'
+import { myerror, fetcher, throwBadResponse} from './utils'
+import { getTaskClass} from './task_utils'
 import { TaskSpec } from 'Tasks/task'
 import { Buffer, EventBuffer, DummyBuffer } from './buffer';
 
@@ -208,7 +208,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     tasks: { [key: string]: TaskSpec}
     buffer: Buffer
     container = React.createRef<HTMLDivElement>()
-    taskRef = React.createRef<ContinuousKeypointTask>()
+    taskRef = React.createRef<React.Component>()
 
     replayIndex = 0
 
@@ -472,11 +472,6 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         }
     }
 
-    handleInputFocus = (focus: boolean) => {
-        if(focus) this.taskRef.current.stopKeyboardListen()
-        else this.taskRef.current.startKeyboardListen()
-    }
-
     handleMenuClick = (e: object) => {
         if (e.key == 'gallery') this.setState({galleryOpen: !this.state.galleryOpen})
     }
@@ -551,7 +546,6 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             tasks={tasks} 
             currTask={this.state.currTask}
             onAddTask={this.handleAddTask} 
-            onInputFocus={this.handleInputFocus}
             onChangeActiveTask={this.handleChangeActiveTask}
             onSubmitNewTaskName={this.handleSubmitNewTaskName} />
 
@@ -570,7 +564,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                     <div className="task-overlay-nav">
                         <Button onClick={this.handleTaskReplay}>Replay</Button>
                         <Button onClick={this.handleTaskRedo}>Re-do</Button>
-                        <Button onClick={this.handleTaskSubmit} 
+                        <Button onClick={()=>{this.handleTaskSubmit({})}} 
                             type="primary" 
                             disabled={this.state.overlay.submitted || this.state.replay.enabled} 
                             loading={this.state.overlay.submitting}
@@ -579,18 +573,21 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                 </div>
             </div>
 
-            task = <ContinuousKeypointTask 
-                    taskName={this.tasks[this.state.currTask].name}
-                    replayMode={this.state.replay.enabled}
-                    getNextReplayAction={this.getNextReplayAction}
-                    getCurrReplayAction={this.getCurrReplayAction}
-                    buffer={this.buffer.data}
-                    key={this.state.currKey} 
-                    onEnd={this.handleTaskEnd} 
-                    ref={this.taskRef}
-                    {...props}/>
-            
-            
+            const taskClass = getTaskClass(props.type)
+            task = React.createElement(taskClass, {
+                key: this.state.currKey,
+                ref: this.taskRef,
+
+                // Annotation task props
+                buffer: this.buffer.data,
+                onEnd: this.handleTaskEnd,
+
+                // Replayable task props
+                replayMode: this.state.replay.enabled,
+                getNextReplayAction: this.getNextReplayAction,
+                getCurrReplayAction: this.getCurrReplayAction,                
+                ...props
+            }, null)            
         }
 
         return <div className="tool-container" ref={this.container}>

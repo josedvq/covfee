@@ -4,14 +4,14 @@ import {
     Modal
 } from 'antd';
 import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import OpencvFlowPlayer from 'Players/opencv'
+import OpencvFlowPlayer from '../players/opencv'
 import '../css/gui.css'
-import MouseTracker from 'Input/mouse_tracker'
-import MouseVisualizer from 'Input/mouse_visualizer'
+import MouseTracker from '../input/mouse_tracker'
+import MouseVisualizer from '../input/mouse_visualizer'
 import classNames from 'classnames'
 
 interface Props {
-    taskName: string,
+    name: string,
     media: any,
     onEnd: Function, // should be called when the task ends
     buffer: Function,
@@ -276,20 +276,6 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
     
 
     render() {
-        const playerOptions = {
-            muted: true,
-            fps: this.props.media.fps,
-            video: {
-                src: this.props.media.url,
-                res: this.props.media.res,
-                type: 'video/mp4'
-            },
-            flow: {
-                src: this.props.media.flow_url,
-                res: this.props.media.flow_res,
-                type: 'video/mp4'
-            }
-        }
         let pr = this.playbackRates[this.state.playbackRateIdx]
         let pr_str = ''
         if(Number.isInteger(pr)) pr_str = pr.toString()
@@ -297,7 +283,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
 
         return <>
             <div className="annot-bar">
-                <div className="annot-bar-header">{this.props.taskName}</div>
+                <div className="annot-bar-header">{this.props.name}</div>
                 <div className="annot-bar-section"><CaretRightOutlined /> {pr_str}x</div>
                 {this.state.paused ? <div className="annot-bar-section"><ClockCircleOutlined /> {this.state.currentTime.toFixed(1)} / {this.state.duration.toFixed(1)}</div> : <></>}
                 {this.state.paused ? <div className="annot-bar-section">frame {this.state.currentFrame}</div> : <></>}
@@ -314,7 +300,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
                 
                 <MouseVisualizer disable={!this.props.replayMode} data={this.state.replayMode.data}>
                     <OpencvFlowPlayer
-                        {...playerOptions}
+                        {...this.props.media}
                         paused={this.state.paused}
                         pausePlay={this.handlePausePlay}
                         rate={this.playbackRates[this.state.playbackRateIdx]}

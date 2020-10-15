@@ -17,23 +17,28 @@ hitistances_tasks = db.Table('hitistances_tasks',
 class HIT(db.Model):
     """ Represents a set of tasks to be completed by one subject, ie. a HIT """
     __tablename__ = 'hits'
+    __table_args__ = (
+        db.UniqueConstraint('project_id', 'name'),
+    )
 
     id = db.Column(db.Binary, primary_key=True)
     type = db.Column(db.String)
-    # name = db.Column(db.String)
+    name = db.Column(db.String)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
     media = db.Column(db.JSON)
     instances = db.relationship("HITInstance", backref='hit')
     tasks = db.relationship("Task", secondary=hits_tasks, backref='hit')
     submitted = db.Column(db.Boolean)
+    test = db.Column(db.String)
 
-    def __init__(self, id, type, media=None, tasks=[], instances=[], submitted=False):
+    def __init__(self, id, type, name, media=None, tasks=[], instances=[], submitted=False):
         self.id = id
         self.type = type
-        # self.name = name
+        self.name = name
         self.tasks = tasks
         self.instances = instances
         self.submitted = submitted
+        self.test = 'this is a test'
 
         # fix URLs
         if media is not None:
@@ -46,6 +51,7 @@ class HIT(db.Model):
     @staticmethod
     def from_dict(hit_dict, seedstr):
         num_instances = hit_dict.get('repeat', 1)
+        hashstr = seedstr + hit_dict['name']
 
         tasks = [Task.from_dict(
             task
@@ -57,13 +63,13 @@ class HIT(db.Model):
         # instances are always created
         is_annotation = (hit_dict['type'] == 'annotation')
         instances = [HITInstance.from_dict({
-            'id': sha256(f'{seedstr}_{j:d}'.encode()).digest(),
+            'id': sha256(f'{hashstr}_{j:d}'.encode()).digest(),
             'submitted': False,
             'tasks': hit_dict['tasks'] if is_annotation else []
         }) for j in range(num_instances)]
 
         return HIT(
-            id=sha256(seedstr.encode()).digest(),
+            id=sha256(hashstr.encode()).digest(),
             type=hit_dict['type'],
             media=hit_dict['media'],
             tasks=tasks if not is_annotation else [],
@@ -190,5 +196,6 @@ class HITInstance(db.Model):
 
         shutil.make_archive(os.path.join(
             app.config['TMP_PATH'], self.id.hex()), 'zip', dirpath)
-        return self.id.hex()+'.zip'
+        shutil.rmtree(dirpath)
+        return self.id.hex() + '.zip'
 
