@@ -189,5 +189,5 @@ class HITInstance(db.Model):
             response.write_json(dirpath)
 
         shutil.make_archive(os.path.join(app.config['TMP_PATH'], 'download'), 'zip', dirpath)
-        return 'download.zip'
+        return self.id.hex()+'.zip'
 
