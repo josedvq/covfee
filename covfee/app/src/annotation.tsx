@@ -21,7 +21,7 @@ const { Text, Title, Link } = Typography
 
 import classNames from 'classnames'
 const Constants = require('./constants.json')
-import { myerror, fetcher, throwBadResponse} from './utils'
+import { myerror, fetcher, getUrlQueryParam, throwBadResponse} from './utils'
 import { getTaskClass} from './task_utils'
 import { TaskSpec } from 'Tasks/task'
 import { Buffer, EventBuffer, DummyBuffer } from './buffer';
@@ -141,6 +141,7 @@ class Task extends React.Component {
 }
 
 interface AnnotationProps {
+    previewMode: boolean,
     type: string,
     id: string,
     media: object,
@@ -333,7 +334,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     }
 
     loadTaskForAnnotation = (taskId: string) => {
-        this.startNewBuffer(taskId)
+        this.startNewBuffer(taskId, this.props.previewMode) // dummy buffer for preview
         this.setState({
             currTask: taskId,
             loadingTask: false,
@@ -458,6 +459,8 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     } 
 
     handleAddTask = () => {
+        if(this.props.previewMode) return
+        
         if (!this.tasks.hasOwnProperty('n')) {
             this.tasks.n = {id: 'n', name: ''}
             const newTaskIds = Array.from(this.state.sidebar.taskIds)

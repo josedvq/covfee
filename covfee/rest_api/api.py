@@ -67,7 +67,6 @@ def hit(hid):
         with_instance_tasks=with_instance_tasks)
 
 # INSTANCES
-
 # return one HIT instance
 @api.route('/instances/<iid>')
 def instance(iid):
@@ -75,6 +74,12 @@ def instance(iid):
     with_responses = request.args.get('with_responses', True)
     res = db.session.query(HITInstance).get(bytes.fromhex(iid))
     return jsonify_or_404(res, with_tasks=with_tasks, with_responses=with_responses)
+
+
+@api.route('/instance-previews/<iid>')
+def instance_preview(iid):
+    res = HITInstance.query.filter_by(preview_id=bytes.fromhex(iid)).first()
+    return jsonify_or_404(res, with_tasks=True, with_responses=False)
 
 # submit a hit (when finished)
 @api.route('/instances/<iid>/submit', methods=['POST'])

@@ -115,6 +115,7 @@ class HITInstance(db.Model):
     __tablename__ = 'hitinstances'
 
     id = db.Column(db.Binary, primary_key=True)
+    preview_id = db.Column(db.Binary, unique=True) # id used for visualization
     hit_id = db.Column(db.Integer, db.ForeignKey('hits.id'))
     tasks = db.relationship("Task", secondary=hitistances_tasks, backref='hitinstance')
     responses = db.relationship("TaskResponse", backref='hitinstance', lazy='dynamic')
@@ -122,6 +123,7 @@ class HITInstance(db.Model):
 
     def __init__(self, id, tasks, submitted=False):
         self.id = id
+        self.preview_id = sha256((id + 'preview'.encode())).digest()
         self.tasks = tasks
         self.submitted = submitted
 
@@ -130,6 +132,9 @@ class HITInstance(db.Model):
 
     def get_url(self):
         return f'{app.config["APP_URL"]}/hits/{self.id.hex():s}'
+
+    def get_preview_url(self):
+        return f'{app.config["APP_URL"]}/hits/{self.preview_id.hex():s}?preview=1'
 
     @staticmethod
     def from_dict(instance_dict):
@@ -151,6 +156,7 @@ class HITInstance(db.Model):
         hit_dict = self.hit.as_dict(with_tasks=with_tasks)
         instance_dict['id'] = instance_dict['id'].hex()
         instance_dict['hit_id'] = instance_dict['hit_id'].hex()
+        instance_dict['preview_id'] = instance_dict['preview_id'].hex()
 
         # merge hit and instance dicts
         instance_dict = {**hit_dict, **instance_dict}

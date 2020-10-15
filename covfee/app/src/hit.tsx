@@ -4,7 +4,7 @@ import { withRouter } from 'react-router'
 import Timeline from './timeline'
 import Annotation from './annotation'
 const Constants = require('./constants.json')
-import { throwBadResponse} from './utils'
+import { getUrlQueryParam, throwBadResponse} from './utils'
 
 import {
     LoadingOutlined,
@@ -28,6 +28,7 @@ interface HITSpec {
 
 interface HITState {
     status: string,
+    previewMode: boolean,
     error: string,
     hit: HITSpec
 }
@@ -38,6 +39,7 @@ class HIT extends React.Component<any, HITState> {
 
     state: HITState = {
         status: 'loading',
+        previewMode: false,
         error: null,
         hit: null,
     }
@@ -46,7 +48,12 @@ class HIT extends React.Component<any, HITState> {
         super(props)
 
         this.id = props.match.params.hitId
-        this.url = Constants.api_url + '/instances/' + this.id
+        this.state.previewMode = (getUrlQueryParam('preview') == '1')
+        if (this.state.previewMode) this.url = Constants.api_url + '/instance-previews/' + this.id
+        else this.url = Constants.api_url + '/instances/' + this.id
+
+        console.log(getUrlQueryParam('preview'))
+        console.log(this.url)
     }
 
     componentDidMount() {
@@ -64,11 +71,7 @@ class HIT extends React.Component<any, HITState> {
                         hit: hit
                     })
                 }
-            })
-            // Note: it's important to handle errors here
-            // instead of a catch() block so that we don't swallow
-            // exceptions from actual bugs in components.
-            .catch(error => {
+            }).catch(error => {
                 this.setState({
                     status: 'error',
                     error
@@ -117,7 +120,7 @@ class HIT extends React.Component<any, HITState> {
             case 'ready':
                 switch (this.state.hit.type) {
                     case 'annotation':
-                        return <Annotation {...this.state.hit} onSubmit={this.handleSubmit}/>
+                        return <Annotation {...this.state.hit} previewMode={this.state.previewMode} onSubmit={this.handleSubmit}/>
                     case 'timeline':
                         return <Timeline {...this.state.hit} onSubmit={this.handleSubmit}/>
                     default:

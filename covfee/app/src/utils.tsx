@@ -8,6 +8,18 @@ function getCookieValue(a: string) {
     return b ? b.pop() : null
 }
 
+function getUrlQueryParam(name: string) {
+    // querystring is after the hash
+    let search
+    if (window.location.hash.indexOf('?') !== -1) {
+        search = '?' + window.location.hash.split('?')[1]
+    } else {
+        search = window.location.search
+    }
+    const params = new URLSearchParams(search);
+    return params.get(name)
+}
+
 // error method that
 //   prints an message to screen in production environment
 //   prints and logs a detailed error in dev mode
@@ -49,4 +61,11 @@ const throwBadResponse = async (response: any) => {
     return await response.json()
 }
 
-export { fetcher, myerror, myinfo, getCookieValue, throwBadResponse}
+export { 
+    fetcher, 
+    myerror, 
+    myinfo, 
+    getUrlQueryParam,
+    getCookieValue,
+    throwBadResponse
+}

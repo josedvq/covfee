@@ -28,9 +28,10 @@ class Project(db.Model):
                 list_of_instances.append({
                     'hit_name': hit.name,
                     'id': instance.id.hex(),
-                    'url': instance.get_url()
+                    'url': instance.get_url(),
+                    'preview_url': instance.get_preview_url()
                 })
-        df = pd.DataFrame(list_of_instances, columns=['hit_name', 'id', 'url'])
+        df = pd.DataFrame(list_of_instances, columns=['hit_name', 'id', 'url', 'preview_url'])
         
         return df
 
