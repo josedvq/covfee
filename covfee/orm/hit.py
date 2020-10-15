@@ -71,6 +71,7 @@ class HIT(db.Model):
         return HIT(
             id=sha256(hashstr.encode()).digest(),
             type=hit_dict['type'],
+            name=hit_dict['name'],
             media=hit_dict['media'],
             tasks=tasks if not is_annotation else [],
             instances=instances,
