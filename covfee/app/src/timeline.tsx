@@ -7,7 +7,8 @@ const { Text, Title, Link } = Typography;
 
 
 const Constants = require('./constants.json')
-import { getTaskClass, myerror, throwBadResponse } from './utils'
+import {myerror, throwBadResponse } from './utils'
+import { getTaskClass} from './task_utils'
 import { TaskSpec} from 'Tasks/task'
 
 interface TimelineState{

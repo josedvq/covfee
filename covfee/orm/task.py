@@ -80,11 +80,15 @@ class TaskResponse(db.Model):
             data = [chunk.data for chunk in self.chunks]
             return task_class.aggregate_chunks(data)
         else:
-            return None
+            return []
 
     def write_json(self, dirpath):
         fpath = os.path.join(dirpath, f'{self.task.name}.json')
-        json.dump(self.data, open(fpath,'w'))
+        data = {
+            'response': self.data,
+            'chunks': self.aggregate()
+        }
+        json.dump(data, open(fpath,'w'))
 
 
 db.Index('taskresponse_index', TaskResponse.task_id,

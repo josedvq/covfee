@@ -21,7 +21,8 @@ const { Text, Title, Link } = Typography
 
 import classNames from 'classnames'
 const Constants = require('./constants.json')
-import { myerror, fetcher, throwBadResponse, getTaskClass} from './utils'
+import { myerror, fetcher, throwBadResponse} from './utils'
+import { getTaskClass} from './task_utils'
 import { TaskSpec } from 'Tasks/task'
 import { Buffer, EventBuffer, DummyBuffer } from './buffer';
 
@@ -545,7 +546,6 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             tasks={tasks} 
             currTask={this.state.currTask}
             onAddTask={this.handleAddTask} 
-            onInputFocus={this.handleInputFocus}
             onChangeActiveTask={this.handleChangeActiveTask}
             onSubmitNewTaskName={this.handleSubmitNewTaskName} />
 
@@ -564,7 +564,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                     <div className="task-overlay-nav">
                         <Button onClick={this.handleTaskReplay}>Replay</Button>
                         <Button onClick={this.handleTaskRedo}>Re-do</Button>
-                        <Button onClick={this.handleTaskSubmit} 
+                        <Button onClick={()=>{this.handleTaskSubmit({})}} 
                             type="primary" 
                             disabled={this.state.overlay.submitted || this.state.replay.enabled} 
                             loading={this.state.overlay.submitting}

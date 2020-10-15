@@ -1,0 +1,25 @@
+import { Meta, Story, Canvas } from '@storybook/addon-docs/blocks'
+import Continuous1DTask from './continuous_1d'
+import {TaskVisualizer} from '../docs'
+
+<Meta title="Tasks / Continuous 1D" component={Continuous1DTask} />
+
+export const Template = (args) => <TaskVisualizer {...args } />
+
+# Basic
+
+Let's define a story for our `Badge` component:
+
+export const taskSpec = {
+    "type": "Continuous1DTask",
+    "media": {
+        "type": "video",
+        "url": "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4",
+        "mute": true,
+    }
+}
+
+<TaskVisualizer task={taskSpec}/>
+
+
+

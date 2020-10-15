@@ -1,11 +1,12 @@
 import * as React from 'react'
+import { MediaSpec } from 'Tasks/task'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
 
-interface Props {
-    onPlay: Function,
-    onPause: Function,
-    onEnded: Function
+interface Props extends MediaSpec {
+    onPlay?: Function,
+    onPause?: Function,
+    onEnded?: Function
 }
 // video.js player from the docs: https://github.com/videojs/video.js/blob/master/docs/guides/react.md
 class VideojsPlayer extends React.PureComponent<Props> {
@@ -13,8 +14,18 @@ class VideojsPlayer extends React.PureComponent<Props> {
     private videoNode = React.createRef<HTMLVideoElement>()
 
     componentDidMount() {
+        let options = {
+            autoplay: false,
+            controls: true,
+            fluid: true,
+            aspectRatio: '16:9',
+            sources: [{
+                src: this.props.url,
+                type: 'video/mp4'
+            }]
+        }
         // instantiate Video.js
-        this.player = videojs(this.videoNode, this.props, function onPlayerReady() {
+        this.player = videojs(this.videoNode.current, options, function onPlayerReady() {
             this.play()
         });
 
@@ -62,15 +73,6 @@ class VideojsPlayer extends React.PureComponent<Props> {
         if (this.player) {
             this.player.dispose()
         }
-    }
-
-    componentWillReceiveProps(newProps: Props) {
-        // When a user moves from one title to the next, the VideoPlayer component will not be unmounted,
-        // instead its properties will be updated with the details of the new video. In this case,
-        // we can update the src of the existing player with the new video URL.
-        // if (this.player) {
-        //     this.player.src(newProps.sources[0])
-        // }
     }
 
     // wrap the player in a div with a `data-vjs-player` attribute

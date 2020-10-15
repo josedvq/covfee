@@ -3,7 +3,7 @@ import {
     Menu,
     Select,
     Typography,
-    Table, Empty
+    Table, Empty, Button
 } from 'antd'
 import {
     Link,
@@ -14,8 +14,9 @@ const { Option } = Select
 import 'antd/dist/antd.css'
 import {HITSpec} from '../hit'
 const Constants = require('../constants.json')
-import { myerror, fetcher, throwBadResponse } from '../utils'
+import { myerror, fetcher, throwBadResponse, myinfo } from '../utils'
 import { IdcardFilled, LoadingOutlined, RightOutlined } from '@ant-design/icons'
+import download from 'downloadjs'
 
 class InstanceListAsync extends React.Component {
     state = {
@@ -86,7 +87,26 @@ class InstanceList extends React.Component {
             {
                 title: 'Data',
                 dataIndex: 'url',
-                render: url => <a href={url + '/download'}>Download</a>
+                render: url => <a onClick={()=>{
+                    fetcher(url + '/download').then(async (response: any)=>{
+                        if (!response.ok) {
+                            const data = await response.json()
+                            if (data.hasOwnProperty('msg')) {
+                                throw Error(data.msg)
+                            }
+                            throw Error(response.statusText)
+                        }
+                        return response
+                    }).then(async (response: any) => {
+                        if (response.status == 204) {
+                            return myinfo('Nothing to download.')
+                        }
+                        const blob = await response.blob()
+                        download(blob)
+                    }).catch(error => {
+                        myerror('Error fetching task response.', error)
+                    })
+                }}>Download</a>
             }
         ]
 
@@ -264,6 +284,7 @@ class AdminProject extends React.Component<Props, State> {
                 return <>
                     <div style={{margin: '2em 1em'}}>
                         Project: {select}
+                        <Button type='primary' href={Constants.api_url + '/projects/' + this.projects[this.state.currProject].id + '/csv'}>Download CSV</Button>
                     </div>
                     {hits}
                 </>

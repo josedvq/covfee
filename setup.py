@@ -62,7 +62,8 @@ setup(
         'Flask-SQLAlchemy == 2.*',
         'gunicorn == 20.*',
         'flask-jwt-extended == 3.*',
-        'click ==  7.*'
+        'click ==  7.*',
+        'pandas == 1.*'
     ],
     python_requires='>=3.6'
 )

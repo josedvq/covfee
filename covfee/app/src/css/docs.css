@@ -1,0 +1,6 @@
+.docs-task-pg {
+    outline: none;
+}
+.docs-task-pg-err {
+    border: 1px solid red;
+}

@@ -1,15 +1,13 @@
-import * as React from 'react';
+import * as React from 'react'
 import { 
     Radio, 
-    Divider, 
-    Slider,
-    Button,
-    Space,
-    List,
-    Alert
-} from 'antd';
+    List
+} from 'antd'
 
 class Form extends React.Component {
+
+    componentDidMount() {
+    }
     
     handleChange = (idx: number, fieldset_values: Array<any>) => {
         let new_state = this.props.values.slice()

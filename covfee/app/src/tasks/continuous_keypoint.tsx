@@ -4,10 +4,10 @@ import {
     Modal
 } from 'antd';
 import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import OpencvFlowPlayer from 'Players/opencv'
+import OpencvFlowPlayer from '../players/opencv'
 import '../css/gui.css'
-import MouseTracker from 'Input/mouse_tracker'
-import MouseVisualizer from 'Input/mouse_visualizer'
+import MouseTracker from '../input/mouse_tracker'
+import MouseVisualizer from '../input/mouse_visualizer'
 import classNames from 'classnames'
 
 interface Props {
@@ -276,20 +276,6 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
     
 
     render() {
-        const playerOptions = {
-            muted: true,
-            fps: this.props.media.fps,
-            video: {
-                src: this.props.media.url,
-                res: this.props.media.res,
-                type: 'video/mp4'
-            },
-            flow: {
-                src: this.props.media.flow_url,
-                res: this.props.media.flow_res,
-                type: 'video/mp4'
-            }
-        }
         let pr = this.playbackRates[this.state.playbackRateIdx]
         let pr_str = ''
         if(Number.isInteger(pr)) pr_str = pr.toString()
@@ -314,7 +300,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
                 
                 <MouseVisualizer disable={!this.props.replayMode} data={this.state.replayMode.data}>
                     <OpencvFlowPlayer
-                        {...playerOptions}
+                        {...this.props.media}
                         paused={this.state.paused}
                         pausePlay={this.handlePausePlay}
                         rate={this.playbackRates[this.state.playbackRateIdx]}

@@ -3,6 +3,7 @@
     "email": "j.d.vargasquiros@tudelft.nl",
     "hits": [
         {
+            "name": "Keypoint1",
             "type": "annotation",
             "repeat": 2,
             "media": {

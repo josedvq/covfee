@@ -1,17 +1,16 @@
 import * as React from 'react'
+import { MediaSpec } from '../tasks/task'
 
 // video player using opencv to control playback speed
-interface Props {
+interface Props extends MediaSpec{
+    /**
+     * Indicates if the video is paused or playing
+     */
     paused: boolean,
-    fps: number,
     onLoad: Function,
     onFrame: Function,
     onEnded: Function,
-    pausePlay: Function,
-    video: {
-        src: string,
-        res: Array<number>
-    }
+    pausePlay: Function
 }
 
 class HTML5Player extends React.PureComponent<Props> {
@@ -20,10 +19,6 @@ class HTML5Player extends React.PureComponent<Props> {
     private req_id: any = false
     private frame: number = 0
     private time: number = 0
-
-    constructor(props: Props) {
-        super(props)
-    }
 
     componentDidMount() {
 
@@ -56,15 +51,14 @@ class HTML5Player extends React.PureComponent<Props> {
     }
 
     public play() {
-        this.video_tag.current.onseeked = () => {
-            this.req_id = window.requestAnimationFrame(this.processVideo)
-        }
+        this.req_id = window.requestAnimationFrame(this.processVideo)
+        this.video_tag.current.play()
     }
 
     public pause() {
         window.cancelAnimationFrame(this.req_id)
         this.req_id = false
-        this.video_tag.current.onseeked = undefined
+        this.video_tag.current.pause()
     }
 
     public restart() {
@@ -95,10 +89,10 @@ class HTML5Player extends React.PureComponent<Props> {
     //style={{ display: 'none' }}
     render() {
         return <>
-                <video ref={this.video_tag} width="100%" crossOrigin="Anonymous" preload="auto" muted> 
-                    <source src={this.props.video.src} type={"video/mp4"}></source>
-                </video>
-            </>
+            <video ref={this.video_tag} width="100%" crossOrigin="Anonymous" preload="auto" muted> 
+                <source src={this.props.url} type={"video/mp4"}></source>
+            </video>
+        </>
     }
 }
 

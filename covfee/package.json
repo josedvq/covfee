@@ -10,6 +10,10 @@
     "@babel/preset-react": "^7.10.1",
     "@babel/preset-typescript": "^7.10.1",
     "@mdx-js/mdx": "^1.6.16",
+    "@storybook/addon-actions": "^6.0.26",
+    "@storybook/addon-essentials": "^6.0.26",
+    "@storybook/addon-links": "^6.0.26",
+    "@storybook/react": "^6.0.26",
     "@types/events": "^3.0.0",
     "@types/react": "^16.9.49",
     "@types/react-dom": "^16.9.8",
@@ -19,10 +23,11 @@
     "awesome-typescript-loader": "^5.2.1",
     "babel-loader": "^8.1.0",
     "babel-plugin-typescript-to-proptypes": "^1.4.1",
+    "core-js": "^3.6.5",
     "css-loader": "^3.6.0",
-    "docz": "^2.3.1",
     "raw-loader": "^4.0.1",
     "react-hot-loader": "^4.12.21",
+    "react-is": "^16.13.1",
     "svg-url-loader": "^6.0.0",
     "ts-loader": "^7.0.5",
     "typescript": "^3.9.5",
@@ -41,9 +46,8 @@
     "reload": "COVFEE_ENV=development python -m utils.db reload_projects",
     "reload-prod": "COVFEE_ENV=production python -m utils.db reload_projects",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docz:dev": "docz dev --config docz/doczrc.js",
-    "docz:build": "docz build",
-    "docz:serve": "docz build && docz serve"
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
   },
   "keywords": [],
   "author": "",
@@ -51,8 +55,11 @@
   "dependencies": {
     "@ant-design/icons": "^4.2.1",
     "@types/classnames": "^2.2.10",
+    "@types/downloadjs": "^1.4.2",
+    "acorn": "^8.0.4",
     "antd": "^4.3.3",
     "classnames": "^2.2.6",
+    "downloadjs": "^1.4.7",
     "marked": "^1.1.1",
     "react": "^16.13.1",
     "react-collapsible": "^2.8.0",
@@ -60,6 +67,6 @@
     "react-router-dom": "^5.2.0",
     "style-loader": "^1.2.1",
     "video.js": "^7.8.4",
-    "wavesurfer.js": "^4.0.1"
+    "wavesurfer.js": "^4.1.1"
   }
 }

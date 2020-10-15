@@ -2,6 +2,7 @@ from .orm import db, app
 from hashlib import sha256
 from copy import copy, deepcopy
 import json
+import pandas as pd
 
 from .hit import HIT
 
@@ -10,7 +11,7 @@ class Project(db.Model):
     __tablename__ = 'projects'
 
     id = db.Column(db.Binary, primary_key=True)
-    name = db.Column(db.String)
+    name = db.Column(db.String, unique=True)
     email = db.Column(db.String)
     hits = db.relationship("HIT", backref="project")
 
@@ -19,6 +20,19 @@ class Project(db.Model):
         self.name = name
         self.email = email
         self.hits = hits
+
+    def get_dataframe(self):
+        list_of_instances = list()
+        for hit in self.hits:
+            for instance in hit.instances:
+                list_of_instances.append({
+                    'hit_name': hit.name,
+                    'id': instance.id.hex(),
+                    'url': instance.get_url()
+                })
+        df = pd.DataFrame(list_of_instances, columns=['hit_name', 'id', 'url'])
+        
+        return df
 
     def as_dict(self, with_hits=False, with_instances=False):
         project_dict = {c.name: getattr(self, c.name)
@@ -47,10 +61,12 @@ class Project(db.Model):
         proj_json = json.dumps(project)
         hits = list()
 
-        project['hits'] = [HIT.from_dict({
-            **p
-        }, proj_json+str(i)) for i, p in enumerate(proj_dict['hits'])]
-        hash_id = sha256(json.dumps(proj_json).encode()).digest()
+        hashstr = proj_dict['name'] + app.config['COVFEE_SALT']
+        project['hits'] = list()
+        for i, hit in enumerate(proj_dict['hits']):
+            project['hits'].append(HIT.from_dict(hit, hashstr))
+        
+        hash_id = sha256(hashstr.encode()).digest()
         project = Project(id=hash_id, **project)
         return project
 

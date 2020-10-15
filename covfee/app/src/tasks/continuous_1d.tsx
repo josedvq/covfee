@@ -6,20 +6,13 @@ import {
     Col
 } from 'antd';
 import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import HTML5Player from 'Players/html5'
+import HTML5Player from '../players/html5'
 import '../css/gui.css'
 import classNames from 'classnames'
-import { OneDIntensityFeedback } from 'Input/1d_intensity_feedback';
+import { OneDIntensityFeedback } from '../input/1d_intensity_feedback'
+import { BaseTaskProps, ReplayableTaskProps } from './task'
 
-interface Props {
-    taskName: string,
-    media: any,
-    onEnd: Function, // should be called when the task ends
-    buffer: Function,
-    replayMode: boolean,
-    getCurrReplayAction: Function,
-    getNextReplayAction: Function
-}
+interface Props extends BaseTaskProps, ReplayableTaskProps {}
 interface State {
     intensity: number,
     paused: boolean,
@@ -229,18 +222,9 @@ class Continuous1DTask extends React.Component<Props, State> {
     }
 
     render() {
-        const playerOptions = {
-            fps: this.props.media.fps,
-            video: {
-                src: this.props.media.url,
-                res: this.props.media.res,
-                type: 'video/mp4'
-            }
-        }
-
         return <>
             <div className="annot-bar">
-                <div className="annot-bar-header">{this.props.taskName}</div>
+                <div className="annot-bar-header">{this.props.name}</div>
                 {this.state.paused ? <div className="annot-bar-section"><ClockCircleOutlined /> {this.state.currentTime.toFixed(1)} / {this.state.duration.toFixed(1)}</div> : <></>}
                 {this.state.paused ? <div className="annot-bar-section">frame {this.state.currentFrame}</div> : <></>}
                 {this.state.reverseCount.visible ? <div className="annot-bar-section" style={{ 'color': 'red' }}>{this.state.reverseCount.count}</div> : <></>}
@@ -248,7 +232,7 @@ class Continuous1DTask extends React.Component<Props, State> {
             <Row>
                 <Col span={20}>
                     <HTML5Player
-                        {...playerOptions}
+                        {...this.props.media}
                         paused={this.state.paused}
                         pausePlay={this.handlePausePlay}
                         ref={this.player}

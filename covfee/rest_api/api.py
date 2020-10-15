@@ -1,6 +1,6 @@
 import json
 
-from flask import request, jsonify, Blueprint, send_from_directory
+from flask import request, jsonify, Blueprint, send_from_directory, make_response
 from ..orm import db, app, Project, HIT, HITInstance, Task, TaskResponse, Chunk
 from .auth import admin_required
 api = Blueprint('api', __name__)
@@ -32,8 +32,21 @@ def project(pid):
     res = db.session.query(Project).get(bytes.fromhex(pid))
     return jsonify_or_404(res, with_hits=with_hits, with_instances=with_instances)
 
-# HITS
 
+@api.route('/projects/<pid>/csv')
+@admin_required
+def project_csv(pid):
+    project = db.session.query(Project).get(bytes.fromhex(pid))
+    if project is None:
+        return {'msg': 'not found'}, 404
+    else:
+        df = project.get_dataframe()
+        res = make_response(df.to_csv())
+        res.headers["Content-Disposition"] = "attachment; filename=export.csv"
+        res.headers["Content-Type"] = "text/csv"
+        return res
+
+# HITS
 # return one hit
 @api.route('/hits/<hid>')
 def hit(hid):
@@ -74,6 +87,9 @@ def instance_download(iid):
     if instance is None:
         return jsonify({'msg': 'not found'}), 404
     fname = instance.make_json_download()
+    if fname is None:
+        # nothing to download
+        return '', 204
     return send_from_directory(app.config['TMP_PATH'], fname, as_attachment=True)
 
 # TASKS

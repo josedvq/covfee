@@ -1,7 +1,5 @@
 import {message} from 'antd'
 
-import * as Tasks from './tasks'
-import * as CustomTasks from 'CustomTasks'
 const Constants = require('./constants.json')
 
 // read a cookie in the browser
@@ -20,6 +18,10 @@ function myerror(msg: string, error?: any) {
         console.error(error)
         message.error(error.stack, 0)
     }
+}
+
+function myinfo(msg: string) {
+    message.info(msg)
 }
 
 // fetch wrapper that appends the csrf_access_token cookie for authentication
@@ -47,16 +49,4 @@ const throwBadResponse = async (response: any) => {
     return await response.json()
 }
 
-const getTaskClass = (type: string) => {
-    if (Tasks.hasOwnProperty(type)) {
-        const taskClass = Tasks[type]
-        return taskClass
-    } else if (CustomTasks.hasOwnProperty(type)) {
-        const taskClass = CustomTasks[type]
-        return taskClass
-    } else {
-        return null
-    }
-}
-
-export { fetcher, myerror, getTaskClass, getCookieValue, throwBadResponse}
+export { fetcher, myerror, myinfo, getCookieValue, throwBadResponse}

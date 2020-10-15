@@ -5,9 +5,17 @@ import {
     Button
 } from 'antd';
 import VideojsPlayer from '../players/videojs'
-import {Form} from 'Input/form'
+import {Form} from '../input/form'
+import { BaseTaskProps } from './task';
 
-class QuestionnaireTask extends React.Component {
+interface Props extends BaseTaskProps {
+    /**
+     * Specification of the form to be created.
+     */
+   form: object
+}
+
+class QuestionnaireTask extends React.Component<Props> {
 
     private player = React.createRef()
     public state = {
@@ -16,6 +24,9 @@ class QuestionnaireTask extends React.Component {
             completed: false,
             disabled: true
         }
+    }
+
+    componentDidMount() {
     }
 
     handleChange = (values: object) => {
@@ -41,39 +52,20 @@ class QuestionnaireTask extends React.Component {
         })
     }
 
-    validate = () => {
-        return this.state.form.values
-    }
-
     render() {
-        const mediaOptions = {
-            autoplay: false,
-            controls: true,
-            fluid: true,
-            aspectRatio: '16:9',
-            sources: [{
-                src: this.props.media.url,
-                type: 'video/mp4'
-            }]
-        }
-        //
         return <>
             <Row gutter={16}>
                 <Col span={16}>
-                    <VideojsPlayer {...mediaOptions} onEnded={this.handleVideoEnded}></VideojsPlayer>
+                    <VideojsPlayer {...this.props.media} onEnded={this.handleVideoEnded}/>
                 </Col>
                 <Col span={8}>
-                    <Form {...this.props.form} 
+                    <Form {...this.props.form}
+                        key={this.props.form}
                         values={this.state.form.values} 
                         disabled={this.state.form.disabled} 
                         onChange={this.handleChange}></Form>
-                    <Task.Submit disabled={!this.state.form.completed} text="Next"/>
+                    <Button disabled={!this.state.form.completed}>Next</Button>
                 </Col>
-            </Row>
-            <Row gutter={16}>
-                <pre>
-                    {JSON.stringify(this.props.form, null, 2)}
-                </pre>
             </Row>
         </>
     }

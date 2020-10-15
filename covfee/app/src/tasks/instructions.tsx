@@ -6,8 +6,9 @@ import {
 } from 'antd'
 import 'antd/dist/antd.css'
 import marked from 'marked'
+import { TaskSpec } from './task'
 
-export interface InstructionsTaskProps {
+export interface Props extends TaskSpec{
     /**
     * A text or Markdown/HTML string containing the experiment instructions.
     */
@@ -18,17 +19,13 @@ export interface InstructionsTaskProps {
     url?: string
 }
 
-export interface InstructionsTaskState {
+export interface State {
     html: string,
     error: string
 }
-class InstructionsTask extends React.Component<InstructionsTaskProps, InstructionsTaskState> {
-    
-    static defaultProps: InstructionsTaskProps = {
-        html: undefined,
-        url: undefined
-    }
 
+class InstructionsTask extends React.Component<Props, State> {
+    
     state: InstructionsTaskState = {
         html: '',
         error: ''
@@ -62,11 +59,6 @@ class InstructionsTask extends React.Component<InstructionsTaskProps, Instructio
             <Row gutter={16}>
                 <Col span={24}>
                     <div dangerouslySetInnerHTML={{ __html: this.state.html}}></div>
-                </Col>
-            </Row>
-            <Row>
-                <Col span={24}>
-                    
                 </Col>
             </Row>
         </>

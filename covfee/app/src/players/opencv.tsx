@@ -1,24 +1,19 @@
+/* global cv */
 import * as React from 'react'
-import cv from 'cv'
+import { MediaSpec } from 'Tasks/task'
+const cv = require('./cv/opencv.js')
 
 // video player using opencv to control playback speed
-interface Props {
+interface Props extends MediaSpec {
     paused: boolean,
     rate: number,
-    fps: number,
     onLoad: Function,
     onFrame: Function,
     onEnded: Function,
     pausePlay: Function,
     getMousePosition: Function,
-    video: {
-        src: string,
-        res: Array<number>
-    },
-    flow: {
-        src: string,
-        res: Array<number>
-    }
+    flow_url: string,
+    flow_res: Array<number>
 }
 class OpencvFlowPlayer extends React.PureComponent<Props> {
     private video_tag = React.createRef<HTMLVideoElement>()
@@ -38,7 +33,7 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
     componentDidMount() {
 
         const cv_init = () => {
-            this.frame_flow = new cv.Mat(this.props.flow.res[1], this.props.flow.res[0], cv.CV_8UC4)
+            this.frame_flow = new cv.Mat(this.props.flow_res[1], this.props.flow_res[0], cv.CV_8UC4)
             this.myMean = new cv.Mat(1, 4, cv.CV_64F)
             this.myStddev = new cv.Mat(1, 4, cv.CV_64F)
             this.cap = new cv.VideoCapture(this.flow_tag.current)
@@ -54,7 +49,7 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
         // update the ratio of flow_res / video_res
         let observer = new ResizeObserver((entries) => {
             this.rect = entries[0].contentRect
-            this.ratio = this.props.flow.res[0] / this.rect.width
+            this.ratio = this.props.flow_res[0] / this.rect.width
         })
         observer.observe(this.video_tag.current)
 
@@ -92,9 +87,9 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
             // start processing.
             this.cap.read(this.frame_flow)
             const x1 = Math.max(0, mouse[0] * this.ratio - 10)
-            const x2 = Math.min(mouse[0] * this.ratio + 10, this.props.flow.res[0])
+            const x2 = Math.min(mouse[0] * this.ratio + 10, this.props.flow_res[0])
             const y1 = Math.max(0, mouse[1] * this.ratio - 10)
-            const y2 = Math.min(mouse[1] * this.ratio + 10, this.props.flow.res[1])
+            const y2 = Math.min(mouse[1] * this.ratio + 10, this.props.flow_res[1])
 
             const rect = new cv.Rect(x1, y1, x2-x1, y2-y1)
             const roi = this.frame_flow.roi(rect)
@@ -158,13 +153,13 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
     //style={{ display: 'none' }}
     render() {
         return <>
-                <video ref={this.video_tag} width="100%" crossOrigin="Anonymous" preload="auto" muted> 
-                    <source src={this.props.video.src} type={"video/mp4"}></source>
-                </video>
-                <video ref={this.flow_tag} width={this.props.flow.res[0]} height={this.props.flow.res[1]} crossOrigin="Anonymous" style={{ display: 'none' }} preload="auto" muted>
-                    <source src={this.props.flow.src} type={"video/mp4"}></source>
-                </video>
-            </>
+            <video ref={this.video_tag} width="100%" crossOrigin="Anonymous" preload="auto" muted> 
+                <source src={this.props.url} type={"video/mp4"}></source>
+            </video>
+            <video ref={this.flow_tag} width={this.props.flow_res[0]} height={this.props.flow_res[1]} crossOrigin="Anonymous" style={{ display: 'none' }} preload="auto" muted>
+                <source src={this.props.flow_url} type={"video/mp4"}></source>
+            </video>
+        </>
     }
 }
 
