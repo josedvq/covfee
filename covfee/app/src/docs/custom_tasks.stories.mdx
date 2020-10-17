@@ -1,0 +1,8 @@
+import { Description } from '@storybook/addon-docs/blocks'
+import Doc from '../../../../docs/custom_task.md'
+import marked from 'marked'
+import {updateMarkdownLinks} from '../docs'
+
+<Meta title="Custom Tasks"/>
+
+<Description>{updateMarkdownLinks(marked(Doc))}</Description>

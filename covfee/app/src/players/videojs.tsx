@@ -1,9 +1,9 @@
 import * as React from 'react'
-import { MediaSpec } from 'Tasks/task'
+import { VideoSpec } from 'Tasks/task'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
 
-interface Props extends MediaSpec {
+interface Props extends VideoSpec {
     onPlay?: Function,
     onPause?: Function,
     onEnded?: Function

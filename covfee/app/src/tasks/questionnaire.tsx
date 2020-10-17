@@ -63,7 +63,7 @@ class QuestionnaireTask extends React.Component<Props> {
                         key={this.props.form}
                         values={this.state.form.values} 
                         disabled={this.state.form.disabled} 
-                        onChange={this.handleChange}></Form>
+                        setValues={this.handleChange}></Form>
                     <Button disabled={!this.state.form.completed}>Next</Button>
                 </Col>
             </Row>

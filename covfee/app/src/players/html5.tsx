@@ -1,8 +1,8 @@
 import * as React from 'react'
-import { MediaSpec } from '../tasks/task'
+import { VideoSpec } from '../tasks/task'
 
 // video player using opencv to control playback speed
-interface Props extends MediaSpec{
+interface Props extends VideoSpec{
     /**
      * Indicates if the video is paused or playing
      */

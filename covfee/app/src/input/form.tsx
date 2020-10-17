@@ -4,15 +4,39 @@ import {
     List
 } from 'antd'
 
-class Form extends React.Component {
+interface FormProps {
+    /**
+     * Specification of the form fiels
+     */
+    fields: Array<any>
+    /**
+     * Stores the form values / answers.
+     */
+    values: Array<any>
+    /**
+     * Used by the form to update it's values / answers.
+     */
+    setValues: Function
+    /**
+     * Disables the form.
+     */
+    disabled: boolean
+}
+class Form extends React.Component<FormProps> {
 
-    componentDidMount() {
+    static defaultProps = {
+        disabled: false
     }
-    
+
+    constructor(props: FormProps) {
+        super(props)
+        this.props.setValues([[]])
+    }
+
     handleChange = (idx: number, fieldset_values: Array<any>) => {
-        let new_state = this.props.values.slice()
-        new_state[idx] = fieldset_values
-        this.props.onChange(new_state)
+        let values = this.props.values.slice()
+        values[idx] = fieldset_values
+        this.props.setValues(values)
     }
 
     render() {
@@ -22,21 +46,44 @@ class Form extends React.Component {
                 disabled={this.props.disabled}
                 fields={this.props.fields} 
                 values={this.props.values[0]} 
-                onChange={this.handleChange}></Fieldset>
+                setValues={this.handleChange}></Fieldset>
             </>
     }
 }
 
-class Fieldset extends React.Component {
+interface FieldsetProps {
+    /**
+     * Index of the fieldset (=key)
+     */
+    idx: number
+    /**
+     * Specification of the form fiels
+     */
+    fields: Array<any>
+    /**
+     * Stores the fieldset values / answers.
+     */
+    values: Array<any>
+    /**
+     * Used by the fieldset to update it's values / answers.
+     */
+    setValues: Function
+    /**
+     * Disables the fieldset.
+     */
+    disabled: boolean
+
+}
+class Fieldset extends React.Component<FieldsetProps> {
     componentDidMount() {
         const initial_state = new Array(this.props.fields.length).fill(null);
-        this.props.onChange(this.props.idx, initial_state)
+        this.props.setValues(this.props.idx, initial_state)
     }
 
     handleChange = (idx: number, new_val: any) => {
         let new_state = this.props.values.slice()
         new_state[idx] = new_val
-        this.props.onChange(this.props.idx, new_state)
+        this.props.setValues(this.props.idx, new_state)
     }
 
     render() {
@@ -46,9 +93,9 @@ class Fieldset extends React.Component {
                 key={index} 
                 idx={index}
                 disabled={this.props.disabled}
-                spec={spec} 
                 value={this.props.values[index]} 
-                onChange={this.handleChange}></Field>)
+                setValues={this.handleChange}
+                {...spec}></Field>)
         }
         return <>
             <List itemLayout='vertical'>
@@ -58,22 +105,53 @@ class Fieldset extends React.Component {
     }
 }
 
-class Field extends React.Component {
+interface FieldProps {
+    /**
+     * Index of the fieldset (=key)
+     */
+    idx: number
+
+    /**
+     * Question or label of the input field
+     */
+    prompt: string
+
+    /**
+     * Specification of the field
+     */
+    input: any
+
+    /**
+     * Stores the field values / answer.
+     */
+    value: any
+
+    /**
+     * Used by the fieldset to update it's values / answers.
+     */
+    setValues: Function
+
+    /**
+     * Disables the fieldset.
+     */
+    disabled: boolean
+}
+class Field extends React.Component<FieldProps> {
     handleChange = (e: any) => {
-        this.props.onChange(this.props.idx, e.target.value)
+        this.props.setValues(this.props.idx, e.target.value)
     }
 
     render() {
-        let prompt = <p>{this.props.spec.prompt}</p>
+        let prompt = <p>{this.props.prompt}</p>
 
         let input = null
-        switch (this.props.spec.input.type) {
+        switch (this.props.input.type) {
             case 'radio':
                 input = <MyRadio 
-                    options={this.props.spec.input.options} 
+                    options={this.props.input.options} 
                     value={this.props.value}
                     disabled={this.props.disabled}
-                    onChange={this.handleChange}/>
+                    setValues={this.handleChange}/>
                 break
             default:
                 input = <p>Unimplemented</p>
@@ -89,7 +167,7 @@ function MyRadio(props) {
         items.push(<Radio.Button 
             key={index} 
             value={index}
-            onChange={props.onChange}>{text}</Radio.Button>)
+            onChange={props.setValues}>{text}</Radio.Button>)
     }
     return <Radio.Group value={props.value} disabled={props.disabled} buttonStyle="solid">
         {items}

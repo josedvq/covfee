@@ -4,6 +4,8 @@ import * as Tasks from './tasks'
 import classNames from 'classnames'
 import './css/docs.css'
 import { Button } from 'antd'
+import $ from 'jquery'
+import { hrefTo } from '@storybook/addon-links'
 
 const getTaskClass = (type: string) => {
     if (Tasks.hasOwnProperty(type)) {
@@ -12,6 +14,28 @@ const getTaskClass = (type: string) => {
     } else {
         return null
     }
+}
+
+// removes relative links in Markdown
+// used to clean github docs for storybook
+const updateMarkdownLinks = (doc: string) => {
+    const html = $($.parseHTML('<div>'+doc+'</div>'))
+    html.find('a')
+    .filter(function(){
+        const pattern = /^((http|https|ftp):\/\/)/
+        const href = $(this).attr("href")
+        return !pattern.test(href)
+    })
+    .each(function() {
+        $(this).attr('href', null)
+        $(this).css({
+            'pointer-events': 'none',
+            cursor: 'default',
+            'text-decoration': 'none',
+            'color': 'black'
+        })
+    })
+    return html.html()
 }
 
 interface Props {
@@ -111,4 +135,6 @@ class TaskVisualizer extends React.Component<Props, State> {
     }
 }
 
-export { TaskVisualizer}
+export { 
+    TaskVisualizer,
+    updateMarkdownLinks}

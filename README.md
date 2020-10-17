@@ -74,7 +74,7 @@ You can find examples of JSON files in the [samples folder](../samples). A basic
 }
 ```
 
-This file begins with the `name` and `email` of the contact person in charge of the study, which will be available to participants. The `timelines` section contains an element per HIT, in this case only one. This timeline contains multiple `tasks`, in this case also a single one. The task is of type [`QuestionnaireTask`](), which consists in watching a video or listening to audio and answering questions about it. The video is specified in the `media` property and the form with questions to be answered in the `form` property. See [tasks](tasks/tasks.md) for details on the tasks available and their properties.
+This file begins with the `name` and `email` of the contact person in charge of the study, which will be available to participants. The `timelines` section contains an element per HIT, in this case only one. This timeline contains multiple `tasks`, in this case also a single one. The task is of type [`QuestionnaireTask`], which consists in watching a video or listening to audio and answering questions about it. The video is specified in the `media` property and the form with questions to be answered in the `form` property. See [tasks](tasks/tasks.md) for details on the tasks available and their properties.
 
 #### 2. Create the database
 covfee uses the previous JSON specification to create a database that will store the responses to the tasks. To run it for the previous basic sample, assuming you are in the base folder of the repository:
