@@ -3,6 +3,7 @@ covfee/node_modules
 covfee/alias.json
 covfee/app/src/constants.json
 covfee/tmp
+covfee/storybook-static
 *.DS_Store
 *.wav
 .vscode*

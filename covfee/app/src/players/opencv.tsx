@@ -5,15 +5,42 @@ const cv = require('./cv/opencv.js')
 
 // video player using opencv to control playback speed
 interface Props extends MediaSpec {
+    /**
+     * If true, the player will pause. The parent element can play/pause playback through changing this prop.
+     */
     paused: boolean,
+    /**
+     * Controls the `paused` state variable. setPaused(val) will set `paused` to val, either true or false, to pause or play the video.
+     */
+    setPaused: Function,
+    /**
+     * Playback rate.
+     */
     rate: number,
-    onLoad: Function,
-    onFrame: Function,
-    onEnded: Function,
-    pausePlay: Function,
+    /**
+     * Returns the mouse position, used to adjust the video playback speed.
+     */
     getMousePosition: Function,
+    /**
+     * URL of the optical flow extracted from the video. The number of frames in this file should match that of the video.
+     */
     flow_url: string,
+    /**
+     * Resolution of the optical flow video. May be different from the video resolution for performance reasons.
+     */
     flow_res: Array<number>
+    /**
+     * This method is called when the video metadata has loaded (`loadedmetadata`).
+     */
+    onLoad?: Function,
+    /**
+     * This method is called for every frame. It can be used to capture a signal from the user for every frame of the video. Some frames may be skipped if performance is suffering.
+     */
+    onFrame?: Function,
+    /**
+     * Called when the video has finished playing.
+     */
+    onEnded?: Function,
 }
 class OpencvFlowPlayer extends React.PureComponent<Props> {
     private video_tag = React.createRef<HTMLVideoElement>()
@@ -37,6 +64,7 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
             this.myMean = new cv.Mat(1, 4, cv.CV_64F)
             this.myStddev = new cv.Mat(1, 4, cv.CV_64F)
             this.cap = new cv.VideoCapture(this.flow_tag.current)
+            if(!this.props.paused) this.play()
         }
 
         // check if cv is already runtime-ready
@@ -133,7 +161,7 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
             this.video_tag.current.currentTime = t
             this.flow_tag.current.currentTime = t
             this.frame = Math.round(t * this.props.fps)
-            this.props.pausePlay(true) // pause the video
+            this.props.setPaused(true) // pause the video
         }
         else return this.video_tag.current.currentTime
     }

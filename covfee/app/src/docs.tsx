@@ -1,15 +1,14 @@
 import * as React from 'react'
 import {TaskSpec} from './tasks/task'
-import * as Tasks from './tasks'
+import AvailableTasks from './tasks'
 import classNames from 'classnames'
 import './css/docs.css'
 import { Button } from 'antd'
 import $ from 'jquery'
-import { hrefTo } from '@storybook/addon-links'
 
 const getTaskClass = (type: string) => {
-    if (Tasks.hasOwnProperty(type)) {
-        const taskClass = Tasks[type]
+    if (type in AvailableTasks) {
+        const taskClass = AvailableTasks[type]
         return taskClass
     } else {
         return null
