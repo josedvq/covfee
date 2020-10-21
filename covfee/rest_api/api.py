@@ -190,6 +190,7 @@ def response_submit(iid, kid):
         chunks=[],
         submitted=True)
 
+    db.session.add(response)
     db.session.commit()
     return jsonify(response.as_dict(with_chunk_data=with_chunk_data))
         

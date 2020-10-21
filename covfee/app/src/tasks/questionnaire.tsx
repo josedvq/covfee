@@ -30,9 +30,6 @@ class QuestionnaireTask extends React.Component<Props> {
         }
     }
 
-    componentDidMount() {
-    }
-
     handleChange = (values: object) => {
         const has_null = values[0].some((val) => {
             return val === null
@@ -57,6 +54,8 @@ class QuestionnaireTask extends React.Component<Props> {
     }
 
     render() {
+
+        // media
         let media
         switch(this.props.media.type) {
             case 'video':

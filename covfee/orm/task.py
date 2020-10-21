@@ -86,6 +86,7 @@ class TaskResponse(db.Model):
         return response_dict
 
     def aggregate(self):
+        # apply task-specific aggregation method
         if hasattr(tasks, self.task.type):
             task_class = getattr(tasks, self.task.type)
             data = [chunk.data for chunk in self.chunks]

@@ -87,10 +87,10 @@ class WaveSurferBasicPlayer extends React.PureComponent<Props, State> {
         const button = <Button onClick={this.playPause} type="primary">
             {this.state.paused ? 'Play': 'Pause'}
         </Button>
-        return <>
+        return <div style={{margin: '2em'}}>
             <div ref={this.container}></div>
             {button}
-        </>
+        </div>
     }
 }
 

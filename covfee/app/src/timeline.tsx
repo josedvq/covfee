@@ -17,6 +17,7 @@ interface State {
 }
 interface Props {
     tasks: { [key: string]: TaskSpec },
+    url: string,
     onSubmit: Function
 }
 class Timeline extends React.Component<Props, State> {
@@ -25,8 +26,6 @@ class Timeline extends React.Component<Props, State> {
         error: null
     }
     tasks: Array<TaskSpec>
-    id: number
-    url: string
 
     constructor(props: Props) {
         super(props)
@@ -49,7 +48,7 @@ class Timeline extends React.Component<Props, State> {
     }
 
     handleTaskSubmit = (taskResult: any) => {
-        const url = this.url + '/tasks/' + this.tasks[this.state.currTask].id + '/submit'
+        const url = this.props.url + '/tasks/' + this.tasks[this.state.currTask].id + '/submit'
         const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

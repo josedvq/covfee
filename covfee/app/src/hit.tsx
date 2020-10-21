@@ -33,6 +33,9 @@ interface HITState {
     hit: HITSpec
 }
 
+/**
+ * Retrieves the HIT and renders and annotation or timeline component depending on its type. Stores the preview state.
+ */
 class HIT extends React.Component<any, HITState> {
     id: string
     url: string
@@ -117,9 +120,16 @@ class HIT extends React.Component<any, HITState> {
             case 'ready':
                 switch (this.state.hit.type) {
                     case 'annotation':
-                        return <Annotation {...this.state.hit} previewMode={this.state.previewMode} onSubmit={this.handleSubmit}/>
+                        return <Annotation 
+                            {...this.state.hit} 
+                            url={this.url}
+                            previewMode={this.state.previewMode} 
+                            onSubmit={this.handleSubmit}/>
                     case 'timeline':
-                        return <Timeline {...this.state.hit} onSubmit={this.handleSubmit}/>
+                        return <Timeline 
+                            {...this.state.hit} 
+                            url={this.url}
+                            onSubmit={this.handleSubmit}/>
                     default:
                         return <div>Unknown HIT type</div>
                 }
