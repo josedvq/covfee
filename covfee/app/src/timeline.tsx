@@ -11,16 +11,16 @@ import {myerror, throwBadResponse } from './utils'
 import { getTaskClass} from './task_utils'
 import { TaskSpec} from 'Tasks/task'
 
-interface TimelineState{
+interface State {
     currTask: number,
     error: string
 }
-interface TimelineProps {
+interface Props {
     tasks: { [key: string]: TaskSpec },
     onSubmit: Function
 }
-class Timeline extends React.Component<TimelineProps, TimelineState> {
-    state: TimelineState = {
+class Timeline extends React.Component<Props, State> {
+    state: State = {
         currTask: 0,
         error: null
     }
@@ -28,19 +28,24 @@ class Timeline extends React.Component<TimelineProps, TimelineState> {
     id: number
     url: string
 
-    componentDidMount() {
+    constructor(props: Props) {
+        super(props)
         // convert tasks dict to array
-        var tasks = Object.keys(this.props.tasks).map(function (key) {
-            return this.props.tasks[key]
+        var tasks = Object.keys(props.tasks).map(function (key) {
+            return props.tasks[key]
         })
         this.tasks = tasks
+
         let new_idx = 0
         this.tasks.forEach((el, idx) => {
             if (el.numSubmissions > 0) {
                 new_idx = idx + 1
             }
         })
-        this.setState({currTask: new_idx})
+        this.state = {
+            ...this.state,
+            currTask: new_idx 
+        }
     }
 
     handleTaskSubmit = (taskResult: any) => {
@@ -69,7 +74,7 @@ class Timeline extends React.Component<TimelineProps, TimelineState> {
         })    
     }
 
-    render() {   
+    render() {
         const props = this.tasks[this.state.currTask]
         props.url = this.url + '/tasks/' + props.id
 

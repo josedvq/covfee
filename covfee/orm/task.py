@@ -21,19 +21,30 @@ class Task(db.Model):
         self.name = name
 
         # fix URLs
-        if props and props.media:
-            for k, v in props.media.items():
+        if props and 'media' in props:
+            for k, v in props['media'].items():
                 if k[-3:] == 'url' and v[:4] != 'http':
-                    props.media[k] = app.config['MEDIA_URL'] + '/' + v
+                    props['media'][k] = app.config['MEDIA_URL'] + '/' + v
 
         self.props = props
 
     @staticmethod
     def from_dict(task_dict):
-        return Task(**task_dict)
+        # copy over type and name. The rest of the elements go into props
+        new_dict = dict()
+
+        new_dict['type'] = task_dict['type']
+        new_dict['name'] = task_dict['name']
+        new_dict['props'] = dict()
+
+        for key, value in task_dict.items():
+            if key not in ['type','name']:
+                new_dict['props'][key] = value
+        return Task(**new_dict)
 
     def as_dict(self):
-       task_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+       task_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns if c != 'props'}
+       task_dict = {**task_dict, **self.props}
        return task_dict
 
     def __str__(self):

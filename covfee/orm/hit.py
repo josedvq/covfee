@@ -29,7 +29,6 @@ class HIT(db.Model):
     instances = db.relationship("HITInstance", backref='hit')
     tasks = db.relationship("Task", secondary=hits_tasks, backref='hit')
     submitted = db.Column(db.Boolean)
-    test = db.Column(db.String)
 
     def __init__(self, id, type, name, media=None, tasks=[], instances=[], submitted=False):
         self.id = id
@@ -38,7 +37,6 @@ class HIT(db.Model):
         self.tasks = tasks
         self.instances = instances
         self.submitted = submitted
-        self.test = 'this is a test'
 
         # fix URLs
         if media is not None:
@@ -53,9 +51,14 @@ class HIT(db.Model):
         num_instances = hit_dict.get('repeat', 1)
         hashstr = seedstr + hit_dict['name']
 
-        tasks = [Task.from_dict(
-            task
-        ) for task in hit_dict['tasks']]
+        tasks = []
+        for i, task in enumerate(hit_dict['tasks']):
+            if 'name' not in task:
+                task['name'] = str(i)
+            tasks.append(Task.from_dict(task))
+        # tasks = [Task.from_dict(
+        #     task
+        # ) for task in hit_dict['tasks']]
 
         # insert multiple hits/URLs according to the repeat param
         # for annotation hits, tasks belong to instances
@@ -72,7 +75,7 @@ class HIT(db.Model):
             id=sha256(hashstr.encode()).digest(),
             type=hit_dict['type'],
             name=hit_dict['name'],
-            media=hit_dict['media'],
+            media=hit_dict.get('media', None),
             tasks=tasks if not is_annotation else [],
             instances=instances,
             submitted=False)

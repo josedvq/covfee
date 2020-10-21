@@ -1,24 +1,49 @@
 import * as React from 'react'
+import {
+    Button
+} from 'antd'
 import { AudioSpec } from 'Tasks/task'
 import WaveSurfer from 'wavesurfer.js'
 
 interface Props extends AudioSpec {
     /**
-     * Indicates if the audio is paused or playing
+     * called when the audio starts playing
      */
-    paused: boolean,
     onPlay?: Function,
+    /**
+     * called whenever the audio is paused
+     */
     onPause?: Function,
+    /**
+     * called when the audio starts playing
+     */
     onEnded?: Function
     /**
      * Options from https://wavesurfer-js.org/docs/options.html
      */
-    waveSurferOptions?: any
+    waveSurferOptions?: any,
+    /**
+     * Show a play/pause button
+     */
+    playPauseButton: boolean
 }
 
-class WaveSurferBasicPlayer extends React.PureComponent<Props> {
+interface State {
+    paused: boolean
+}
+
+class WaveSurferBasicPlayer extends React.PureComponent<Props, State> {
+    state: State = {
+        paused: true
+    }
+
     player: any
     container = React.createRef<HTMLDivElement>()
+
+    static defaultProps: Props = {
+        url: null,
+        playPauseButton: true
+    }
 
     componentDidMount() {
         this.player = WaveSurfer.create({
@@ -31,59 +56,40 @@ class WaveSurferBasicPlayer extends React.PureComponent<Props> {
 
         this.player.load(this.props.url)
         
-        if(!this.props.paused) {
-            this.player.on('ready', ()=> {
-                this.player.play()
-            })
-        }
-
-        if (this.props.onPlay) {
-            this.player.on('play', (e: Event) => {
-                this.props.onPlay(e)
-            })
-        }
-
-        if (this.props.onPause) {
-            this.player.on('pause', (e: Event) => {
-                this.props.onPause(e)
-            })
-        }
-
-        if (this.props.onEnded) {
-            this.player.on('ended', (e: Event) => {
-                this.props.onEnded(e)
-            })
-        }
+        this.player.on('play', (e: Event) => {
+            this.setState({paused: false})
+            if (this.props.onPlay) this.props.onPlay(e)
+        })
+        this.player.on('pause', (e: Event) => {
+            this.setState({paused: true})
+            if (this.props.onPause) this.props.onPause(e)
+        })
+        if (this.props.onEnded) this.player.on('ended', this.props.onEnded)
     }
 
-    componentDidUpdate(prevProps: Props) {
-        // Typical usage (don't forget to compare props):
-        if (this.props.paused !== prevProps.paused) {
-            if (this.props.paused) this.pause()
-            else this.play()
-        }
-    }
-
-    play() {
+    play = () => {
         this.player.play()
     }
 
-    pause() {
+    pause = () => {
         this.player.pause()
     }
 
-    playPause() {
+    playPause = () => {
         this.player.playPause()
     }
 
-    currentTime() {
+    currentTime = () => {
         return this.player.getCurrentTime()
     }
 
     render() {
+        const button = <Button onClick={this.playPause} type="primary">
+            {this.state.paused ? 'Play': 'Pause'}
+        </Button>
         return <>
-            Wavesurfer player
             <div ref={this.container}></div>
+            {button}
         </>
     }
 }

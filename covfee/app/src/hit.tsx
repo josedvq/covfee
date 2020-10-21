@@ -51,9 +51,6 @@ class HIT extends React.Component<any, HITState> {
         this.state.previewMode = (getUrlQueryParam('preview') == '1')
         if (this.state.previewMode) this.url = Constants.api_url + '/instance-previews/' + this.id
         else this.url = Constants.api_url + '/instances/' + this.id
-
-        console.log(getUrlQueryParam('preview'))
-        console.log(this.url)
     }
 
     componentDidMount() {

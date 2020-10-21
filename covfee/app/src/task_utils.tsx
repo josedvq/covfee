@@ -1,11 +1,11 @@
-import * as Tasks from './tasks'
-import * as CustomTasks from 'CustomTasks'
+import CovfeeTasks from './tasks'
+import CustomTasks from 'CustomTasks'
 
 const getTaskClass = (type: string) => {
-    if (Tasks.hasOwnProperty(type)) {
-        const taskClass = Tasks[type]
+    if (type in CovfeeTasks) {
+        const taskClass = CovfeeTasks[type]
         return taskClass
-    } else if (CustomTasks.hasOwnProperty(type)) {
+    } else if (type in CustomTasks) {
         const taskClass = CustomTasks[type]
         return taskClass
     } else {

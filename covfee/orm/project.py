@@ -65,6 +65,8 @@ class Project(db.Model):
         hashstr = proj_dict['name'] + app.config['COVFEE_SALT']
         project['hits'] = list()
         for i, hit in enumerate(proj_dict['hits']):
+            if 'name' not in hit:
+                hit['name'] = str(i)
             project['hits'].append(HIT.from_dict(hit, hashstr))
         
         hash_id = sha256(hashstr.encode()).digest()

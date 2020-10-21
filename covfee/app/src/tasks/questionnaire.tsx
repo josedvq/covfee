@@ -3,10 +3,11 @@ import {
     Row,
     Col,
     Button
-} from 'antd';
+} from 'antd'
 import VideojsPlayer from '../players/videojs'
+import WaveSurferBasicPlayer from '../players/wavesurfer_basic'
 import {Form} from '../input/form'
-import { BaseTaskProps } from './task';
+import { BaseTaskProps } from './task'
 
 interface Props extends BaseTaskProps {
     /**
@@ -19,6 +20,9 @@ class QuestionnaireTask extends React.Component<Props> {
 
     private player = React.createRef()
     public state = {
+        media: {
+            paused: true
+        },
         form: {
             values: [[]],
             completed: false,
@@ -43,7 +47,7 @@ class QuestionnaireTask extends React.Component<Props> {
         })
     }
 
-    handleVideoEnded = () => {
+    handleMediaEnded = () => {
         this.setState({
             form: {
                 ...this.state.form,
@@ -53,10 +57,24 @@ class QuestionnaireTask extends React.Component<Props> {
     }
 
     render() {
+        let media
+        switch(this.props.media.type) {
+            case 'video':
+                media = <VideojsPlayer {...this.props.media} onEnded={this.handleMediaEnded} />
+                break
+            case 'audio':
+                media = <WaveSurferBasicPlayer 
+                            {...this.props.media} 
+                            paused={this.state.media.paused} 
+                            onEnded={this.handleMediaEnded}/>
+                break
+            default:
+                media = <p>Unrecognized media type.</p>
+        }
         return <>
             <Row gutter={16}>
                 <Col span={16}>
-                    <VideojsPlayer {...this.props.media} onEnded={this.handleVideoEnded}/>
+                    {media}
                 </Col>
                 <Col span={8}>
                     <Form {...this.props.form}
