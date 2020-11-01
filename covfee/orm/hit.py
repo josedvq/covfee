@@ -28,15 +28,15 @@ class HIT(db.Model):
     media = db.Column(db.JSON)
     instances = db.relationship("HITInstance", backref='hit')
     tasks = db.relationship("Task", secondary=hits_tasks, backref='hit')
-    submitted = db.Column(db.Boolean)
+    userTasks = db.Column(db.JSON)
 
-    def __init__(self, id, type, name, media=None, tasks=[], instances=[], submitted=False):
+    def __init__(self, id, type, name, media=None, tasks=[], userTasks=[], instances=[]):
         self.id = id
         self.type = type
         self.name = name
         self.tasks = tasks
+        self.userTasks = userTasks
         self.instances = instances
-        self.submitted = submitted
 
         # fix URLs
         if media is not None:
@@ -52,23 +52,20 @@ class HIT(db.Model):
         hashstr = seedstr + hit_dict['name']
 
         tasks = []
-        for i, task in enumerate(hit_dict['tasks']):
+        for i, task in enumerate(hit_dict.get('tasks', [])):
             if 'name' not in task:
                 task['name'] = str(i)
             tasks.append(Task.from_dict(task))
-        # tasks = [Task.from_dict(
-        #     task
-        # ) for task in hit_dict['tasks']]
 
         # insert multiple hits/URLs according to the repeat param
         # for annotation hits, tasks belong to instances
         # for timeline hits, tasks belong to HITs
         # instances are always created
-        is_annotation = (hit_dict['type'] == 'annotation')
+        # is_annotation = (hit_dict['type'] == 'annotation')
         instances = [HITInstance.from_dict({
             'id': sha256(f'{hashstr}_{j:d}'.encode()).digest(),
             'submitted': False,
-            'tasks': hit_dict['tasks'] if is_annotation else []
+            'tasks': []
         }) for j in range(num_instances)]
 
         return HIT(
@@ -76,9 +73,9 @@ class HIT(db.Model):
             type=hit_dict['type'],
             name=hit_dict['name'],
             media=hit_dict.get('media', None),
-            tasks=tasks if not is_annotation else [],
-            instances=instances,
-            submitted=False)
+            tasks=tasks,
+            userTasks=hit_dict.get('userTasks', {}),
+            instances=instances)
 
     def as_dict(self, with_project=True, with_tasks=False, with_instances=False, with_instance_tasks=False):
         hit_dict = {c.name: getattr(self, c.name)
@@ -86,7 +83,7 @@ class HIT(db.Model):
         hit_dict['id'] = hit_dict['id'].hex()
 
         if with_tasks:
-            hit_dict['tasks'] = {task.id: task.as_dict()
+            hit_dict['tasks'] = {task.id: task.as_dict(editable=False)
                                  for task in self.tasks}
 
         if with_instances:
@@ -96,10 +93,6 @@ class HIT(db.Model):
         if with_project:
             hit_dict['project'] = self.project.as_dict()
         del hit_dict['project_id']
-
-        if self.submitted:
-            hit_dict['completion_code'] = sha256(
-                (self.id.hex() + app.config['COVFEE_SALT']).encode()).digest().hex()[:12]
 
         return hit_dict
 
@@ -166,8 +159,7 @@ class HITInstance(db.Model):
 
         if with_tasks:
             # join instance and HIT tasks
-
-            instance_tasks = {task.id: task.as_dict() for task in self.tasks}
+            instance_tasks = {task.id: task.as_dict(editable=True) for task in self.tasks}
             instance_dict['tasks'] = {**instance_tasks, **hit_dict['tasks']}
 
             if with_responses:

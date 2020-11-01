@@ -14,15 +14,17 @@ import {
     Menu,
     Input,
     Button, 
-    Modal
+    Modal,
+    Collapse
 } from 'antd';
+const { Panel } = Collapse
 import Collapsible from 'react-collapsible'
 const { Text, Title, Link } = Typography
 
 import classNames from 'classnames'
 const Constants = require('./constants.json')
 import { myerror, fetcher, getUrlQueryParam, throwBadResponse} from './utils'
-import { getTaskClass} from './task_utils'
+import { getTaskClass, NewTaskModal} from './task_utils'
 import { TaskSpec } from 'Tasks/task'
 import { Buffer, EventBuffer, DummyBuffer } from './buffer';
 
@@ -60,81 +62,36 @@ class TaskGroup extends React.Component<any, {}> {
                     name={task.name} 
                     active={task.id == this.props.currTask} 
                     onActivate={this.props.onChangeActiveTask} 
-                    onSubmitName={this.props.onSubmitNewTaskName}
-                    onInputFocus={this.props.onInputFocus}
-                    />)}
-            <li><Button type="primary" block={true} onClick={this.props.onAddTask} icon={<PlusCircleOutlined />}>New Task</Button></li>
+                    onClickEdit={this.props.onClickEdit}/>)}
+            <li>
+                <Button 
+                    type="primary" 
+                    block={true} 
+                    onClick={this.props.onClickAdd} 
+                    icon={<PlusCircleOutlined />}>
+                        New Task
+                </Button>
+            </li>
         </ol>
     }
 }
 
 class Task extends React.Component {
-    state = {
-        editable: false,
-        loading: false,
-        input_text: ''
-    }
-
-    inputRef = React.createRef<Input>()
-
-    componentDidMount() {
-        this.setState({
-            input_text: this.props.name
-        }, ()=>{
-            if(this.props.name == '') {
-                this.handleEdit()
-            }
-        })
-    }
 
     handleEdit = () => {
-        this.setState({
-            editable: true
-        }, () => {
-            this.inputRef.current.focus()
-        })
+        this.props.onClickEdit(this.props.id)
     }
-
-    handleInputChange = (e) => {
-        this.setState({
-            input_text: e.target.value
-        })
-    }
-
-    handleSubmitName = () => {
-        this.setState({
-            editable: false
-        })
-        this.props.onSubmitName(this.props.id, this.state.input_text, ()=>{})
-    }
-
+    
     handleActivate = () => {
         this.props.onActivate(this.props.id)
     }
 
-    handleFocus = () => {
-        this.props.onInputFocus(true)
-    }
-
-    handleBlur = () => {
-        this.props.onInputFocus(false)
-    }
-
     render() {
-        this.props.name == ''
-
         return <li className={classNames('task-li', { 'task-li-active': this.props.active})}>
             <Input 
-                onFocus={this.handleFocus} 
-                onBlur={this.handleBlur} 
-                placeholder="Task Name" 
-                onChange={this.handleInputChange} 
-                disabled={!this.state.editable} 
-                value={this.state.input_text} 
-                ref={this.inputRef}/>
-            {this.state.editable
-                ? <Button icon={<CheckCircleOutlined/>} onClick={this.handleSubmitName}></Button>
-                : <Button icon={<EditOutlined />} onClick={this.handleEdit}></Button>}
+                disabled={true} 
+                value={this.props.name} />
+            <Button icon={<EditOutlined />} onClick={this.handleEdit}></Button>
             <Button icon={<EyeFilled />} onClick={this.handleActivate}></Button>
         </li>
     }
@@ -144,10 +101,12 @@ interface AnnotationProps {
     previewMode: boolean,
     type: string,
     id: string,
+    name: string,
     media: object,
     project: object,
     submitted: boolean,
     tasks: { [key: string]: TaskSpec }
+    userTasks: any
 }
 
 interface AnnotationState {
@@ -161,6 +120,11 @@ interface AnnotationState {
     galleryOpen: boolean,
     fullscreen: boolean,
     submittingTask: boolean,
+    editTaskModal: {
+        taskId: number,
+        visible: boolean,
+        new: boolean
+    },
     errorModal: {
         visible: boolean,
         message: string,
@@ -189,10 +153,18 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         galleryOpen: false,
         fullscreen: false,
         submittingTask: false,
+        editTaskModal: {
+            taskId: null,
+            visible: false,
+            new: false
+        },
         errorModal: {
             visible: false,
             message: '',
             loading: false
+        },
+        submitModal: {
+            visible: false
         },
         overlay: {
             visible: false,
@@ -411,46 +383,80 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         })
     }
 
-    handleSubmitNewTaskName = (taskId: string, name: string, cb: Function) => {
-        if(taskId == 'n') {
+    /* HANDLING OF NEW TASKS AND TASK EDITION */
+    handleTaskClickAdd = () => {
+        if(this.props.previewMode) return
+        
+        this.setState({
+            editTaskModal: {
+                ...this.state.editTaskModal,
+                taskId: null,
+                visible: true,
+                new: true
+            }
+        })
+    }
+
+    handleTaskClickEdit = (taskId: string) => {
+        if (this.props.previewMode) return
+
+        this.setState({
+            editTaskModal: {
+                ...this.state.editTaskModal,
+                taskId: taskId,
+                visible: true,
+                new: false
+            }
+        })
+    }
+
+    handleEditTaskCancel = () => {
+        this.setState({
+            editTaskModal: {
+                ...this.state.editTaskModal,
+                visible: false,
+            }
+        })
+    }
+
+    handleEditTaskSubmit = (task: any) => {
+        
+        if (this.state.editTaskModal.new) {
             // adding new task
             const url = this.url + '/tasks/add'
             const requestOptions = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'ContinuousKeypointTask', name: name })
+                body: JSON.stringify(task)
             }
 
-            fetch(url, requestOptions)
+            return fetch(url, requestOptions)
                 .then(throwBadResponse)
                 .then(data => {
-                    delete this.tasks['n']
                     this.tasks[data.id] = data
                     const newTaskIds = Array.from(this.state.sidebar.taskIds)
-                    newTaskIds.pop()
                     newTaskIds.push(data.id)
                     this.setState({
                         currTask: this.state.currTask == 'n' ? data.id : this.state.currTask,
-                        sidebar: { taskIds: newTaskIds } 
-                    }, () => { cb()})
+                        sidebar: { taskIds: newTaskIds }
+                    })
                 })
                 .catch(error => {
                     myerror('Error creating the new task.', error)
                 })
         } else {
             // editing existing task
-            const url = Constants.api_url + '/tasks/' + taskId + '/edit'
+            const url = Constants.api_url + '/tasks/' + task.id + '/edit'
             const requestOptions = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: name })
+                body: JSON.stringify(task)
             }
 
-            fetch(url, requestOptions)
+            return fetch(url, requestOptions)
                 .then(throwBadResponse)
                 .then(data => {
-                    this.tasks[taskId] = data
-                    cb()
+                    this.tasks[task.id] = data
                 })
                 .catch(error => {
                     myerror('Error creating the new task.', error)
@@ -458,25 +464,25 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         }
     } 
 
-    handleAddTask = () => {
-        if(this.props.previewMode) return
-        
-        if (!this.tasks.hasOwnProperty('n')) {
-            this.tasks.n = {id: 'n', name: ''}
-            const newTaskIds = Array.from(this.state.sidebar.taskIds)
-            newTaskIds.push('n')
-            this.setState({
-                sidebar: {
-                    taskIds: newTaskIds
-                }
-            })
-        } else {
-            myerror('Please finish creating the existing tasks.')
-        }
-    }
-
     handleMenuClick = (e: object) => {
         if (e.key == 'gallery') this.setState({galleryOpen: !this.state.galleryOpen})
+    }
+
+    handleHitSubmit = () => {
+        this.props.onSubmit()
+            .then(hit=>{
+                Modal.success({
+                    title: 'HIT submitted!',
+                    content: <>
+                        <p>Thank you. Your work has been submitted.</p>
+                        <p>Your completion code is:</p>
+                        <pre>{hit.completion_code}</pre>
+                    </>
+                })
+            })
+            .catch(err=>{
+                myerror('Error submitting HIT. Please try again later or contact the organizers.', err)
+            })
     }
 
     // Buffer error handling
@@ -545,12 +551,19 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
 
     render() {
         const tasks = this.state.sidebar.taskIds.map(taskId => this.tasks[taskId])
-        const sidebar = <TaskGroup 
-            tasks={tasks} 
-            currTask={this.state.currTask}
-            onAddTask={this.handleAddTask} 
-            onChangeActiveTask={this.handleChangeActiveTask}
-            onSubmitNewTaskName={this.handleSubmitNewTaskName} />
+        const sidebar = <>
+            <Collapse>
+                <Panel header={this.props.name} key="1">
+                    <Button type="link" onClick={this.handleHitSubmit}>Submit HIT</Button>
+                </Panel>
+            </Collapse>
+            <TaskGroup 
+                tasks={tasks} 
+                currTask={this.state.currTask}
+                onClickAdd={this.handleTaskClickAdd}
+                onClickEdit={this.handleTaskClickEdit}
+                onChangeActiveTask={this.handleChangeActiveTask}/>
+        </>
 
         let task = null
         let overlay = null
@@ -594,6 +607,13 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         }
 
         return <div className="tool-container" ref={this.container}>
+            
+            <NewTaskModal 
+                {...this.state.editTaskModal} 
+                presets={this.props.userTasks}
+                task={this.state.editTaskModal.taskId != null ? this.tasks[this.state.editTaskModal.taskId]: null}
+                onSubmit={this.handleEditTaskSubmit}
+                onCancel={this.handleEditTaskCancel}/>
             <Row>
                 <Col span={24}>
                     <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark">

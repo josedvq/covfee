@@ -42,9 +42,10 @@ class Task(db.Model):
                 new_dict['props'][key] = value
         return Task(**new_dict)
 
-    def as_dict(self):
+    def as_dict(self, editable=False):
        task_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns if c != 'props'}
        task_dict = {**task_dict, **self.props}
+       task_dict['editable'] = editable
        return task_dict
 
     def __str__(self):

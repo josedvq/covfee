@@ -1,5 +1,8 @@
 import { Description } from '@storybook/addon-docs/blocks'
 import marked from 'marked'
+import timeline from '../../../../docs/timeline.md'
 import {updateMarkdownLinks} from '../docs'
 
 <Meta title="Timeline Mode"/>
+
+<Description>{updateMarkdownLinks(marked(timeline))}</Description>

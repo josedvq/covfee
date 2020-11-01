@@ -2,7 +2,8 @@ import * as React from 'react'
 import {
     Row,
     Col,
-    Button
+    Button,
+    Alert
 } from 'antd'
 import VideojsPlayer from '../players/videojs'
 import WaveSurferBasicPlayer from '../players/wavesurfer_basic'
@@ -54,6 +55,15 @@ class QuestionnaireTask extends React.Component<Props> {
     }
 
     render() {
+        // instructions
+        let instructions = <></>
+        if(this.props.instructions) {
+            instructions = <Row gutter={16}>
+                <Col span={24} style={{padding: '2em'}}>
+                    <Alert type="info" message={'Instructions'} description={this.props.instructions} showIcon/>
+                </Col>
+            </Row>
+        }
 
         // media
         let media
@@ -71,6 +81,7 @@ class QuestionnaireTask extends React.Component<Props> {
                 media = <p>Unrecognized media type.</p>
         }
         return <>
+            {instructions}
             <Row gutter={16}>
                 <Col span={16}>
                     {media}

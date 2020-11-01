@@ -25,7 +25,12 @@
                     "type": "Continuous1DTask",
                     "name": "Sample"
                 }
-            ]
+            ],
+            "userTasks": {
+                "continuous": {
+                    "type": "Continuous1DTask"
+                }
+            }
         }
     ]
 }

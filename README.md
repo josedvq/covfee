@@ -27,7 +27,7 @@ covfee-installjs
 ### Getting started
 
 #### 1. Decribe your HITs
-The easiest way to get started with covfee is to create a JSON file containing timelines or HITs. Each HIT is a series of tasks that are assigned to a single subject. Examples of tasks are:
+The easiest way to get started with covfee is to create a JSON file containing timelines or HITs. Each HIT is a set of tasks that are assigned to a single subject. Examples of tasks are:
 
 - Picking a single label for a video
 - Picking multiple labels for a video
@@ -35,9 +35,14 @@ The easiest way to get started with covfee is to create a JSON file containing t
 - Continuously annotating a video for arousal
 - Continuously annotating the position of a hand in a video.
 
-HITs can be as simple as a single one of these tasks, or consist of multiple tasks of different types chained together. You will be able to specify exactly how each HIT will look like. covfee will produce a separate URL per HIT, which can be sent to a study participant. 
+HITs can be as simple as a single one of these tasks, or consist of multiple tasks of different types. You are able to specify exactly what tasks are part of each HIT. covfee will produce a separate URL per HIT, which can be sent to a study participant. 
 
-You can find examples of JSON files in the [samples folder](../samples). A basic one looks like this:
+There are two types of HITs: timeline and annotation HITs.
+
+- **Timeline HITs** are a sequence of tasks, which must be completed in order by study subjects. Timeline HITs would normally be used for perception studies, where a subject must complete a series of tasks to complete participation. 
+- **Annotation HITs** are a set of tasks in no particular order, and are meant to be used mainly for annotation of continuous variables. It is especially meant for use online with Mechanical Turk and similar platforms. An annotation HIT is used to annotate a single media file (all its tasks will refer to the same audio/video file). Predefined tasks can be set to be completed by annotators. Annotators can also be allowed to create and name their own tasks. These HITs will be rendered in an annotation interface where users can control the available continuous variables.
+
+A JSON file is the easiest way to specify your HITs. You can find examples of such JSON files in the [samples folder](../samples). A basic timeline HIT one looks like this:
 
 ```
 {

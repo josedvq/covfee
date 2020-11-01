@@ -4,7 +4,7 @@ import { withRouter } from 'react-router'
 import Timeline from './timeline'
 import Annotation from './annotation'
 const Constants = require('./constants.json')
-import { getUrlQueryParam, throwBadResponse} from './utils'
+import { fetcher, getUrlQueryParam, throwBadResponse} from './utils'
 
 import {
     LoadingOutlined,
@@ -80,31 +80,19 @@ class HIT extends React.Component<any, HITState> {
     }
 
     handleSubmit = () => {
-        this.setState({
-            status: 'sending'
-        })
-
         // submit timeline to get completion code
         const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 'success': true })
         }
-        let p = fetch(this.url + '/submit', requestOptions)
+        let p = fetcher(this.url + '/submit', requestOptions)
             .then(throwBadResponse)
             
-        p.then(data=>{
+        p.then(hit=>{
             // success
             this.setState({
-                status: 'finished',
-                completion_code: data.completion_code,
-                error: false
-            })
-        })
-        .catch(error => {
-            this.setState({
-                status: 'finished',
-                error: error.toString()
+                hit: hit
             })
         })
 
@@ -133,48 +121,7 @@ class HIT extends React.Component<any, HITState> {
                     default:
                         return <div>Unknown HIT type</div>
                 }
-            case 'sending':
-                return <div className={'site-layout-content'}>
-                    <LoadingOutlined />
-                </div>
-
-            case 'finished':
-                if (this.state.error) {
-                    return <>
-                        <div className={'site-layout-content'}>
-                            <Row gutter={16}>
-                                <Col span={24}>
-                                    <Space direction="vertical">
-                                        <Title level={2}>Oops!</Title>
-                                        <Text>Something went wrong when sending the task to the server.
-                                        Please try again in a few minutes.
-                                        If the issue persists please email
-                                            <a href={'mailto:' + this.timeline.project.email}> {this.timeline.project.email}</a>
-                                        </Text>
-                                    </Space>
-                                </Col>
-                            </Row>
-                        </div>
-                    </>
-                } else {
-                    let code = ''
-                    if (this.state.completion_code) {
-                        code = <>
-                            <Text>Your completion code: </Text>
-                            <Text code>{this.state.completion_code}</Text>
-                        </>
-                    }
-                    return <>
-                        <div className={'site-layout-content'}>
-                            <Row gutter={16}>
-                                <Col span={24}>
-                                    <Title level={2}>Thank you!</Title>
-                                    {code}
-                                </Col>
-                            </Row>
-                        </div>
-                    </>
-                }
+            
             default:
                 return <></>
         }

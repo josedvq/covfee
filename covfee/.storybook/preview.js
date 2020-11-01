@@ -7,8 +7,8 @@ export const parameters = {
     storySort: {
         order: [
           'Getting Started', 
-          'Timeline Mode',
-          'Annotation Mode',
+          'Timeline HITs',
+          'Annotation HITs',
           'Custom Tasks', 
           'Development Setup', 
           'Deploying covfee',

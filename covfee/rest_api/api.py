@@ -115,7 +115,7 @@ def task_add_to_instance(iid):
     if instance.hit.type != 'annotation':
         return jsonify(msg='Only annotation-type instances can be user-edited.'), 403
 
-    task = Task(**request.json)
+    task = Task.from_dict(request.json)
     instance.tasks.append(task)
     db.session.commit()
     return jsonify(task.as_dict())

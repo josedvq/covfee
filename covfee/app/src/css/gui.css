@@ -97,7 +97,7 @@ a.header-covfee {
 }
 
 .task-group {
-  height:calc(100vh - 54px);
+  max-height:calc(100vh - 54px);
   overflow-y: scroll;
   list-style-type: none;
   margin: 0;

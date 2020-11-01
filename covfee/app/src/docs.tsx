@@ -5,6 +5,9 @@ import classNames from 'classnames'
 import './css/docs.css'
 import { Button } from 'antd'
 import $ from 'jquery'
+import { HITSpec } from './hit'
+import Annotation from './annotation'
+import Timeline from './timeline'
 
 const getTaskClass = (type: string) => {
     if (type in AvailableTasks) {
@@ -134,6 +137,56 @@ class TaskVisualizer extends React.Component<Props, State> {
     }
 }
 
+interface HITVisualizerProps {
+    hit: HITSpec,
+    previewMode: boolean
+}
+
+interface HITVisualizerState {
+}
+
+class HITVisualizer extends React.Component<HITVisualizerProps, HITVisualizerState> {
+
+    state: HITVisualizerState = {
+    }
+
+    constructor(props: HITVisualizerProps) {
+        super(props)
+    }
+
+    render() {
+        switch (this.props.hit.type) {
+            case 'annotation':
+                return <Annotation
+                    {...this.props.hit}
+                    url={null}
+                    previewMode={this.props.previewMode}
+                    onSubmit={()=>{}} />
+            case 'timeline':
+                return <Timeline
+                    {...this.props.hit}
+                    url={null}
+                    onSubmit={() => {}} />
+            default:
+                return <div>Unknown HIT type</div>
+        }
+    }
+}
+
+class CodeBlock extends React.Component {
+    render() {
+        return <>
+            <div>
+                <pre className={classNames('docs-code-block')}>
+                    {JSON.stringify(this.props.code, null, 2)}
+                </pre >
+            </div >
+        </>
+    }
+}
+
 export { 
     TaskVisualizer,
+    HITVisualizer,
+    CodeBlock,
     updateMarkdownLinks}

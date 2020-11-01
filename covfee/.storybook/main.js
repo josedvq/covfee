@@ -11,8 +11,9 @@ module.exports = {
   "webpackFinal": async (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
-      "Input/": path.resolve(__dirname, "../app/src/input/"),
-      "Players/": path.resolve(__dirname, "../app/src/players/"),
+      // "Input": path.resolve(__dirname, "../app/src/input/"),
+      // "Players": path.resolve(__dirname, "../app/src/players/"),
+      "CustomTasks": path.resolve(__dirname, "./dummy_tasks")
     };
     config.resolve.extensions.push(".ts", ".tsx");
 
