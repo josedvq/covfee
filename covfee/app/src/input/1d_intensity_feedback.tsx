@@ -2,6 +2,10 @@ import * as React from 'react';
 
 interface Props {
     /**
+     * Disables input. Used for visualization.
+     */
+    disabled: boolean,
+    /**
      * Array with keyboard key strings to be used as intensity indicators.
      */
     keys: Array<string>,
@@ -49,7 +53,7 @@ class OneDIntensityFeedback extends React.Component<Props, State> {
 
     componentDidMount() {
         // start animation
-        this.reqId = requestAnimationFrame(this.animation_render)
+        this.reqId = requestAnimationFrame(this.animationRender)
         // key presses: left = 37, up = 38, right = 39, down = 40
         window.addEventListener("keydown", this.keydown, false)
 
@@ -97,9 +101,9 @@ class OneDIntensityFeedback extends React.Component<Props, State> {
         this.props.setIntensity(intensity)
     }
 
-    animation_render = (timestamp: any) => {
-        this.update(timestamp);
-        this.reqId = requestAnimationFrame(this.animation_render.bind(this));
+    animationRender = (timestamp: any) => {
+        if(!this.props.disabled) this.update(timestamp)
+        this.reqId = requestAnimationFrame(this.animationRender);
     }
 
     render() {

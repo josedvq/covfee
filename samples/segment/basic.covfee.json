@@ -1,7 +1,7 @@
 {
     "name": "Example project",
     "email": "example@example.com",
-    "timelines": [
+    "hits": [
         {
             "type": "timeline",
             "tasks": [

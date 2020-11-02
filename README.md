@@ -16,7 +16,7 @@ This document contains instructions for installing covfee locally, to test it or
 ```
 git clone git@github.com:josedvq/covfee.git
 cd covfee
-python3 -m pip install .
+python3 -m pip install -e .
 ```
 
 3. Install Javascript dependencies:
@@ -42,13 +42,13 @@ There are two types of HITs: timeline and annotation HITs.
 - **Timeline HITs** are a sequence of tasks, which must be completed in order by study subjects. Timeline HITs would normally be used for perception studies, where a subject must complete a series of tasks to complete participation. 
 - **Annotation HITs** are a set of tasks in no particular order, and are meant to be used mainly for annotation of continuous variables. It is especially meant for use online with Mechanical Turk and similar platforms. An annotation HIT is used to annotate a single media file (all its tasks will refer to the same audio/video file). Predefined tasks can be set to be completed by annotators. Annotators can also be allowed to create and name their own tasks. These HITs will be rendered in an annotation interface where users can control the available continuous variables.
 
-A JSON file is the easiest way to specify your HITs. You can find examples of such JSON files in the [samples folder](../samples). A basic timeline HIT one looks like this:
+A JSON file is the easiest way to specify your HITs. You can find examples of such JSON files in the [samples folder](../samples). A basic timeline HIT looks like this:
 
 ```
 {
     "name": "Example project",
     "email": "example@example.com",
-    "timelines": [
+    "hits": [
         {
             "type": "timeline",
             "tasks": [
@@ -56,10 +56,7 @@ A JSON file is the easiest way to specify your HITs. You can find examples of su
                     "type": "QuestionnaireTask",
                     "media": {
                         "type": "video",
-                        "url": "1_cam_3.mp4",
-                        "mute": true,
-                        "autoplay": true,
-                        "controls": false
+                        "url": "video.mp4",
                     },
                     "form": {
                         "fields": [
@@ -79,19 +76,25 @@ A JSON file is the easiest way to specify your HITs. You can find examples of su
 }
 ```
 
-This file begins with the `name` and `email` of the contact person in charge of the study, which will be available to participants. The `timelines` section contains an element per HIT, in this case only one. This timeline contains multiple `tasks`, in this case also a single one. The task is of type [`QuestionnaireTask`], which consists in watching a video or listening to audio and answering questions about it. The video is specified in the `media` property and the form with questions to be answered in the `form` property. See [tasks](tasks/tasks.md) for details on the tasks available and their properties.
+This file begins with the `name` and `email` of the contact person in charge of the study, which will be available to participants. The `hits` section contains an element per HIT, in this case only one. This timeline contains multiple `tasks`, in this case also a single one. The task is of type [`QuestionnaireTask`], which consists in watching a video or listening to audio and answering questions about it. The video is specified in the `media` property and the form with questions to be answered in the `form` property. See [tasks](tasks/tasks.md) for details on the tasks available and their properties.
 
 #### 2. Create the database
 covfee uses the previous JSON specification to create a database that will store the responses to the tasks. To run it for the previous basic sample, assuming you are in the base folder of the repository:
 
 ```
 cd samples/basic
-mkcovfee json --fpath basic.covfee.json
+covfee-maker .
 ```
 
+#### 3. Run covfee
+Run the following two commands in separate terminals. Both should be run from your project directory (eg. `samples/basic`)
+```
+covfee-webpack
+covfee-dev
+```
 
-#### 3. Annotate!
-Running `mkcovfee` should give you an output such as:
+#### 4. Annotate!
+Running `covfee-maker` should have given you an output such as:
 
 ```
 Example project

@@ -110,7 +110,7 @@ class Continuous1DTask extends React.Component<Props, State> {
         } else {
             this.props.buffer(
                 frame,
-                [...this.mouse_normalized, this.state.mouse_valid ? 1 : 0, this.state.occluded ? 1 : 0]
+                [this.state.intensity]
             )
         }
     }
@@ -126,9 +126,7 @@ class Continuous1DTask extends React.Component<Props, State> {
     }
 
     replayAction = (action: Array<any>) => {
-
         if (typeof action[3] == 'number') {
-            this.mouse_normalized = [action[3], action[4]]
             this.setState({
                 replayMode: {
                     ...this.state.replayMode,
@@ -245,6 +243,7 @@ class Continuous1DTask extends React.Component<Props, State> {
                 </Col>
                 <Col span={4}>
                     <OneDIntensityFeedback 
+                        disabled={this.props.replayMode}
                         intensity={this.state.intensity}
                         setIntensity={this.setIntensity}
                         keys={['ArrowUp', 'ArrowRight']}/>
