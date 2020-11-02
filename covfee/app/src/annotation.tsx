@@ -5,7 +5,7 @@ import {
     CheckCircleOutlined,
     BarsOutlined,
     PictureOutlined,
-    PlusCircleOutlined, LoadingOutlined
+    PlusCircleOutlined, LoadingOutlined, QuestionCircleOutlined, PlusOutlined
 } from '@ant-design/icons'
 import {
     Row,
@@ -15,7 +15,8 @@ import {
     Input,
     Button, 
     Modal,
-    Collapse
+    Collapse,
+    Popover
 } from 'antd';
 const { Panel } = Collapse
 import Collapsible from 'react-collapsible'
@@ -26,7 +27,8 @@ const Constants = require('./constants.json')
 import { myerror, fetcher, getUrlQueryParam, throwBadResponse} from './utils'
 import { getTaskClass, NewTaskModal} from './task_utils'
 import { TaskSpec } from 'Tasks/task'
-import { Buffer, EventBuffer, DummyBuffer } from './buffer';
+import { Buffer, EventBuffer, DummyBuffer } from './buffer'
+import { MarkdownLoader} from './tasks/instructions'
 
 function getFullscreen(element: HTMLElement) {
     if (element.requestFullscreen) {
@@ -117,7 +119,7 @@ interface AnnotationState {
     sidebar: {
         taskIds: Array<string>
     },
-    galleryOpen: boolean,
+    extraOpen: boolean,
     fullscreen: boolean,
     submittingTask: boolean,
     editTaskModal: {
@@ -150,7 +152,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         sidebar: {
             taskIds: []
         },
-        galleryOpen: false,
+        extraOpen: false,
         fullscreen: false,
         submittingTask: false,
         editTaskModal: {
@@ -465,7 +467,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     } 
 
     handleMenuClick = (e: object) => {
-        if (e.key == 'gallery') this.setState({galleryOpen: !this.state.galleryOpen})
+        if (e.key == 'extra') this.setState({extraOpen: !this.state.extraOpen})
     }
 
     handleHitSubmit = () => {
@@ -565,45 +567,64 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                 onChangeActiveTask={this.handleChangeActiveTask}/>
         </>
 
-        let task = null
-        let overlay = null
-        if (this.state.loadingTask) {
-            overlay = <></>
-            task = <LoadingOutlined/>
-        } else {
-            let props = this.tasks[this.state.currTask]
-            props.url = this.url + '/tasks/' + props.id
-            props.media = this.props.media
-
-            overlay = <div className={classNames('task-container')}>
-                <div className={classNames('task-overlay', { 'task-overlay-off': !this.state.overlay.visible })}>
-                    <div className="task-overlay-nav">
-                        <Button onClick={this.handleTaskReplay}>Replay</Button>
-                        <Button onClick={this.handleTaskRedo}>Re-do</Button>
-                        <Button onClick={()=>{this.handleTaskSubmit({})}} 
-                            type="primary" 
-                            disabled={this.state.overlay.submitted || this.state.replay.enabled} 
-                            loading={this.state.overlay.submitting}
-                            >Submit</Button>
-                    </div>
+        let props = this.tasks[this.state.currTask]
+        props.url = this.url + '/tasks/' + props.id
+        props.media = this.props.media
+        const overlay = <div className={classNames('task-container')}>
+            <div className={classNames('task-overlay', { 'task-overlay-off': !this.state.overlay.visible })}>
+                <div className="task-overlay-nav">
+                    <Button onClick={this.handleTaskReplay}>Replay</Button>
+                    <Button onClick={this.handleTaskRedo}>Re-do</Button>
+                    <Button onClick={()=>{this.handleTaskSubmit({})}} 
+                        type="primary" 
+                        disabled={this.state.overlay.submitted || this.state.replay.enabled} 
+                        loading={this.state.overlay.submitting}
+                        >Submit</Button>
                 </div>
             </div>
+        </div>
 
-            const taskClass = getTaskClass(props.type)
-            task = React.createElement(taskClass, {
-                key: this.state.currKey,
-                ref: this.taskRef,
+        const taskClass = getTaskClass(props.type)
+        const task = React.createElement(taskClass, {
+            key: this.state.currKey,
+            ref: this.taskRef,
 
-                // Annotation task props
-                buffer: this.buffer.data,
-                onEnd: this.handleTaskEnd,
+            // Annotation task props
+            buffer: this.buffer.data,
+            onEnd: this.handleTaskEnd,
 
-                // Replayable task props
-                replayMode: this.state.replay.enabled,
-                getNextReplayAction: this.getNextReplayAction,
-                getCurrReplayAction: this.getCurrReplayAction,                
-                ...props
-            }, null)            
+            // Replayable task props
+            replayMode: this.state.replay.enabled,
+            getNextReplayAction: this.getNextReplayAction,
+            getCurrReplayAction: this.getCurrReplayAction,                
+            ...props
+        }, null)
+
+        
+        let taskInfo = <></>
+        if(task.ref.current && task.ref.current.hasOwnProperty('instructions')) {
+            taskInfo = <Menu.Item key="keyboard" style={{ padding: '0' }}>
+                <Popover 
+                    placement="bottom" 
+                    content={<div style={{ width: '400px' }}>
+                        {task.ref.current.instructions()}
+                    </div>} 
+                    trigger="hover">
+                    <div style={{ width: '100%', padding: '0 20px' }}>
+                        <QuestionCircleOutlined/>Controls
+                    </div>
+                </Popover>
+            </Menu.Item>
+        }
+
+        let taskExtraMenuItem = <></>
+        let taskExtraCollapsible = <></>
+        if(this.props.extra) {
+            taskExtraMenuItem = <Menu.Item key="extra" icon={<PlusOutlined />}>Extra</Menu.Item>
+
+            taskExtraCollapsible = <Collapsible open={this.state.extraOpen}>
+                <MarkdownLoader {...this.props.extra}/>
+            </Collapsible>
         }
 
         return <div className="tool-container" ref={this.container}>
@@ -617,16 +638,13 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             <Row>
                 <Col span={24}>
                     <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark">
-                        <Menu.Item key="instructions" icon={<BarsOutlined />}>
-                            Instructions
+                        <Menu.Item key="task" disabled>
+                            <Text strong style={{color:'white'}}>{props.name}</Text>
                         </Menu.Item>
-                        <Menu.Item key="gallery" icon={<PictureOutlined />}>
-                            Gallery
-                        </Menu.Item>
+                        {taskInfo}
+                        {taskExtraMenuItem}
                     </Menu>
-                    <Collapsible open={this.state.galleryOpen}>
-                        <img src={this.props.media.gallery_url} className={"gallery-img"} />
-                    </Collapsible>
+                    {taskExtraCollapsible}
                 </Col>
             </Row>
             <Row>

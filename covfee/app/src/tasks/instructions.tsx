@@ -24,9 +24,9 @@ export interface State {
     error: string
 }
 
-class InstructionsTask extends React.Component<Props, State> {
+class MarkdownLoader extends React.Component<Props, State> {
     
-    state: InstructionsTaskState = {
+    state: MarkdownLoaderState = {
         html: '',
         error: ''
     }
@@ -64,5 +64,7 @@ class InstructionsTask extends React.Component<Props, State> {
         </>
     }
 }
+const InstructionsTask = MarkdownLoader
 
+export { MarkdownLoader}
 export default InstructionsTask

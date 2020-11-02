@@ -3,8 +3,11 @@ import {
     Button,
     Modal,
     Row,
-    Col
-} from 'antd';
+    Col,
+    List,
+    Typography
+} from 'antd'
+const { Title, Text } = Typography
 import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import HTML5Player from '../players/html5'
 import '../css/gui.css'
@@ -224,7 +227,6 @@ class Continuous1DTask extends React.Component<Props, State> {
     render() {
         return <>
             <div className="annot-bar">
-                <div className="annot-bar-header">{this.props.name}</div>
                 {this.state.paused ? <div className="annot-bar-section"><ClockCircleOutlined /> {this.state.currentTime.toFixed(1)} / {this.state.duration.toFixed(1)}</div> : <></>}
                 {this.state.paused ? <div className="annot-bar-section">frame {this.state.currentFrame}</div> : <></>}
                 {this.state.reverseCount.visible ? <div className="annot-bar-section" style={{ 'color': 'red' }}>{this.state.reverseCount.count}</div> : <></>}
@@ -249,6 +251,20 @@ class Continuous1DTask extends React.Component<Props, State> {
                 </Col>
             </Row>
             
+        </>
+    }
+
+    instructions = () => {
+        return <>
+            <Row>
+                <Col span={24}>
+                    <Title level={4}>Keyboard controls</Title>
+                    <List>
+                        <List.Item><Text keyboard>[space]</Text> play/pause the video</List.Item>
+                        <List.Item><Text keyboard>[ArrowUp] / [ArrowRight]</Text> increase intensity</List.Item>
+                    </List>
+                </Col>
+            </Row>
         </>
     }
 }

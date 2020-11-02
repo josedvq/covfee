@@ -1,5 +1,6 @@
 import shutil
 import os
+from urllib.parse import urljoin
 
 from .orm import db, app
 from .task import Task
@@ -26,11 +27,12 @@ class HIT(db.Model):
     name = db.Column(db.String)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
     media = db.Column(db.JSON)
+    extra = db.Column(db.JSON)
     instances = db.relationship("HITInstance", backref='hit')
     tasks = db.relationship("Task", secondary=hits_tasks, backref='hit')
     userTasks = db.Column(db.JSON)
 
-    def __init__(self, id, type, name, media=None, tasks=[], userTasks=[], instances=[]):
+    def __init__(self, id, type, name, media=None, extra=None, tasks=[], userTasks=[], instances=[]):
         self.id = id
         self.type = type
         self.name = name
@@ -42,9 +44,13 @@ class HIT(db.Model):
         if media is not None:
             for k, v in media.items():
                 if k[-3:] == 'url' and v[:4] != 'http':
-                    media[k] = app.config['MEDIA_URL'] + '/' + v
-
+                    media[k] = os.path.join(app.config['MEDIA_URL'], v)
         self.media = media
+
+        if extra is not None:
+            if 'url' in extra and extra['url'][:4] != 'http':
+                extra['url'] = os.path.join(app.config['MEDIA_URL'], extra['url'])         
+        self.extra = extra
 
     @staticmethod
     def from_dict(hit_dict, seedstr):
@@ -73,6 +79,7 @@ class HIT(db.Model):
             type=hit_dict['type'],
             name=hit_dict['name'],
             media=hit_dict.get('media', None),
+            extra=hit_dict.get('extra', None),
             tasks=tasks,
             userTasks=hit_dict.get('userTasks', {}),
             instances=instances)
