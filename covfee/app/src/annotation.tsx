@@ -62,12 +62,14 @@ class TaskGroup extends React.Component<any, {}> {
                 <Task key={task.id} 
                     id={task.id} 
                     name={task.name} 
+                    editable={task.editable}
                     active={task.id == this.props.currTask} 
                     onActivate={this.props.onChangeActiveTask} 
                     onClickEdit={this.props.onClickEdit}/>)}
             <li>
                 <Button 
                     type="primary" 
+                    disabled={!this.props.allowNewTasks}
                     block={true} 
                     onClick={this.props.onClickAdd} 
                     icon={<PlusCircleOutlined />}>
@@ -89,11 +91,15 @@ class Task extends React.Component {
     }
 
     render() {
+        let editButton = <></>
+        if (this.props.editable)
+            editButton = <Button icon={<EditOutlined />} onClick={this.handleEdit}></Button>
+            
         return <li className={classNames('task-li', { 'task-li-active': this.props.active})}>
             <Input 
                 disabled={true} 
                 value={this.props.name} />
-            <Button icon={<EditOutlined />} onClick={this.handleEdit}></Button>
+            {editButton}
             <Button icon={<EyeFilled />} onClick={this.handleActivate}></Button>
         </li>
     }
@@ -237,7 +243,6 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     handleChangeActiveTask = (taskId: string) => {
         // IMPORTANT: order matters here
         // buffer must be created before the render triggered by setState
-        
         this.replayIndex = 0
         // if the task has previous responses, query them
         if(this.tasks[taskId].response != null) {
@@ -561,6 +566,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             </Collapse>
             <TaskGroup 
                 tasks={tasks} 
+                allowNewTasks={Object.entries(this.props.userTasks).length > 0}
                 currTask={this.state.currTask}
                 onClickAdd={this.handleTaskClickAdd}
                 onClickEdit={this.handleTaskClickEdit}
@@ -600,7 +606,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             ...props
         }, null)
 
-        
+
         let taskInfo = <></>
         if(task.ref.current && task.ref.current.hasOwnProperty('instructions')) {
             taskInfo = <Menu.Item key="keyboard" style={{ padding: '0' }}>

@@ -155,16 +155,29 @@ class HITVisualizer extends React.Component<HITVisualizerProps, HITVisualizerSta
     }
 
     render() {
-        switch (this.props.hit.type) {
+
+        // add id to each task
+        const hitProps = JSON.parse(JSON.stringify(this.props.hit))
+        hitProps.tasks = hitProps.tasks.map((task, idx)=>{
+            task.id = idx
+            return task
+        })
+
+        // write default empty userTasks
+        if(!('userTasks' in hitProps)) {
+            hitProps['userTasks'] = {}
+        }
+
+        switch (hitProps.type) {
             case 'annotation':
                 return <Annotation
-                    {...this.props.hit}
+                    {...hitProps}
                     url={null}
                     previewMode={this.props.previewMode}
                     onSubmit={()=>{}} />
             case 'timeline':
                 return <Timeline
-                    {...this.props.hit}
+                    {...hitProps}
                     url={null}
                     onSubmit={() => {}} />
             default:

@@ -36,5 +36,3 @@ You can now open the HIT link as explained in the main [README](../README.md)
 
 And that's it. The next section explains how to code a custom task in Javascript.
 
-## Custom tasks
-
