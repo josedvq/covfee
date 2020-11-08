@@ -30,14 +30,14 @@ class HIT(db.Model):
     extra = db.Column(db.JSON)
     instances = db.relationship("HITInstance", backref='hit')
     tasks = db.relationship("Task", secondary=hits_tasks, backref='hit')
-    userTasks = db.Column(db.JSON)
+    interface = db.Column(db.JSON)
 
-    def __init__(self, id, type, name, media=None, extra=None, tasks=[], userTasks=[], instances=[]):
+    def __init__(self, id, type, name, media=None, extra=None, tasks=[], interface=[], instances=[]):
         self.id = id
         self.type = type
         self.name = name
         self.tasks = tasks
-        self.userTasks = userTasks
+        self.interface = interface
         self.instances = instances
 
         # fix URLs
@@ -81,7 +81,7 @@ class HIT(db.Model):
             media=hit_dict.get('media', None),
             extra=hit_dict.get('extra', None),
             tasks=tasks,
-            userTasks=hit_dict.get('userTasks', {}),
+            interface=hit_dict.get('interface', {}),
             instances=instances)
 
     def as_dict(self, with_project=True, with_tasks=False, with_instances=False, with_instance_tasks=False):

@@ -7,7 +7,6 @@ import { Button } from 'antd'
 import $ from 'jquery'
 import { HITSpec } from './hit'
 import Annotation from './annotation'
-import Timeline from './timeline'
 
 const getTaskClass = (type: string) => {
     if (type in AvailableTasks) {
@@ -163,26 +162,15 @@ class HITVisualizer extends React.Component<HITVisualizerProps, HITVisualizerSta
             return task
         })
 
-        // write default empty userTasks
-        if(!('userTasks' in hitProps)) {
-            hitProps['userTasks'] = {}
-        }
+        const content = <Annotation
+            {...hitProps}
+            url={null}
+            previewMode={true}
+            onSubmit={() => { }} />
 
-        switch (hitProps.type) {
-            case 'annotation':
-                return <Annotation
-                    {...hitProps}
-                    url={null}
-                    previewMode={this.props.previewMode}
-                    onSubmit={()=>{}} />
-            case 'timeline':
-                return <Timeline
-                    {...hitProps}
-                    url={null}
-                    onSubmit={() => {}} />
-            default:
-                return <div>Unknown HIT type</div>
-        }
+        return <div style={{minHeight: '300px', 'border': '1px solid #969696'}}>
+            {content}
+        </div>
     }
 }
 

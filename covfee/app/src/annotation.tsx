@@ -105,16 +105,25 @@ class Task extends React.Component {
     }
 }
 
+interface TimelineInterfaceProps {
+    showTimeline?: boolean,
+}
+
+interface AnnotationInterfaceProps {
+    showMenu?: boolean,
+    userTasks?: any,
+}
+
 interface AnnotationProps {
     previewMode: boolean,
     type: string,
     id: string,
     name: string,
-    media: object,
+    media?: object,
     project: object,
     submitted: boolean,
     tasks: { [key: string]: TaskSpec }
-    userTasks: any
+    interface: TimelineInterfaceProps | AnnotationInterfaceProps
 }
 
 interface AnnotationState {
@@ -187,11 +196,20 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     }
     url: string
     tasks: { [key: string]: TaskSpec}
+    taskKeys: Array<string>
     buffer: Buffer
     container = React.createRef<HTMLDivElement>()
     taskRef = React.createRef<React.Component>()
 
     replayIndex = 0
+
+    static defaultProps = {
+        interface: {
+            userTasks: {},
+            showTimeline: false,
+            showMenu: true,
+        }
+    }
 
     constructor(props: AnnotationProps) {
         super(props)
@@ -208,6 +226,8 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         }        
         this.buffer = new DummyBuffer()
     }
+
+    isTimeline = () => {return (this.props.type == 'timeline')}
 
     componentDidMount() {
         document.addEventListener("keydown", this.handleKeydown, false)
@@ -268,7 +288,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                     currTask: taskId,
                     overlay: {
                         ...this.state.overlay,
-                        visible: true,
+                        visible: !this.isTimeline(),
                         submitted: true
                     },
                     currKey: this.state.currKey + 1
@@ -337,16 +357,33 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         this.loadTaskForAnnotation(this.state.currTask)
     }
 
+    gotoNextTask = () => {
+        // if done with tasks
+        if (this.state.currTask == this.tasks.length - 1) {
+            this.props.onSubmit()
+        } else {
+            // go to next task
+            const currTaskIdx = Object.keys(this.tasks).indexOf(this.state.currTask) 
+
+            this.setState({
+                currTask: Object.keys(this.tasks)[currTaskIdx + 1]
+            })
+        }
+    }
+
     handleTaskSubmit = (taskResult: any) => {
-        this.setState({
-            overlay: {
-                ...this.state.overlay,
-                submitting: true
-            }
-        })
-        // wait for the buffer queue to be sent
-        this.buffer.attemptBufferSubmit(true)
-        this.buffer.awaitQueueClear(3000).then(() => {
+        if(this.props.previewMode) {
+            this.setState({
+                overlay: {
+                    ...this.state.overlay,
+                    submitted: true
+                }
+            })
+            this.gotoNextTask()
+            return
+        }
+
+        let sendResult = () => {
             const url = this.url + '/tasks/' + this.tasks[this.state.currTask].id + '/submit?' + new URLSearchParams({
                 'with_chunk_data': '1'
             })
@@ -358,26 +395,66 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             }
 
             // now send the task results
-            return fetch(url, requestOptions)   
-        }).then(throwBadResponse)
-        .then(data => {
-            this.tasks[this.state.currTask].response = data
+            return fetch(url, requestOptions)
+        }
+
+        if(!this.buffer.receivedData) {
+            // non-continuous task
+            sendResult()
+            .then(throwBadResponse)
+            .then(data => {
+                this.tasks[this.state.currTask].response = data
+                this.setState({
+                    overlay: {
+                        ...this.state.overlay,
+                        submitting: false,
+                        submitted: true
+                    }
+                })
+                if(this.isTimeline()) {
+                    this.gotoNextTask()
+                }
+            }).catch((error) => {
+                myerror('Error submitting the task.', error)
+                this.setState({
+                    overlay: {
+                        ...this.state.overlay,
+                        submitting: false
+                    }
+                })
+            })
+        } else {
+            // continuous task sent data to the buffer
             this.setState({
                 overlay: {
                     ...this.state.overlay,
-                    submitting: false,
-                    submitted: true
+                    submitting: true
                 }
             })
-        }).catch((error) => {
-            myerror('Error submitting the task.', error)
-            this.setState({
-                overlay: {
-                    ...this.state.overlay,
-                    submitting: false
-                }
+            // wait for the buffer queue to be sent
+            this.buffer.attemptBufferSubmit(true)
+            this.buffer.awaitQueueClear(3000)
+            .then(sendResult)
+            .then(throwBadResponse)
+            .then(data => {
+                this.tasks[this.state.currTask].response = data
+                this.setState({
+                    overlay: {
+                        ...this.state.overlay,
+                        submitting: false,
+                        submitted: true
+                    }
+                })
+            }).catch((error) => {
+                myerror('Error submitting the task.', error)
+                this.setState({
+                    overlay: {
+                        ...this.state.overlay,
+                        submitting: false
+                    }
+                })
             })
-        })
+        }
     }
 
     handleTaskEnd = () => {
@@ -556,40 +633,60 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             return null
     }
 
-    render() {
+    renderAnnotationMenu = () => {
         const tasks = this.state.sidebar.taskIds.map(taskId => this.tasks[taskId])
-        const sidebar = <>
+        return <>
             <Collapse>
                 <Panel header={this.props.name} key="1">
                     <Button type="link" onClick={this.handleHitSubmit}>Submit HIT</Button>
                 </Panel>
             </Collapse>
-            <TaskGroup 
-                tasks={tasks} 
-                allowNewTasks={Object.entries(this.props.userTasks).length > 0}
+            <TaskGroup
+                tasks={tasks}
+                allowNewTasks={'userTasks' in this.props.interface && Object.entries(this.props.interface.userTasks).length > 0}
                 currTask={this.state.currTask}
                 onClickAdd={this.handleTaskClickAdd}
                 onClickEdit={this.handleTaskClickEdit}
-                onChangeActiveTask={this.handleChangeActiveTask}/>
+                onChangeActiveTask={this.handleChangeActiveTask} />
         </>
+    }
 
-        let props = this.tasks[this.state.currTask]
-        props.url = this.url + '/tasks/' + props.id
-        props.media = this.props.media
-        const overlay = <div className={classNames('task-container')}>
+    renderTimelineMenu = () => {
+        const tasks = this.state.sidebar.taskIds.map(taskId => this.tasks[taskId])
+        return <></>
+    }
+
+    renderOverlay = () => {
+        return <div className={classNames('task-container')}>
             <div className={classNames('task-overlay', { 'task-overlay-off': !this.state.overlay.visible })}>
                 <div className="task-overlay-nav">
                     <Button onClick={this.handleTaskReplay}>Replay</Button>
                     <Button onClick={this.handleTaskRedo}>Re-do</Button>
-                    <Button onClick={()=>{this.handleTaskSubmit({})}} 
-                        type="primary" 
-                        disabled={this.state.overlay.submitted || this.state.replay.enabled} 
+                    <Button onClick={() => { this.handleTaskSubmit({}) }}
+                        type="primary"
+                        disabled={this.state.overlay.submitted || this.state.replay.enabled}
                         loading={this.state.overlay.submitting}
-                        >Submit</Button>
+                    >Submit</Button>
                 </div>
             </div>
         </div>
+    }
 
+    renderErrorModal = () => {
+        return <Modal
+            title="Error"
+            visible={this.state.errorModal.visible}
+            confirmLoading={this.state.errorModal.loading}
+            onOk={this.handleErrorOk}
+            onCancel={this.handleErrorCancel}
+            cancelButtonProps={{ disabled: true }}
+            okButtonProps={{}}
+        >
+            <p>{this.state.errorModal.message}</p>
+        </Modal>
+    }
+
+    renderTask = (props) => {
         const taskClass = getTaskClass(props.type)
         const task = React.createElement(taskClass, {
             key: this.state.currKey,
@@ -598,82 +695,150 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             // Annotation task props
             buffer: this.buffer.data,
             onEnd: this.handleTaskEnd,
+            onSubmit: this.handleTaskSubmit,
 
             // Replayable task props
             replayMode: this.state.replay.enabled,
             getNextReplayAction: this.getNextReplayAction,
-            getCurrReplayAction: this.getCurrReplayAction,                
+            getCurrReplayAction: this.getCurrReplayAction,
             ...props
         }, null)
 
+        return task
+    }
 
-        let taskInfo = <></>
-        if(task.ref.current && task.ref.current.hasOwnProperty('instructions')) {
-            taskInfo = <Menu.Item key="keyboard" style={{ padding: '0' }}>
-                <Popover 
-                    placement="bottom" 
-                    content={<div style={{ width: '400px' }}>
-                        {task.ref.current.instructions()}
-                    </div>} 
-                    trigger="hover">
-                    <div style={{ width: '100%', padding: '0 20px' }}>
-                        <QuestionCircleOutlined/>Controls
-                    </div>
-                </Popover>
-            </Menu.Item>
+    getTaskInfo = (task) => {
+        let taskInfo = null
+        if (task.ref.current && task.ref.current.hasOwnProperty('instructions')) {
+            taskInfo = task.ref.current.instructions()
         }
+        return taskInfo
+    }
 
-        let taskExtraMenuItem = <></>
-        let taskExtraCollapsible = <></>
-        if(this.props.extra) {
-            taskExtraMenuItem = <Menu.Item key="extra" icon={<PlusOutlined />}>Extra</Menu.Item>
+    getTaskExtra = (task) => {
+        if (this.props.extra) return <MarkdownLoader {...this.props.extra} />
+        else return false
+    }
 
-            taskExtraCollapsible = <Collapsible open={this.state.extraOpen}>
-                <MarkdownLoader {...this.props.extra}/>
-            </Collapsible>
-        }
+    renderAnnotation = () => {
+        
+        let props = this.tasks[this.state.currTask]
+        props._url = this.url + '/tasks/' + props.id
+        if (!props.media) props.media = this.props.media
+        
+        const task = this.renderTask(props)
+        const taskInfo = this.getTaskInfo(task)
+        const taskExtra = this.getTaskExtra(task)
 
         return <div className="tool-container" ref={this.container}>
-            
-            <NewTaskModal 
-                {...this.state.editTaskModal} 
-                presets={this.props.userTasks}
-                task={this.state.editTaskModal.taskId != null ? this.tasks[this.state.editTaskModal.taskId]: null}
+
+            <NewTaskModal
+                {...this.state.editTaskModal}
+                presets={'userTasks' in this.props.interface ? this.props.interface.userTasks : {}}
+                task={this.state.editTaskModal.taskId != null ? this.tasks[this.state.editTaskModal.taskId] : null}
                 onSubmit={this.handleEditTaskSubmit}
-                onCancel={this.handleEditTaskCancel}/>
+                onCancel={this.handleEditTaskCancel} />
             <Row>
                 <Col span={24}>
                     <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark">
                         <Menu.Item key="task" disabled>
-                            <Text strong style={{color:'white'}}>{props.name}</Text>
+                            <Text strong style={{ color: 'white' }}>{props.name}</Text>
                         </Menu.Item>
-                        {taskInfo}
-                        {taskExtraMenuItem}
+                        {taskInfo ?
+                        <Menu.Item key="keyboard" style={{ padding: '0' }}>
+                            <Popover
+                                placement="bottom"
+                                content={<div style={{ width: '400px' }}>
+                                    {taskInfo}
+                                </div>}
+                                trigger="hover">
+                                <div style={{ width: '100%', padding: '0 20px' }}>
+                                    <QuestionCircleOutlined />Controls
+                                </div>
+                            </Popover>
+                        </Menu.Item> : <></>}
+                        {taskExtra?
+                        <Menu.Item key="extra" icon={<PlusOutlined />}>Extra</Menu.Item>
+                        :<></>}
                     </Menu>
-                    {taskExtraCollapsible}
+                    {taskExtra?
+                    <Collapsible open={this.state.extraOpen}>
+                        {taskExtra}
+                    </Collapsible>
+                    :<></>}
                 </Col>
             </Row>
             <Row>
                 <Col span={20}>
-                    {overlay}
+                    {this.renderOverlay()}
                     {task}
                 </Col>
                 <Col span={4}>
-                    {sidebar}
+                    {this.renderAnnotationMenu()}
                 </Col>
             </Row>
-            <Modal
-                title="Error"
-                visible={this.state.errorModal.visible}
-                confirmLoading={this.state.errorModal.loading}
-                onOk={this.handleErrorOk}
-                onCancel={this.handleErrorCancel}
-                cancelButtonProps={{ disabled: true }}
-                okButtonProps={{}}
-            >
-                <p>{this.state.errorModal.message}</p>
-            </Modal>
+            {this.renderErrorModal()}
         </div>
+    }
+
+    renderTimeline = () => {
+        let props = this.tasks[this.state.currTask]
+        props._url = this.url + '/tasks/' + props.id
+        if (!props.media) props.media = this.props.media
+
+        const task = this.renderTask(props)
+        const taskInfo = this.getTaskInfo(task)
+
+        return <div className="tool-container" ref={this.container}>
+            <Row>
+                <Col span={24}>
+                    <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark">
+                        <Menu.Item key="task" disabled>
+                            <Text strong style={{ color: 'white' }}>{props.name}</Text>
+                        </Menu.Item>
+                        {taskInfo ?
+                            <Menu.Item key="keyboard" style={{ padding: '0' }}>
+                                <Popover
+                                    placement="bottom"
+                                    content={<div style={{ width: '400px' }}>
+                                        {taskInfo}
+                                    </div>}
+                                    trigger="hover">
+                                    <div style={{ width: '100%', padding: '0 20px' }}>
+                                        <QuestionCircleOutlined />Controls
+                                </div>
+                                </Popover>
+                            </Menu.Item> : <></>}
+                    </Menu>
+                </Col>
+            </Row>
+            <Row>
+                {this.props.interface.showTimeline?
+                <>
+                    <Col span={4}>
+                        {this.renderTimelineMenu()}
+                    </Col>
+                    <Col span={20}>
+                        {this.renderOverlay()}
+                        {task}
+                    </Col>
+                </>:
+                    <Col span={24}>
+                        {this.renderOverlay()}
+                        {task}
+                    </Col>
+                }
+            </Row>
+            {this.renderErrorModal()}
+        </div>
+    }
+
+    render() {
+        if(this.isTimeline()) {
+            return this.renderTimeline()
+        } else {
+            return this.renderAnnotation()
+        }
     }
 }
 

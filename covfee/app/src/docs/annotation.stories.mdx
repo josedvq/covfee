@@ -43,7 +43,7 @@ Predefined tasks can be set to be completed by annotators. Annotators can also b
 
 ## User-created tasks
 
-Annotation HITs may also allow the user to add new tasks. This is useful in cases in which the tracks or tasks are not known beforehand. This can be the case, for example, when there is an unknown number of subjects in the video, and the annotation task consists in annotating them all. For these cases we follow a simplistic approach by allowing annotators to add and name tracks at will. User-created tasks can be enabled by providing a list of allowed task types in the `userTasks` attribute:
+Annotation HITs may also allow the user to add new tasks. This is useful in cases in which the tracks or tasks are not known beforehand. This can be the case, for example, when there is an unknown number of subjects in the video, and the annotation task consists in annotating them all. For these cases we follow a simplistic approach by allowing annotators to add and name tracks at will. User-created tasks can be enabled by providing a list of allowed task types in the `interface.userTasks` attribute:
 
 export const hitSpec2 = {
     "type": "annotation",
@@ -56,9 +56,11 @@ export const hitSpec2 = {
         "type": "Continuous1DTask",
         "name": "Arousal"
     }],
-    "userTasks": {
-        "1dvariable": {
-            "type": "Continuous1DTask"
+    "interface": {
+        "userTasks": {
+            "1dvariable": {
+                "type": "Continuous1DTask"
+            }
         }
     }
 }

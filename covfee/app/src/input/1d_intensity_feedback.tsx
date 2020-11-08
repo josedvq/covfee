@@ -33,7 +33,7 @@ interface State {
 
 class OneDIntensityFeedback extends React.Component<Props, State> {
 
-    static defaultProps = {
+    static defaultProps:Props = {
         keys: ['ArrowUp'],
         jump_speed: 1 / 10,
         falling_constant: 5 / 600

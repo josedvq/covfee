@@ -3,6 +3,7 @@ import {
     Row,
     Col,
     Space,
+    Button
 } from 'antd'
 import 'antd/dist/antd.css'
 import marked from 'marked'
@@ -31,6 +32,10 @@ class MarkdownLoader extends React.Component<Props, State> {
         error: ''
     }
 
+    handleSubmit = () => {
+        this.props.onSubmit({})
+    }
+
     componentDidMount() {
         if(this.props.url !== undefined) {
             fetch(this.props.url)
@@ -56,9 +61,10 @@ class MarkdownLoader extends React.Component<Props, State> {
 
     render() {
         return <>
-            <Row gutter={16}>
+            <Row gutter={0}>
                 <Col span={24}>
                     <div dangerouslySetInnerHTML={{ __html: this.state.html}}></div>
+                    <Button type="primary" onClick={this.handleSubmit}>Start!</Button>
                 </Col>
             </Row>
         </>
