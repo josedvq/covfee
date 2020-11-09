@@ -92,6 +92,8 @@ a.header-covfee {
   position: absolute;
   width: 8px;
   height: 8px;
+  margin-top: -4px;
+  margin-left: -4px;
   background-color: red;
   border-radius: 50%;
 }
