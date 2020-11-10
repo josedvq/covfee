@@ -219,7 +219,7 @@ def response_chunk(iid, kid):
         chunk = next(
             (chunk for chunk in response.chunks if chunk.index == sent_index), None)
         if chunk is not None:
-            chunk.data = request.json.data
+            chunk.data = request.json['data']
             db.session.commit()
             return jsonify({'success': True}), 201
 
