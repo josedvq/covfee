@@ -2,6 +2,8 @@
 
 Covfee was created to provide an easily extensible tool for video perception and annotation experiments, especially those requiring continuous feedback from the user.
 
+Full documentation: https://<branch>--5faeef49f6655f00210dbf35.chromatic.com
+
 ## Quick start
 
 This document contains instructions for installing covfee locally, to test it or to create your experiments locally before putting them online. If you wish to develop a custom task please follow this guide and then see [developing a custom task](custom_task.md)
