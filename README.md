@@ -2,7 +2,7 @@
 
 Covfee was created to provide an easily extensible tool for video perception and annotation experiments, especially those requiring continuous feedback from the user.
 
-Full documentation: https://<branch>--5faeef49f6655f00210dbf35.chromatic.com
+Full documentation: [COVFEE DOCS](https://<branch>--5faeef49f6655f00210dbf35.chromatic.com)
 
 ## Quick start
 
