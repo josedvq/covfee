@@ -2,12 +2,11 @@
 
 Covfee was created to provide an easily extensible tool for video perception and annotation experiments, especially those requiring continuous feedback from the user.
 
-Full documentation: [COVFEE DOCS](https://master--5faeef49f6655f00210dbf35.chromatic.com)
+Full interactive documentation: [COVFEE DOCS](https://master--5faeef49f6655f00210dbf35.chromatic.com)
 
 ## Quick start
 
-This document contains instructions for installing covfee locally, to test it or to create your experiments locally before putting them online. If you wish to develop a custom task please follow this guide and then see [developing a custom task](custom_task.md)
-
+This document contains instructions for installing covfee locally. We recommend that you work with covfee locally first even if you plan to put it online.
 
 ### Setup
 
@@ -37,7 +36,7 @@ The easiest way to get started with covfee is to create a JSON file containing t
 - Continuously annotating a video for arousal
 - Continuously annotating the position of a hand in a video.
 
-HITs can be as simple as a single one of these tasks, or consist of multiple tasks of different types. You are able to specify exactly what tasks are part of each HIT. covfee will produce a separate URL per HIT, which can be sent to a study participant. 
+You can see live examples of these tasks in the [covfee documentation](https://master--5faeef49f6655f00210dbf35.chromatic.com/). HITs can be as simple as a single one of these tasks, or consist of multiple tasks of different types. You can also create your own custom tasks (see below). You are able to specify exactly what tasks are part of each HIT. covfee will produce a separate URL per HIT, which can be sent to a study participant. 
 
 There are two types of HITs: timeline and annotation HITs.
 
