@@ -7,6 +7,7 @@ export const parameters = {
   options: {
     storySort: {
         order: [
+          'Covfee',
           'Getting Started', 
           'Timeline HITs',
           'Annotation HITs',
