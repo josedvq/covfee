@@ -6,6 +6,7 @@ abstract class Buffer {
 class EventBuffer extends Buffer {
     public numBuffers = 0 // num of filled buffers
     public queue = [{status: 'filling', buffer: []}]
+    public receivedData = false
 
     private currBuffer = 0
 
@@ -113,6 +114,8 @@ class EventBuffer extends Buffer {
         if(this.queue[this.currBuffer].buffer.length == this.size) {
             this.handleBufferFilled()
         }
+
+        this.receivedData = true
     }
 }
 

@@ -1,7 +1,63 @@
 import { Description } from '@storybook/addon-docs/blocks'
 import marked from 'marked'
-import {updateMarkdownLinks} from '../docs'
+import {updateMarkdownLinks, CodeBlock, HITVisualizer} from '../docs'
 
 <Meta title="Timeline HITs"/>
 
-<Description>{updateMarkdownLinks(marked(timeline))}</Description>
+# Timeline HITs
+
+HITs with a `type` of `timeline` are rendered as a series of tasks that must be completed in order. An array of tasks, of possibly different types must be specified in order. Users cannot add tasks to timeline HITs (the `interface.userTasks` property of annotation HITs is ignored).
+
+export const hitSpec = {
+    "type": "timeline",
+    "tasks": [
+        {
+            "type": "InstructionsTask",
+            "html": "Please watch each video and answer the questions next to it."
+        },
+        {
+            "type": "QuestionnaireTask",
+            "form": {
+                "fields": [
+                    {
+                        "prompt": "Does the person in the video laugh?",
+                        "input": {
+                            "type": "radio",
+                            "options": [
+                            "yes",
+                            "no"
+                            ]
+                        }
+                    }
+                ]
+            },
+            "media": {
+                "type": "video",
+                "url": "av/1_51_cam_1.mp4"
+            }
+        },
+        {
+            "type": "QuestionnaireTask",
+            "form": {
+                "fields": [
+                    {
+                        "prompt": "What is the intensity of the laugh?",
+                        "input": {
+                            "type": "radio",
+                            "options": ["1", "2", "3", "4", "5", "6", "7"]
+                        }
+                    }
+                ]
+            },
+            "media": {
+                "type": "video",
+                "url": "av/1_38_cam_1.mp4"
+            }
+        }
+    ]
+}
+
+<CodeBlock code={hitSpec} />
+
+<Alert message="Note: this preview is not fully interactive. To be able to edit the tasks and submit data recreate the HIT in a local covfee install."/>
+<HITVisualizer hit={hitSpec}/>

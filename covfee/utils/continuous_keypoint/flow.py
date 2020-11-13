@@ -7,8 +7,8 @@ from tqdm import tqdm, trange
 
 from covfee.utils.continuous_keypoint.of_utils import pixelwise_movement, optical_flow_mask
 
-def compute_flow(video_path: str, flow_path: str, width: int):
-    cap = cv2.VideoCapture(video_path)
+def compute_flow(video: str, flow: str, width: int):
+    cap = cv2.VideoCapture(video)
     num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     frame_rate = cap.get(cv2.CAP_PROP_FPS)
@@ -19,7 +19,7 @@ def compute_flow(video_path: str, flow_path: str, width: int):
     flow_res = (width, int(width * video_res[1] / video_res[0]))
 
     fourcc = cv2.VideoWriter_fourcc(*'H264')
-    out = cv2.VideoWriter(flow_path, fourcc, frame_rate, flow_res, 0)
+    out = cv2.VideoWriter(flow, fourcc, frame_rate, flow_res, 0)
 
     _, prev_frame = cap.read()
     for i in trange(num_frames-1):
@@ -31,10 +31,10 @@ def compute_flow(video_path: str, flow_path: str, width: int):
 
     cap.release()
     out.release()
-    cv2.destroyAllWindows()
 
 def main(args):
-    compute_flow(**args)
+    print(type(args))
+    compute_flow(**vars(args))
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -53,13 +53,6 @@ if __name__ == '__main__':
                         type=int,
                         default=320,
                         help="width of the resulting flow video")
-    parser.add_argument('-d',
-                        '--debug',
-                        help="Print lots of debugging statements",
-                        action="store_const",
-                        dest="loglevel",
-                        const=logging.DEBUG,
-                        default=logging.WARNING)
 
     args = parser.parse_args()
     main(args)

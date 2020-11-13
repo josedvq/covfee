@@ -1,7 +1,6 @@
 
 import * as React from 'react'
 import { withRouter } from 'react-router'
-import Timeline from './timeline'
 import Annotation from './annotation'
 const Constants = require('./constants.json')
 import { fetcher, getUrlQueryParam, throwBadResponse} from './utils'
@@ -34,7 +33,7 @@ interface HITState {
 }
 
 /**
- * Retrieves the HIT and renders and annotation or timeline component depending on its type. Stores the preview state.
+ * Retrieves the HIT and renders and annotation component. Stores the preview state.
  */
 class HIT extends React.Component<any, HITState> {
     id: string
@@ -80,7 +79,7 @@ class HIT extends React.Component<any, HITState> {
     }
 
     handleSubmit = () => {
-        // submit timeline to get completion code
+        // submit HIT to get completion code
         const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -106,22 +105,11 @@ class HIT extends React.Component<any, HITState> {
                     <LoadingOutlined />
                 </div>
             case 'ready':
-                switch (this.state.hit.type) {
-                    case 'annotation':
-                        return <Annotation 
-                            {...this.state.hit} 
-                            url={this.url}
-                            previewMode={this.state.previewMode} 
-                            onSubmit={this.handleSubmit}/>
-                    case 'timeline':
-                        return <Timeline 
-                            {...this.state.hit} 
-                            url={this.url}
-                            onSubmit={this.handleSubmit}/>
-                    default:
-                        return <div>Unknown HIT type</div>
-                }
-            
+                return <Annotation
+                    {...this.state.hit}
+                    url={this.url}
+                    previewMode={this.state.previewMode}
+                    onSubmit={this.handleSubmit} />
             default:
                 return <></>
         }

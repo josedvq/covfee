@@ -11,17 +11,7 @@
             "repeat": 2,
             "media": {
                 "type": "video",
-                "url": "sample_mp4_10s.mp4",
-                "res": [
-                    320,
-                    240
-                ],
-                "flow_url": "sample_mp4_flow_10s.mp4",
-                "flow_res": [
-                    320,
-                    240
-                ],
-                "fps": 59.94
+                "url": "person_reading.mp4"
             },
             "tasks": [
                 {
