@@ -28,8 +28,8 @@ class HIT(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
     media = db.Column(db.JSON)
     extra = db.Column(db.JSON)
-    instances = db.relationship("HITInstance", backref='hit')
-    tasks = db.relationship("Task", secondary=hits_tasks, backref='hit')
+    instances = db.relationship("HITInstance", backref='hit', cascade="all, delete")
+    tasks = db.relationship("Task", secondary=hits_tasks, backref='hits', cascade="all, delete", order_by='Task.order.asc(),Task.created_at.asc()')
     interface = db.Column(db.JSON)
 
     def __init__(self, id, type, name, media=None, extra=None, tasks=[], interface=[], instances=[]):
@@ -61,6 +61,7 @@ class HIT(db.Model):
         for i, task in enumerate(hit_dict.get('tasks', [])):
             if 'name' not in task:
                 task['name'] = str(i)
+            task['order'] = i
             tasks.append(Task.from_dict(task))
 
         # insert multiple hits/URLs according to the repeat param
@@ -90,8 +91,7 @@ class HIT(db.Model):
         hit_dict['id'] = hit_dict['id'].hex()
 
         if with_tasks:
-            hit_dict['tasks'] = {task.id: task.as_dict(editable=False)
-                                 for task in self.tasks}
+            hit_dict['tasks'] = [task.as_dict(editable=False) for task in self.tasks]
 
         if with_instances:
             hit_dict['instances'] = [instance.as_dict(
@@ -120,7 +120,7 @@ class HITInstance(db.Model):
     id = db.Column(db.Binary, primary_key=True)
     preview_id = db.Column(db.Binary, unique=True) # id used for visualization
     hit_id = db.Column(db.Integer, db.ForeignKey('hits.id'))
-    tasks = db.relationship("Task", secondary=hitistances_tasks, backref='hitinstance')
+    tasks = db.relationship("Task", secondary=hitistances_tasks, backref='hitinstances', cascade="delete, all", order_by='Task.order.asc(),Task.created_at.asc()')
     responses = db.relationship("TaskResponse", backref='hitinstance', lazy='dynamic')
     submitted = db.Column(db.Boolean)
 
@@ -166,19 +166,20 @@ class HITInstance(db.Model):
 
         if with_tasks:
             # join instance and HIT tasks
-            instance_tasks = {task.id: task.as_dict(editable=True) for task in self.tasks}
-            instance_dict['tasks'] = {**instance_tasks, **hit_dict['tasks']}
+            instance_tasks = [task.as_dict(editable=True) for task in self.tasks]
+            instance_dict['tasks'] = [*hit_dict['tasks'], *instance_tasks]
 
             if with_responses:
-                for task_id, task in instance_dict['tasks'].items():
+                for task in instance_dict['tasks']:
+                    task_id = task['id']
                     # query the latest response
                     # only include submitted responses
                     lastResponse = self.responses.filter_by(
                         task_id=task_id, submitted=True).order_by(TaskResponse.index.desc()).first()
                     if lastResponse is None:
-                        instance_dict['tasks'][task_id]['response'] = None
+                        task['response'] = None
                     else:
-                        instance_dict['tasks'][task_id]['response'] = lastResponse.as_dict()
+                        task['response'] = lastResponse.as_dict()
 
         if self.submitted:
             instance_dict['completion_code'] = sha256(

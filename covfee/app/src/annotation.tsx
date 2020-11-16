@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { withRouter, generatePath } from 'react-router'
 import {
     EyeFilled, 
     EditOutlined,
@@ -29,6 +30,7 @@ import { getTaskClass, NewTaskModal} from './task_utils'
 import { TaskSpec } from 'Tasks/task'
 import { Buffer, EventBuffer, DummyBuffer } from './buffer'
 import { MarkdownLoader} from './tasks/instructions'
+import CovfeeLogo from './art/logo.svg'
 
 function getFullscreen(element: HTMLElement) {
     if (element.requestFullscreen) {
@@ -58,12 +60,12 @@ class TaskGroup extends React.Component<any, {}> {
 
     render() {
         return <ol className={'task-group'}>
-            {this.props.tasks.map(task => 
+            {this.props.tasks.map((task, index) => 
                 <Task key={task.id} 
-                    id={task.id} 
+                    id={index} 
                     name={task.name} 
                     editable={task.editable}
-                    active={task.id == this.props.currTask} 
+                    active={index == this.props.currTask} 
                     onActivate={this.props.onChangeActiveTask} 
                     onClickEdit={this.props.onClickEdit}/>)}
             <li>
@@ -122,17 +124,21 @@ interface AnnotationProps {
     media?: object,
     project: object,
     submitted: boolean,
-    tasks: { [key: string]: TaskSpec }
+    tasks: Array<TaskSpec>
     interface: TimelineInterfaceProps | AnnotationInterfaceProps
+    /**
+     * Tells the annotation component to keep urls up to date
+     */
+    routingEnabled: boolean
 }
 
 interface AnnotationState {
-    currTask: string,
+    currTask: number,
     loadingTask: boolean,
     error: string,
     completionCode: string,
     sidebar: {
-        taskIds: Array<string>
+        taskIds: Array<number>
     },
     extraOpen: boolean,
     fullscreen: boolean,
@@ -195,7 +201,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         currKey: 0 // for re-mounting components
     }
     url: string
-    tasks: { [key: string]: TaskSpec}
+    tasks: Array<TaskSpec>
     taskKeys: Array<string>
     buffer: Buffer
     container = React.createRef<HTMLDivElement>()
@@ -216,12 +222,18 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         // copy props into tasks
         this.url = Constants.api_url + '/instances/' + this.props.id
         this.tasks = this.props.tasks
+
+        // calculate the current task using the route and the HIT
+        let currTask = 0
+        if (props.match.params.taskId !== undefined && this.tasks.length < parseInt(props.match.params.taskId)) {
+            currTask = parseInt(props.match.params.taskId)
+        }
         
         this.state = {
             ...this.state,
-            currTask: Object.keys(this.tasks)[0],
+            'currTask': currTask,
             sidebar: {
-                taskIds: Object.keys(this.tasks)
+                taskIds: [...this.tasks.keys()]
             }
         }        
         this.buffer = new DummyBuffer()
@@ -260,32 +272,41 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         }
     }
 
-    handleChangeActiveTask = (taskId: string) => {
+    handleChangeActiveTask = (taskIndex: number) => {
         // IMPORTANT: order matters here
         // buffer must be created before the render triggered by setState
         this.replayIndex = 0
         // if the task has previous responses, query them
-        if(this.tasks[taskId].response != null) {
-            this.fetchTaskResponse(taskId)
+        if(this.tasks[taskIndex].response != null) {
+            this.fetchTaskResponse(taskIndex)
         } else {
         // no previous responses, prepare task
-            this.loadTaskForAnnotation(taskId)
-        }   
+            this.loadTaskForAnnotation(taskIndex)
+        }
     }
 
-    fetchTaskResponse = (taskId: string) => {
+    updateUrl = (taskIndex: number) => {
+        if(this.props.routingEnabled) {
+            window.history.pushState(null, null, '#' + generatePath(this.props.match.path, {
+                hitId: this.props.match.params.hitId,
+                taskId: taskIndex
+            }))
+        }
+    }
+
+    fetchTaskResponse = (taskIndex: number) => {
         this.setState({ loadingTask: true })
-        const url = this.url + '/tasks/' + taskId + '/responses?' + new URLSearchParams({
+        const url = this.url + '/tasks/' + this.tasks[taskIndex].id + '/responses?' + new URLSearchParams({
             'with_chunk_data': '1'
         })
         fetcher(url)
             .then(throwBadResponse)
             .then((data) => {
-                this.tasks[taskId].response = data
-                // this.startNewBuffer(taskId)
+                this.tasks[taskIndex].response = data
+                this.startNewBuffer(taskIndex)
                 this.setState({
                     loadingTask: false,
-                    currTask: taskId,
+                    currTask: taskIndex,
                     overlay: {
                         ...this.state.overlay,
                         visible: !this.isTimeline(),
@@ -294,6 +315,8 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                     currKey: this.state.currKey + 1
                 })
 
+                this.updateUrl(taskIndex)
+                
             }).catch(error => {
                 myerror('Error fetching task response.', error)
             })
@@ -313,10 +336,10 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     
 
     // Overlay actions
-    loadTaskForReplay = (taskId: string) => {
-        this.startNewBuffer(taskId, true)
+    loadTaskForReplay = (taskIndex: number) => {
+        this.startNewBuffer(this.tasks[taskIndex].id, true)
         this.setState({
-            currTask: taskId,
+            currTask: taskIndex,
             loadingTask: false,
             overlay: {
                 ...this.state.overlay,
@@ -330,12 +353,13 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         }, () => {
             this.replayIndex = 0
         })
+        this.updateUrl(taskIndex)
     }
 
-    loadTaskForAnnotation = (taskId: string) => {
-        this.startNewBuffer(taskId, this.props.previewMode) // dummy buffer for preview
+    loadTaskForAnnotation = (taskIndex: number) => {
+        this.startNewBuffer(this.tasks[taskIndex].id, this.props.previewMode) // dummy buffer for preview
         this.setState({
-            currTask: taskId,
+            currTask: taskIndex,
             loadingTask: false,
             overlay: {
                 ...this.state.overlay,
@@ -347,6 +371,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             },
             currKey: this.state.currKey + 1
         })
+        this.updateUrl(taskIndex)
     }
 
     handleTaskReplay = () => {
@@ -360,14 +385,15 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     gotoNextTask = () => {
         // if done with tasks
         if (this.state.currTask == this.tasks.length - 1) {
-            this.props.onSubmit()
+            this.handleHitSubmit()
         } else {
             // go to next task
-            const currTaskIdx = Object.keys(this.tasks).indexOf(this.state.currTask) 
-
+            const nextTaskIndex = this.state.currTask + 1
             this.setState({
-                currTask: Object.keys(this.tasks)[currTaskIdx + 1]
+                currTask: nextTaskIndex,
+                currKey: this.state.currKey+1
             })
+            this.updateUrl(nextTaskIndex)
         }
     }
 
@@ -445,6 +471,9 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                         submitted: true
                     }
                 })
+                if (this.isTimeline()) {
+                    this.gotoNextTask()
+                }
             }).catch((error) => {
                 myerror('Error submitting the task.', error)
                 this.setState({
@@ -481,7 +510,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         })
     }
 
-    handleTaskClickEdit = (taskId: string) => {
+    handleTaskClickEdit = (taskId: number) => {
         if (this.props.previewMode) return
 
         this.setState({
@@ -517,11 +546,10 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             return fetch(url, requestOptions)
                 .then(throwBadResponse)
                 .then(data => {
-                    this.tasks[data.id] = data
-                    const newTaskIds = Array.from(this.state.sidebar.taskIds)
-                    newTaskIds.push(data.id)
+                    this.tasks.push(data)
+                    const newTaskIds = [...this.tasks.keys()]
                     this.setState({
-                        currTask: this.state.currTask == 'n' ? data.id : this.state.currTask,
+                        currTask: this.tasks.length-1,
                         sidebar: { taskIds: newTaskIds }
                     })
                 })
@@ -540,7 +568,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             return fetch(url, requestOptions)
                 .then(throwBadResponse)
                 .then(data => {
-                    this.tasks[task.id] = data
+                    this.tasks[this.state.editTaskModal.taskId] = data
                 })
                 .catch(error => {
                     myerror('Error creating the new task.', error)
@@ -741,6 +769,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             <Row>
                 <Col span={24}>
                     <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark">
+                        <Menu.Item icon={<img src={CovfeeLogo} width={20} />} disabled></Menu.Item>
                         <Menu.Item key="task" disabled>
                             <Text strong style={{ color: 'white' }}>{props.name}</Text>
                         </Menu.Item>
@@ -793,9 +822,8 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             <Row>
                 <Col span={24}>
                     <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark">
-                        <Menu.Item key="task" disabled>
-                            <Text strong style={{ color: 'white' }}>{props.name}</Text>
-                        </Menu.Item>
+                        <Menu.Item icon={<img src={CovfeeLogo} width={20} />} disabled>&nbsp;</Menu.Item>
+                        
                         {taskInfo ?
                             <Menu.Item key="keyboard" style={{ padding: '0' }}>
                                 <Popover
@@ -842,4 +870,6 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     }
 }
 
-export default Annotation
+const AnnotationWithRouter = withRouter(Annotation)
+
+export default AnnotationWithRouter

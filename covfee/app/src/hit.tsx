@@ -14,6 +14,11 @@ import {
     Space,
     Typography
 } from 'antd';
+import {
+    HashRouter as Router,
+    Switch,
+    Route,
+} from "react-router-dom"
 const { Text, Title, Link } = Typography
 import {TaskSpec} from './tasks/task'
 
@@ -105,11 +110,14 @@ class HIT extends React.Component<any, HITState> {
                     <LoadingOutlined />
                 </div>
             case 'ready':
-                return <Annotation
-                    {...this.state.hit}
-                    url={this.url}
-                    previewMode={this.state.previewMode}
-                    onSubmit={this.handleSubmit} />
+                return <Route path={`${this.props.match.path}/:taskId?`}>
+                    <Annotation
+                        {...this.state.hit}
+                        url={this.url}
+                        routingEnabled={true}
+                        previewMode={this.state.previewMode}
+                        onSubmit={this.handleSubmit} />
+                </Route>
             default:
                 return <></>
         }

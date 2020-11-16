@@ -32,10 +32,6 @@ class MarkdownLoader extends React.Component<Props, State> {
         error: ''
     }
 
-    handleSubmit = () => {
-        this.props.onSubmit({})
-    }
-
     componentDidMount() {
         if(this.props.url !== undefined) {
             fetch(this.props.url)
@@ -64,13 +60,24 @@ class MarkdownLoader extends React.Component<Props, State> {
             <Row gutter={0}>
                 <Col span={24}>
                     <div dangerouslySetInnerHTML={{ __html: this.state.html}}></div>
-                    <Button type="primary" onClick={this.handleSubmit}>Start!</Button>
                 </Col>
             </Row>
         </>
     }
 }
-const InstructionsTask = MarkdownLoader
+
+class InstructionsTask extends React.Component<Props, State> {
+    handleSubmit = () => {
+        this.props.onSubmit({})
+    }
+
+    render() {
+        return <>
+            <MarkdownLoader {...this.props}/>
+            <Button type="primary" onClick={this.handleSubmit}>Start!</Button>
+        </>
+    }
+}
 
 export { MarkdownLoader}
 export default InstructionsTask

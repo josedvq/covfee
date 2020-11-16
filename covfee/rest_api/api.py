@@ -118,7 +118,7 @@ def task_add_to_instance(iid):
     task = Task.from_dict(request.json)
     instance.tasks.append(task)
     db.session.commit()
-    return jsonify(task.as_dict())
+    return jsonify(task.as_dict(editable=True))
 
 # edit an existing task
 @api.route('/tasks/<kid>/edit', methods=['POST'])
@@ -126,11 +126,11 @@ def task_edit(kid):
     task = db.session.query(Task).get(int(kid))
     if task is None:
         return jsonify({'msg': 'invalid task'}), 400
-    if task.hit:
+    if task.hits:
         return jsonify(msg='Only annotation-type instances can be user-edited.'), 403
     task.name = request.json['name']
     db.session.commit()
-    return jsonify(task.as_dict())
+    return jsonify(task.as_dict(editable=True))
 
 # delete an existing task
 @api.route('/tasks/<kid>/delete')
@@ -138,7 +138,7 @@ def task_delete(kid):
     task = db.session.query(Task).get(int(kid))
     if task is None:
         return jsonify({'msg': 'invalid task'}), 400
-    if task.hit:
+    if task.hits:
         return jsonify(msg='Only annotation-type instances can be user-deleted.'), 403
     task.delete()
     db.session.commit()
@@ -214,6 +214,16 @@ def response_chunk(iid, kid):
             submitted=False,
             chunks=[])
 
+    # if there is a previous chunk with the same index, overwrite it
+    if len(response.chunks) > 0:
+        sent_index = request.json.index
+        chunk = next((chunk for chunk in response.chunks if chunk.index == sent_index), None)
+        if chunk is not None:
+            chunk.data = request.json.data
+            db.session.commit()
+            return jsonify({'success': True}), 201
+
+    # no previous chunk with the same index -> append the chunk
     chunk = Chunk(**request.json)
     response.chunks.append(chunk)
     db.session.add(response)
