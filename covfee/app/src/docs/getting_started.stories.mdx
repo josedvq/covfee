@@ -1,0 +1,138 @@
+import { linkTo } from '@storybook/addon-links'
+import LinkTo from '@storybook/addon-links/react'
+
+<Meta title="Getting Started"/>
+
+# Getting Started
+
+This guide takes you through the process of creating a simple covfee experiment which gathers continuous data from subjects.
+
+## 1. Decribe your HITs
+The easiest way to get started with covfee is to create a JSON file containing timelines or HITs. Each HIT is a set of tasks that are assigned to a single subject. Examples of tasks are:
+
+- Picking multiple labels for a video
+- Answering a personality test or survey
+- Continuously annotating a video for arousal
+- Continuously annotating the position of a hand in a video.
+
+You can see live examples of these tasks in the [covfee documentation](https://master--5faeef49f6655f00210dbf35.chromatic.com/). HITs can be as simple as a single one of these tasks, or consist of multiple tasks of different types. You can also create your own custom tasks (see Custom Tasks). You are able to specify exactly what tasks are part of each HIT. covfee will produce a separate URL per HIT, which can be sent to a study participant. 
+
+There are two types of HITs: timeline and annotation HITs.
+
+- **Timeline HITs** are a sequence of tasks, which must be completed in order by study subjects. Timeline HITs would normally be used for perception studies, where a subject must complete a series of tasks to complete participation. 
+- **Annotation HITs** are a set of tasks in no particular order, and are meant to be used mainly for annotation of continuous variables. It is especially meant for use online with Mechanical Turk and similar platforms. An annotation HIT is used to annotate a single media file (all its tasks will refer to the same audio/video file). Predefined tasks can be set to be completed by annotators. Annotators can also be allowed to create and name their own tasks. These HITs will be rendered in an annotation interface where users can control the available continuous variables.
+
+A covfee project may contain one or multiple different HITs. A JSON file is the easiest way to specify your covfee project. You can find examples of such JSON files in the [samples folder](../samples).
+
+In this guide, we will create a project consisting of a single timeline HIT in which participants must:
+
+1. read general instructions for the whole experiment before seeing the data.
+2. watch a video and afterwards indicate the arousal of the subject in it using a slider.
+3. watch the same video and this time continuously (ie. while watching the video) annotate arousal by using their mouse to indicate a level in a scale.
+
+Our HIT therefore has 3 tasks.
+
+First create a folder for your covfee project and write a file `example.covfee.json` with the following content:
+
+```
+{
+  "name": "Local Audiovisual",
+  "email": "example@example.com",
+  "hits": [
+    {
+      "type": "timeline",
+      "tasks": [
+        ...
+      ]
+    }
+  ]
+}
+```
+
+This is the skeleton of a covfee project and `example.covfee.json` will contain the full specification of it. It starts with the `name` and `email` of the contact person in charge of the study, which will be available to participants. The `hits` section contains an object per HIT, in this case a single one. This HIT is a `timeline` HIT with a set of tasks that we will specify next.
+
+You can see the tasks available in covfee in the Tasks section of the documentation. We will start by specifying the instructions using `InstructionsTask` (see <LinkTo kind="tasks-instructions" story="page">Instructions</LinkTo>):
+
+```
+{
+  "type": "InstructionsTask",
+  "html": ""
+}
+```
+
+Tasks like `InstructionsTask` have each their own set of parameters that allow you to configure the task. `InstructionsTask`, for example, allows you to pass the URL to a Markdown document with instructions instead of providing them directly. See <LinkTo kind="tasks-instructions" story="page">Instructions</LinkTo> for more.
+
+Second, we will add a task in which participants watch a video and then rate the arousal of the participant in it using a simple slider. To do this we will make use of the `QuestionnaireTask` (see <LinkTo kind="questionnaire" story="page">Questionnaire</LinkTo>), which supports many form elements including sliders:
+
+```
+{
+  "type": "QuestionnaireTask",
+  "media": {
+    
+  },
+  "form": [
+      {
+        "prompt": "Level of arousal",
+        "type": "Slider"
+      }
+  ]
+}
+```
+
+Form elements are very common in any kind of annotation. Covfee allows you to use much more than sliders by supporting most of the [data entry components of the ant.design library](https://ant.design/components/overview/).
+
+What if you want to use a video in your computer that is not hosted anywhere? Simply add a folder named `media` to your project folder, next to your `.covfee.json` file and paste your video there. Then simply specify the video filename (eg. `myvideo.mp4`) as `url`. Covfee will take care of serving your media from this folder.
+
+Finally, we will add a continuous task in which subjects must continuously annotate a one dimensional variable: the arousal of the subject in the video:
+
+```
+{
+  "type": "QuestionnaireTask",
+  "form": [
+      {
+        "prompt": "Level of arousal",
+        "type": "Slider"
+      }
+  ]
+}
+```
+
+By now, your project folder should look more or less like this:
+
+```
+myproject
+    example.covfee.json
+    media
+        myvideo.mp4
+```
+
+## 2. Create the database
+covfee uses the previous JSON specification to create a database that will store the responses to the tasks. 
+
+All you need to do now is `cd` to your project folder and run covfee from it:
+
+```
+cd myproject
+covfee-maker .
+```
+
+`covfee-maker` will read all the `.covfee.json` files in the passed folder and initialize a database for covfee.
+
+## 3. Run covfee
+Run the following two commands in separate terminals. Both should be run from your project directory (eg. `samples/basic`)
+```
+covfee-webpack
+covfee-dev
+```
+
+## 4. Annotate!
+Running `covfee-maker` should have given you an output such as:
+
+```
+Example project
+ID: c721d8b7f0722ae0f575a8725609e46b1e9421e125dcfa471dc5ebd14e188fb1
+ - url: http://127.0.0.1:5000/#/timelines/ebf503d58b3e5a2fb81c22d822d80f1b98d402a44a0c96e04d8f91b2cf531df7
+ - api: http://127.0.0.1:5000/api/timelines/ebf503d58b3e5a2fb81c22d822d80f1b98d402a44a0c96e04d8f91b2cf531df7
+```
+
+This will contain in general one URL per hit. These are the URLs that you should send to your workers or collaborators. Try opening the first URL in your browser! This should display the HIT you described.

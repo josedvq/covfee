@@ -23,6 +23,7 @@
     "awesome-typescript-loader": "^5.2.1",
     "babel-loader": "^8.1.0",
     "babel-plugin-typescript-to-proptypes": "^1.4.1",
+    "chromatic": "^5.3.0",
     "core-js": "^3.6.5",
     "css-loader": "^3.6.0",
     "raw-loader": "^4.0.1",
@@ -47,7 +48,8 @@
     "reload-prod": "COVFEE_ENV=production python -m utils.db reload_projects",
     "test": "echo \"Error: no test specified\" && exit 1",
     "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook"
+    "build-storybook": "build-storybook",
+    "chromatic": "npx chromatic --project-token 681awumx8cs"
   },
   "keywords": [],
   "author": "",

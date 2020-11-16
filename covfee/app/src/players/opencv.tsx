@@ -1,7 +1,6 @@
 /* global cv */
 import * as React from 'react'
 import { MediaSpec } from 'Tasks/task'
-const cv = require('./cv/opencv.js')
 
 // video player using opencv to control playback speed
 interface Props extends MediaSpec {
