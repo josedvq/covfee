@@ -216,10 +216,11 @@ def response_chunk(iid, kid):
 
     # if there is a previous chunk with the same index, overwrite it
     if len(response.chunks) > 0:
-        sent_index = request.json.index
-        chunk = next((chunk for chunk in response.chunks if chunk.index == sent_index), None)
+        sent_index = request.json['index']
+        chunk = next(
+            (chunk for chunk in response.chunks if chunk.index == sent_index), None)
         if chunk is not None:
-            chunk.data = request.json.data
+            chunk.data = request.json['data']
             db.session.commit()
             return jsonify({'success': True}), 201
 
