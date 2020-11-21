@@ -7,6 +7,7 @@ import { Button } from 'antd'
 import $ from 'jquery'
 import { HITSpec } from './hit'
 import Annotation from './annotation'
+import KeyboardManagerContext from './input/keyboard_manager'
 
 const getTaskClass = (type: string) => {
     if (type in AvailableTasks) {
@@ -122,7 +123,7 @@ class TaskVisualizer extends React.Component<Props, State> {
             ...this.state.task})
 
         return <>
-            {task}
+            <KeyboardManagerContext>{task}</KeyboardManagerContext>
             <div>
                 <pre 
                     className={classNames('docs-task-pg',{'docs-task-pg-err': this.state.error})}

@@ -12,8 +12,9 @@ import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined } from '@ant-de
 import HTML5Player from '../players/html5'
 import '../css/gui.css'
 import classNames from 'classnames'
-import { OneDIntensityFeedback } from '../input/1d_intensity_feedback'
+import { OneDIntensity } from '../input/1d_intensity'
 import { BaseTaskProps, ReplayableTaskProps } from './task'
+import keyboardManagerContext from '../input/keyboard_manager_context'
 
 interface Props extends BaseTaskProps, ReplayableTaskProps {}
 interface State {
@@ -45,15 +46,55 @@ class Continuous1DTask extends React.Component<Props, State> {
             data: null
         }
     }
-    private player = React.createRef<HTML5Player>()
-    private reverseCountTimerId: number = null
+
+    player = React.createRef<HTML5Player>()
+    reverseCountTimerId: number = null
+
+    keyboardEvents = {
+        'play-pause': {
+            key: ' ',
+            description: 'Play/pause the video and data capture.',
+            handler: (e: Event) => {
+                if (this.state.paused) this.props.buffer(this.player.current.currentFrame(), ['play'])
+                else this.props.buffer(this.player.current.currentFrame(), ['pause'])
+                this.togglePlayPause()
+            }
+        },
+        'back2s': {
+            key: 'c',
+            description: 'Go back 2 seconds',
+            handler: () => {
+                this.back2s()
+                this.props.buffer(this.player.current.currentFrame(), ['back2s'])
+            }
+        },
+        'back10s': {
+            key: 'x',
+            description: 'Go back 10 seconds',
+            handler: () => {
+                this.back10s()
+                this.props.buffer(this.player.current.currentFrame(), ['back10s'])
+            }
+        }
+    }
+
+    constructor(props: Props, context) {
+        super(props, context)
+
+        // update default keyboard keys with props
+        if(props.controls) {
+            for(const [id, key] in Object.entries(props.controls)) {
+                this.keyboardEvents[id]['key'] = key
+            }
+        }
+    }
 
     componentDidMount() {
-        document.addEventListener("keydown", this.handleKeydown, false)
+        this.context.addEvents(this.keyboardEvents)
     }
 
     componentWillUnmount() {
-        document.removeEventListener("keydown", this.handleKeydown, false)
+        this.context.removeEvents(this.keyboardEvents)
     }
 
     back2s = () => {
@@ -64,32 +105,6 @@ class Continuous1DTask extends React.Component<Props, State> {
     back10s = () => {
         const t2 = Math.max(0, this.player.current.currentTime() - 10)
         this.goto(t2)
-    }
-
-    handleKeydown = (e: KeyboardEvent) => {
-        if (e.repeat) {
-            e.preventDefault()
-            e.stopPropagation()
-            return
-        }
-        switch (e.key) {
-            case ' ':
-                e.preventDefault()
-                if (this.state.paused) this.props.buffer(this.player.current.currentFrame(), ['play'])
-                else this.props.buffer(this.player.current.currentFrame(), ['pause'])
-                this.togglePlayPause()
-                break
-            case 'x': // => go back 2s
-                this.back2s()
-                this.props.buffer(this.player.current.currentFrame(), ['back2s'])
-                break
-            case 'c': // => go back 10s
-                this.back10s()
-                this.props.buffer(this.player.current.currentFrame(), ['back10s'])
-                break
-            default:
-                break
-        }
     }
 
     private goto = (time: number) => {
@@ -242,14 +257,13 @@ class Continuous1DTask extends React.Component<Props, State> {
                     </HTML5Player>
                 </Col>
                 <Col span={4}>
-                    <OneDIntensityFeedback 
+                    <OneDIntensity 
                         disabled={this.props.replayMode}
                         intensity={this.state.intensity}
                         setIntensity={this.setIntensity}
                         keys={['ArrowUp', 'ArrowRight']}/>
                 </Col>
             </Row>
-            
         </>
     }
 
@@ -258,14 +272,11 @@ class Continuous1DTask extends React.Component<Props, State> {
             <Row>
                 <Col span={24}>
                     <Title level={4}>Keyboard controls</Title>
-                    <List>
-                        <List.Item><Text keyboard>[space]</Text> play/pause the video</List.Item>
-                        <List.Item><Text keyboard>[ArrowUp] / [ArrowRight]</Text> increase intensity</List.Item>
-                    </List>
+                    {this.context.renderInfo()}
                 </Col>
             </Row>
         </>
     }
 }
-
+Continuous1DTask.contextType = keyboardManagerContext
 export default Continuous1DTask

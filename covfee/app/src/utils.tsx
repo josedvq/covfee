@@ -27,8 +27,10 @@ function myerror(msg: string, error?: any) {
     if(Constants.env == 'production') {
         message.error(msg + ' Please try again later or contact the organizer(s).')
     } else {
-        console.error(error)
-        message.error(error.stack, 0)
+        if(error) {
+            console.error(error)
+            message.error(error.stack, 0)
+        }
     }
 }
 
