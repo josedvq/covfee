@@ -13,7 +13,7 @@ class Project(db.Model):
     id = db.Column(db.Binary, primary_key=True)
     name = db.Column(db.String, unique=True)
     email = db.Column(db.String)
-    hits = db.relationship("HIT", backref="project")
+    hits = db.relationship("HIT", backref="project", cascade="all, delete-orphan")
 
     def __init__(self, id, name, email, hits):
         self.id = id

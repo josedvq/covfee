@@ -22,7 +22,8 @@ module.exports = {
         'alias': Object.assign({
             'Tasks': path.resolve(__dirname, 'app/src/tasks'),
             'Players': path.resolve(__dirname, 'app/src/players'),
-            'Input': path.resolve(__dirname, 'app/src/input')
+            'Input': path.resolve(__dirname, 'app/src/input'),
+            'Constants': path.resolve(__dirname, 'app/src/constants.json')
         }, alias)
     },
     module: {

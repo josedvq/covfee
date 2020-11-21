@@ -21,7 +21,14 @@ class MouseTracker extends React.Component<Props> {
 
         this.container.current.addEventListener('mouseover', this.handleMouseOver)
         this.container.current.addEventListener('mouseout', this.handleMouseOut)
-        window.addEventListener('resize', this.handleResize)
+        // window.addEventListener('resize', this.handleResize)
+        // update the height of the container
+        let observer = new ResizeObserver((entries) => {
+            this.resolution = [entries[0].contentRect.width, entries[0].contentRect.height]
+        })
+        observer.observe(this.container.current)
+
+        if(!this.props.paused) this.start()
     }
 
     componentDidUpdate(prevProps: Props) {
@@ -36,12 +43,12 @@ class MouseTracker extends React.Component<Props> {
         if(this.props.paused) this.stop()
         this.container.current.removeEventListener('mouseover', this.handleMouseOver)
         this.container.current.removeEventListener('mouseout', this.handleMouseOut)
-        window.removeEventListener('resize', this.handleResize)
+        // window.removeEventListener('resize', this.handleResize)
     }
 
-    handleResize = (e: Event) => {
-        this.resolution = [this.container.current.offsetWidth, this.container.current.offsetHeight]
-    }
+    // handleResize = (e: Event) => {
+    //     this.resolution = [this.container.current.offsetWidth, this.container.current.offsetHeight]
+    // }
 
     handleMouseMove = (e: MouseEvent) => {
         const data = [
@@ -62,7 +69,7 @@ class MouseTracker extends React.Component<Props> {
     start() {
         if(this.props.disable) return
         
-        this.resolution = [this.container.current.offsetWidth, this.container.current.offsetHeight]
+        // this.resolution = [this.container.current.offsetWidth, this.container.current.offsetHeight]
         this.container.current.addEventListener('mousemove', this.handleMouseMove)
     }
 

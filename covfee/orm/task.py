@@ -1,4 +1,5 @@
 import json
+import datetime
 
 from .orm import db, app
 from .. import tasks
@@ -10,14 +11,19 @@ class Task(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String)
+    order = db.Column(db.Integer)
     name = db.Column(db.String)
     props = db.Column(db.JSON)
-    responses = db.relationship("TaskResponse", backref='task')
-    # backref hit
-    # backref hitinstance
+    responses = db.relationship("TaskResponse", backref='task', cascade="all, delete-orphan")
+    # backref hits
+    # backref hitinstances
 
-    def __init__(self, type, name=None, props=None):
+    created_at = db.Column(db.Date, default=datetime.datetime.now)
+    updated_at = db.Column(db.Date, onupdate=datetime.datetime.now)
+
+    def __init__(self, type, order=0, name=None, props=None):
         self.type = type
+        self.order = order
         self.name = name
 
         # fix URLs
@@ -35,10 +41,11 @@ class Task(db.Model):
 
         new_dict['type'] = task_dict['type']
         new_dict['name'] = task_dict['name']
+        new_dict['order'] = task_dict.get('order', 10000)
         new_dict['props'] = dict()
 
         for key, value in task_dict.items():
-            if key not in ['type','name']:
+            if key not in ['type', 'name', 'order']:
                 new_dict['props'][key] = value
         return Task(**new_dict)
 
@@ -66,7 +73,7 @@ class TaskResponse(db.Model):
     task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'))
     hitinstance_id = db.Column(db.Binary, db.ForeignKey('hitinstances.id'))
     data = db.Column(db.JSON)
-    chunks = db.relationship("Chunk", backref='taskresponse')
+    chunks = db.relationship("Chunk", backref='taskresponse', order_by="Chunk.index", cascade="all, delete-orphan")
 
     def __init__(self, task_id, hitinstance_id, index, submitted=False, data=None, chunks=None):
         self.task_id = task_id
@@ -118,13 +125,12 @@ class Chunk(db.Model):
         'taskresponses.id'), primary_key=True)
     data = db.Column(db.JSON)
 
-    def __init__(self, index, data, submission=None):
+    def __init__(self, index, data):
         self.index = index
         self.data = data
-        self.submission = submission
 
     def __str__(self):
-        return f' idx={self.index} - sub={self.submission:d}'
+        return f' idx={self.index}'
 
     def __repr__(self):
         return str(self)

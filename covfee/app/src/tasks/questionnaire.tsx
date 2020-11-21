@@ -15,6 +15,10 @@ interface Props extends BaseTaskProps {
      * Specification of the form to be created.
      */
    form: object
+   /**
+    * If true, the form will only become active after the media playback ends
+    */
+    disabledUntilEnd?: boolean
 }
 
 class QuestionnaireTask extends React.Component<Props> {
@@ -29,6 +33,15 @@ class QuestionnaireTask extends React.Component<Props> {
             completed: false,
             disabled: true
         }
+    }
+
+    static defaultProps = {
+        disabledUntilEnd: false
+    }
+
+    constructor(props: Props) {
+        super(props)
+        this.state.form.disabled = props.disabledUntilEnd
     }
 
     handleChange = (values: object) => {
@@ -52,6 +65,10 @@ class QuestionnaireTask extends React.Component<Props> {
                 disabled: false
             }
         })
+    }
+
+    handleSubmit = () => {
+        this.props.onSubmit(this.state.form.values)
     }
 
     render() {
@@ -92,7 +109,7 @@ class QuestionnaireTask extends React.Component<Props> {
                         values={this.state.form.values} 
                         disabled={this.state.form.disabled} 
                         setValues={this.handleChange}></Form>
-                    <Button disabled={!this.state.form.completed}>Next</Button>
+                    <Button disabled={!this.state.form.completed} onClick={this.handleSubmit}>Next</Button>
                 </Col>
             </Row>
         </>

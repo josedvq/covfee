@@ -1,8 +1,43 @@
 import * as React from 'react'
 import { 
+    /*
+    Supported input elements
+    */
+    Cascader,
+    Checkbox,
+    DatePicker,
+    Input,
+    InputNumber,
     Radio, 
-    List
+    Rate,
+    Select,
+    Slider,
+    Switch,
+    TimePicker,
+    TreeSelect,
+    /**
+     * Other
+     */
+    List, 
 } from 'antd'
+
+const antd_components = {
+    'Cascader': Cascader,
+    'Checkbox': Checkbox,
+    'Checkbox.Group': Checkbox.Group,
+    'DatePicker': DatePicker,
+    'Input': Input,
+    'Input.TextArea': Input.TextArea,
+    'Input.Password': Input.Password,
+    'InputNumber': InputNumber,
+    'Radio.Group': Radio.Group,
+    'Rate': Rate,
+    'Select': Select,
+    'Slider': Slider,
+    'Switch': Switch,
+    'TimePicker': TimePicker,
+    'TreeSelect': TreeSelect,
+}
 
 interface FormProps {
     /**
@@ -138,40 +173,37 @@ interface FieldProps {
 }
 class Field extends React.Component<FieldProps> {
     handleChange = (e: any) => {
-        this.props.setValues(this.props.idx, e.target.value)
+        console.log(typeof e)
+        // components passing event objects to onChange
+        if (['Input', 'Radio.Group'].includes(this.props.input.type)) {
+            this.props.setValues(this.props.idx, e.target.value)
+        // the rest pass values directly
+        } else if (Object.keys(antd_components).includes(this.props.input.type)) {
+            this.props.setValues(this.props.idx, e)
+        } else {
+            console.log('Unrecognized argument type to callback')
+        }
     }
 
     render() {
         let prompt = <p>{this.props.prompt}</p>
+        let input
 
-        let input = null
-        switch (this.props.input.type) {
-            case 'radio':
-                input = <MyRadio 
-                    options={this.props.input.options} 
-                    value={this.props.value}
-                    disabled={this.props.disabled}
-                    setValues={this.handleChange}/>
-                break
-            default:
-                input = <p>Unimplemented</p>
+        if(!(this.props.input.type in antd_components)) {
+            input = <p>Unimplemented</p>
         }
+
+        const elementClass = antd_components[this.props.input.type]
+        input = React.createElement(elementClass, {
+            ...this.props.input,
+            value: this.props.value,
+            disabled: this.props.disabled,
+            onChange: this.handleChange,
+            optionType: 'button'
+        }, null)
 
         return <List.Item>{prompt}{input}</List.Item>
     }
-}
-
-function MyRadio(props) {
-    const items = []
-    for (const [index, text] of props.options.entries()) {
-        items.push(<Radio.Button 
-            key={index} 
-            value={index}
-            onChange={props.setValues}>{text}</Radio.Button>)
-    }
-    return <Radio.Group value={props.value} disabled={props.disabled} buttonStyle="solid">
-        {items}
-    </Radio.Group>
 }
 
 export {Form}

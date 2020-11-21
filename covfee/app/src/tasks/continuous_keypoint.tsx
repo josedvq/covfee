@@ -291,7 +291,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
             </div>
             <MouseTracker
                 disable={this.props.replayMode} // disable mouse tracking in replay mode
-                paused={this.state.paused}
+                paused={false}
                 occluded={this.state.occluded}
                 mouseActive={this.state.mouse_valid}
                 onData={this.handleMouseData} 

@@ -27,7 +27,8 @@ def prepare():
         'app_url': app.config['APP_URL'],
         'admin_url': app.config['ADMIN_URL'],
         'api_url': app.config['API_URL'],
-        'auth_url': app.config['AUTH_URL']  
+        'auth_url': app.config['AUTH_URL'],
+        'media_url': app.config['MEDIA_URL']
     }
 
     constants_path = os.path.join(covfee_path, 'app/src/constants.json')
@@ -52,35 +53,60 @@ def prepare():
 
 @click.command()
 @click.option("--force", is_flag=True, help="Specify to overwrite existing databases.")
-@click.option("--save", default=None, help="JSON file for outputing the specification including URLs.")
 @click.argument("file_or_folder")
-def make_db(force, file_or_folder, save):
+def make_db(force, file_or_folder):
     dbpath = app.config['DATABASE_PATH']
-    if force:
-        try:
-            os.remove(app.config['DATABASE_PATH'])
-            print(
-                f'deleted existing database file {app.config["DATABASE_PATH"]}')
-        except OSError:
-            pass
-    create_tables()
-
+    
     json_files = []
+    # ask user what to do if the database file exists
+    if os.path.exists(app.config['DATABASE_PATH']):
+        if os.path.isdir(file_or_folder):
+            if force:
+                res = input('This action will remove an existing database, including annotations. Are you sure you want to recreate the db? (y/n)')
+                if res == 'y':
+                    try:
+                        os.remove(app.config['DATABASE_PATH'])
+                        print(
+                            f'deleted existing database file {app.config["DATABASE_PATH"]}')
+                    except OSError:
+                        print(f'Error removing existing database file {app.config["DATABASE_PATH"]}')
+                        sys.exit(1)
+                    create_tables()
+                else:
+                    sys.exit(1)
+            else:
+                print('Database already exists. Run with the --force option to overwrite.')
+    else:
+    # create db
+        create_tables()
+
+    # database exists and tables are created
     if os.path.isdir(file_or_folder):
         for json_path in Path(file_or_folder).rglob('*.covfee.json'):
             json_files.append(json_path)
-    else:
+    elif os.path.isfile(file_or_folder):
         json_files.append(file_or_folder)
+    else:
+        print(f'Path {file_or_folder} does not point to a file or folder.')
+        sys.exit(1)
         
     for json_file in json_files:
         project = Project.from_json(json_file)
+
+        # delete existing project with the same id
+        existing_project = Project.query.filter_by(id=project.id).first()
+        if existing_project is not None:
+            if force:
+                # print('DELETING')
+                db.session.delete(existing_project)
+            else:
+                print('Project exists. Add --force option to overwrite.')
+                sys.exit(1)
+
         db.session.add(project)
         print(project.info())
 
     db.session.commit()
-
-    # if save is not None:
-    #     json.dump(project_dict, open(save, 'w'), indent=2)
 
 @click.command()
 def make_user():

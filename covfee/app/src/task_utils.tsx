@@ -13,6 +13,23 @@ class NewTaskModal extends React.Component {
 
     constructor(props) {
         super(props)
+
+        if(!props.new ) {
+            this.state = {
+                task: {
+                    preset: null,
+                    ...props.task
+                }
+            }
+        } else {
+            this.state = {
+                task: {
+                    preset: Object.keys(props.presets)[0],
+                    type: Object.values(props.presets)[0].type,
+                    name: ''
+                }
+            }
+        }
     }
 
     componentDidUpdate(prevProps: Props) {
