@@ -1,14 +1,11 @@
 import * as React from 'react';
+import keyboardManagerContext from './keyboard_manager_context';
 
 interface Props {
     /**
      * Disables input. Used for visualization.
      */
     disabled: boolean,
-    /**
-     * Array with keyboard key strings to be used as intensity indicators.
-     */
-    keys: Array<string>,
     /**
      * Value of intensity reading.
      */
@@ -24,17 +21,26 @@ interface Props {
     /**
      * Acceleration constant. Speed is reduced by this number on every timestep.
      */
-    falling_constant: number
+    falling_constant: number,
+    /**
+     * Indicates how the intensity is input
+     */
+    input: {
+        device: 'keyboard' | 'gamepad'
+        /**
+         * Increase intensity
+         */
+        up: string
+    }
 }
 
 interface State {
     speed: number
 }
 
-class OneDIntensityFeedback extends React.Component<Props, State> {
+class OneDInterval extends React.Component<Props, State> {
 
-    static defaultProps:Props = {
-        keys: ['ArrowUp'],
+    static defaultProps = {
         jump_speed: 1 / 10,
         falling_constant: 5 / 600
     }
@@ -54,8 +60,6 @@ class OneDIntensityFeedback extends React.Component<Props, State> {
     componentDidMount() {
         // start animation
         this.reqId = requestAnimationFrame(this.animationRender)
-        // key presses: left = 37, up = 38, right = 39, down = 40
-        window.addEventListener("keydown", this.keydown, false)
 
         // update the height of the container
         this.observer = new ResizeObserver((entries) => {
@@ -65,30 +69,26 @@ class OneDIntensityFeedback extends React.Component<Props, State> {
         
         // init intensity
         this.props.setIntensity(0)
+
+        this.context.addEvents(this.keyboardEvents)
     }
 
     componentWillUnmount() {
-        window.removeEventListener('keydown', this.keydown)
+        this.context.removeEvents(this.keyboardEvents)
         cancelAnimationFrame(this.reqId)
         this.observer.disconnect()
     }
 
-    keydown = (e: KeyboardEvent) => {
-        // ignore if event occurs in input elements
-        const tagName = e.target.tagName.toLowerCase()
-        if (['input', 'textarea', 'select', 'button'].includes(tagName)) return
-
-        // ignore if not one of the given keys
-        if(!this.props.keys.includes(e.key)) return
-
-        // ignore repeat events
-        if (e.repeat) return
-
-        e.preventDefault()
-        
-        this.setState({
-            speed: this.props.jump_speed
-        })
+    keyboardEvents = {
+        'up': {
+            key: 'ArrowUp',
+            description: 'Increase',
+            handler: () => {
+                this.setState({
+                    speed: this.props.jump_speed
+                })
+            }
+        }
     }
 
     update = (timestamp: any) => {
@@ -114,4 +114,5 @@ class OneDIntensityFeedback extends React.Component<Props, State> {
     }
 }
 
-export { OneDIntensityFeedback }
+OneDInterval.contextType = keyboardManagerContext
+export { OneDInterval }

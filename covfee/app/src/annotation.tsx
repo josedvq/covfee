@@ -29,6 +29,7 @@ import { getTaskClass, NewTaskModal} from './task_utils'
 import { TaskSpec } from 'Tasks/task'
 import { Buffer, EventBuffer, DummyBuffer } from './buffer'
 import { MarkdownLoader} from './tasks/instructions'
+import KeyboardManagerContext from './input/keyboard_manager'
 
 function getFullscreen(element: HTMLElement) {
     if (element.requestFullscreen) {
@@ -771,7 +772,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             <Row>
                 <Col span={20}>
                     {this.renderOverlay()}
-                    {task}
+                    <KeyboardManagerContext>{task}</KeyboardManagerContext>
                 </Col>
                 <Col span={4}>
                     {this.renderAnnotationMenu()}
