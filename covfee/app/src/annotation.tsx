@@ -763,7 +763,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
             <NewTaskModal
                 {...this.state.editTaskModal}
                 presets={'userTasks' in this.props.interface ? this.props.interface.userTasks : {}}
-                task={this.state.editTaskModal.taskId != null ? this.tasks[this.state.editTaskModal.taskId] : null}
+                task={this.state.editTaskModal.taskId != null ? this.tasks[this.state.editTaskModal.taskId] : {}}
                 onSubmit={this.handleEditTaskSubmit}
                 onCancel={this.handleEditTaskCancel} />
             <Row>
