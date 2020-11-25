@@ -29,9 +29,10 @@ class Project(db.Model):
                     'hit_name': hit.name,
                     'id': instance.id.hex(),
                     'url': instance.get_url(),
-                    'preview_url': instance.get_preview_url()
+                    'preview_url': instance.get_preview_url(),
+                    'completion_code': instance.get_completion_code()
                 })
-        df = pd.DataFrame(list_of_instances, columns=['hit_name', 'id', 'url', 'preview_url'])
+        df = pd.DataFrame(list_of_instances, columns=['hit_name', 'id', 'url', 'preview_url', 'completion_code'])
         
         return df
 

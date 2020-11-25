@@ -139,6 +139,9 @@ class HITInstance(db.Model):
     def get_preview_url(self):
         return f'{app.config["APP_URL"]}/hits/{self.preview_id.hex():s}?preview=1'
 
+    def get_completion_code(self):
+        return sha256((self.id.hex() + app.config['COVFEE_SALT']).encode()).digest().hex()[:12]
+
     @staticmethod
     def from_dict(instance_dict):
         if 'tasks' in instance_dict:
@@ -182,8 +185,7 @@ class HITInstance(db.Model):
                         task['response'] = lastResponse.as_dict()
 
         if self.submitted:
-            instance_dict['completion_code'] = sha256(
-                (self.id.hex() + app.config['COVFEE_SALT']).encode()).digest().hex()[:12]
+            instance_dict['completion_code'] = self.get_completion_code()
 
         return instance_dict
 
