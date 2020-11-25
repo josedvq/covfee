@@ -42,7 +42,11 @@ interface BaseTaskProps extends TaskSpec {
     /**
      * For continuous tasks.
      */
-    buffer: Function
+    buffer: Function,
+    /**
+     * Used to provide a function that renders the task instructions.
+     */
+    setInstructionsFn: Function
 }
 
 interface ReplayableTaskProps {

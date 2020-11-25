@@ -91,6 +91,7 @@ class Continuous1DTask extends React.Component<Props, State> {
 
     componentDidMount() {
         this.context.addEvents(this.keyboardEvents)
+        this.props.setInstructionsFn(this.instructions)
     }
 
     componentWillUnmount() {

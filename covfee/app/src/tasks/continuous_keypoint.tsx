@@ -1,8 +1,13 @@
 import * as React from 'react'
 import {
     Button,
-    Modal
+    Col,
+    List,
+    Modal,
+    Row,
+    Typography
 } from 'antd';
+const { Title, Text } = Typography
 import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import OpencvFlowPlayer from '../players/opencv'
 import '../css/gui.css'
@@ -17,7 +22,8 @@ interface Props {
     buffer: Function,
     replayMode: boolean,
     getCurrReplayAction: Function,
-    getNextReplayAction: Function
+    getNextReplayAction: Function,
+    setInstructionsFn: Function
 }
 interface State {
     paused: boolean,
@@ -59,6 +65,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
     private reverseCountTimerId: number = null
 
     componentDidMount() {
+        this.props.setInstructionsFn(this.instructions)
         document.addEventListener("keydown", this.handleKeydown, false)
     }
 
@@ -312,6 +319,24 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
                         </OpencvFlowPlayer>
                 </MouseVisualizer>
             </MouseTracker>
+        </>
+    }
+
+    instructions = () => {
+        return <>
+            <Row>
+                <Col span={24}>
+                    <Title level={4}>Keyboard controls</Title>
+                    <List>
+                        <List.Item><Text keyboard>[&larr;]</Text> Video speed down</List.Item>
+                        <List.Item><Text keyboard>[&rarr;]</Text> Video speed up</List.Item>
+                        <List.Item><Text keyboard>[space]</Text> Pause/play video</List.Item>
+                        <List.Item><Text keyboard>[x]</Text> Go back 2 seconds</List.Item>
+                        <List.Item><Text keyboard>[c]</Text> Go back 10 seconds</List.Item>
+                        <List.Item><Text keyboard>[z]</Text> Body part is occluded</List.Item>
+                    </List>
+                </Col>
+            </Row>
         </>
     }
 }

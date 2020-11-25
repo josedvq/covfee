@@ -207,6 +207,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     buffer: Buffer
     container = React.createRef<HTMLDivElement>()
     taskRef = React.createRef<React.Component>()
+    instructionsFn: Function = null
 
     replayIndex = 0
 
@@ -284,6 +285,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         // no previous responses, prepare task
             this.loadTaskForAnnotation(taskIndex)
         }
+        this.instructionsFn = null
     }
 
     updateUrl = (taskIndex: number) => {
@@ -715,11 +717,17 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         </Modal>
     }
 
+    handleSetTaskInstructionsFn = (instructionsFn: Function) => {
+        this.instructionsFn = instructionsFn
+        this.setState(this.state)
+    }
+
     renderTask = (props) => {
         const taskClass = getTaskClass(props.type)
         const task = React.createElement(taskClass, {
             key: this.state.currKey,
             ref: this.taskRef,
+            setInstructionsFn: this.handleSetTaskInstructionsFn,
 
             // Annotation task props
             buffer: this.buffer.data,
@@ -737,9 +745,10 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     }
 
     getTaskInfo = (task) => {
+
         let taskInfo = null
-        if (task.ref.current && task.ref.current.hasOwnProperty('instructions')) {
-            taskInfo = task.ref.current.instructions()
+        if(this.instructionsFn != null) {
+            taskInfo = this.instructionsFn()
         }
         return taskInfo
     }
