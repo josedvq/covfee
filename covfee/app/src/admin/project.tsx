@@ -60,6 +60,31 @@ class InstanceListAsync extends React.Component {
 }
 
 class InstanceList extends React.Component {
+
+    getDownloadHandler = (url: string, csv: boolean) => {
+        const request_url = url + '/download' + (csv ? '?csv=1' : '')
+        return () => {
+            fetcher(request_url).then(async (response: any) => {
+                if (!response.ok) {
+                    const data = await response.json()
+                    if (data.hasOwnProperty('msg')) {
+                        throw Error(data.msg)
+                    }
+                    throw Error(response.statusText)
+                }
+                return response
+            }).then(async (response: any) => {
+                if (response.status == 204) {
+                    return myinfo('Nothing to download.')
+                }
+                const blob = await response.blob()
+                download(blob)
+            }).catch(error => {
+                myerror('Error fetching task response.', error)
+            })
+        }
+    }
+
     render() {
 
         const data = this.props.instances.map((instance, index) => {
@@ -87,26 +112,9 @@ class InstanceList extends React.Component {
             {
                 title: 'Data',
                 dataIndex: 'url',
-                render: url => <a onClick={()=>{
-                    fetcher(url + '/download').then(async (response: any)=>{
-                        if (!response.ok) {
-                            const data = await response.json()
-                            if (data.hasOwnProperty('msg')) {
-                                throw Error(data.msg)
-                            }
-                            throw Error(response.statusText)
-                        }
-                        return response
-                    }).then(async (response: any) => {
-                        if (response.status == 204) {
-                            return myinfo('Nothing to download.')
-                        }
-                        const blob = await response.blob()
-                        download(blob)
-                    }).catch(error => {
-                        myerror('Error fetching task response.', error)
-                    })
-                }}>Download</a>
+                render: url => <>
+                    Download: <a onClick={this.getDownloadHandler(url, false)}>JSON</a> | <a onClick={this.getDownloadHandler(url, true)}>CSV</a>
+                </>
             }
         ]
 
@@ -284,7 +292,8 @@ class AdminProject extends React.Component<Props, State> {
                 return <>
                     <div style={{margin: '2em 1em'}}>
                         Project: {select}
-                        <Button type='primary' href={Constants.api_url + '/projects/' + this.projects[this.state.currProject].id + '/csv'}>Download CSV</Button>
+                        <Button type='primary' href={Constants.api_url + '/projects/' + this.projects[this.state.currProject].id + '/csv'}>Download URLs</Button>
+                        <Button href={Constants.api_url + '/projects/' + this.projects[this.state.currProject].id + '/download?csv=1'}>Download results (CSV)</Button>
                     </div>
                     {hits}
                 </>

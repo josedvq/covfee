@@ -3,6 +3,8 @@ import json
 from flask import request, jsonify, Blueprint, send_from_directory, make_response
 from ..orm import db, app, Project, HIT, HITInstance, Task, TaskResponse, Chunk
 from .auth import admin_required
+import shutil
+import os
 api = Blueprint('api', __name__)
 
 # PROJECTS
@@ -14,7 +16,6 @@ def jsonify_or_404(res, **kwargs):
 
 @app.teardown_request
 def teardown_request(exception):
-    print('tearing down')
     if exception:
         db.session.rollback()
     db.session.remove()
@@ -52,6 +53,28 @@ def project_csv(pid):
         res.headers["Content-Disposition"] = "attachment; filename=export.csv"
         res.headers["Content-Type"] = "text/csv"
         return res
+
+
+@api.route('/projects/<pid>/download')
+@admin_required
+def project_download(pid):
+    is_csv = bool(request.args.get('csv', False))
+
+    project = db.session.query(Project).get(bytes.fromhex(pid))
+    if project is None:
+        return {'msg': 'not found'}, 404
+
+    dirpath, num_files = project.make_download(csv=is_csv)
+
+    if dirpath is None or num_files == 0:
+        # nothing to download
+        return '', 204
+
+    fname = os.path.join(app.config['TMP_PATH'], 'download')
+    shutil.make_archive(fname, 'zip', dirpath)
+    shutil.rmtree(dirpath)
+
+    return send_from_directory(app.config['TMP_PATH'], 'download.zip', as_attachment=True)
 
 # HITS
 # return one hit
@@ -95,14 +118,28 @@ def instance_submit(iid):
 @api.route('/instances/<iid>/download')
 @admin_required
 def instance_download(iid):
+    is_csv = request.args.get('csv', False)
+
     instance = db.session.query(HITInstance).get(bytes.fromhex(iid))
     if instance is None:
+        print('here1')
         return jsonify({'msg': 'not found'}), 404
-    fname = instance.make_json_download()
-    if fname is None:
+
+    try:
+        dirpath, num_files = instance.make_download(csv=is_csv)
+    except NotImplementedError:
+        return jsonify({'msg': 'File aggregation not implemented for this task.'}), 404
+
+    if dirpath is None or num_files == 0:
         # nothing to download
         return '', 204
-    return send_from_directory(app.config['TMP_PATH'], fname, as_attachment=True)
+
+    fname = os.path.join(app.config['TMP_PATH'], 'download')
+    shutil.make_archive(fname, 'zip', dirpath)
+    shutil.rmtree(dirpath)
+
+    return send_from_directory(app.config['TMP_PATH'], 'download.zip', as_attachment=True)
+
 
 # TASKS
 

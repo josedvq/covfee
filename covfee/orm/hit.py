@@ -189,9 +189,12 @@ class HITInstance(db.Model):
 
         return instance_dict
 
-    def make_json_download(self):
+    def make_download(self, base_dir=None, csv=False):
+        if base_dir is None:
+            base_dir = app.config['TMP_PATH']
+            
         # create a folder to store all the files
-        dirpath = os.path.join(app.config['TMP_PATH'], self.id.hex())
+        dirpath = os.path.join(base_dir, self.id.hex())
         if os.path.exists(dirpath) and os.path.isdir(dirpath):
             shutil.rmtree(dirpath)
 
@@ -201,13 +204,17 @@ class HITInstance(db.Model):
         responses = self.responses.filter_by(submitted=True).all()
 
         if len(responses) == 0:
-            return None
+            return None, 0
 
+        num_success = 0
         for response in responses:
-            response.write_json(dirpath)
+            if csv:
+                res = response.write_csv(dirpath)
+            else:
+                res = response.write_json(dirpath)
+            num_success += int(res)
 
-        shutil.make_archive(os.path.join(
-            app.config['TMP_PATH'], self.id.hex()), 'zip', dirpath)
-        shutil.rmtree(dirpath)
-        return self.id.hex() + '.zip'
+        return dirpath, num_success
+
+    
 

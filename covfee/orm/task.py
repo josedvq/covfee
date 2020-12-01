@@ -100,16 +100,35 @@ class TaskResponse(db.Model):
             data = [chunk.data for chunk in self.chunks]
             return task_class.aggregate_chunks(data)
         else:
-            return []
+            return None
 
     def write_json(self, dirpath):
-        fpath = os.path.join(dirpath, f'{self.task.name}.json')
+        fpath = os.path.join(dirpath, f'{self.task.name}_{self.index:d}.json')
+        aggregated_chunks = self.aggregate()
+        if aggregated_chunks is None:
+            return False
+
         data = {
             'response': self.data,
-            'chunks': self.aggregate()
+            'chunks': aggregated_chunks
         }
-        json.dump(data, open(fpath,'w'))
 
+        json.dump(data, open(fpath,'w'))
+        return True
+
+    def write_csv(self, dirpath):
+        if not hasattr(tasks, self.task.type):
+            return False
+        
+        data = self.aggregate()
+        if data is None:
+            return False
+        
+        fpath = os.path.join(dirpath, f'{self.task.name}_{self.index:d}.csv')
+        task_class = getattr(tasks, self.task.type)
+        df = task_class.to_dataframe(data)
+        df.to_csv(fpath)
+        return True
 
 db.Index('taskresponse_index', TaskResponse.task_id,
       TaskResponse.hitinstance_id, TaskResponse.index)
