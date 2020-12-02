@@ -121,7 +121,6 @@ def make_user():
 
 @click.command()
 def webpack():
-    
     prepare()
     
     # run the dev server
@@ -132,19 +131,15 @@ def webpack():
 
 @click.command()
 def start_dev():
-    covfee_path = os.path.dirname(os.path.realpath(__file__))
-    os.chdir(covfee_path)
     os.environ['FLASK_ENV'] = 'development'
     os.environ['FLASK_APP'] = 'covfee.start:create_app'
-    os.system('flask run')
+    os.system(sys.executable + ' -m flask run')
 
 @click.command()
 def start_prod():
-    covfee_path = os.path.dirname(os.path.realpath(__file__))
-    os.chdir(covfee_path)
     os.environ['FLASK_ENV'] = 'production'
     os.environ['FLASK_APP'] = 'covfee.start:create_app'
-    os.system('flask run')
+    os.system(sys.executable + ' -m flask run')
 
 
 @click.command()

@@ -3,6 +3,7 @@ covfee/node_modules
 covfee/alias.json
 covfee/tmp
 covfee/storybook-static
+covfee/build-storybook.log
 *.DS_Store
 *.wav
 .vscode*
@@ -15,3 +16,4 @@ covfee/.docz
 samples/*/database.covfee.db
 samples/*/covfee_tasks/index.js
 samples/conflab/media/*
+samples/memory/media/*
