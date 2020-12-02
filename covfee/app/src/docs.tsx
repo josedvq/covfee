@@ -1,4 +1,7 @@
 import * as React from 'react'
+import {
+    HashRouter
+} from 'react-router-dom'
 import {TaskSpec} from './tasks/task'
 import AvailableTasks from './tasks'
 import classNames from 'classnames'
@@ -118,6 +121,7 @@ class TaskVisualizer extends React.Component<Props, State> {
             // Annotation task props
             buffer: this.handleData,
             onEnd: this.handleEnd,
+            setInstructionsFn: ()=>{},
 
             // Replayable task props
             ...this.state.task})
@@ -169,9 +173,9 @@ class HITVisualizer extends React.Component<HITVisualizerProps, HITVisualizerSta
             previewMode={true}
             onSubmit={() => { }} />
 
-        return <div style={{minHeight: '300px', 'border': '1px solid #969696'}}>
+        return <HashRouter><div style={{minHeight: '300px', 'border': '1px solid #969696'}}>
             {content}
-        </div>
+        </div></HashRouter>
     }
 }
 

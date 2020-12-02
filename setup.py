@@ -44,12 +44,13 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    scripts=['./covfee-dev', './covfee-prod'],
     entry_points={
         'console_scripts': [
             'covfee-installjs = covfee.commands:install_js',
             'covfee-maker = covfee.commands:make_db',
-            'covfee-webpack = covfee.commands:start',
+            'covfee-webpack = covfee.commands:webpack',
+            'covfee-dev = covfee.commands:start_dev',
+            'covfee-prod = covfee.commands:start_prod',
             'covfee-build = covfee.commands:build',
             'covfee-env-production = covfee.commands:set_env_prod',
             'covfee-env-development = covfee.commands:set_env_dev',

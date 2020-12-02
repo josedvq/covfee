@@ -120,14 +120,31 @@ def make_user():
     print('User has been created!')
 
 @click.command()
-def start():
+def webpack():
     
     prepare()
     
     # run the dev server
     covfee_path = os.path.dirname(os.path.realpath(__file__))
     os.chdir(covfee_path)
-    os.system(f'./node_modules/.bin/webpack-dev-server --config ./webpack.dev.js')
+    os.system(os.path.join('node_modules', '.bin', 'webpack-dev-server') + ' --config ./webpack.dev.js')
+
+
+@click.command()
+def start_dev():
+    covfee_path = os.path.dirname(os.path.realpath(__file__))
+    os.chdir(covfee_path)
+    os.environ['FLASK_ENV'] = 'development'
+    os.environ['FLASK_APP'] = 'covfee.start:create_app'
+    os.system('flask run')
+
+@click.command()
+def start_prod():
+    covfee_path = os.path.dirname(os.path.realpath(__file__))
+    os.chdir(covfee_path)
+    os.environ['FLASK_ENV'] = 'production'
+    os.environ['FLASK_APP'] = 'covfee.start:create_app'
+    os.system('flask run')
 
 
 @click.command()
@@ -137,7 +154,7 @@ def build():
     # run the dev server
     covfee_path = os.path.dirname(os.path.realpath(__file__))
     os.chdir(covfee_path)
-    os.system(f'./node_modules/.bin/webpack --config ./webpack.dev.js')
+    os.system(os.path.join('node_modules', '.bin', 'webpack') + ' --config ./webpack.dev.js')
 
 
 def set_env(env: str):
@@ -158,4 +175,6 @@ def set_env_prod():
 @click.command()
 def install_js():
     fpath = os.path.dirname(os.path.realpath(__file__))
-    subprocess.check_call(['npm', 'install', '--prefix', fpath])
+    os.chdir('covfee')
+    os.system('npm install')
+    #subprocess.check_call(['npm', 'install', '--prefix', fpath], shell=True)

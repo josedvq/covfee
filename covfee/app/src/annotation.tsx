@@ -881,5 +881,4 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
 }
 
 const AnnotationWithRouter = withRouter(Annotation)
-
 export default AnnotationWithRouter

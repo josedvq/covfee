@@ -136,7 +136,7 @@ class Fieldset extends React.Component<FieldsetProps> {
             <List itemLayout='vertical'>
                 {elems}
             </List>
-            </>
+        </>
     }
 }
 
@@ -173,7 +173,6 @@ interface FieldProps {
 }
 class Field extends React.Component<FieldProps> {
     handleChange = (e: any) => {
-        console.log(typeof e)
         // components passing event objects to onChange
         if (['Input', 'Radio.Group'].includes(this.props.input.type)) {
             this.props.setValues(this.props.idx, e.target.value)
@@ -190,17 +189,17 @@ class Field extends React.Component<FieldProps> {
         let input
 
         if(!(this.props.input.type in antd_components)) {
-            input = <p>Unimplemented</p>
+            input = <p>Unimplemented input element!</p>
+        } else {
+            const elementClass = antd_components[this.props.input.type]
+            input = React.createElement(elementClass, {
+                ...this.props.input,
+                value: this.props.value,
+                disabled: this.props.disabled,
+                onChange: this.handleChange,
+                optionType: 'button'
+            }, null)
         }
-
-        const elementClass = antd_components[this.props.input.type]
-        input = React.createElement(elementClass, {
-            ...this.props.input,
-            value: this.props.value,
-            disabled: this.props.disabled,
-            onChange: this.handleChange,
-            optionType: 'button'
-        }, null)
 
         return <List.Item>{prompt}{input}</List.Item>
     }

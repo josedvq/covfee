@@ -28,7 +28,7 @@ Basic.args = {
     "fields": [{
         "prompt": "Does the person in the video laugh?",
         "input": {
-            "type": "radio",
+            "type": "Radio.Group",
             "options": ["yes", "no"]
         }
     }]

@@ -39,17 +39,9 @@
     "webpack-merge": "^5.1.3"
   },
   "scripts": {
-    "webpack-fg": "webpack-dev-server --open --config webpack.dev.js",
-    "webpack-bg": "nohup webpack-dev-server --open >/dev/null 2>&1 &",
-    "start": "COVFEE_ENV=development FLASK_APP=start:create_app python -m flask run",
-    "start-prod": "COVFEE_ENV=production gunicorn start:app",
-    "build": "webpack --config webpack.prod.js",
-    "reload": "COVFEE_ENV=development python -m utils.db reload_projects",
-    "reload-prod": "COVFEE_ENV=production python -m utils.db reload_projects",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
-    "chromatic": "npx chromatic --project-token 681awumx8cs"
+    "chromatic": "npx chromatic --project-token 681awumx8cs --auto-accept-changes"
   },
   "keywords": [],
   "author": "",
