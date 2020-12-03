@@ -552,8 +552,9 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                     this.tasks.push(data)
                     const newTaskIds = [...this.tasks.keys()]
                     this.setState({
-                        currTask: this.tasks.length-1,
                         sidebar: { taskIds: newTaskIds }
+                    }, ()=>{
+                        this.handleChangeActiveTask(this.tasks.length - 1)
                     })
                 })
                 .catch(error => {
