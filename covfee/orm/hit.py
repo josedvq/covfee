@@ -32,13 +32,35 @@ class HIT(db.Model):
     tasks = db.relationship("Task", secondary=hits_tasks, backref='hits', cascade="all, delete", order_by='Task.order.asc(),Task.created_at.asc()')
     interface = db.Column(db.JSON)
 
-    def __init__(self, id, type, name, media=None, extra=None, tasks=[], interface=[], instances=[]):
-        self.id = id
+    def __init__(self, id, hashstr, type, repeat=1, tasks=[], **kwargs):
+        hashstr = HIT.get_hashstr(hashstr, id)
+        self.id = sha256(hashstr.encode()).digest()
         self.type = type
-        self.name = name
-        self.tasks = tasks
-        self.interface = interface
+
+        task_objects = []
+        for i, task in enumerate(tasks):
+            if 'name' not in task:
+                task['name'] = str(i)
+            task['order'] = i
+            task_objects.append(Task(**task))
+        self.tasks = task_objects
+        
+        # insert multiple hits/URLs according to the repeat param
+        # for annotation hits, tasks belong to instances
+        # for timeline hits, tasks belong to HITs
+        # instances are always created
+        instances = [HITInstance(
+            id=sha256(f'{hashstr}_{j:d}'.encode()).digest(),
+            submitted=False,
+            tasks=[]
+        ) for j in range(repeat)]
         self.instances = instances
+
+        self.update(**kwargs)
+
+    def update(self, name, media=None, extra=None, interface={}, **kwargs):
+        self.name = name
+        self.interface = interface
 
         # fix URLs
         if media is not None:
@@ -49,41 +71,32 @@ class HIT(db.Model):
 
         if extra is not None:
             if 'url' in extra and extra['url'][:4] != 'http':
-                extra['url'] = os.path.join(app.config['MEDIA_URL'], extra['url'])         
+                extra['url'] = os.path.join(
+                    app.config['MEDIA_URL'], extra['url'])
         self.extra = extra
 
+        # for i, task_dict in enumerate(tasks_dict):
+        #     task_dict['order'] = i
+
+        #     if 'name' not in task_dict:
+        #         task_dict['name'] = str(i)
+
+        #     tasks_with_name = [t for t in self.tasks if t.name == task_dict['name']]
+        #     if len(tasks_with_name):
+        #         # the task exists already
+        #         task = tasks_with_name[0]
+        #         task.update(**task_dict)
+        #     else:
+        #         # append the task
+        #         self.tasks.append(Task(**task_dict))
+
     @staticmethod
-    def from_dict(hit_dict, seedstr):
-        num_instances = hit_dict.get('repeat', 1)
-        hashstr = seedstr + hit_dict['name']
+    def get_hashstr(project_hashstr, id):
+        return project_hashstr + id
 
-        tasks = []
-        for i, task in enumerate(hit_dict.get('tasks', [])):
-            if 'name' not in task:
-                task['name'] = str(i)
-            task['order'] = i
-            tasks.append(Task.from_dict(task))
-
-        # insert multiple hits/URLs according to the repeat param
-        # for annotation hits, tasks belong to instances
-        # for timeline hits, tasks belong to HITs
-        # instances are always created
-        # is_annotation = (hit_dict['type'] == 'annotation')
-        instances = [HITInstance.from_dict({
-            'id': sha256(f'{hashstr}_{j:d}'.encode()).digest(),
-            'submitted': False,
-            'tasks': []
-        }) for j in range(num_instances)]
-
-        return HIT(
-            id=sha256(hashstr.encode()).digest(),
-            type=hit_dict['type'],
-            name=hit_dict['name'],
-            media=hit_dict.get('media', None),
-            extra=hit_dict.get('extra', None),
-            tasks=tasks,
-            interface=hit_dict.get('interface', {}),
-            instances=instances)
+    @staticmethod
+    def get_id(project_hashstr, id):
+        return sha256(HIT.get_hashstr(project_hashstr, id).encode()).digest()
 
     def as_dict(self, with_project=True, with_tasks=False, with_instances=False, with_instance_tasks=False):
         hit_dict = {c.name: getattr(self, c.name)
@@ -124,11 +137,15 @@ class HITInstance(db.Model):
     responses = db.relationship("TaskResponse", backref='hitinstance', lazy='dynamic')
     submitted = db.Column(db.Boolean)
 
-    def __init__(self, id, tasks, submitted=False):
+    def __init__(self, id, tasks=[], submitted=False):
         self.id = id
         self.preview_id = sha256((id + 'preview'.encode())).digest()
-        self.tasks = tasks
         self.submitted = submitted
+
+        task_objects = [Task.from_dict(
+            task
+        ) for task in tasks]
+        self.tasks = task_objects
 
     def get_api_url(self):
         return f'{app.config["API_URL"]}/instances/{self.id.hex():s}'
@@ -141,20 +158,6 @@ class HITInstance(db.Model):
 
     def get_completion_code(self):
         return sha256((self.id.hex() + app.config['COVFEE_SALT']).encode()).digest().hex()[:12]
-
-    @staticmethod
-    def from_dict(instance_dict):
-        if 'tasks' in instance_dict:
-            # insert multiple tasks
-            tasks = [Task.from_dict(
-                task
-            ) for task in instance_dict['tasks']]
-            del instance_dict['tasks']
-
-        return HITInstance(
-            **instance_dict,
-            tasks=tasks
-        )
 
     def as_dict(self, with_tasks=False, with_responses=False):
         instance_dict = {c.name: getattr(self, c.name)

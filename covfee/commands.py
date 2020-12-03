@@ -108,6 +108,21 @@ def make_db(force, file_or_folder):
 
     db.session.commit()
 
+
+@click.command()
+@click.argument("fpath")
+def update_db(fpath):
+    dbpath = app.config['DATABASE_PATH']
+
+    with open(fpath, 'r') as f:
+        proj_dict = json.load(f)
+
+    project = db.session.query(Project).get(Project.get_id(proj_dict['id']))
+    project.update(**proj_dict)
+    print(project.info())
+
+    db.session.commit()
+
 @click.command()
 def make_user():
     if not os.path.exists(app.config['DATABASE_PATH']):
@@ -172,4 +187,3 @@ def install_js():
     fpath = os.path.dirname(os.path.realpath(__file__))
     os.chdir('covfee')
     os.system('npm install')
-    #subprocess.check_call(['npm', 'install', '--prefix', fpath], shell=True)

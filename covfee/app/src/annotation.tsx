@@ -493,7 +493,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         this.setState({
             overlay: {
                 visible: true,
-                submitted: false,
+                submitted: this.state.replay.enabled,
                 submitting: false
             }
         })
@@ -667,7 +667,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     renderAnnotationMenu = () => {
         const tasks = this.state.sidebar.taskIds.map(taskId => this.tasks[taskId])
         return <>
-            <Collapse>
+            <Collapse defaultActiveKey={1}>
                 <Panel header={this.props.name} key="1">
                     <Button type="link" onClick={this.handleHitSubmit}>Submit HIT</Button>
                 </Panel>
@@ -691,7 +691,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         return <div className={classNames('task-container')}>
             <div className={classNames('task-overlay', { 'task-overlay-off': !this.state.overlay.visible })}>
                 <div className="task-overlay-nav">
-                    <Button onClick={this.handleTaskReplay}>Replay</Button>
+                    <Button onClick={this.handleTaskReplay} disabled={!this.state.overlay.submitted}>Replay</Button>
                     <Button onClick={this.handleTaskRedo}>Re-do</Button>
                     <Button onClick={() => { this.handleTaskSubmit({}) }}
                         type="primary"

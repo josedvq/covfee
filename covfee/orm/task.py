@@ -21,33 +21,18 @@ class Task(db.Model):
     created_at = db.Column(db.Date, default=datetime.datetime.now)
     updated_at = db.Column(db.Date, onupdate=datetime.datetime.now)
 
-    def __init__(self, type, order=0, name=None, props=None):
+    def __init__(self, type, order=0, name=None, **props):
         self.type = type
         self.order = order
         self.name = name
 
         # fix URLs
-        if props and 'media' in props:
+        if 'media' in props:
             for k, v in props['media'].items():
                 if k[-3:] == 'url' and v[:4] != 'http':
                     props['media'][k] = app.config['MEDIA_URL'] + '/' + v
 
         self.props = props
-
-    @staticmethod
-    def from_dict(task_dict):
-        # copy over type and name. The rest of the elements go into props
-        new_dict = dict()
-
-        new_dict['type'] = task_dict['type']
-        new_dict['name'] = task_dict['name']
-        new_dict['order'] = task_dict.get('order', 10000)
-        new_dict['props'] = dict()
-
-        for key, value in task_dict.items():
-            if key not in ['type', 'name', 'order']:
-                new_dict['props'][key] = value
-        return Task(**new_dict)
 
     def as_dict(self, editable=False):
        task_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns if c != 'props'}

@@ -48,6 +48,7 @@ setup(
         'console_scripts': [
             'covfee-installjs = covfee.commands:install_js',
             'covfee-maker = covfee.commands:make_db',
+            'covfee-update = covfee.commands:update_db',
             'covfee-webpack = covfee.commands:webpack',
             'covfee-dev = covfee.commands:start_dev',
             'covfee-prod = covfee.commands:start_prod',

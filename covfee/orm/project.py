@@ -17,11 +17,24 @@ class Project(db.Model):
     email = db.Column(db.String)
     hits = db.relationship("HIT", backref="project", cascade="all, delete-orphan")
 
-    def __init__(self, id, name, email, hits):
-        self.id = id
+    def __init__(self, id, name, email, hits, **kwargs):
+        hashstr = Project.get_hashtr(id)
+        self.id = sha256(hashstr.encode()).digest()
+        self.update(id, name, email, hits)
+
+    def update(self, id, name, email, hits, **kwargs):
         self.name = name
         self.email = email
-        self.hits = hits
+
+        hashstr = Project.get_hashtr(id)
+        for hit_dict in hits:
+            hit = db.session.query(HIT).get(HIT.get_id(hashstr, hit_dict['id']))
+            if hit is None:
+                print('creating HIT')
+                self.hits.append(HIT(**hit_dict, hashstr=hashstr))
+            else:
+                print('updating HIT')
+                hit.update(**hit_dict)
 
     def get_dataframe(self):
         list_of_instances = list()
@@ -60,21 +73,29 @@ class Project(db.Model):
         return txt
 
     @staticmethod
-    def from_dict(proj_dict: dict):
-        project = deepcopy(proj_dict)
-        proj_json = json.dumps(project)
-        hits = list()
+    def get_hashtr(id):
+        return id + app.config['COVFEE_SALT']
 
-        hashstr = proj_dict['name'] + app.config['COVFEE_SALT']
-        project['hits'] = list()
-        for i, hit in enumerate(proj_dict['hits']):
-            if 'name' not in hit:
-                hit['name'] = str(i)
-            project['hits'].append(HIT.from_dict(hit, hashstr))
+    @staticmethod
+    def get_id(id):
+        return sha256(Project.get_hashtr(id).encode()).digest()
+
+    # @staticmethod
+    # def from_dict(proj_dict: dict):
+    #     project = deepcopy(proj_dict)
+    #     proj_json = json.dumps(project)
+    #     hits = list()
+
+    #     hashstr = Project.get_hashtr(proj_dict['id'])
+    #     project['hits'] = list()
+    #     for i, hit in enumerate(proj_dict['hits']):
+    #         if 'id' not in hit:
+    #             hit['id'] = str(i)
+    #         project['hits'].append(HIT.from_dict(hit, hashstr))
         
-        hash_id = sha256(hashstr.encode()).digest()
-        project = Project(id=hash_id, **project)
-        return project
+    #     hash_id = sha256(hashstr.encode()).digest()
+    #     project = Project(id=hash_id, **project)
+    #     return project
 
     @staticmethod
     def from_json(fpath: str):
@@ -84,7 +105,7 @@ class Project(db.Model):
         with open(fpath, 'r') as f:
             proj_dict = json.load(f)
 
-        return Project.from_dict(proj_dict)
+        return Project(**proj_dict)
 
     def make_download(self, csv=False):
         # create a folder to store all the files
