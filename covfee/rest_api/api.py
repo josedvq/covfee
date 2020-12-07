@@ -194,7 +194,7 @@ def response(iid, kid):
         return jsonify(msg='No submitted responses found.'), 403
 
     response_dict = lastResponse.as_dict(with_chunk_data=with_chunk_data)
-    response_dict['chunk_data'] = lastResponse.aggregate()
+    # response_dict['chunk_data'] = lastResponse.aggregate()
     return jsonify(response_dict)
     
 # record a response to a task

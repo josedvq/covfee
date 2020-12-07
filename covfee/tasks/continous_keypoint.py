@@ -4,13 +4,14 @@ class ContinuousKeypointTask:
         pass
 
     @staticmethod
-    def aggregate_chunks(chunks):
-        # concatenate all chunks together
-        return [x for y in chunks for x in y]
+    def process_response(result, chunks):
+        return {
+            'data': [x for y in chunks for x in y]
+        }
 
     @staticmethod
-    def to_dataframe(data):
+    def to_dataframe(response):
         # remove all the log events that are not data points
-        filtered = filter(lambda x: len(x) == 7, data)
+        filtered = filter(lambda x: len(x) == 7, response['data'])
         df = pd.DataFrame(filtered, columns=['index', 'timestamp', 'frame', 'x', 'y', 'valid', 'occluded'])
         return df

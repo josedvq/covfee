@@ -74,7 +74,7 @@ class TaskResponse(db.Model):
 
         response_dict['hitinstance_id'] = response_dict['hitinstance_id'].hex()
         if with_chunk_data:
-            response_dict['chunk_data'] = self.aggregate()
+            response_dict['chunk_data'] = self.aggregate()['data']
 
         return response_dict
 
@@ -82,36 +82,35 @@ class TaskResponse(db.Model):
         # apply task-specific aggregation method
         if hasattr(tasks, self.task.type):
             task_class = getattr(tasks, self.task.type)
-            data = [chunk.data for chunk in self.chunks]
-            return task_class.aggregate_chunks(data)
+            chunk_data = [chunk.data for chunk in self.chunks]
+            return task_class.process_response(self.data, chunk_data)
         else:
-            return None
+            # default aggregation
+            return {
+                'result': self.data,
+                'data': [x for y in self.chunks for x in y.data]
+            }
 
     def write_json(self, dirpath):
         fpath = os.path.join(dirpath, f'{self.task.name}_{self.index:d}.json')
-        aggregated_chunks = self.aggregate()
-        if aggregated_chunks is None:
+        processed_response = self.aggregate()
+        if processed_response is None:
             return False
 
-        data = {
-            'response': self.data,
-            'chunks': aggregated_chunks
-        }
-
-        json.dump(data, open(fpath,'w'))
+        json.dump(processed_response, open(fpath, 'w'))
         return True
 
     def write_csv(self, dirpath):
         if not hasattr(tasks, self.task.type):
             return False
         
-        data = self.aggregate()
-        if data is None:
+        processed_response = self.aggregate()
+        if processed_response is None:
             return False
         
         fpath = os.path.join(dirpath, f'{self.task.name}_{self.index:d}.csv')
         task_class = getattr(tasks, self.task.type)
-        df = task_class.to_dataframe(data)
+        df = task_class.to_dataframe(processed_response)
         df.to_csv(fpath)
         return True
 
