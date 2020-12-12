@@ -3,6 +3,7 @@ import sys
 import glob
 import json
 import subprocess
+from hashlib import sha256
 
 import click
 from pathlib import Path
@@ -91,18 +92,21 @@ def make_db(force, file_or_folder):
         sys.exit(1)
         
     for json_file in json_files:
-        project = Project.from_json(json_file)
+        with open(json_file, 'r') as f:
+            proj_dict = json.load(f)
 
         # delete existing project with the same id
-        existing_project = Project.query.filter_by(id=project.id).first()
+        projid = Project.get_id(proj_dict['id'])
+        existing_project=Project.query.filter_by(id=projid).first()
         if existing_project is not None:
             if force:
-                # print('DELETING')
                 db.session.delete(existing_project)
+                db.session.commit()
             else:
                 print('Project exists. Add --force option to overwrite.')
                 sys.exit(1)
 
+        project = Project(**proj_dict)
         db.session.add(project)
         print(project.info())
 
@@ -161,10 +165,11 @@ def start_prod():
 def build():
     prepare()
 
-    # run the dev server
+    bundle_path = os.path.join(os.getcwd(), 'www')
     covfee_path = os.path.dirname(os.path.realpath(__file__))
     os.chdir(covfee_path)
-    os.system(os.path.join('node_modules', '.bin', 'webpack') + ' --config ./webpack.dev.js')
+    os.system(os.path.join('node_modules', '.bin', 'webpack') +
+              ' --config ./webpack.dev.js' + ' --output-path '+bundle_path)
 
 
 def set_env(env: str):
