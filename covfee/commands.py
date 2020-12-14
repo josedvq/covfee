@@ -190,5 +190,5 @@ def set_env_prod():
 @click.command()
 def install_js():
     fpath = os.path.dirname(os.path.realpath(__file__))
-    os.chdir('covfee')
+    os.chdir(fpath)
     os.system('npm install')
