@@ -1,7 +1,10 @@
 {
     "name": "Example project",
+    "id": "sample_project",
     "email": "example@example.com",
     "hits": [{
+        "id": "sample_hit",
+        "name": "Sample Questionnaire",
         "type": "timeline",
         "tasks": [{
             "type": "QuestionnaireTask",

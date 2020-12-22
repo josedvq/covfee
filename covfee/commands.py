@@ -31,8 +31,7 @@ def prepare():
         'auth_url': app.config['AUTH_URL'],
         'media_url': app.config['MEDIA_URL']
     }
-
-    constants_path = os.path.join(covfee_path, 'app/src/constants.json')
+    constants_path = os.path.join(os.getcwd(), 'covfee_constants.json')
     json.dump(app_constants, open(constants_path, 'w'), indent=2)
 
     # create a javascript custom tasks module if it does not exist
@@ -44,12 +43,12 @@ def prepare():
         with open(fpaths[0], 'w') as fh:
             fh.write('export {}')
 
-    alias = {
-        'CustomTasks': custom_tasks_path
-    }
+    # alias = {
+    #     'CustomTasks': custom_tasks_path
+    # }
 
-    with open(os.path.join(covfee_path, 'alias.json'), 'w') as outfile:
-        json.dump(alias, outfile, indent=2)
+    # with open(os.path.join(covfee_path, 'alias.json'), 'w') as outfile:
+    #     json.dump(alias, outfile, indent=2)
 
 
 @click.command()
@@ -144,8 +143,11 @@ def webpack():
     
     # run the dev server
     covfee_path = os.path.dirname(os.path.realpath(__file__))
+    cwd = os.getcwd()
     os.chdir(covfee_path)
-    os.system(os.path.join('node_modules', '.bin', 'webpack-dev-server') + ' --config ./webpack.dev.js')
+    os.system(os.path.join('node_modules', '.bin', 'webpack-dev-server') +
+     ' --env.COVFEE_WD=' + cwd +
+     ' --config ./webpack.dev.js')
 
 
 @click.command()
@@ -167,8 +169,11 @@ def build():
 
     bundle_path = os.path.join(os.getcwd(), 'www')
     covfee_path = os.path.dirname(os.path.realpath(__file__))
+    
+    cwd = os.getcwd()
     os.chdir(covfee_path)
     os.system(os.path.join('node_modules', '.bin', 'webpack') +
+              ' --env.COVFEE_WD=' + cwd +
               ' --config ./webpack.dev.js' + ' --output-path '+bundle_path)
 
 

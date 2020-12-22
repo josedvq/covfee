@@ -8,7 +8,7 @@ import {
 } from "react-router-dom"
 import 'antd/dist/antd.css'
 import userContext from '../userContext'
-const Constants = require('../constants.json')
+const Constants = require('Constants')
 import CovfeeLogo from '../art/logo.svg'
 import '../css/gui.css'
 

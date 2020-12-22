@@ -75,9 +75,9 @@ class QuestionnaireTask extends React.Component<Props> {
         // instructions
         let instructions = <></>
         if(this.props.instructions) {
-            instructions = <Row gutter={16}>
-                <Col span={24} style={{padding: '2em'}}>
-                    <Alert type="info" message={'Instructions'} description={this.props.instructions} showIcon/>
+            instructions = <Row gutter={16} style={{ padding: '1em' }}>
+                <Col span={24}>
+                    <Alert type="info" message={'Instructions'} description={this.props.instructions}  showIcon/>
                 </Col>
             </Row>
         }

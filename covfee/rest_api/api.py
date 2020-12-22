@@ -89,6 +89,25 @@ def hit(hid):
         with_instances=with_instances, 
         with_instance_tasks=with_instance_tasks)
 
+
+@api.route('/hits/<hid>/instances/add')
+def instance_add(hid):
+    num_instances = request.args.get('num_instances', 1)
+    hit = db.session.query(HIT).get(bytes.fromhex(hid))
+    if hit is None:
+        return {'msg': 'not found'}, 404
+    
+    hit.add_instances(num_instances)
+
+    with_tasks = request.args.get('with_tasks', True)
+    with_instances = request.args.get('with_instances', True)
+    with_instance_tasks = request.args.get('with_instance_tasks', False)
+    
+    return jsonify_or_404(hit,
+                          with_tasks=with_tasks,
+                          with_instances=with_instances,
+                          with_instance_tasks=with_instance_tasks)
+
 # INSTANCES
 # return one HIT instance
 @api.route('/instances/<iid>')

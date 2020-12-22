@@ -2,7 +2,7 @@
 import * as React from 'react'
 import { withRouter } from 'react-router'
 import Annotation from './annotation'
-const Constants = require('./constants.json')
+const Constants = require('Constants')
 import { fetcher, getUrlQueryParam, throwBadResponse} from './utils'
 
 import {

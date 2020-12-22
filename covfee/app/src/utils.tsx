@@ -1,6 +1,6 @@
 import {message} from 'antd'
 
-const Constants = require('./constants.json')
+const Constants = require('Constants')
 
 // read a cookie in the browser
 function getCookieValue(a: string) {

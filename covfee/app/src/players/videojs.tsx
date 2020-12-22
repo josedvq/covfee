@@ -4,6 +4,11 @@ import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
 
 interface Props extends VideoSpec {
+    paused: boolean,
+    autoplay?: boolean,
+    controls?: boolean,
+    fluid?: boolean,
+    aspectRatio?: string,
     onPlay?: Function,
     onPause?: Function,
     onEnded?: Function
@@ -13,21 +18,27 @@ class VideojsPlayer extends React.PureComponent<Props> {
     private player: any
     private videoNode = React.createRef<HTMLVideoElement>()
 
+    static defaultProps = {
+        paused: true,
+        autoplay: false,
+        controls: true,
+        fluid: true,
+        aspectRatio: '16:9'
+    }
+
     componentDidMount() {
         let options = {
-            autoplay: false,
-            controls: true,
-            fluid: true,
-            aspectRatio: '16:9',
+            autoplay: this.props.autoplay,
+            controls: this.props.controls,
+            fluid: this.props.fluid,
+            aspectRatio: this.props.aspectRatio,
             sources: [{
                 src: this.props.url,
                 type: 'video/mp4'
             }]
         }
         // instantiate Video.js
-        this.player = videojs(this.videoNode.current, options, function onPlayerReady() {
-            this.play()
-        });
+        this.player = videojs(this.videoNode.current, options)
 
         if (this.props.onPlay) {
             this.player.on('play', (e: Event) => {

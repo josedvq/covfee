@@ -13,7 +13,7 @@ class Project(db.Model):
     __tablename__ = 'projects'
 
     id = db.Column(db.Binary, primary_key=True)
-    name = db.Column(db.String, unique=True)
+    name = db.Column(db.String)
     email = db.Column(db.String)
     hits = db.relationship("HIT", backref="project", cascade="all, delete-orphan")
 
@@ -79,23 +79,6 @@ class Project(db.Model):
     @staticmethod
     def get_id(id):
         return sha256(Project.get_hashtr(id).encode()).digest()
-
-    # @staticmethod
-    # def from_dict(proj_dict: dict):
-    #     project = deepcopy(proj_dict)
-    #     proj_json = json.dumps(project)
-    #     hits = list()
-
-    #     hashstr = Project.get_hashtr(proj_dict['id'])
-    #     project['hits'] = list()
-    #     for i, hit in enumerate(proj_dict['hits']):
-    #         if 'id' not in hit:
-    #             hit['id'] = str(i)
-    #         project['hits'].append(HIT.from_dict(hit, hashstr))
-        
-    #     hash_id = sha256(hashstr.encode()).digest()
-    #     project = Project(id=hash_id, **project)
-    #     return project
 
     @staticmethod
     def from_json(fpath: str):

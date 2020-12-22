@@ -24,7 +24,7 @@ import Collapsible from 'react-collapsible'
 const { Text, Title, Link } = Typography
 
 import classNames from 'classnames'
-const Constants = require('./constants.json')
+const Constants = require('Constants')
 import { myerror, fetcher, getUrlQueryParam, throwBadResponse} from './utils'
 import { getTaskClass, NewTaskModal} from './task_utils'
 import { TaskSpec } from 'Tasks/task'
