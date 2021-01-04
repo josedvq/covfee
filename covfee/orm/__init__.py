@@ -7,7 +7,6 @@ from .project import *
 from .task import *
 from .user import *
 
-
 # load the config files
 app.config.from_object('covfee.config')
 app.config.from_json(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'covfee.env.json'))

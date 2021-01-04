@@ -34,7 +34,7 @@ class Project(db.Model):
                 self.hits.append(HIT(**hit_dict, hashstr=hashstr))
             else:
                 print('updating HIT')
-                hit.update(**hit_dict)
+                hit.update(**hit_dict, hashstr=hashstr)
 
     def get_dataframe(self):
         list_of_instances = list()

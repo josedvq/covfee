@@ -44,21 +44,11 @@ class HIT(db.Model):
             task['order'] = i
             task_objects.append(Task(**task))
         self.tasks = task_objects
-        
-        # insert multiple hits/URLs according to the repeat param
-        # for annotation hits, tasks belong to instances
-        # for timeline hits, tasks belong to HITs
-        # instances are always created
-        instances = [HITInstance(
-            id=sha256(f'{hashstr}_{j:d}'.encode()).digest(),
-            submitted=False,
-            tasks=[]
-        ) for j in range(repeat)]
-        self.instances = instances
 
-        self.update(**kwargs)
+        self.update(id=id, hashstr=hashstr, repeat=repeat, **kwargs)
 
-    def update(self, name, media=None, extra=None, interface={}, **kwargs):
+    def update(self, id, hashstr, name, repeat=1, media=None, extra=None, interface={}, **kwargs):
+        hashstr = HIT.get_hashstr(hashstr, id)
         self.name = name
         self.interface = interface
 
@@ -75,6 +65,16 @@ class HIT(db.Model):
                     app.config['MEDIA_URL'], extra['url'])
         self.extra = extra
 
+        # insert multiple hits/URLs according to the repeat param
+        # for annotation hits, tasks belong to instances
+        # for timeline hits, tasks belong to HITs
+        # instances are always created
+        for j in range(len(self.instances), repeat):
+            self.instances.append(HITInstance(
+                id=sha256(f'{hashstr}_{j:d}'.encode()).digest(),
+                submitted=False,
+                tasks=[]
+            ))
         # for i, task_dict in enumerate(tasks_dict):
         #     task_dict['order'] = i
 
