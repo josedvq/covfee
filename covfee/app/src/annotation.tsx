@@ -1,4 +1,5 @@
 import * as React from 'react'
+import {unstable_batchedUpdates} from 'react-dom'
 import { withRouter, generatePath } from 'react-router'
 import {
     EyeFilled, 
@@ -134,6 +135,9 @@ interface AnnotationProps {
 }
 
 interface AnnotationState {
+    /**
+     * Index of the currently selected task
+     */
     currTask: number,
     loadingTask: boolean,
     error: string,
@@ -535,6 +539,27 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         })
     }
 
+    handleEditTaskDelete = (taskId) => {
+        // deleting existing task
+        const url = Constants.api_url + '/tasks/' + taskId + '/delete'
+
+        return fetch(url)
+            .then(throwBadResponse)
+            .then(data => {
+                this.tasks.splice(this.state.editTaskModal.taskId, 1)
+                const newTaskIds = [...this.tasks.keys()]
+                unstable_batchedUpdates(() => {
+                    this.setState({
+                        sidebar: { taskIds: newTaskIds }
+                    })
+                    this.handleChangeActiveTask(Math.max(0, this.state.currTask-1) - 1)
+                })
+            })
+            .catch(error => {
+                myerror('Error creating the new task.', error)
+            })
+    }
+
     handleEditTaskSubmit = (task: any) => {
         
         if (this.state.editTaskModal.new) {
@@ -724,6 +749,8 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     }
 
     renderTask = (props) => {
+        if(this.state.loadingTask) return <></>
+
         const taskClass = getTaskClass(props.type)
         const task = React.createElement(taskClass, {
             key: this.state.currKey,
@@ -746,6 +773,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     }
 
     getTaskInfo = (task) => {
+        if(this.state.loadingTask) return null
 
         let taskInfo = null
         if(this.instructionsFn != null) {
@@ -755,12 +783,13 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     }
 
     getTaskExtra = (task) => {
+        if(this.state.loadingTask) return false
+        
         if (this.props.extra) return <MarkdownLoader {...this.props.extra} />
         else return false
     }
 
     renderAnnotation = () => {
-        
         let props = this.tasks[this.state.currTask]
         props._url = this.url + '/tasks/' + props.id
         if (!props.media) props.media = this.props.media
@@ -776,7 +805,8 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                 presets={'userTasks' in this.props.interface ? this.props.interface.userTasks : {}}
                 task={this.state.editTaskModal.taskId != null ? this.tasks[this.state.editTaskModal.taskId] : {}}
                 onSubmit={this.handleEditTaskSubmit}
-                onCancel={this.handleEditTaskCancel} />
+                onCancel={this.handleEditTaskCancel}
+                onDelete={this.handleEditTaskDelete}/>
             <Row>
                 <Col span={24}>
                     <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark">

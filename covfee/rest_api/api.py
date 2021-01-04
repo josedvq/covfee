@@ -196,9 +196,9 @@ def task_delete(kid):
         return jsonify({'msg': 'invalid task'}), 400
     if task.hits:
         return jsonify(msg='Only annotation-type instances can be user-deleted.'), 403
-    task.delete()
+    db.session.delete(task)
     db.session.commit()
-    return jsonify({'success': True}), 204
+    return jsonify({'success': True}), 200
 
 
 @api.route('/instances/<iid>/tasks/<kid>/responses')

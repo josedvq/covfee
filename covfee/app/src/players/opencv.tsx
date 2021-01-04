@@ -1,6 +1,7 @@
 /* global cv */
 import * as React from 'react'
 import { MediaSpec } from 'Tasks/task'
+import { myinfo } from '../utils'
 
 // video player using opencv to control playback speed
 interface Props extends MediaSpec {
@@ -33,6 +34,10 @@ interface Props extends MediaSpec {
      */
     onLoad?: Function,
     /**
+     * Called when there is an error pre-loading the video
+     */
+    onError?: Function,
+    /**
      * This method is called for every frame. It can be used to capture a signal from the user for every frame of the video. Some frames may be skipped if performance is suffering.
      */
     onFrame?: Function,
@@ -56,6 +61,10 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
     private delay: number = 0
     private frame: number = 0
 
+    state = {
+        ready: false
+    }
+
     componentDidMount() {
 
         const cv_init = () => {
@@ -71,7 +80,7 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
             cv['onRuntimeInitialized'] = cv_init
         } else {
             cv_init()
-        }
+        }        
 
         // update the ratio of flow_res / video_res
         let observer = new ResizeObserver((entries) => {
@@ -87,6 +96,25 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
         this.video_tag.current.addEventListener('ended', (e: Event) => {
             this.props.onEnded(e)
             this.pause()
+        })
+
+        // preload video and flow video
+        Promise.all([
+            fetch(this.props.url)
+                .then(response => response.blob())
+                .then(blob=>{
+                    this.video_tag.current.src = window.URL.createObjectURL(blob)
+                }),
+            fetch(this.props.flow_url)
+                .then(response => response.blob())
+                .then(blob=>{
+                    this.flow_tag.current.src = window.URL.createObjectURL(blob)
+                })])
+        .then(res=>{
+            this.setState({ready: true})
+        })
+        .catch(err => {
+            this.props.onError('There has been an error while loading the videos.', err)
         })
     }
 
@@ -133,6 +161,8 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
     }
 
     public play() {
+        if(!this.state.ready) return myinfo('Video is loading. Please wait a few seconds and try again.')
+
         this.video_tag.current.onseeked = () => {
             this.timeout_id = window.setTimeout(() => {
                 this.req_id = window.requestAnimationFrame(this.processVideo)
@@ -180,11 +210,9 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
     //style={{ display: 'none' }}
     render() {
         return <>
-            <video ref={this.video_tag} width="100%" crossOrigin="Anonymous" preload="auto" muted> 
-                <source src={this.props.url} type={"video/mp4"}></source>
+            <video ref={this.video_tag} width="100%" crossOrigin="Anonymous" disablePictureInPicture muted> 
             </video>
             <video ref={this.flow_tag} width={this.props.flow_res[0]} height={this.props.flow_res[1]} crossOrigin="Anonymous" style={{ display: 'none' }} preload="auto" muted>
-                <source src={this.props.flow_url} type={"video/mp4"}></source>
             </video>
         </>
     }

@@ -1,8 +1,9 @@
 import * as React from 'react'
 import CovfeeTasks from './tasks'
 import CustomTasks from 'CustomTasks'
-import { Button, Input, Modal, Select, Form } from 'antd'
+import { Button, Input, Modal, Select, Form, Typography } from 'antd'
 const { Option } = Select
+const { Text, Link } = Typography
 
 class NewTaskModal extends React.Component {
 
@@ -73,6 +74,12 @@ class NewTaskModal extends React.Component {
         })
     }
 
+    handleDelete = (taskId) => {
+        this.props.onDelete(taskId).then(()=>{
+            this.props.onCancel(taskId)
+        })
+    }
+
     render() {
         return <Modal
             visible={this.props.visible}
@@ -90,13 +97,18 @@ class NewTaskModal extends React.Component {
             <NewTaskForm 
                 {...this.props} 
                 task={this.state.task} 
-                onChange={this.handleChange} />
+                onChange={this.handleChange}
+                onDelete={this.handleDelete} />
         </Modal>
     }
 }
 
 
 class NewTaskForm extends React.Component {
+
+    state = {
+        pressedDelete: false
+    }
 
     handlePresetChange = (value: String) => {
         this.props.onChange({preset: value})
@@ -110,9 +122,24 @@ class NewTaskForm extends React.Component {
         this.props.onChange({name: e.target.value})
     }
 
+    handleDeleteClick = (e: Event) => {
+        this.setState({
+            pressedDelete: true
+        })
+    }
+
+    handleDelete = (e: Event) => {
+        this.props.onDelete(this.props.task.id)
+        this.setState({
+            pressedDelete: false
+        })
+    }
+
     render() {
         let presetSelect = <></>
         let typeSelect = <></>
+        let deletePrompt = <></>
+
         if(this.props.new) {
             presetSelect = <Form.Item label="Preset">
                 <Select value={this.props.task.preset} style={{ width: 120 }} onChange={this.handlePresetChange} >
@@ -130,6 +157,18 @@ class NewTaskForm extends React.Component {
             </Select>
         </Form.Item>
 
+        if(!this.props.new) {
+            if(!this.state.pressedDelete) {
+                deletePrompt = <Button type="danger" onClick={this.handleDeleteClick}>Delete</Button>
+            } else {
+                deletePrompt = <>
+                    <Text type="danger">All annotations submitted for this task may be lost. Are you sure you want to delete?</Text><br/>
+                    <Button type="danger" onClick={this.handleDelete}>Delete</Button>
+                    <Button type="default" onClick={()=>{this.setState({pressedDelete: false})}}>Cancel</Button>    
+                </>
+            }
+        }
+
         return <>
             {presetSelect}
 
@@ -138,6 +177,8 @@ class NewTaskForm extends React.Component {
             <Form.Item label="Name">
                 <Input value={this.props.task.name} onChange={this.handleNameChange} />
             </Form.Item>
+
+            {deletePrompt}
         </>
     }
 }

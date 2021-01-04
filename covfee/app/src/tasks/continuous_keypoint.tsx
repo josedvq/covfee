@@ -8,11 +8,12 @@ import {
     Typography
 } from 'antd';
 const { Title, Text } = Typography
-import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined, CodeSandboxCircleFilled } from '@ant-design/icons';
 import OpencvFlowPlayer from '../players/opencv'
 import '../css/gui.css'
 import MouseTracker from '../input/mouse_tracker'
 import MouseVisualizer from '../input/mouse_visualizer'
+import { myerror } from '../utils'
 import classNames from 'classnames'
 
 interface Props {
@@ -108,6 +109,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
                 break
             case ' ':
                 e.preventDefault()
+                console.log('play')
                 if (this.state.paused) this.props.buffer(this.player.current.currentFrame(), ['play'])
                 else this.props.buffer(this.player.current.currentFrame(), ['pause'])
                 this.togglePlayPause()
@@ -154,6 +156,10 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
 
     handleVideoLoad = (vid:HTMLVideoElement) => {
         this.setState({duration: vid.duration})
+    }
+
+    handleVideoError = (err: string) => {
+        myerror(err)
     }
 
     // Replaying logic
@@ -315,6 +321,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
                         ref={this.player}
                         onEnded={this.handleVideoEnded}
                         onLoad={this.handleVideoLoad}
+                        onError={this.handleVideoError}
                         onFrame={this.handleFrame}>
                         </OpencvFlowPlayer>
                 </MouseVisualizer>
