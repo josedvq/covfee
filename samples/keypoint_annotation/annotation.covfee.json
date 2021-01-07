@@ -1,8 +1,10 @@
 {
+    "id": "Continuous annot sample",
     "name": "Continuous annot sample",
     "email": "j.d.vargasquiros@tudelft.nl",
     "hits": [
         {
+            "id": "Keypoint1",
             "name": "Keypoint1",
             "type": "annotation",
             "repeat": 2,
@@ -36,6 +38,9 @@
                         "type": "ContinuousKeypointTask"
                     }
                 }
+            },
+            "extra": {
+                "html": "asdf"
             }
         }
     ]

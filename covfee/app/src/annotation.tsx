@@ -17,7 +17,8 @@ import {
     Button, 
     Modal,
     Collapse,
-    Popover
+    Popover,
+    Progress
 } from 'antd';
 const { Panel } = Collapse
 import Collapsible from 'react-collapsible'
@@ -109,7 +110,7 @@ class Task extends React.Component {
 }
 
 interface TimelineInterfaceProps {
-    showTimeline?: boolean,
+    showProgress?: boolean,
 }
 
 interface AnnotationInterfaceProps {
@@ -214,7 +215,7 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
     static defaultProps = {
         interface: {
             userTasks: {},
-            showTimeline: false,
+            showProgress: false,
             showMenu: true,
         }
     }
@@ -829,6 +830,9 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
         const task = this.renderTask(props)
         const taskInfo = this.getTaskInfo(task)
 
+        console.log(this.state.currTask / this.tasks.length)
+        console.log(this.tasks.length)
+
         return <div className="tool-container" ref={this.container}>
             <Row>
                 <Col span={24}>
@@ -852,21 +856,15 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                 </Col>
             </Row>
             <Row>
-                {this.props.interface.showTimeline?
-                <>
-                    <Col span={4}>
-                        {this.renderTimelineMenu()}
-                    </Col>
-                    <Col span={20}>
-                        {this.renderOverlay()}
-                        {task}
-                    </Col>
-                </>:
-                    <Col span={24}>
-                        {this.renderOverlay()}
-                        {task}
-                    </Col>
+                {this.props.interface.showProgress?
+                    <Progress percent={100 * this.state.currTask / this.tasks.length} steps={this.tasks.length}/>:
+                    <></>
                 }
+
+                <Col span={24}>
+                    {this.renderOverlay()}
+                    {task}
+                </Col>
             </Row>
             {this.renderErrorModal()}
         </div>
