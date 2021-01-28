@@ -83,7 +83,7 @@ class TaskResponse(db.Model):
         if hasattr(tasks, self.task.type):
             task_class = getattr(tasks, self.task.type)
             chunk_data = [chunk.data for chunk in self.chunks]
-            return task_class.process_response(self.data, chunk_data)
+            return task_class.process_response(self.data, chunk_data, self.hitinstance, self.task)
         else:
             # default aggregation
             return {
