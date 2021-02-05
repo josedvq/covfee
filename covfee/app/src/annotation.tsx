@@ -886,10 +886,16 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
                 </Col>
             </Row>
             <Row>
+                <Col span={24}>
                 {this.props.interface.showProgress?
-                    <Progress percent={100 * this.state.currTask / this.tasks.length} steps={this.tasks.length}/>:
+                    <Progress 
+                        percent={100 * this.state.currTask / this.tasks.length} 
+                        // steps={this.tasks.length}
+                        showInfo={false}
+                        />:
                     <></>
                 }
+                </Col>
 
                 <Col span={24}>
                     {this.renderOverlay()}
