@@ -59,7 +59,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
             data: null
         }
     }
-    private playbackRates = [1/8, 1/7, 1/6, 1/5, 1/4, 1/3, 1/2, 1, 2, 3, 4]
+    private playbackRates = [1/16, 1/12, 1/8, 1/6, 1/5, 1/4, 1/3, 1/2, 1, 2, 3, 4]
     private player = React.createRef<OpencvFlowPlayer>()
     private tracker = React.createRef<MouseTracker>()
     private mouse_normalized = [0,0]
