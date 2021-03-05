@@ -94,7 +94,6 @@ a.header-covfee {
 .mouse-tracker > .video-container {
     position: relative;
     width: 100%;
-    max-height: calc(100vh - 60px);
     height: auto;
     cursor: crosshair;
 }
@@ -125,7 +124,7 @@ a.header-covfee {
 }
 
 .task-group {
-  max-height:calc(100vh - 54px);
+  max-height: calc(100vh - 54px);
   overflow-y: scroll;
   list-style-type: none;
   margin: 0;
