@@ -5,16 +5,18 @@ import {
     List,
     Modal,
     Row,
-    Typography
+    Typography,
+    Checkbox
 } from 'antd';
 const { Title, Text } = Typography
-import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined, CodeSandboxCircleFilled } from '@ant-design/icons';
+import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined, CodeSandboxCircleFilled, CloseOutlined } from '@ant-design/icons';
 import OpencvFlowPlayer from '../players/opencv'
 import '../css/gui.css'
 import MouseTracker from '../input/mouse_tracker'
 import MouseVisualizer from '../input/mouse_visualizer'
 import { myerror } from '../utils'
 import classNames from 'classnames'
+import { withCookies, Cookies } from 'react-cookie'
 
 interface Props {
     name: string,
@@ -24,13 +26,16 @@ interface Props {
     replayMode: boolean,
     getCurrReplayAction: Function,
     getNextReplayAction: Function,
-    setInstructionsFn: Function
+    setInstructionsFn: Function,
+    cookies: Cookies
 }
 interface State {
     paused: boolean,
     occluded: boolean,
     mouse_valid: boolean,
+    opticalFlowEnabled: boolean,
     playbackRateIdx: number,
+    playbackBaseSpeed: number,
     duration: number,
     currentTime: number,
     currentFrame: number,
@@ -47,7 +52,9 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
         paused: true,
         occluded: false,
         mouse_valid: false,
+        opticalFlowEnabled: true,
         playbackRateIdx: 6,
+        playbackBaseSpeed: 0,
         duration: 0,
         currentTime: 0,
         currentFrame: 0,
@@ -64,6 +71,11 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
     private tracker = React.createRef<MouseTracker>()
     private mouse_normalized = [0,0]
     private reverseCountTimerId: number = null
+
+    constructor(props: Props) {
+        super(props)
+        this.state.opticalFlowEnabled = (this.props.cookies.get('opticalFlowEnabled') === 'true')
+    }
 
     componentDidMount() {
         this.props.setInstructionsFn(this.instructions)
@@ -109,7 +121,6 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
                 break
             case ' ':
                 e.preventDefault()
-                console.log('play')
                 if (this.state.paused) this.props.buffer(this.player.current.currentFrame(), ['play'])
                 else this.props.buffer(this.player.current.currentFrame(), ['pause'])
                 this.togglePlayPause()
@@ -124,6 +135,9 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
                 break
             case 'z': // occluded
                 if(!this.props.replayMode) this.toggleOcclusion()
+                break
+            case 'v': // toggle optical flow
+                this.handleToggleOpticalFlow()
                 break
             default:
                 break
@@ -162,11 +176,23 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
         myerror(err)
     }
 
+    handleToggleOpticalFlow = () => {
+        this.props.cookies.set('opticalFlowEnabled', !this.state.opticalFlowEnabled);
+        this.setState({
+            playbackRateIdx: 0,
+            opticalFlowEnabled: !this.state.opticalFlowEnabled
+        })
+    }
+
     // Replaying logic
     // Takes care of replaying an annotation given a log
 
     // writes mouse position to the buffer on every frame
-    handleFrame = (frame: number) => {
+    handleFrame = (frame: number, delay: number) => {
+        this.setState({
+            currentFrame: frame,
+            playbackBaseSpeed: Math.min(1.0, 0.8 * this.state.playbackBaseSpeed + 0.2 / delay)
+        })
         if(this.props.replayMode) {
             this.replayUntilFrame(frame)
         } else {
@@ -192,6 +218,8 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
         if(typeof action[3] == 'number') {
             this.mouse_normalized = [action[3], action[4]]
             this.setState({
+                mouse_valid: !!action[5],
+                occluded: !!action[6],
                 replayMode: {
                     ...this.state.replayMode,
                     data: [action[3], action[4]]
@@ -292,15 +320,25 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
         let pr = this.playbackRates[this.state.playbackRateIdx]
         let pr_str = ''
         if(Number.isInteger(pr)) pr_str = pr.toString()
-        else pr_str = pr.toFixed(2)
+        else pr_str = pr.toPrecision(2)
 
         return <>
             <div className="annot-bar">
                 <div className="annot-bar-header">{this.props.name}</div>
-                <div className="annot-bar-section"><CaretRightOutlined /> {pr_str}x</div>
-                {this.state.paused ? <div className="annot-bar-section"><ClockCircleOutlined /> {this.state.currentTime.toFixed(1)} / {this.state.duration.toFixed(1)}</div> : <></>}
-                {this.state.paused ? <div className="annot-bar-section">frame {this.state.currentFrame}</div> : <></>}
-                {this.state.reverseCount.visible ? <div className="annot-bar-section" style={{'color': 'red'}}>{this.state.reverseCount.count}</div> : <></>}
+
+                {this.state.reverseCount.visible ? <div className="annot-bar-section" style={{ 'color': 'red' }}>{this.state.reverseCount.count}</div> : <></>}
+
+                    <div className="annot-bar-right">
+                        <CaretRightOutlined /> 
+                        <Button size={'small'} type={'danger'}>{pr_str}</Button> <CloseOutlined /> 
+                        <Button size={'small'} 
+                            type={this.state.opticalFlowEnabled ? 'danger' : 'dashed'}>
+                        {this.state.playbackBaseSpeed.toPrecision(2)} <Checkbox checked={this.state.opticalFlowEnabled} onChange={this.handleToggleOpticalFlow}></Checkbox>
+                        </Button>
+                    </div>
+                    <div className="annot-bar-right"><ClockCircleOutlined /> {this.state.currentTime.toFixed(1)} / {this.state.duration.toFixed(1)}</div>
+                    <div className="annot-bar-right">frame {this.state.currentFrame}</div>
+                
             </div>
             <MouseTracker
                 disable={this.props.replayMode} // disable mouse tracking in replay mode
@@ -315,6 +353,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
                     <OpencvFlowPlayer
                         {...this.props.media}
                         paused={this.state.paused}
+                        opticalFlowEnabled={this.state.opticalFlowEnabled}
                         pausePlay={this.handlePausePlay}
                         rate={this.playbackRates[this.state.playbackRateIdx]}
                         getMousePosition={this.getMousePosition}
@@ -341,6 +380,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
                         <List.Item><Text keyboard>[x]</Text> Go back 2 seconds</List.Item>
                         <List.Item><Text keyboard>[c]</Text> Go back 10 seconds</List.Item>
                         <List.Item><Text keyboard>[z]</Text> Body part is occluded</List.Item>
+                        <List.Item><Text keyboard>[v]</Text> Disable automatic speed control</List.Item>
                     </List>
                 </Col>
             </Row>
@@ -348,4 +388,4 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
     }
 }
 
-export default ContinuousKeypointTask
+export default withCookies(ContinuousKeypointTask)

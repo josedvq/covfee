@@ -104,9 +104,9 @@ a.header-covfee {
   background-color: blue;
 }
 
-.mouse-tracker.mouse-tracker-occluded > .video-container {
+/* .mouse-tracker.mouse-tracker-occluded > .video-container {
   cursor: progress;
-}
+} */
 
 /* Mouse visualization component */
 .mouse-visualizer {
@@ -172,6 +172,12 @@ a.header-covfee {
 }
 .annot-bar-section, .annot-bar-header{
   display: inline-block;
+  padding: 5px 15px;
+  font-size:0.8em;
+  border-right: 1px solid #363636;
+}
+.annot-bar-right {
+  float: right;
   padding: 5px 15px;
   font-size:0.8em;
   border-right: 1px solid #363636;
