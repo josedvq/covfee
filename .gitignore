@@ -1,5 +1,6 @@
 *__pycache__
-covfee/node_modules
+covfee/client/node_modules
+covfee/shared/node_modules
 covfee/alias.json
 covfee/tmp
 covfee/storybook-static
