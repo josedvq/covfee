@@ -130,17 +130,17 @@ def instance_submit(iid):
     return jsonify(instance.as_dict(with_tasks=True))
 
 
-@api.route('/instances/<iid>/copy')
-@admin_required
-def instance_copy(iid):
-    preserve_data = request.args.get('preserve_data', False)
-    instance = db.session.query(HITInstance).get(bytes.fromhex(iid))
-    if instance is None:
-        return jsonify({'msg': 'invalid instance'}), 400
-    instance_copy = instance.copy()
-    db.session.add(instance_copy)
-    db.session.commit()
-    return jsonify(instance_copy.as_dict(with_tasks=False))
+# @api.route('/instances/<iid>/copy')
+# @admin_required
+# def instance_copy(iid):
+#     preserve_data = request.args.get('preserve_data', False)
+#     instance = db.session.query(HITInstance).get(bytes.fromhex(iid))
+#     if instance is None:
+#         return jsonify({'msg': 'invalid instance'}), 400
+#     instance_copy = instance.copy()
+#     db.session.add(instance_copy)
+#     db.session.commit()
+#     return jsonify(instance_copy.as_dict(with_tasks=False))
 
 @api.route('/instances/<iid>/download')
 @admin_required
