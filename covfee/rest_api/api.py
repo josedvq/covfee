@@ -1,6 +1,6 @@
 import json
 
-from flask import request, jsonify, Blueprint, send_from_directory, make_response
+from flask import request, jsonify, Blueprint, send_from_directory, make_response, Response, stream_with_context
 from ..orm import db, app, Project, HIT, HITInstance, Task, TaskResponse, Chunk
 from .auth import admin_required
 import shutil
@@ -145,27 +145,40 @@ def instance_submit(iid):
 @api.route('/instances/<iid>/download')
 @admin_required
 def instance_download(iid):
-    is_csv = request.args.get('csv', False)
-
     instance = db.session.query(HITInstance).get(bytes.fromhex(iid))
     if instance is None:
-        print('here1')
         return jsonify({'msg': 'not found'}), 404
 
-    try:
-        dirpath, num_files = instance.make_download(csv=is_csv)
-    except NotImplementedError:
-        return jsonify({'msg': 'File aggregation not implemented for this task.'}), 404
+    responses = instance.responses.filter_by(submitted=True).all()
 
-    if dirpath is None or num_files == 0:
+    if len(responses) == 0:
         # nothing to download
         return '', 204
 
-    fname = os.path.join(app.config['TMP_PATH'], 'download')
-    shutil.make_archive(fname, 'zip', dirpath)
-    shutil.rmtree(dirpath)
+    def generate():
+        yield '['
+        for i, res in enumerate(responses):
+            yield json.dumps(res.make_results_object())
 
-    return send_from_directory(app.config['TMP_PATH'], 'download.zip', as_attachment=True)
+            if i < len(responses)-1:
+                yield ','
+        yield ']'
+    return Response(stream_with_context(generate()), mimetype='text/json')
+
+    # try:
+    #     dirpath, num_files = instance.make_download(csv=is_csv)
+    # except NotImplementedError:
+    #     return jsonify({'msg': 'File aggregation not implemented for this task.'}), 404
+
+    # if dirpath is None or num_files == 0:
+    #     # nothing to download
+    #     return '', 204
+
+    # fname = os.path.join(app.config['TMP_PATH'], 'download')
+    # shutil.make_archive(fname, 'zip', dirpath)
+    # shutil.rmtree(dirpath)
+
+    # return send_from_directory(app.config['TMP_PATH'], 'download.zip', as_attachment=True)
 
 
 # TASKS
@@ -221,7 +234,6 @@ def response(iid, kid):
         return jsonify(msg='No submitted responses found.'), 403
 
     response_dict = lastResponse.as_dict(with_chunk_data=with_chunk_data)
-    # response_dict['chunk_data'] = lastResponse.aggregate()
     return jsonify(response_dict)
     
 # record a response to a task

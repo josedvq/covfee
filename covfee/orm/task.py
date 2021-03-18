@@ -81,26 +81,36 @@ class TaskResponse(db.Model):
 
         response_dict['hitinstance_id'] = response_dict['hitinstance_id'].hex()
         if with_chunk_data:
-            response_dict['chunk_data'] = self.aggregate()['data']
+            response_dict['chunk_data'] = self.aggregate_chunk_data()
 
         return response_dict
 
-    def aggregate(self):
-        # apply task-specific aggregation method
+    def aggregate_chunk_data(self):
         if hasattr(tasks, self.task.type):
             task_class = getattr(tasks, self.task.type)
             chunk_data = [chunk.data for chunk in self.chunks]
             return task_class.process_response(self.data, chunk_data, self.hitinstance, self.task)
         else:
             # default aggregation
-            return {
-                'result': self.data,
-                'data': [x for y in self.chunks for x in y.data]
-            }
+            return [x for y in self.chunks for x in y.data]
+
+    def make_results_object(self):
+        
+        # apply task-specific aggregation method
+        result = {
+            'hit_id': self.hitinstance.hit.id.hex(),
+            'instance_id': self.hitinstance.id.hex(),
+            'task_id': self.task.id,
+            'hit_name': self.hitinstance.hit.name,
+            'task_name': self.task.name,
+            'data': self.aggregate_chunk_data()
+        }
+
+        return result
 
     def write_json(self, dirpath):
         fpath = os.path.join(dirpath, f'{self.task.name}_{self.index:d}.json')
-        processed_response = self.aggregate()
+        processed_response = self.make_results_object()
         if processed_response is None:
             return False
 
@@ -111,7 +121,7 @@ class TaskResponse(db.Model):
         if not hasattr(tasks, self.task.type):
             return False
         
-        processed_response = self.aggregate()
+        processed_response = self.make_results_object()
         if processed_response is None:
             return False
         

@@ -5,11 +5,7 @@ class ContinuousKeypointTask:
 
     @staticmethod
     def process_response(result, chunks, hitinstance, task):
-        return {
-            'hit_name': hitinstance.hit.name,
-            'task_name': task.name,
-            'data': [x for y in chunks for x in y]
-        }
+        return [x for y in chunks for x in y]
 
     @staticmethod
     def to_dataframe(response):

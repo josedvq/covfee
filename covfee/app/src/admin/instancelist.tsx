@@ -97,7 +97,7 @@ export class InstanceList extends React.Component {
                 title: 'Data',
                 dataIndex: 'url',
                 render: url => <>
-                    Download: <a onClick={this.getDownloadHandler(url, false)}>JSON</a> | <a onClick={this.getDownloadHandler(url, true)}>CSV</a>
+                    Download: <a onClick={this.getDownloadHandler(url, false)}>JSON</a>
                 </>
             }
         ]
