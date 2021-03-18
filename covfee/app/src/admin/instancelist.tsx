@@ -49,8 +49,8 @@ export class InstanceList extends React.Component {
     getDownloadHandler = (url: string) => {
 
         return () => {
-            const request_url = url + '/download'
-            download(request_url, 'results.json')
+            const request_url = url + '/download.json'
+            download(request_url)
         }
         // return () => {
         //     fetcher(request_url).then(async (response: any) => {

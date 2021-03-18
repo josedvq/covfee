@@ -142,7 +142,7 @@ def instance_submit(iid):
 #     db.session.commit()
 #     return jsonify(instance_copy.as_dict(with_tasks=False))
 
-@api.route('/instances/<iid>/download')
+@api.route('/instances/<iid>/download.json')
 @admin_required
 def instance_download(iid):
     instance = db.session.query(HITInstance).get(bytes.fromhex(iid))
