@@ -5,6 +5,11 @@ from .orm import db, app
 from .. import tasks
 import os
 
+def url_prepend(url):
+    if url[:4] != 'http':
+        return app.config['MEDIA_URL'] + '/' + url
+    return url
+
 class Task(db.Model):
     """ Represents a single task, like eg. annotating one video """
     __tablename__ = 'tasks'
@@ -29,8 +34,10 @@ class Task(db.Model):
         # fix URLs
         if 'media' in props:
             for k, v in props['media'].items():
-                if k[-3:] == 'url' and v[:4] != 'http':
-                    props['media'][k] = app.config['MEDIA_URL'] + '/' + v
+                if k[-3:] == 'url':
+                    props['media'][k] = url_prepend(v)
+                if k[-4:] == 'urls' and isinstance(v, list):
+                    props['media'][k] = [url_prepend(url) for url in v]
 
         self.props = props
 
