@@ -46,28 +46,32 @@ export class InstanceListAsync extends React.Component {
 
 export class InstanceList extends React.Component {
 
-    getDownloadHandler = (url: string, csv: boolean) => {
-        const request_url = url + '/download' + (csv ? '?csv=1' : '')
+    getDownloadHandler = (url: string) => {
+
         return () => {
-            fetcher(request_url).then(async (response: any) => {
-                if (!response.ok) {
-                    const data = await response.json()
-                    if (data.hasOwnProperty('msg')) {
-                        throw Error(data.msg)
-                    }
-                    throw Error(response.statusText)
-                }
-                return response
-            }).then(async (response: any) => {
-                if (response.status == 204) {
-                    return myinfo('Nothing to download.')
-                }
-                const blob = await response.blob()
-                download(blob)
-            }).catch(error => {
-                myerror('Error fetching task response.', error)
-            })
+            const request_url = url + '/download'
+            download(request_url, 'results.json')
         }
+        // return () => {
+        //     fetcher(request_url).then(async (response: any) => {
+        //         if (!response.ok) {
+        //             const data = await response.json()
+        //             if (data.hasOwnProperty('msg')) {
+        //                 throw Error(data.msg)
+        //             }
+        //             throw Error(response.statusText)
+        //         }
+        //         return response
+        //     }).then(async (response: any) => {
+        //         if (response.status == 204) {
+        //             return myinfo('Nothing to download.')
+        //         }
+        //         const blob = await response.blob()
+        //         download(blob)
+        //     }).catch(error => {
+        //         myerror('Error fetching task response.', error)
+        //     })
+        // }
     }
 
     render() {
@@ -97,7 +101,7 @@ export class InstanceList extends React.Component {
                 title: 'Data',
                 dataIndex: 'url',
                 render: url => <>
-                    Download: <a onClick={this.getDownloadHandler(url, false)}>JSON</a>
+                    Download: <a onClick={this.getDownloadHandler(url)}>JSON</a>
                 </>
             }
         ]

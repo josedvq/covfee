@@ -163,7 +163,10 @@ def instance_download(iid):
             if i < len(responses)-1:
                 yield ','
         yield ']'
-    return Response(stream_with_context(generate()), mimetype='text/json')
+
+    #res.headers["Content-Disposition"] = "attachment; filename=export.csv"
+    #res.headers["Content-Type"] = "text/csv"
+    return Response(stream_with_context(generate()), mimetype='application/octet-stream')
 
     # try:
     #     dirpath, num_files = instance.make_download(csv=is_csv)
