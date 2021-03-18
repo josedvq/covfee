@@ -10,6 +10,10 @@ interface Props extends MediaSpec {
      */
     paused: boolean,
     /**
+     * If true, automatic optical-flow-based speed adjustment is enabled
+     */
+    opticalFlowEnabled?: boolean,
+    /**
      * Controls the `paused` state variable. setPaused(val) will set `paused` to val, either true or false, to pause or play the video.
      */
     setPaused: Function,
@@ -63,6 +67,10 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
 
     state = {
         ready: false
+    }
+
+    static defaultProps = {
+        opticalFlowEnabled: true
     }
 
     componentDidMount() {
@@ -128,18 +136,20 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
 
     processVideo = () => {
         const mouse_normalized = this.props.getMousePosition()
-        if(mouse_normalized === undefined) {
+
+        if (!this.props.opticalFlowEnabled || mouse_normalized === undefined) {
             this.delay = 16
+            this.cap.read(this.frame_flow)
             this.flow_tag.current.seekToNextFrame().then(()=>{
                 this.video_tag.current.seekToNextFrame().then(()=>{
-                    this.props.onFrame(this.frame)
+                    this.props.onFrame(this.frame, this.delay)
                     this.frame += 1
                 })
             })
-            
         } else {
             const mouse = [mouse_normalized[0] * this.rect.width, mouse_normalized[0] * this.rect.height]
             // start processing.
+
             this.cap.read(this.frame_flow)
             const x1 = Math.max(0, mouse[0] * this.ratio - 10)
             const x2 = Math.min(mouse[0] * this.ratio + 10, this.props.flow_res[0])
@@ -150,13 +160,13 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
             const roi = this.frame_flow.roi(rect)
             cv.meanStdDev(roi, this.myMean, this.myStddev)
             this.delay = this.myMean.doubleAt(0, 0)
+
             this.flow_tag.current.seekToNextFrame().then(()=>{
                 this.video_tag.current.seekToNextFrame().then(()=>{
-                    this.props.onFrame(this.frame)
+                    this.props.onFrame(this.frame, this.delay)
                     this.frame += 1
                 })
             })
-            
         }
     }
 

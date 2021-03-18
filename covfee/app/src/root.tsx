@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { CookiesProvider } from 'react-cookie'
 import { 
     Layout, 
     Menu, 
@@ -34,28 +35,30 @@ class Root extends React.Component {
 
     render() {
         return <Router>
-            <UserContext>
-                <Layout>
+            <CookiesProvider>
+                <UserContext>
                     <Layout>
-                        <Switch>
-                            <Route path="/about">
-                                <About />
-                            </Route>
-                            <Route path="/login">
-                                <LoginWithRouter />
-                            </Route>
-                            <Route path="/hits/:hitId">
-                                <HITWithRouter/>
-                            </Route>
-                        </Switch>
+                        <Layout>
+                            <Switch>
+                                <Route path="/about">
+                                    <About />
+                                </Route>
+                                <Route path="/login">
+                                    <LoginWithRouter />
+                                </Route>
+                                <Route path="/hits/:hitId">
+                                    <HITWithRouter/>
+                                </Route>
+                            </Switch>
+                        </Layout>
+                        <Footer>
+                            <Text style={{float: 'right'}}>
+                                Experiment developed with <a href="https://github.com/josedvq/covfee">covfee</a>
+                            </Text>
+                        </Footer>
                     </Layout>
-                    <Footer>
-                        <Text style={{float: 'right'}}>
-                            Experiment developed with <a href="https://github.com/josedvq/covfee">covfee</a>
-                        </Text>
-                    </Footer>
-                </Layout>
-            </UserContext>
+                </UserContext>
+            </CookiesProvider>
         </Router>
     }
 }

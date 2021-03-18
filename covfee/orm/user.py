@@ -7,7 +7,7 @@ class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String)
-    password = db.Column(db.Binary)
+    password = db.Column(db.LargeBinary)
     roles = db.Column(db.JSON)
 
     def __init__(self, username: str, password: str, roles: list = ['user']):

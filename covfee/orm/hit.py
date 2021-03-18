@@ -1,4 +1,5 @@
 import shutil
+import random
 import os
 from urllib.parse import urljoin
 
@@ -6,6 +7,7 @@ from .orm import db, app
 from .task import Task
 from hashlib import sha256
 from .task import TaskResponse
+import sys
 
 hits_tasks = db.Table('hits_tasks',
     db.Column('hit_id', db.Integer, db.ForeignKey('hits.id'), primary_key=True),
@@ -22,7 +24,7 @@ class HIT(db.Model):
         db.UniqueConstraint('project_id', 'name'),
     )
 
-    id = db.Column(db.Binary, primary_key=True)
+    id = db.Column(db.LargeBinary, primary_key=True)
     type = db.Column(db.String)
     name = db.Column(db.String)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
@@ -90,6 +92,18 @@ class HIT(db.Model):
         #         # append the task
         #         self.tasks.append(Task(**task_dict))
 
+    def add_instances(self, num_instances):
+        instances = list()
+        for i in range(num_instances):
+            instance = HITInstance(
+                id=random.getrandbits(256).to_bytes(32, sys.byteorder),
+                submitted=False,
+                tasks=[]
+            )
+            self.instances.append(instance)
+            instances.append(instance)
+        return instances
+
     @staticmethod
     def get_hashstr(project_hashstr, id):
         return project_hashstr + id
@@ -130,8 +144,8 @@ class HITInstance(db.Model):
     """ Represents an instance of a HIT, to be performed by one user """
     __tablename__ = 'hitinstances'
 
-    id = db.Column(db.Binary, primary_key=True)
-    preview_id = db.Column(db.Binary, unique=True) # id used for visualization
+    id = db.Column(db.LargeBinary, primary_key=True)
+    preview_id = db.Column(db.LargeBinary, unique=True) # id used for visualization
     hit_id = db.Column(db.Integer, db.ForeignKey('hits.id'))
     tasks = db.relationship("Task", secondary=hitistances_tasks, backref='hitinstances', cascade="delete, all", order_by='Task.order.asc(),Task.created_at.asc()')
     responses = db.relationship("TaskResponse", backref='hitinstance', lazy='dynamic')
@@ -158,6 +172,11 @@ class HITInstance(db.Model):
 
     def get_completion_code(self):
         return sha256((self.id.hex() + app.config['COVFEE_SALT']).encode()).digest().hex()[:12]
+    
+    def copy(self, preserve_data=False):
+        new = HITInstance(id=sha256((self.id.encode())).digest())
+        new.hit_id = self.hit_id
+        return new
 
     def as_dict(self, with_tasks=False, with_responses=False):
         instance_dict = {c.name: getattr(self, c.name)

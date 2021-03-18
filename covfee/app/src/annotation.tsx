@@ -4,9 +4,6 @@ import { withRouter, generatePath } from 'react-router'
 import {
     EyeFilled, 
     EditOutlined,
-    CheckCircleOutlined,
-    BarsOutlined,
-    PictureOutlined,
     PlusCircleOutlined, LoadingOutlined, QuestionCircleOutlined, PlusOutlined
 } from '@ant-design/icons'
 import {
@@ -859,9 +856,6 @@ class Annotation extends React.Component<AnnotationProps, AnnotationState> {
 
         const task = this.renderTask(props)
         const taskInfo = this.getTaskInfo(task)
-
-        console.log(this.state.currTask / this.tasks.length)
-        console.log(this.tasks.length)
 
         return <div className="tool-container" ref={this.container}>
             <Row>
