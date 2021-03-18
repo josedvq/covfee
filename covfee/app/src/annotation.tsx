@@ -4,9 +4,6 @@ import { withRouter, generatePath } from 'react-router'
 import {
     EyeFilled, 
     EditOutlined,
-    CheckCircleOutlined,
-    BarsOutlined,
-    PictureOutlined,
     PlusCircleOutlined, LoadingOutlined, QuestionCircleOutlined, PlusOutlined
 } from '@ant-design/icons'
 import {

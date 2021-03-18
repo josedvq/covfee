@@ -62,6 +62,7 @@ setup(
         'Flask == 1.*',
         'flask_cors == 3.*',
         'Flask-SQLAlchemy == 2.*',
+        'SQLAlchemy<1.4.0',
         'gunicorn == 20.*',
         'flask-jwt-extended == 3.*',
         'click ==  7.*',

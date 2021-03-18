@@ -76,6 +76,7 @@ def project_download(pid):
 
     return send_from_directory(app.config['TMP_PATH'], 'download.zip', as_attachment=True)
 
+
 # HITS
 # return one hit
 @api.route('/hits/<hid>')
@@ -90,23 +91,18 @@ def hit(hid):
         with_instance_tasks=with_instance_tasks)
 
 
-@api.route('/hits/<hid>/instances/add')
+@api.route('/hits/<hid>/add_instances')
+@admin_required
 def instance_add(hid):
     num_instances = request.args.get('num_instances', 1)
     hit = db.session.query(HIT).get(bytes.fromhex(hid))
     if hit is None:
         return {'msg': 'not found'}, 404
     
-    hit.add_instances(num_instances)
+    new_instances = hit.add_instances(num_instances)
+    db.session.commit()
 
-    with_tasks = request.args.get('with_tasks', True)
-    with_instances = request.args.get('with_instances', True)
-    with_instance_tasks = request.args.get('with_instance_tasks', False)
-    
-    return jsonify_or_404(hit,
-                          with_tasks=with_tasks,
-                          with_instances=with_instances,
-                          with_instance_tasks=with_instance_tasks)
+    return jsonify([instance.as_dict(with_tasks=True) for instance in new_instances])
 
 # INSTANCES
 # return one HIT instance
@@ -133,6 +129,18 @@ def instance_submit(iid):
     
     return jsonify(instance.as_dict(with_tasks=True))
 
+
+@api.route('/instances/<iid>/copy')
+@admin_required
+def instance_copy(iid):
+    preserve_data = request.args.get('preserve_data', False)
+    instance = db.session.query(HITInstance).get(bytes.fromhex(iid))
+    if instance is None:
+        return jsonify({'msg': 'invalid instance'}), 400
+    instance_copy = instance.copy()
+    db.session.add(instance_copy)
+    db.session.commit()
+    return jsonify(instance_copy.as_dict(with_tasks=False))
 
 @api.route('/instances/<iid>/download')
 @admin_required
