@@ -13,16 +13,20 @@ import HTML5Player from '../players/html5'
 import '../css/gui.css'
 import classNames from 'classnames'
 import { OneDIntensity } from '../input/1d_intensity'
-import { BaseTaskProps, ReplayableTaskProps } from './task'
+import { BaseTaskProps, ReplayableTaskProps, VideoSpec } from './task'
 import keyboardManagerContext from '../input/keyboard_manager_context'
 
-interface Props extends BaseTaskProps, ReplayableTaskProps { }
+interface MemVideoSpec extends VideoSpec {
+    segment_urls: Array<string>
+}
+interface Props extends BaseTaskProps, ReplayableTaskProps {
+    media: MemVideoSpec
+}
 interface State {
-    intensity: number,
+    currSegment: number,
+    recall: number,
     paused: boolean,
     duration: number,
-    currentTime: number,
-    currentFrame: number,
     reverseCount: {
         visible: boolean,
         count: number
@@ -33,11 +37,10 @@ interface State {
 }
 class VideoRecallTask extends React.Component<Props, State> {
     state: State = {
-        intensity: 0,
+        currSegment: -1,
+        recall: 0,
         paused: true,
         duration: 0,
-        currentTime: 0,
-        currentFrame: 0,
         reverseCount: {
             visible: false,
             count: 0
@@ -59,22 +62,6 @@ class VideoRecallTask extends React.Component<Props, State> {
                 else this.props.buffer(this.player.current.currentFrame(), ['pause'])
                 this.togglePlayPause()
             }
-        },
-        'back2s': {
-            key: 'c',
-            description: 'Go back 2 seconds',
-            handler: () => {
-                this.back2s()
-                this.props.buffer(this.player.current.currentFrame(), ['back2s'])
-            }
-        },
-        'back10s': {
-            key: 'x',
-            description: 'Go back 10 seconds',
-            handler: () => {
-                this.back10s()
-                this.props.buffer(this.player.current.currentFrame(), ['back10s'])
-            }
         }
     }
 
@@ -90,7 +77,7 @@ class VideoRecallTask extends React.Component<Props, State> {
     }
 
     componentDidMount() {
-        this.context.addEvents(this.keyboardEvents)
+        // this.context.addEvents(this.keyboardEvents)
         this.props.setInstructionsFn(this.instructions)
     }
 
@@ -98,31 +85,18 @@ class VideoRecallTask extends React.Component<Props, State> {
         this.context.removeEvents(this.keyboardEvents)
     }
 
-    back2s = () => {
-        const t1 = Math.max(0, this.player.current.currentTime() - 2)
-        this.goto(t1)
-    }
-
-    back10s = () => {
-        const t2 = Math.max(0, this.player.current.currentTime() - 10)
-        this.goto(t2)
-    }
-
-    private goto = (time: number) => {
-        this.player.current.currentTime(time)
-        this.cancelReverseCount(this.startReverseCount)
-    }
-
     handleVideoLoad = (vid: HTMLVideoElement) => {
         this.setState({ duration: vid.duration })
     }
 
     handleVideoEnded = () => {
-        this.setState({
-            paused: true
-        }, () => {
+        if(this.state.currSegment < this.props.media.segment_urls.length - 1) {
+            this.setState({
+                currSegment: this.state.currSegment + 1
+            })
+        } else {   
             this.props.onEnd({ success: true })
-        })
+        }
     }
 
     togglePlayPause = () => {
@@ -145,8 +119,6 @@ class VideoRecallTask extends React.Component<Props, State> {
     handlePausePlay = (pause: boolean, cb?: Function) => {
         this.setState({
             paused: pause,
-            currentTime: this.player.current.currentTime(),
-            currentFrame: this.player.current.currentFrame()
         }, () => { if (cb) cb() })
     }
 
@@ -194,30 +166,25 @@ class VideoRecallTask extends React.Component<Props, State> {
     }
 
     render() {
+        let video_url = this.props.media.url
+        if(this.state.currSegment != -1) {
+            video_url = this.props.media.segment_urls[this.state.currSegment]
+        }
+
         return <>
-            <div className="annot-bar">
-                {this.state.paused ? <div className="annot-bar-section"><ClockCircleOutlined /> {this.state.currentTime.toFixed(1)} / {this.state.duration.toFixed(1)}</div> : <></>}
-                {this.state.paused ? <div className="annot-bar-section">frame {this.state.currentFrame}</div> : <></>}
-                {this.state.reverseCount.visible ? <div className="annot-bar-section" style={{ 'color': 'red' }}>{this.state.reverseCount.count}</div> : <></>}
-            </div>
             <Row>
                 <Col span={20}>
                     <HTML5Player
-                        {...this.props.media}
+                        url={video_url}
                         paused={this.state.paused}
                         pausePlay={this.handlePausePlay}
                         ref={this.player}
                         onEnded={this.handleVideoEnded}
                         onLoad={this.handleVideoLoad}
-                        onFrame={this.handleFrame}>
+                        controls={true}>
                     </HTML5Player>
                 </Col>
                 <Col span={4}>
-                    <OneDIntensity
-                        disabled={this.props.replayMode}
-                        intensity={this.state.intensity}
-                        setIntensity={this.setIntensity}
-                        keys={['ArrowUp', 'ArrowRight']} />
                 </Col>
             </Row>
         </>
@@ -228,7 +195,7 @@ class VideoRecallTask extends React.Component<Props, State> {
             <Row>
                 <Col span={24}>
                     <Title level={4}>Keyboard controls</Title>
-                    {this.context.renderInfo()}
+                    {/* {this.context.renderInfo()} */}
                 </Col>
             </Row>
         </>
