@@ -7,32 +7,6 @@ from setuptools import find_packages, setup
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-
-class NPMInstall(build_py):
-    def run(self):
-        import subprocess
-        print('npm install')
-        print(os.getcwd())
-        subprocess.check_call(['npm', 'install', '--prefix', 'covfee'])
-        build_py.run(self)
-        print(os.getcwd())
-
-class Install(install):
-    def run(self):
-        import subprocess
-        print('install')
-        print(os.getcwd())
-        subprocess.check_call(['npm', 'install', '--prefix', 'covfee'])
-        install.run(self)
-        print(os.getcwd())
-
-
-class Develop(develop):
-    def run(self):
-        import subprocess
-        subprocess.check_call(['npm', 'install', '--prefix', 'covfee'])
-        develop.run(self)
-
 setup(
     name='covfee',
     version='0.1.0',
@@ -48,6 +22,7 @@ setup(
         'console_scripts': [
             'covfee-installjs = covfee.commands:install_js',
             'covfee-maker = covfee.commands:make_db',
+            'covfee-filter = covfee.cli.filter:filter',
             'covfee-update = covfee.commands:update_db',
             'covfee-webpack = covfee.commands:webpack',
             'covfee-dev = covfee.commands:start_dev',
@@ -65,7 +40,8 @@ setup(
         'gunicorn == 20.*',
         'flask-jwt-extended == 3.*',
         'click ==  7.*',
-        'pandas == 1.*'
+        'pandas == 1.*',
+        'jsonschema == 3.*'
     ],
     python_requires='>=3.6'
 )

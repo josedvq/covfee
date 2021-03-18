@@ -1,8 +1,10 @@
 {
+    "id": "1d_annot",
     "name": "Continuous annot sample",
     "email": "j.d.vargasquiros@tudelft.nl",
     "hits": [
         {
+            "id": "1d_annot",
             "type": "annotation",
             "name": "1D annotation sample",
             "extra": {

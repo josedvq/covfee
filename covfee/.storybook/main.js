@@ -13,6 +13,7 @@ module.exports = {
       ...config.resolve.alias,
       // "Input": path.resolve(__dirname, "../app/src/input/"),
       // "Players": path.resolve(__dirname, "../app/src/players/"),
+      "Constants": path.resolve(__dirname, "./covfee_constants.json"),
       "CustomTasks": path.resolve(__dirname, "./dummy_tasks")
     };
     config.resolve.extensions.push(".ts", ".tsx");

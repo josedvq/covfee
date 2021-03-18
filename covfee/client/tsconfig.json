@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es2016",
+        "jsx": "preserve",
+        "skipLibCheck": true,
+        "noImplicitAny": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "strictFunctionTypes": true,
+        "sourceMap": true,
+        "baseUrl": ".",
+        "paths": {
+            "@covfee-types/*": ["../shared/types/*"]
+        }
+    },
+    "include": [
+        "./**/*",
+        "../shared/types/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "**/node_modules/*"
+    ]
+}

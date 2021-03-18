@@ -8,7 +8,7 @@ from hashlib import sha256
 import click
 from pathlib import Path
 
-from covfee.orm import app, db, Project, HIT, Task, Chunk, User
+from covfee.server.orm import app, db, Project, HIT, Task, Chunk, User
 
 # DATABASE CREATION
 def create_tables():
@@ -42,13 +42,6 @@ def prepare():
     if not any(fpaths_exist):
         with open(fpaths[0], 'w') as fh:
             fh.write('export {}')
-
-    # alias = {
-    #     'CustomTasks': custom_tasks_path
-    # }
-
-    # with open(os.path.join(covfee_path, 'alias.json'), 'w') as outfile:
-    #     json.dump(alias, outfile, indent=2)
 
 
 @click.command()
@@ -142,7 +135,7 @@ def webpack():
     prepare()
     
     # run the dev server
-    covfee_path = os.path.dirname(os.path.realpath(__file__))
+    covfee_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'client')
     cwd = os.getcwd()
     os.chdir(covfee_path)
     os.system(os.path.join('node_modules', '.bin', 'webpack-dev-server') +
@@ -153,13 +146,13 @@ def webpack():
 @click.command()
 def start_dev():
     os.environ['FLASK_ENV'] = 'development'
-    os.environ['FLASK_APP'] = 'covfee.start:create_app'
+    os.environ['FLASK_APP'] = 'covfee.server.start:create_app'
     os.system(sys.executable + ' -m flask run')
 
 @click.command()
 def start_prod():
     os.environ['FLASK_ENV'] = 'production'
-    os.environ['FLASK_APP'] = 'covfee.start:create_app'
+    os.environ['FLASK_APP'] = 'covfee.server.start:create_app'
     os.system(sys.executable + ' -m flask run')
 
 
@@ -172,7 +165,7 @@ def build():
     
     cwd = os.getcwd()
     os.chdir(covfee_path)
-    os.system(os.path.join('node_modules', '.bin', 'webpack') +
+    os.system(os.path.join('..', 'node_modules', '.bin', 'webpack') +
               ' --env.COVFEE_WD=' + cwd +
               ' --config ./webpack.dev.js' + ' --output-path '+bundle_path)
 
