@@ -18,7 +18,7 @@ export interface HitBaseSpec {
     /**
      * number of copies or instances of the HIT
      */
-    repeat: number
+    repeat?: number
 }
 
 export interface AnnotationHitSpec extends HitBaseSpec {
@@ -42,6 +42,8 @@ export interface TimelineHitSpec extends HitBaseSpec {
      */
     type: 'timeline'
 }
+
+export type HitSpec = AnnotationHitSpec | TimelineHitSpec
 
 
 export interface HitProps {

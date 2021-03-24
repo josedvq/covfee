@@ -2,6 +2,7 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "es2016",
+        "esModuleInterop": true,
         "jsx": "preserve",
         "skipLibCheck": true,
         "noImplicitAny": true,
@@ -11,7 +12,8 @@
         "sourceMap": true,
         "baseUrl": ".",
         "paths": {
-            "@covfee-types/*": ["../shared/types/*"]
+            "@covfee-types/*": ["../shared/types/*"],
+            "@docs/*": ["../docs/*"]
         }
     },
     "include": [

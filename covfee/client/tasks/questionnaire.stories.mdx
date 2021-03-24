@@ -1,14 +1,15 @@
 import { Meta, Story, Canvas, ArgsTable } from '@storybook/addon-docs/blocks'
 import QuestionnaireTask from './questionnaire'
-import {TaskVisualizer} from '../docs'
+import schemata from '@shared/schemata.json'
+import {TaskForm} from '@docs/utils/task_form'
 
 <Meta title="Tasks / Questionnaire" component={QuestionnaireTask} />
 
 export const Template = (args) => <TaskVisualizer {...args } />
 
-# Basic
+# Surveys and thin-slice annotations
 
-Let's define a story for our `Badge` component:
+The questionnaire task was created to support basic the creation of static questionnaires. These can be used to collect subject information as in a typical survey. The task can include media, which supports the use case of thin-slice annotations of video or audio.
 
 export const taskSpec = {
     "type": "QuestionnaireTask",
@@ -19,18 +20,41 @@ export const taskSpec = {
         "autoplay": true,
         "controls": false
     },
+    "instructions": "These are the form instructions",
     "form": {
         "fields": [{
             "prompt": "Does the person in the video laugh?",
             "input": {
-                "type": "Radio.Group",
+                "inputType": "Radio.Group",
                 "options": ["yes", "no"]
             }
         }]
+    },
+    "disabledUntilEnd": true
+}
+
+export const uiSchema = {
+    'ui:order': ['name', 'type', 'media','instructions','form','disabledUntilEnd'],
+    type: {'ui:widget':'hidden'},
+    media: {
+        type: {'ui:widget':'hidden'}
+    },
+    form: {
+        fields: {
+            items: {
+                'ui:order': ['prompt', 'input'],
+                input: {
+                    inputType: {'ui:widget':'hidden'}
+                }
+            }
+        }
     }
 }
 
-<TaskVisualizer task={taskSpec}/>
+<TaskForm spec={taskSpec} 
+    schema={schemata['definitions']['QuestionnaireTaskSpec']}
+    uiSchema={uiSchema}/>
 
-# Props
+## Component Props (for developers)
+
 <ArgsTable of={QuestionnaireTask}/>

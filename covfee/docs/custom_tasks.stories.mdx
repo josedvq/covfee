@@ -1,8 +1,8 @@
 import { Description } from '@storybook/addon-docs/blocks'
-import Doc from '../../../../docs/deployment.md'
+import Doc from '../../docs/custom_task.md'
 import marked from 'marked'
-import {updateMarkdownLinks} from '../docs'
+import {updateMarkdownLinks} from './utils/utils'
 
-<Meta title="Deploying covfee"/>
+<Meta title="Custom Tasks"/>
 
 <Description>{updateMarkdownLinks(marked(Doc))}</Description>

@@ -1,20 +1,16 @@
 import { Meta, Story, Canvas, ArgsTable } from '@storybook/addon-docs/blocks'
-import ContinuousKeypointTask from './continuous_keypoint'
-import {TaskVisualizer} from '../docs'
+import schemata from '@shared/schemata.json'
+import {ContinuousKeypointTask} from './continuous_keypoint'
+import {TaskForm} from '@docs/utils/task_form'
 
 # Continuous Keypoint Task
 
 <Meta title="Tasks / Continuous Keypoint" component={ContinuousKeypointTask} />
 
-export const Template = (args) => <TaskVisualizer {...args } />
-
 The continuous keypoint task was created for annotation of keypoints in a video. In the original application these keypoints corresponded to extremities of people in a social interaction. The task makes use of an optical flow video to play the video slower when the mouse cursor is close to moving parts, to aid annotators in the process. Skeletal keypoints were annotated one-by-one continuously, instead of traditional frame-based annotation in which some image frames are annotated to then be interpolated. In general, this task is especially useful when the target keypoint are visible for long periods of time.
 
-## Basic
-
-Let's define a story for our `Badge` component:
-
 export const taskSpec = {
+    "name": "Continuous annotation example",
     "type": "ContinuousKeypointTask",
     "media": {
         "type": "video",
@@ -36,7 +32,14 @@ export const taskSpec = {
     }
 }
 
-<TaskVisualizer task={taskSpec}/>
+export const uiSchema = {
+    'ui:order': ['name', 'type', 'media','controls'],
+    type: {'ui:widget':'hidden'},
+}
 
-## Props
+<TaskForm spec={taskSpec} 
+    schema={schemata['definitions']['ContinuousKeypointTaskSpec']}
+    uiSchema={uiSchema}/>
+
+## Component Props (for developers)
 <ArgsTable of={ContinuousKeypointTask}/>

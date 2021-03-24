@@ -5,15 +5,17 @@ from .orm import db, app
 from .. import tasks
 import os
 
+
 class Task(db.Model):
     """ Represents a single task, like eg. annotating one video """
     __tablename__ = 'tasks'
 
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.String)
-    order = db.Column(db.Integer)
     name = db.Column(db.String)
-    props = db.Column(db.JSON)
+
+    order = db.Column(db.Integer)
+    spec = db.Column(db.JSON)
     responses = db.relationship("TaskResponse", backref='task', cascade="all, delete-orphan")
     # backref hits
     # backref hitinstances
@@ -21,24 +23,24 @@ class Task(db.Model):
     created_at = db.Column(db.Date, default=datetime.datetime.now)
     updated_at = db.Column(db.Date, onupdate=datetime.datetime.now)
 
-    def __init__(self, type, order=0, name=None, **props):
+    def __init__(self, type, order=0, name=None, **spec):
         self.type = type
         self.order = order
         self.name = name
 
         # fix URLs
-        if 'media' in props:
-            for k, v in props['media'].items():
+        if 'media' in spec:
+            for k, v in spec['media'].items():
                 if k[-3:] == 'url' and v[:4] != 'http':
-                    props['media'][k] = app.config['MEDIA_URL'] + '/' + v
+                    spec['media'][k] = app.config['MEDIA_URL'] + '/' + v
 
-        self.props = props
+        self.spec = spec
 
     def as_dict(self, editable=False):
-       task_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns if c != 'props'}
-       task_dict = {**task_dict, **self.props}
-       task_dict['editable'] = editable
-       return task_dict
+        task_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns if c != 'spec'}
+        task_dict = {**task_dict, 'spec': self.spec}
+        task_dict['editable'] = editable
+        return task_dict
 
     def __str__(self):
         return f'{self.name}: chunks={len(self.chunks):d}'

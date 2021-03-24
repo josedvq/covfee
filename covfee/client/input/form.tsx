@@ -22,21 +22,21 @@ import {
 } from 'antd'
 
 const antd_components = {
-    'Cascader': Cascader,
+    // 'Cascader': Cascader,
     'Checkbox': Checkbox,
     'Checkbox.Group': Checkbox.Group,
-    'DatePicker': DatePicker,
+    // 'DatePicker': DatePicker,
     'Input': Input,
-    'Input.TextArea': Input.TextArea,
-    'Input.Password': Input.Password,
-    'InputNumber': InputNumber,
+    // 'Input.TextArea': Input.TextArea,
+    // 'Input.Password': Input.Password,
+    // 'InputNumber': InputNumber,
     'Radio.Group': Radio.Group,
-    'Rate': Rate,
-    'Select': Select,
+    // 'Rate': Rate,
+    // 'Select': Select,
     'Slider': Slider,
-    'Switch': Switch,
-    'TimePicker': TimePicker,
-    'TreeSelect': TreeSelect,
+    // 'Switch': Switch,
+    // 'TimePicker': TimePicker,
+    // 'TreeSelect': TreeSelect,
 }
 
 interface FormProps {
@@ -57,7 +57,7 @@ interface FormProps {
      */
     disabled: boolean
 }
-class Form extends React.Component<FormProps> {
+export class Form extends React.Component<FormProps> {
 
     static defaultProps = {
         disabled: false
@@ -174,10 +174,10 @@ interface FieldProps {
 class Field extends React.Component<FieldProps> {
     handleChange = (e: any) => {
         // components passing event objects to onChange
-        if (['Input', 'Radio.Group'].includes(this.props.input.type)) {
+        if (['Input', 'Radio.Group'].includes(this.props.input.inputType)) {
             this.props.setValues(this.props.idx, e.target.value)
         // the rest pass values directly
-        } else if (Object.keys(antd_components).includes(this.props.input.type)) {
+        } else if (Object.keys(antd_components).includes(this.props.input.inputType)) {
             this.props.setValues(this.props.idx, e)
         } else {
             console.log('Unrecognized argument type to callback')
@@ -188,10 +188,10 @@ class Field extends React.Component<FieldProps> {
         let prompt = <p>{this.props.prompt}</p>
         let input
 
-        if(!(this.props.input.type in antd_components)) {
+        if(!(this.props.input.inputType in antd_components)) {
             input = <p>Unimplemented input element!</p>
         } else {
-            const elementClass = antd_components[this.props.input.type]
+            const elementClass = antd_components[this.props.input.inputType]
             input = React.createElement(elementClass, {
                 ...this.props.input,
                 value: this.props.value,
@@ -204,5 +204,3 @@ class Field extends React.Component<FieldProps> {
         return <List.Item>{prompt}{input}</List.Item>
     }
 }
-
-export {Form}

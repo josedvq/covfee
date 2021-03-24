@@ -1,25 +1,38 @@
-import { Meta, Story, Canvas } from '@storybook/addon-docs/blocks'
+import { Meta, Story, Canvas, ArgsTable } from '@storybook/addon-docs/blocks'
 import Continuous1DTask from './continuous_1d'
-import {TaskVisualizer} from '../docs'
+import schemata from '@shared/schemata.json'
+import {TaskForm} from '@docs/utils/task_form'
 
 <Meta title="Tasks / Continuous 1D" component={Continuous1DTask} />
 
 export const Template = (args) => <TaskVisualizer {...args } />
 
-# Basic
+# Continuous annotation of a 1D variable
 
-Let's define a story for our `Badge` component:
+This component was designed to capture the continuous annotation of a single one-dimensional variable, like arousal or valence in annotations of emotional expresion. The user controls the annotation interface via mouse or keyboard.
 
 export const taskSpec = {
+    "name": "Continuous annotation example",
     "type": "Continuous1DTask",
     "media": {
         "type": "video",
         "url": "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4",
         "mute": true,
+    },
+    "intensityInput": {
+        "device": "mousemove"
     }
 }
 
-<TaskVisualizer task={taskSpec}/>
+export const uiSchema = {
+    'ui:order': ['name', 'type', 'media','controls','intensityInput'],
+    type: {'ui:widget':'hidden'},
+}
 
+<TaskForm spec={taskSpec} 
+    schema={schemata['definitions']['Continuous1DTaskSpec']}
+    uiSchema={uiSchema}/>
 
+## Component Props (for developers)
 
+<ArgsTable of={Continuous1DTask}/>

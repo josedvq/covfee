@@ -1,8 +1,8 @@
 import * as React from 'react'
-import { VideoSpec } from '../tasks/task'
+import { HTML5PlayerMedia } from '@covfee-types/players/html5'
 
 // video player using opencv to control playback speed
-interface Props extends VideoSpec{
+interface Props extends HTML5PlayerMedia {
     /**
      * Indicates if the video is paused or playing
      */

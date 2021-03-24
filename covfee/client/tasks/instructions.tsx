@@ -7,7 +7,7 @@ import {
 } from 'antd'
 import 'antd/dist/antd.css'
 import marked from 'marked'
-import { BaseTaskProps } from './types'
+import { BaseTaskProps } from './props'
 import { Spec } from '@covfee-types/tasks/instructions'
 
 interface Props extends BaseTaskProps, Spec {

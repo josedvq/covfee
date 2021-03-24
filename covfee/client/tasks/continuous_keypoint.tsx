@@ -15,10 +15,12 @@ import MouseTracker from '../input/mouse_tracker'
 import MouseVisualizer from '../input/mouse_visualizer'
 import { myerror } from '../utils'
 import { withCookies, Cookies } from 'react-cookie'
-import { ReplayableTaskProps} from './types'
-import { Spec} from '@covfee-types/tasks/continuous_keypoint'
+import { ReplayableTaskProps} from './props'
+import { ContinuousKeypointTaskSpec} from '@covfee-types/tasks/continuous_keypoint'
+import { TaskObject } from '@covfee-types/task';
 
-interface Props extends ReplayableTaskProps, Spec {
+interface Props extends TaskObject, ReplayableTaskProps {
+    spec: ContinuousKeypointTaskSpec,
     cookies: Cookies
 }
 
@@ -40,7 +42,7 @@ interface State {
         data: Array<number>
     }
 }
-class ContinuousKeypointTask extends React.Component<Props, State> {
+export class ContinuousKeypointTask extends React.Component<Props, State> {
     state: State = {
         paused: true,
         occluded: false,
@@ -317,7 +319,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
 
         return <>
             <div className="annot-bar">
-                <div className="annot-bar-header">{this.props.name}</div>
+                <div className="annot-bar-header">{this.props.spec.name}</div>
 
                 {this.state.reverseCount.visible ? <div className="annot-bar-section" style={{ 'color': 'red' }}>{this.state.reverseCount.count}</div> : <></>}
 
@@ -344,7 +346,7 @@ class ContinuousKeypointTask extends React.Component<Props, State> {
                 
                 <MouseVisualizer disable={!this.props.replayMode} data={this.state.replayMode.data}>
                     <OpencvFlowPlayer
-                        {...this.props.media}
+                        {...this.props.spec.media}
                         paused={this.state.paused}
                         opticalFlowEnabled={this.state.opticalFlowEnabled}
                         pausePlay={this.handlePausePlay}

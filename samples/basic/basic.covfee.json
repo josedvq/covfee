@@ -7,6 +7,7 @@
         "name": "Sample Questionnaire",
         "type": "timeline",
         "tasks": [{
+            "name": "example task",
             "type": "QuestionnaireTask",
             "media": {
                 "type": "video",
@@ -19,7 +20,27 @@
                 "fields": [{
                     "prompt": "Does the person in the video laugh?",
                     "input": {
-                        "type": "Radio.Group",
+                        "inputType": "Radio.Group",
+                        "options": ["yes", "no"]
+                    }
+                }]
+            }
+        },
+        {
+            "name": "example task",
+            "type": "QuestionnaireTask",
+            "media": {
+                "type": "video",
+                "url": "1_cam_3.mp4",
+                "mute": true,
+                "autoplay": true,
+                "controls": false
+            },
+            "form": {
+                "fields": [{
+                    "prompt": "Does the person in the video laugh?",
+                    "input": {
+                        "inputType": "Radio.Group",
                         "options": ["yes", "no"]
                     }
                 }]

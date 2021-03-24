@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { myerror } from '../utils'
 import keyboardManagerContext from './keyboard_manager_context'
-
+import { Intensity1DInputSpec} from '@covfee-types/input/1d_intensity'
 
 interface Props {
     /**
@@ -19,17 +19,7 @@ interface Props {
     /**
      * Indicates how the intensity is input
      */
-    input: 'mouse' | {
-        device: 'keyboard' | 'gamepad',
-        /**
-         * Increase intensity
-         */
-        up: string,
-        /**
-         * Decrease intensity
-         */
-        down: string
-    }
+    input: Intensity1DInputSpec
 }
 
 interface State {
@@ -39,7 +29,7 @@ interface State {
 class OneDIntensity extends React.Component<Props, State> {
 
     static defaultProps = {
-        input: 'mouse'
+        controls: 'mousemove'
     }
 
     container = React.createRef<HTMLDivElement>()
@@ -61,12 +51,12 @@ class OneDIntensity extends React.Component<Props, State> {
     }
 
     componentWillUnmount() {
-        this.context.removeEvents(this.keyboardEvents)
-        document.removeEventListener('mousemove', this.mousemove)
+        this.context.removeEvents(this.buttonEvents)
+        document.removeEventListener('mousemove', this.mousemove, false)
         this.observer.disconnect()
     }
 
-    keyboardEvents = {
+    buttonEvents = {
         'up': {
             key: 'ArrowUp',
             description: 'Increase',
@@ -84,10 +74,16 @@ class OneDIntensity extends React.Component<Props, State> {
     }
 
     startInput = () => {
-        if (this.props.input == 'mouse') {
+        if (this.props.input.device == 'mousemove') {
             document.addEventListener('mousemove', this.mousemove, false)
         } else if (this.props.input.device == 'keyboard') {
-            this.context.addEvents(this.keyboardEvents)
+            if (this.props.input.controls) {
+                for (const [id, key] of Object.entries(this.props.input.controls)) {
+                    this.buttonEvents[id]['key'] = key
+                    
+                }
+            }
+            this.context.addEvents(this.buttonEvents)
         } else {
             myerror('Unrecognized input device.')
         }

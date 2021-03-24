@@ -8,15 +8,29 @@ import {
 import VideojsPlayer from '../players/videojs'
 import WaveSurferBasicPlayer from '../players/wavesurfer_basic'
 import {Form} from '../input/form'
-import { BaseTaskProps } from './types'
-import { Spec } from '@covfee-types/tasks/questionnaire'
+import { BaseTaskProps } from './props'
+import { QuestionnaireTaskSpec } from '@covfee-types/tasks/questionnaire'
+import { TaskObject } from '@covfee-types/task'
 
-interface Props extends BaseTaskProps, Spec {}
+interface Props extends TaskObject, BaseTaskProps {
+    spec: QuestionnaireTaskSpec
+}
 
-class QuestionnaireTask extends React.Component<Props> {
+type Values = Array<Array<string | number>>
+interface State {
+    media: {
+        paused: boolean
+    },
+    form: {
+        values: Values
+        completed: boolean
+        disabled: boolean
+    }
+}
 
-    private player = React.createRef()
-    public state = {
+class QuestionnaireTask extends React.Component<Props, State> {
+
+    state: State = {
         media: {
             paused: true
         },
@@ -27,16 +41,13 @@ class QuestionnaireTask extends React.Component<Props> {
         }
     }
 
-    static defaultProps = {
-        disabledUntilEnd: false
-    }
-
     constructor(props: Props) {
         super(props)
-        this.state.form.disabled = props.disabledUntilEnd
+        if (props.spec.disabledUntilEnd != undefined)
+            this.state.form.disabled = props.spec.disabledUntilEnd
     }
 
-    handleChange = (values: object) => {
+    handleChange = (values: Values) => {
         const has_null = values[0].some((val) => {
             return val === null
         })
@@ -66,24 +77,25 @@ class QuestionnaireTask extends React.Component<Props> {
     render() {
         // instructions
         let instructions = <></>
-        if(this.props.instructions) {
+        if(this.props.spec.instructions) {
             instructions = <Row gutter={16} style={{ padding: '1em' }}>
                 <Col span={24}>
-                    <Alert type="info" message={'Instructions'} description={this.props.instructions}  showIcon/>
+                    <Alert type="info" message={'Instructions'} description={this.props.spec.instructions}  showIcon/>
                 </Col>
             </Row>
         }
 
         // media
         let media
-        switch(this.props.media.type) {
+        switch(this.props.spec.media.type) {
             case 'video':
-                media = <VideojsPlayer {...this.props.media} onEnded={this.handleMediaEnded} />
+                media = <VideojsPlayer 
+                            {...this.props.spec.media} 
+                            onEnded={this.handleMediaEnded} />
                 break
             case 'audio':
                 media = <WaveSurferBasicPlayer 
-                            {...this.props.media} 
-                            paused={this.state.media.paused} 
+                            {...this.props.spec.media} 
                             onEnded={this.handleMediaEnded}/>
                 break
             default:
@@ -96,8 +108,7 @@ class QuestionnaireTask extends React.Component<Props> {
                     {media}
                 </Col>
                 <Col span={8}>
-                    <Form {...this.props.form}
-                        key={this.props.form}
+                    <Form {...this.props.spec.form}
                         values={this.state.form.values} 
                         disabled={this.state.form.disabled} 
                         setValues={this.handleChange}></Form>

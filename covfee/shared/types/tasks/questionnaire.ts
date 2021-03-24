@@ -1,42 +1,102 @@
 import { BaseTaskSpec } from '../task'
-import {CascaderProps, CheckboxOptionType, CheckboxProps, InputProps, RadioGroupProps, SliderSingleProps} from 'antd'
-import { CheckboxGroupProps, CheckboxValueType } from 'antd/lib/checkbox/Group'
-import {
-    Cascader,
-    Checkbox,
-    DatePicker,
-    Input,
-    InputNumber,
-    Radio,
-    Rate,
-    Select,
-    Slider,
-    Switch,
-    TimePicker,
-    TreeSelect} from 'antd'
-import { SiderProps } from 'antd/lib/layout'
+import {CheckboxProps, InputProps, RadioGroupProps, SliderSingleProps} from 'antd'
+import { WavesurferPlayerMedia } from '../players/wavesurfer'
+import { VideojsPlayerMedia } from 'types/players/videojs'
+
 
 export type CascaderSpec = {
+    /**
+     * @default "Cascader"
+     */
     inputType: 'Cascader'
     // TODO: complete spec
 }
 
-export type CheckboxSpec = { inputType: 'Checkbox' } & Pick<CheckboxProps, 
-    "autoFocus" | "defaultChecked">
+/**
+ * Props for the antd checkbox
+ * @title checkbox
+ */
+export type CheckboxSpec = Pick<CheckboxProps, "defaultChecked"> & { 
+    /**
+     * @default "Checkbox"
+     */
+    inputType: 'Checkbox' 
+}
 
-export type CheckboxGroupSpec = { inputType: 'Checkbox.Group' } & Pick<CheckboxGroupProps, 
-    "options" | "defaultValue">
+/**
+* Props for the antd checkbox group
+* @title checkbox-group
+*/
+export type CheckboxGroupSpec = { 
+    /**
+     * @default "Checkbox.Group"
+     */
+    inputType: 'Checkbox.Group' 
+    options: Array<string>
+    defaultValue: string
+}
 
-export type InputFieldSpec = { inputType: 'Input' } & Pick<InputProps, 
-    "type" | "allowClear" | "bordered" | "defaultValue" | "maxLength" | "size">
+/**
+* Props for the antd input field
+* @title input
+*/
+export type InputFieldSpec = Pick<InputProps, "type" | "allowClear" | "bordered" | "defaultValue" | "maxLength" | "size"> &
+{
+    /**
+     * @default "Input"
+     */
+    inputType: 'Input' 
+}
 
-export type RadioSpec = { inputType: 'Radio.Group' } & Pick<RadioGroupProps, 
-    "options" | "optionType" | "defaultValue" | "buttonStyle" | "size">
+/**
+* Props for the antd radio
+* @title radio
+*/
+export type RadioSpec = Pick<RadioGroupProps, "optionType" | "buttonStyle" | "size"> &
+{ 
+    /**
+     * @default "Radio.Group"
+     */
+    inputType: 'Radio.Group'
+    options: Array<string>
+    defaultValue: string
+}
 
-export type SliderSpec = { inputType: 'Slider' } & Pick<SliderSingleProps, 
-    "autoFocus" | "defaultValue" | "dots" | "included" | "marks" | "max" | "min" | "range" | "reverse" | "step" | "tooltipPlacement" | "tooltipVisible" | "vertical">
+/**
+* Props for the antd slider
+* @title slider
+*/
+export type SliderSpec = Pick<SliderSingleProps, "autoFocus" | "defaultValue" | "dots" | "included" | "range" | "reverse" | "tooltipPlacement" | "tooltipVisible" | "vertical"> &
+{ 
+    /**
+     * The maximum value the slider can slide to
+     * @default 7
+     */
+    max: number
+    /**
+     * The minimum value the slider can slide to
+     * @default 0
+     */
+    min: number
+    /**
+     * The granularity the slider can step through values. Must greater than 0, and be divided by (max - min) . When marks no null, step can be null
+     * @default 1
+     */
+    step: number
+    /**
+     * @default "Slider"
+     */
+    inputType: 'Slider'
+    /**
+     * @default {0: "0", 1: "1", 2: "2"}
+     */
+    marks: {[key: number]: {
+        label: string | number
+    }}
+}
 
-export type InputSpec = CascaderSpec | CheckboxSpec | CheckboxGroupSpec | InputFieldSpec | RadioSpec
+
+export type InputSpec = CheckboxSpec | CheckboxGroupSpec | InputFieldSpec | RadioSpec | SliderSpec
 
 export interface FieldSpec {
     prompt: string
@@ -47,7 +107,16 @@ export interface FormSpec {
     fields: Array<FieldSpec>
 }
 
-export interface Spec extends BaseTaskSpec {
+export interface QuestionnaireTaskSpec extends BaseTaskSpec {
+    type: 'QuestionnaireTask'
+    /**
+     * Media file to be displayed.
+     */
+    media: VideojsPlayerMedia | WavesurferPlayerMedia
+    /**
+     * Instructions to be displayed before the form
+     */
+    instructions: string
     /**
      * Specification of the form to be created.
      */

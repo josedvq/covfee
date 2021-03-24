@@ -52,24 +52,25 @@ class KeyboardManagerContext extends React.Component {
 
     addEvents = (events: EventsSpec) => {
         // add the events to current spec
+        // events with same name and same keys will be overwritten
         this.events = {
             ...this.events,
             ...events
         }
 
-        Object.keys(events).forEach(key => {
-            this.keysToIds[events[key]['key']] = key
+        Object.keys(events).forEach(id => {
+            this.keysToIds[events[id]['key']] = id
         })
     }
 
     removeEvents = (events: EventsSpec) => {
-        
+        // TODO: implement code for removing events
     }
 
     renderInfo = () => {
         return <List>
             {Object.entries(this.events).map(([key, ev], i) => {
-                return <List.Item><Text keyboard>[{ev.key}]</Text> {ev.description}</List.Item>
+                return <List.Item><Text keyboard><span style={{ color: 'black' }}>[{ev.key}]</span></Text> {ev.description}</List.Item>
             })}
         </List>
     }

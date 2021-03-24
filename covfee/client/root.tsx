@@ -18,7 +18,7 @@ import {
     Route,
     Link,
 } from "react-router-dom"
-import {HITWithRouter} from './hit'
+import {HITWithRouter} from './hit_loader'
 
 const { SubMenu } = Menu;
 const { Header, Footer, Content, Sider } = Layout;

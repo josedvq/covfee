@@ -22,7 +22,8 @@ setup(
         'console_scripts': [
             'covfee-installjs = covfee.commands:install_js',
             'covfee-maker = covfee.commands:make_db',
-            'covfee-filter = covfee.cli.filter:filter',
+            'covfee-filter = covfee.cli.filter:validate',
+            'covfee-schemata = covfee.cli.filter:cmd_make_schemata',
             'covfee-update = covfee.commands:update_db',
             'covfee-webpack = covfee.commands:webpack',
             'covfee-dev = covfee.commands:start_dev',
@@ -41,7 +42,9 @@ setup(
         'flask-jwt-extended == 3.*',
         'click ==  7.*',
         'pandas == 1.*',
-        'jsonschema == 3.*'
+        'jsonschema == 3.*',
+        'halo == 0.*',
+        'colorama == 0.3.*'
     ],
     python_requires='>=3.6'
 )

@@ -1,10 +1,12 @@
 const path = require("path");
 module.exports = {
   "stories": [
-    "../app/src/**/*.stories.mdx",
-    "../app/src/**/*.stories.@(js|jsx|ts|tsx)"
+    "../docs/**/*.stories.mdx",
+    "../client/**/*.stories.mdx",
+    "../client/**/*.stories.@(js|jsx|ts|tsx)"
   ],
   "addons": [
+    "@storybook/addon-docs",
     "@storybook/addon-links",
     "@storybook/addon-essentials"
   ],
@@ -14,7 +16,11 @@ module.exports = {
       // "Input": path.resolve(__dirname, "../app/src/input/"),
       // "Players": path.resolve(__dirname, "../app/src/players/"),
       "Constants": path.resolve(__dirname, "./covfee_constants.json"),
-      "CustomTasks": path.resolve(__dirname, "./dummy_tasks")
+      "CustomTasks": path.resolve(__dirname, "./dummy_tasks"),
+      "@docs": path.resolve(__dirname, "../docs"),
+      "@client": path.resolve(__dirname, "../client"),
+      "@shared": path.resolve(__dirname, "../shared"),
+      "@covfee-types": path.resolve(__dirname, "../shared/types")
     };
     config.resolve.extensions.push(".ts", ".tsx");
 

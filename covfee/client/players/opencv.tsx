@@ -1,16 +1,10 @@
 /* global cv */
 import * as React from 'react'
-import { MediaSpec } from 'Tasks/task'
+import { OpencvFlowPlayerMedia } from '@covfee-types/players/opencv';
 import { myinfo } from '../utils'
 
-function sleepFor(sleepDuration) {
-    var now = new Date().getTime();
-    while (new Date().getTime() < now + sleepDuration) { /* do nothing */ }
-}
-
-
 // video player using opencv to control playback speed
-interface Props extends MediaSpec {
+interface Props extends OpencvFlowPlayerMedia {
     /**
      * If true, the player will pause. The parent element can play/pause playback through changing this prop.
      */
@@ -31,14 +25,6 @@ interface Props extends MediaSpec {
      * Returns the mouse position, used to adjust the video playback speed.
      */
     getMousePosition: Function,
-    /**
-     * URL of the optical flow extracted from the video. The number of frames in this file should match that of the video.
-     */
-    flow_url: string,
-    /**
-     * Resolution of the optical flow video. May be different from the video resolution for performance reasons.
-     */
-    flow_res: Array<number>
     /**
      * This method is called when the video metadata has loaded (`loadedmetadata`).
      */
@@ -142,8 +128,6 @@ class OpencvFlowPlayer extends React.PureComponent<Props> {
 
     processVideo = () => {
         const mouse_normalized = this.props.getMousePosition()
-
-        sleepFor(200)
 
         if (!this.props.opticalFlowEnabled || mouse_normalized === undefined) {
             this.delay = 0//16

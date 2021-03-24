@@ -10,10 +10,13 @@ import HTML5Player from '../players/html5'
 import '../css/gui.css'
 import { OneDIntensity } from '../input/1d_intensity'
 import keyboardManagerContext from '../input/keyboard_manager_context'
-import { ReplayableTaskProps } from './types'
-import { Spec} from '@covfee-types/tasks/continuous_1d'
+import { TaskObject} from '@covfee-types/task'
+import { ReplayableTaskProps } from './props'
+import { Continuous1DTaskSpec} from '@covfee-types/tasks/continuous_1d'
 
-interface Props extends ReplayableTaskProps, Spec {}
+interface Props extends TaskObject, ReplayableTaskProps {
+    spec: Continuous1DTaskSpec
+}
 
 interface State {
     intensity: number,
@@ -48,7 +51,7 @@ class Continuous1DTask extends React.Component<Props, State> {
     player = React.createRef<HTML5Player>()
     reverseCountTimerId: number = null
 
-    keyboardEvents = {
+    buttonEvents = {
         'play-pause': {
             key: ' ',
             description: 'Play/pause the video and data capture.',
@@ -76,24 +79,24 @@ class Continuous1DTask extends React.Component<Props, State> {
         }
     }
 
-    constructor(props: Props, context) {
-        super(props, context)
+    constructor(props: Props) {
+        super(props)
 
         // update default keyboard keys with props
-        if (props.controls) {
-            for (const [id, key] in Object.entries(props.controls)) {
-                this.keyboardEvents[id]['key'] = key
+        if (props.spec.controls) {
+            for (const [id, key] of Object.entries(props.spec.controls)) {
+                this.buttonEvents[id]['key'] = key
             }
         }
     }
 
     componentDidMount() {
-        this.context.addEvents(this.keyboardEvents)
+        this.context.addEvents(this.buttonEvents)
         this.props.setInstructionsFn(this.instructions)
     }
 
     componentWillUnmount() {
-        this.context.removeEvents(this.keyboardEvents)
+        this.context.removeEvents(this.buttonEvents)
     }
 
     back2s = () => {
@@ -239,14 +242,14 @@ class Continuous1DTask extends React.Component<Props, State> {
     render() {
         return <>
             <div className="annot-bar">
-                {this.state.paused ? <div className="annot-bar-section"><ClockCircleOutlined /> {this.state.currentTime.toFixed(1)} / {this.state.duration.toFixed(1)}</div> : <></>}
-                {this.state.paused ? <div className="annot-bar-section">frame {this.state.currentFrame}</div> : <></>}
+                <div className="annot-bar-section"><ClockCircleOutlined /> {this.state.currentTime.toFixed(1)} / {this.state.duration.toFixed(1)}</div>
+                <div className="annot-bar-section">frame {this.state.currentFrame}</div>
                 {this.state.reverseCount.visible ? <div className="annot-bar-section" style={{ 'color': 'red' }}>{this.state.reverseCount.count}</div> : <></>}
             </div>
             <Row>
                 <Col span={20}>
                     <HTML5Player
-                        {...this.props.media}
+                        {...this.props.spec.media}
                         paused={this.state.paused}
                         pausePlay={this.handlePausePlay}
                         ref={this.player}
@@ -260,7 +263,7 @@ class Continuous1DTask extends React.Component<Props, State> {
                         disabled={this.props.replayMode}
                         intensity={this.state.intensity}
                         setIntensity={this.setIntensity}
-                        keys={['ArrowUp', 'ArrowRight']} />
+                        input={this.props.spec.intensityInput} />
                 </Col>
             </Row>
         </>

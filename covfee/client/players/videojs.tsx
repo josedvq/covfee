@@ -1,13 +1,28 @@
 import * as React from 'react'
-import { VideoSpec } from 'Tasks/task'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
+import { VideojsPlayerMedia } from '@covfee-types/players/videojs'
 
-interface Props extends VideoSpec {
+interface Props extends VideojsPlayerMedia {
+    /**
+     * Paused status of the video
+     */
     paused: boolean,
+    /**
+     * videojs option. If true the video will be played as soon as the component loads.
+     */
     autoplay?: boolean,
+    /**
+     * videojs option. If true the video player will display controls
+     */
     controls?: boolean,
+    /**
+     * videojs option. If true the video player will be resizable
+     */
     fluid?: boolean,
+    /**
+     * videojs option. Aspect ratio of the player frame, eg: 16:9 or 4:3
+     */
     aspectRatio?: string,
     onPlay?: Function,
     onPause?: Function,
@@ -15,7 +30,7 @@ interface Props extends VideoSpec {
 }
 // video.js player from the docs: https://github.com/videojs/video.js/blob/master/docs/guides/react.md
 class VideojsPlayer extends React.PureComponent<Props> {
-    private player: any
+    player: videojs.Player
     private videoNode = React.createRef<HTMLVideoElement>()
 
     static defaultProps = {

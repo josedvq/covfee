@@ -1,5 +1,3 @@
-import {MediaSpec} from './media'
-
 export interface UserTaskSpec {
     /**
      * Task type 
@@ -9,19 +7,26 @@ export interface UserTaskSpec {
 
 export interface BaseTaskSpec {
     /**
-     * Task type 
-     */
-    type: string,
-    /**
      * Name of the task. It is displayed in covfee (eg. "Video 3")
      */
     name: string,
-    /**
-     * Media file to be displayed.
-     */
-    media: MediaSpec
 }
+export interface ContinuousTaskSpec extends BaseTaskSpec { }
 
-export interface ContinuousTaskSpec extends BaseTaskSpec {
-
+export interface TaskResponse {
+    id: number,
+    task_id: number,
+    hitinstance_id: string,
+    index: number,
+    submitted: boolean,
+    data: any,
+    chunk_data: any
+}
+export interface TaskObject {
+    id: number,
+    type: string,
+    order: number,
+    name: string,
+    spec: any,
+    responses: Array<TaskResponse>
 }

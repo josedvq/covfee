@@ -1,4 +1,4 @@
-import '../app/src/css/gui.css'
+import '../client/css/gui.css'
 import 'antd/dist/antd.css'
 
 export const parameters = {

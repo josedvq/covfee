@@ -2,10 +2,10 @@ import * as React from 'react'
 import {
     Button
 } from 'antd'
-import { AudioSpec } from 'Tasks/task'
 import WaveSurfer from 'wavesurfer.js'
+import { WavesurferPlayerMedia } from '@covfee-types/players/wavesurfer'
 
-interface Props extends AudioSpec {
+interface Props extends WavesurferPlayerMedia {
     /**
      * called when the audio starts playing
      */
@@ -37,11 +37,10 @@ class WaveSurferBasicPlayer extends React.PureComponent<Props, State> {
         paused: true
     }
 
-    player: any
+    player: WaveSurfer
     container = React.createRef<HTMLDivElement>()
 
-    static defaultProps: Props = {
-        url: null,
+    static defaultProps = {
         playPauseButton: true
     }
 
