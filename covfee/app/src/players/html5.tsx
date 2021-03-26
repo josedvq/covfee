@@ -4,12 +4,24 @@ import { VideoSpec } from '../tasks/task'
 // video player using opencv to control playback speed
 interface Props extends VideoSpec{
     /**
+     * Show HTML5 controls or not
+     */
+    controls?: boolean
+    /**
+     * autoplay the video or not
+     */
+    autoplay?: boolean
+    /**
+     * Mute the video
+     */
+    muted?: boolean
+    /**
      * Indicates if the video is paused or playing
      */
-    paused: boolean,
-    onLoad: Function,
-    onFrame: Function,
-    onEnded: Function,
+    paused: boolean
+    onLoad: Function
+    onFrame: Function
+    onEnded: Function
     pausePlay: Function
 }
 
@@ -37,6 +49,12 @@ class HTML5Player extends React.PureComponent<Props> {
         if (this.props.paused !== prevProps.paused) {
             if(this.props.paused) this.pause()
             else this.play()
+        }
+
+        if(this.props.url !== prevProps.url) {
+            this.video_tag.current.load()
+            this.video_tag.current.play()
+            console.log('replay')
         }
     }
 
@@ -89,8 +107,21 @@ class HTML5Player extends React.PureComponent<Props> {
     //style={{ display: 'none' }}
     render() {
         return <>
-            <video ref={this.video_tag} width="100%" crossOrigin="Anonymous" preload="auto" muted> 
-                <source src={this.props.url} type={"video/mp4"}></source>
+            <video 
+                ref={this.video_tag} 
+                width="100%" 
+                crossOrigin="Anonymous" 
+                preload="auto"
+                muted={this.props.muted}
+                controls={this.props.controls}
+                autoPlay={this.props.autoplay}>
+
+                {Array.isArray(this.props.url) ? 
+                    this.props.url.map((url, i) => {
+                        return <source src={url} type={"video/mp4"}></source>
+                    }) :
+                    <source src={this.props.url} type={"video/mp4"}></source>
+                }
             </video>
         </>
     }
