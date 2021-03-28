@@ -27,10 +27,6 @@ export interface AnnotationHitSpec extends HitBaseSpec {
      */
     type: 'annotation'
     /**
-     * media file for the HIT (for annotation HITs only)
-     */
-    media: MediaSpec
-    /**
      * List of tasks specifications that users can create
      */
     userTasks: Record<string, UserTaskSpec>

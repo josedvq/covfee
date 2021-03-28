@@ -9,14 +9,15 @@ import { CodeBlock, LivePreviewFrame} from './utils'
 import { HITVisualizer} from './hit_visualizer'
 
 interface Props {
-    spec: TaskSpec,
-    schema: object,
+    spec: TaskSpec
+    schema: object
     uiSchema: object
+    formEnabled: boolean
 }
 
 interface State {
-    error: boolean,
-    spec: TaskSpec,
+    error: boolean
+    spec: TaskSpec
     currKey: number
 }
 
@@ -26,6 +27,10 @@ export class TaskForm extends React.Component<Props, State> {
         error: false,
         spec: null,
         currKey: 0
+    }
+
+    static defaultProps = {
+        formEnabled: false
     }
 
     formData = null
@@ -43,7 +48,8 @@ export class TaskForm extends React.Component<Props, State> {
     }
 
 
-    handleUpdatePreview = () => {
+    handleUpdatePreview: React.MouseEventHandler<HTMLDivElement> = (e) => {
+        e.currentTarget.blur()
         this.setState({
             currKey: this.state.currKey + 1,
             spec: {...this.formData}

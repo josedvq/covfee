@@ -40,6 +40,12 @@ class HTML5Player extends React.PureComponent<Props> {
         }
     }
 
+    componentWillUnmount() {
+        if(this.req_id) {
+            cancelAnimationFrame(this.req_id)
+        }
+    }
+
     processVideo = () => {
         const time = this.video_tag.current.currentTime
         if(time !== this.time) {

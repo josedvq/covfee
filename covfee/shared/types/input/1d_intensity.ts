@@ -1,22 +1,60 @@
-export type Intensity1DInputSpec = 
+/**
+ * @title continuous-mousemove
+ */
+export type ContinuousMousemoveInputSpec = {
     /**
-     * @TJS-title mousemove
+     * @default "continuous-mousemove"
      */
-    { 
-        device: 'mousemove'
-    } | {
-    device: 'keyboard' | 'gamepad',
+    mode: "continuous-mousemove"
+}
+
+/**
+ * @title continuous-keyboard
+ */
+export type ContinuousKeyboardInputSpec = {
     /**
-     * Button control mapping
+     * @default "continuous-keyboard"
      */
+    mode: "continuous-keyboard",
     controls: {
         /**
          * Increase intensity
+         * @default "s"
          */
         up: string,
         /**
          * Decrease intensity
+         * @default "a"
          */
         down: string
     }
 }
+
+/**
+ * @title gravity-keyboard
+ */
+export type GravityKeyboardInputSpec = {
+    /**
+     * @default "gravity-keyboard"
+     */
+    mode: "gravity-keyboard",
+    /**
+     * Initial speed when a key is pressed
+     * @default 0.1
+     */
+    jump_speed: number,
+    /**
+     * Acceleration constant.
+     * @default 0.008
+     */
+    acceleration_constant: number
+    controls: {
+        /**
+         * Increase intensity
+         * @default "a"
+         */
+        up: string
+    }
+}
+
+export type Intensity1DInputSpec = ContinuousMousemoveInputSpec | ContinuousKeyboardInputSpec | GravityKeyboardInputSpec

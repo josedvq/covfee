@@ -1,13 +1,18 @@
 import { BaseTaskSpec } from '../task'
+import {CheckboxSpec, FormSpec, InputFieldSpec, RadioSpec} from './questionnaire'
 
+type InputSpec = CheckboxSpec | InputFieldSpec | RadioSpec
 export interface InstructionsTaskSpec extends BaseTaskSpec {
-    type: 'InstructionTask'
+    /**
+     * @default "InstructionsTask"
+     */
+    type: 'InstructionsTask'
     /**
     * A text or Markdown/HTML string containing the experiment instructions.
     */
-    html?: string
+    content?: string
     /**
-    * A URL to a Markdown (.md) document containing experiment instructions.
+    * a form to display after the content.
     */
-    url?: string
+    form?: FormSpec
 }

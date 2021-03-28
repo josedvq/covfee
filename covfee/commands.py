@@ -1,22 +1,14 @@
 import os
 import sys
-import glob
 import json
-import subprocess
-from hashlib import sha256
+from shutil import which
+from colorama import init, Fore
 
 import click
-from pathlib import Path
+from covfee.server.orm import app
 
-from covfee.server.orm import app, db, Project, HIT, Task, Chunk, User
-
-# DATABASE CREATION
-def create_tables():
-    db.create_all()
 
 def prepare():
-    covfee_path = os.path.dirname(os.path.realpath(__file__))
-
     custom_tasks_path = os.path.join(os.getcwd(), 'covfee_tasks')
 
     if not os.path.exists(custom_tasks_path):
@@ -44,112 +36,38 @@ def prepare():
             fh.write('export {}')
 
 
-@click.command()
-@click.option("--force", is_flag=True, help="Specify to overwrite existing databases.")
-@click.argument("file_or_folder")
-def make_db(force, file_or_folder):
-    dbpath = app.config['DATABASE_PATH']
-    
-    json_files = []
-    # ask user what to do if the database file exists
-    if os.path.exists(app.config['DATABASE_PATH']):
-        if os.path.isdir(file_or_folder):
-            if force:
-                res = input('This action will remove an existing database, including annotations. Are you sure you want to recreate the db? (y/n)')
-                if res == 'y':
-                    try:
-                        os.remove(app.config['DATABASE_PATH'])
-                        print(
-                            f'deleted existing database file {app.config["DATABASE_PATH"]}')
-                    except OSError:
-                        print(f'Error removing existing database file {app.config["DATABASE_PATH"]}')
-                        sys.exit(1)
-                    create_tables()
-                else:
-                    sys.exit(1)
-            else:
-                print('Database already exists. Run with the --force option to overwrite.')
-    else:
-    # create db
-        create_tables()
-
-    # database exists and tables are created
-    if os.path.isdir(file_or_folder):
-        for json_path in Path(file_or_folder).rglob('*.covfee.json'):
-            json_files.append(json_path)
-    elif os.path.isfile(file_or_folder):
-        json_files.append(file_or_folder)
-    else:
-        print(f'Path {file_or_folder} does not point to a file or folder.')
-        sys.exit(1)
-        
-    for json_file in json_files:
-        with open(json_file, 'r') as f:
-            proj_dict = json.load(f)
-
-        # delete existing project with the same id
-        projid = Project.get_id(proj_dict['id'])
-        existing_project=Project.query.filter_by(id=projid).first()
-        if existing_project is not None:
-            if force:
-                db.session.delete(existing_project)
-                db.session.commit()
-            else:
-                print('Project exists. Add --force option to overwrite.')
-                sys.exit(1)
-
-        project = Project(**proj_dict)
-        db.session.add(project)
-        print(project.info())
-
-    db.session.commit()
-
-
-@click.command()
-@click.argument("fpath")
-def update_db(fpath):
-    dbpath = app.config['DATABASE_PATH']
-
-    with open(fpath, 'r') as f:
-        proj_dict = json.load(f)
-
-    project = db.session.query(Project).get(Project.get_id(proj_dict['id']))
-    project.update(**proj_dict)
-    print(project.info())
-
-    db.session.commit()
-
-@click.command()
-def make_user():
-    if not os.path.exists(app.config['DATABASE_PATH']):
-        create_tables()
-    username = input('Please enter username: ')
-    password = input('Please enter password: ')
-    user = User(username, password, ['admin'])
-    db.session.add(user)
-    db.session.commit()
-    print('User has been created!')
-
-@click.command()
-def webpack():
+def start_webpack():
     prepare()
-    
-    # run the dev server
-    covfee_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'client')
+
     cwd = os.getcwd()
+
+    # run the dev server
+    covfee_path = os.path.join(os.path.dirname(os.path.realpath(__file__)))
     os.chdir(covfee_path)
     os.system(os.path.join('node_modules', '.bin', 'webpack-dev-server') +
      ' --env.COVFEE_WD=' + cwd +
-     ' --config ./webpack.dev.js')
+     ' --config ./client/webpack.dev.js')
 
 
 @click.command()
-def start_dev():
+def cmd_start_webpack():
+    start_webpack()
+
+
+def start_dev(unsafe):
+    if unsafe:
+        os.environ['UNSAFE_MODE_ON'] = 'enable'
     os.environ['FLASK_ENV'] = 'development'
     os.environ['FLASK_APP'] = 'covfee.server.start:create_app'
     os.system(sys.executable + ' -m flask run')
 
+
 @click.command()
+@click.option('--unsafe', is_flag=True, help='Disables authentication.')
+def cmd_start_dev(unsafe):
+    start_dev(unsafe)
+
+
 def start_prod():
     os.environ['FLASK_ENV'] = 'production'
     os.environ['FLASK_APP'] = 'covfee.server.start:create_app'
@@ -157,17 +75,27 @@ def start_prod():
 
 
 @click.command()
+def cmd_start_prod():
+    start_prod()
+
+
 def build():
     prepare()
 
+    cwd = os.getcwd()
+
     bundle_path = os.path.join(os.getcwd(), 'www')
     covfee_path = os.path.dirname(os.path.realpath(__file__))
-    
-    cwd = os.getcwd()
+
     os.chdir(covfee_path)
     os.system(os.path.join('..', 'node_modules', '.bin', 'webpack') +
               ' --env.COVFEE_WD=' + cwd +
-              ' --config ./webpack.dev.js' + ' --output-path '+bundle_path)
+              ' --config ./client/webpack.dev.js' + ' --output-path '+bundle_path)
+
+
+@click.command()
+def cmd_build():
+    build()
 
 
 def set_env(env: str):
@@ -185,8 +113,26 @@ def set_env_prod():
     return set_env('production')
 
 
-@click.command()
 def install_js():
     fpath = os.path.dirname(os.path.realpath(__file__))
     os.chdir(fpath)
     os.system('npm install')
+
+
+@click.command()
+def cmd_install_js():
+    install_js()
+
+
+def open_covfee_admin():
+    if which('xdg-open') is not None:
+        os.system(f'xdg-open {app.config["ADMIN_URL"]}')
+    elif sys.platform == 'darwin' and which('open') is not None:
+        os.system(f'open {app.config["ADMIN_URL"]}')
+    else:
+        print(f'covfee is available at {app.config["ADMIN_URL"]}')
+
+
+@click.command()
+def cmd_open():
+    open_covfee_admin()

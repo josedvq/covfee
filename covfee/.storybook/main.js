@@ -19,6 +19,7 @@ module.exports = {
       "CustomTasks": path.resolve(__dirname, "./dummy_tasks"),
       "@docs": path.resolve(__dirname, "../docs"),
       "@client": path.resolve(__dirname, "../client"),
+      "@server": path.resolve(__dirname, "../server"),
       "@shared": path.resolve(__dirname, "../shared"),
       "@covfee-types": path.resolve(__dirname, "../shared/types")
     };

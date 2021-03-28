@@ -19,5 +19,5 @@ export interface ProjectSpec {
     /**
      * List of HIT specifications, one for each Human Intelligence Task in this project.
      */
-    hits: Array<HitSpec>
+    hits: Array<any>
 }

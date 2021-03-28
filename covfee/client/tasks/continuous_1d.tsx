@@ -19,7 +19,6 @@ interface Props extends TaskObject, ReplayableTaskProps {
 }
 
 interface State {
-    intensity: number,
     paused: boolean,
     duration: number,
     currentTime: number,
@@ -34,7 +33,6 @@ interface State {
 }
 class Continuous1DTask extends React.Component<Props, State> {
     state: State = {
-        intensity: 0,
         paused: true,
         duration: 0,
         currentTime: 0,
@@ -48,8 +46,12 @@ class Continuous1DTask extends React.Component<Props, State> {
         }
     }
 
+    // intensity reading
+    intensity: number
+
     player = React.createRef<HTML5Player>()
     reverseCountTimerId: number = null
+    frameUpdateTimerId: number = null
 
     buttonEvents = {
         'play-pause': {
@@ -127,7 +129,7 @@ class Continuous1DTask extends React.Component<Props, State> {
         } else {
             this.props.buffer(
                 frame,
-                [this.state.intensity]
+                [this.intensity]
             )
         }
     }
@@ -188,12 +190,23 @@ class Continuous1DTask extends React.Component<Props, State> {
         }
     }
 
+    updateTime = () => {
+        this.setState({
+            currentTime: this.player.current.currentTime(),
+            currentFrame: this.player.current.currentFrame()
+        })
+    }
+
     handlePausePlay = (pause: boolean, cb?: Function) => {
         this.setState({
             paused: pause,
-            currentTime: this.player.current.currentTime(),
-            currentFrame: this.player.current.currentFrame()
         }, () => { if (cb) cb() })
+
+        if(pause) {
+            if (this.frameUpdateTimerId) clearInterval(this.frameUpdateTimerId)
+        } else {
+            this.frameUpdateTimerId = setInterval(this.updateTime, 1000)
+        }
     }
 
     startReverseCount = () => {
@@ -217,7 +230,7 @@ class Continuous1DTask extends React.Component<Props, State> {
                     }
                 })
             }
-        }, 800)
+        }, 300)
     }
 
     cancelReverseCount = (cb?: Function) => {
@@ -233,17 +246,15 @@ class Continuous1DTask extends React.Component<Props, State> {
         }, () => { if (cb) cb() })
     }
 
+    // important: do not call setState here (can impair performance)
     setIntensity = (val: number) => {
-        this.setState({
-            intensity: val
-        })
+        this.intensity = val
     }
 
     render() {
         return <>
             <div className="annot-bar">
-                <div className="annot-bar-section"><ClockCircleOutlined /> {this.state.currentTime.toFixed(1)} / {this.state.duration.toFixed(1)}</div>
-                <div className="annot-bar-section">frame {this.state.currentFrame}</div>
+                <div className="annot-bar-section"><ClockCircleOutlined /> {this.state.currentTime.toFixed(0)} / {this.state.duration.toFixed(1)}</div>
                 {this.state.reverseCount.visible ? <div className="annot-bar-section" style={{ 'color': 'red' }}>{this.state.reverseCount.count}</div> : <></>}
             </div>
             <Row>
@@ -261,7 +272,6 @@ class Continuous1DTask extends React.Component<Props, State> {
                 <Col span={4}>
                     <OneDIntensity
                         disabled={this.props.replayMode}
-                        intensity={this.state.intensity}
                         setIntensity={this.setIntensity}
                         input={this.props.spec.intensityInput} />
                 </Col>

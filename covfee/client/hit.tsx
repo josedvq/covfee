@@ -120,7 +120,6 @@ interface HitProps {
     type: string,
     id: string,
     name: string,
-    media?: object,
     project: object,
     submitted: boolean,
     tasks: Array<any>
@@ -796,7 +795,6 @@ class Hit extends React.Component<HitProps, HitState> {
     renderAnnotation = () => {
         let props = this.tasks[this.state.currTask]
         props._url = this.url + '/tasks/' + props.id
-        if (!props.spec.media) props.spec.media = this.props.media
         
         const task = this.renderTask(props)
         const taskInfo = this.getTaskInfo(task)
@@ -858,7 +856,6 @@ class Hit extends React.Component<HitProps, HitState> {
     renderTimeline = () => {
         let props = this.tasks[this.state.currTask]
         props._url = this.url + '/tasks/' + props.id
-        if (!props.spec.media) props.spec.media = this.props.media
 
         const task = this.renderTask(props)
         const taskInfo = this.getTaskInfo(task)

@@ -33,7 +33,7 @@ export type CheckboxGroupSpec = {
      */
     inputType: 'Checkbox.Group' 
     options: Array<string>
-    defaultValue: string
+    defaultValue: Array<string>
 }
 
 /**
@@ -59,7 +59,7 @@ export type RadioSpec = Pick<RadioGroupProps, "optionType" | "buttonStyle" | "si
      */
     inputType: 'Radio.Group'
     options: Array<string>
-    defaultValue: string
+    defaultValue?: string
 }
 
 /**

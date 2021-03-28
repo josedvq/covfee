@@ -1,22 +1,25 @@
+import { Typography, Space } from 'antd'
 import { Meta, Story, Canvas, ArgsTable } from '@storybook/addon-docs/blocks'
 import InstructionsTask from './instructions'
+import schemata from '@server/schemata.json'
+import {TaskForm} from '@docs/utils/task_form'
 
 <Meta title="Tasks / Instructions" component={InstructionsTask} />
 
-export const Template = (args) => <InstructionsTask {...args } />
-
-
+The instructions task was created as a way to provide a page with instructions for participants or annotators. 
 
 # Basic
 
-The easiest way to provide instructions is to pass HTML code directly to the `Instructions` task:
+The easiest way to provide instructions is to pass HTML code directly to the `Instructions`. Note however that this is obly recommended for short instructions. The reason is that JSON does not preserve line breaks, and therefore any linebreaks must be explicitly input with <Typography.Text code>\\n</Typography.Text>:
 
 export const taskSpec = {
     "type": "InstructionsTask",
     "html": "<h1>Instructions</h1><p>These are the instructions provided directly in HTML.</p><p>This is good for short instructions but inconvenient for long ones because you cannot have line breaks in a JSON file. Linking to a Markdown file is more convenient in that case.</p>"
 }
 
-<TaskVisualizer task={taskSpec}/>
+<TaskForm spec={taskSpec} 
+    schema={schemata['definitions']['InstructionsTaskSpec']}
+    formEnabled={false}/>
 
 # Link to Markdown file
 
@@ -27,6 +30,10 @@ export const taskSpecMd = {
     "url": "https://gist.githubusercontent.com/benbalter/3914310/raw/f757a33411082da23f0ad4a124b45fcdacc1b43f/Example--text.txt"
 }
 
-<TaskVisualizer task={taskSpecMd}/>
+<TaskForm spec={taskSpecMd} 
+    schema={schemata['definitions']['InstructionsTaskSpec']}
+    formEnabled={false}/>
+
+## Component Props (for developers)
 
 <ArgsTable of={InstructionsTask}/>

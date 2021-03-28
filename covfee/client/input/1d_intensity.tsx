@@ -11,9 +11,9 @@ interface Props {
     /*
      * Value of intensity reading.
      */
-    intensity: number
+    getIntensity?: number
     /**
-     * To be called by the component to update the intensity reading.
+     * Called by the component to update the intensity reading. Should not call setState as it is called inside a requestAnimationFrame.
      */
     setIntensity: Function
     /**
@@ -22,16 +22,17 @@ interface Props {
     input: Intensity1DInputSpec
 }
 
-interface State {
-    speed: number
-}
-
 class OneDIntensity extends React.Component<Props, State> {
 
     static defaultProps = {
         controls: 'mousemove'
     }
 
+    // animation variables
+    intensity: number = 0
+    speed: number = 0
+
+    animationId: number
     container = React.createRef<HTMLDivElement>()
     indicator = React.createRef<HTMLDivElement>()
     observer: ResizeObserver = null
@@ -44,62 +45,98 @@ class OneDIntensity extends React.Component<Props, State> {
         })
         this.observer.observe(this.container.current)
         
-        // init intensity
-        this.props.setIntensity(0)
-
         this.startInput()
     }
 
     componentWillUnmount() {
-        this.context.removeEvents(this.buttonEvents)
+        this.context.removeEvents(this.buttonEventsContinuousKeyboard)
         document.removeEventListener('mousemove', this.mousemove, false)
         this.observer.disconnect()
-    }
-
-    buttonEvents = {
-        'up': {
-            key: 'ArrowUp',
-            description: 'Increase',
-            handler: () => {
-                this.props.setIntensity(this.props.intensity + 0.05)
-            }
-        },
-        'down': {
-            key: 'ArrowDown',
-            description: 'Decrease',
-            handler: () => {
-                this.props.setIntensity(this.props.intensity - 0.05)
-            }
-        }
-    }
-
-    startInput = () => {
-        if (this.props.input.device == 'mousemove') {
-            document.addEventListener('mousemove', this.mousemove, false)
-        } else if (this.props.input.device == 'keyboard') {
-            if (this.props.input.controls) {
-                for (const [id, key] of Object.entries(this.props.input.controls)) {
-                    this.buttonEvents[id]['key'] = key
-                    
-                }
-            }
-            this.context.addEvents(this.buttonEvents)
-        } else {
-            myerror('Unrecognized input device.')
+        if(this.animationId) {
+            cancelAnimationFrame(this.animationId)
         }
     }
 
     mousemove = (e: MouseEvent) => {
         const rect = this.container.current.getBoundingClientRect()
         const unboundedIntensity = (rect.bottom - e.clientY) / this.containerHeight
-        const intensity = Math.max(0.0, Math.min(1.0, unboundedIntensity))
-        this.props.setIntensity(intensity)
+        this.intensity = Math.max(0.0, Math.min(1.0, unboundedIntensity))
+    }
+
+    buttonEventsContinuousKeyboard = {
+        'up': {
+            key: 'ArrowUp',
+            description: 'Increase',
+            handler: () => {
+                this.intensity = this.intensity + 0.05
+            }
+        },
+        'down': {
+            key: 'ArrowDown',
+            description: 'Decrease',
+            handler: () => {
+                this.intensity = this.intensity - 0.05
+            }
+        }
+    }
+
+    buttonEventsGravityKeyboard = {
+        'up': {
+            key: 'a',
+            description: 'Increase',
+            handler: () => {
+                this.speed = this.props.input.jump_speed
+            }
+        }
+    }
+
+    startInput = () => {
+        if (this.props.input.mode == 'continuous-mousemove') {
+            document.addEventListener('mousemove', this.mousemove, false)
+        } else if (this.props.input.mode == 'continuous-keyboard') {
+            if (this.props.input.controls) {
+                for (const [id, key] of Object.entries(this.props.input.controls)) {
+                    this.buttonEventsContinuousKeyboard[id]['key'] = key
+                }
+            }
+            this.context.addEvents(this.buttonEventsContinuousKeyboard)
+        } else if (this.props.input.mode == 'gravity-keyboard') {
+            if (this.props.input.controls) {
+                for (const [id, key] of Object.entries(this.props.input.controls)) {
+                    this.buttonEventsGravityKeyboard[id]['key'] = key
+                }
+            }
+            this.context.addEvents(this.buttonEventsGravityKeyboard)
+        } else {
+            myerror('Unrecognized input device.')
+        }
+
+        requestAnimationFrame(this.animate)
+    }
+
+
+    animate = (timestamp: number) => {
+        if (this.props.input.mode == 'continuous-mousemove') {
+            //pass
+        } else if (this.props.input.mode == 'continuous-keyboard') {
+            //pass
+        } else if (this.props.input.mode == 'gravity-keyboard') {
+            let delta_time = 1
+            // TODO: implement delta_time calculation
+            this.intensity = Math.max(0, Math.min(1, this.intensity + this.speed * delta_time))
+            this.speed = this.speed - this.props.input.acceleration_constant * delta_time
+        }
+
+        this.props.setIntensity(this.intensity)
+        const position = Math.round(this.intensity * this.containerHeight)
+        this.indicator.current.style.bottom = position.toString() + 'px'
+
+        this.animationId = requestAnimationFrame(this.animate)
     }
 
     render() {
-        const position = Math.round(this.props.intensity * this.containerHeight)
         return <div ref={this.container} className='gui-vertical'>
-            <div ref={this.indicator} className='gui-indicator' style={{ bottom: position}}></div>
+            <div ref={this.indicator} className='gui-indicator' style={{bottom: 0}}></div>
         </div>
     }
 }

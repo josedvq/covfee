@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import contextlib
 
+
 @contextlib.contextmanager
 def working_directory(path):
     """Changes working directory and returns to previous on exit."""
@@ -11,6 +12,7 @@ def working_directory(path):
         yield
     finally:
         os.chdir(prev_cwd)
+
 
 def look_for_covfee_files(file_or_folder):
     covfee_files = []
@@ -25,4 +27,3 @@ def look_for_covfee_files(file_or_folder):
         return None
 
     return covfee_files
-    

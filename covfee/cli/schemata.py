@@ -6,6 +6,7 @@ class Schemata:
         self.annotation_hit = schemata['definitions']['AnnotationHitSpec']
         self.timeline_hit = schemata['definitions']['TimelineHitSpec']
 
+        self.base_task = schemata['definitions']['BaseTaskSpec']
         self.task_types = [
             'Continuous1DTask',
             'ContinuousKeypointTask',

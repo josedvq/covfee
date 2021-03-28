@@ -11,19 +11,26 @@
                 "html": "These are HIT-level instructions or auxiliary information for annotators."
             },
             "repeat": 2,
-            "media": {
-                "type": "video",
-                "url": "person_reading.mp4"
-            },
             "tasks": [
                 {
                     "type": "Continuous1DTask",
-                    "name": "Sample"
+                    "name": "Sample",
+                    "media": {
+                        "type": "video",
+                        "url": "sample.mp4"
+                    },
+                    "intensityInput": {
+                        "mode": "continuous-mousemove"
+                    }
                 }
             ],
             "userTasks": {
                 "continuous": {
-                    "type": "Continuous1DTask"
+                    "type": "Continuous1DTask",
+                    "media": {
+                        "type": "video",
+                        "url": "sample.mp4"
+                    }
                 }
             }
         }

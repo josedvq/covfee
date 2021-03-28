@@ -15,6 +15,10 @@ MEDIA_PATH = os.path.join(os.getcwd(), 'media')
 MEDIA_URL = BASE_URL + '/media'
 MEDIA_SERVER = True
 
+# for storing the json schemata for validation
+SHARED_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../shared')
+SCHEMATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'schemata.json')
+
 # for temporary (download) files
 TMP_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'tmp')
 
@@ -23,7 +27,6 @@ DATABASE_PATH = f'{os.path.join(os.getcwd(), "database.covfee.db")}'
 SQLALCHEMY_DATABASE_URI = f'sqlite:///{DATABASE_PATH}'
 SQLALCHEMY_ENGINE_OPTIONS = {'isolation_level': "READ UNCOMMITTED"}
 SQLALCHEMY_TRACK_MODIFICATIONS = False
-# SQLALCHEMY_ECHO = True
 
 # Security: JSON web tokens
 JWT_SECRET_KEY = 'CHANGE_ME'

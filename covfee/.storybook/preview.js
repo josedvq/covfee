@@ -1,10 +1,12 @@
 import '../client/css/gui.css'
 import 'antd/dist/antd.css'
+import './docs.css'
 
 export const parameters = {
   actions: { argTypesRegex: "^on[A-Z].*" },
   viewMode: 'docs',
   options: {
+    enableShortcuts: false,
     storySort: {
         order: [
           'Covfee',

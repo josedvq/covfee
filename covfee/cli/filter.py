@@ -1,3 +1,4 @@
+from covfee.server.orm import app
 import os
 import click
 import json
@@ -60,31 +61,39 @@ class ValidationError(Exception):
 
 
 def make_schemata():
-    shared_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../shared')
-    schemata_path = os.path.join(shared_path, 'schemata.json')
+    shared_path = app.config['SHARED_PATH']
+    schemata_path = app.config['SCHEMATA_PATH']
     with working_directory(shared_path):
         os.system(
             f'npx typescript-json-schema tsconfig.json "*" --refs false --titles --defaultProps --ignoreErrors --required -o {schemata_path}')
-    return schemata_path
 
 
-@click.command()
-def cmd_make_schemata():
+def cli_make_schemata():
     with Halo(text='Making JSON schemata', spinner='dots') as spinner:
-        schemata_path = make_schemata()
+        make_schemata()
         spinner.succeed('Generated JSON schemata')
-    return schemata_path
 
-@click.command()
-@click.option("--output", '-o', help="Write filtered .covfee.json to a new file.")
-@click.argument("file_or_folder")
-def validate(file_or_folder, output):
+
+cmd_make_schemata = click.command()(cli_make_schemata)
+
+
+def cli_get_schemata(remake=False):
     # first create the schemata
-    schemata_path = cmd_make_schemata()
+    schemata_path = app.config['SCHEMATA_PATH']
+    if remake or not os.path.exists(schemata_path):
+        cli_make_schemata()
 
     with Halo(text='Loading generated schemata', spinner='dots') as spinner:
         schemata = Schemata(json.load(open(schemata_path)))
         spinner.succeed('Loaded JSON schemata')
+    return schemata
+
+
+@click.command()
+@click.option("--output", '-o', help="Write filtered .covfee.json to a new file.")
+@click.argument("file_or_folder")
+def cmd_validate(file_or_folder, output):
+    schemata = cli_get_schemata
 
     with Halo(text='Looking for .covfee.json files', spinner='dots') as spinner:
         covfee_files = look_for_covfee_files(file_or_folder)
@@ -94,16 +103,23 @@ def validate(file_or_folder, output):
             return
 
     for cf in covfee_files:
-        with Halo(text=f'Validating file {cf}', spinner='dots') as spinner:
+        with Halo(text=f'Reading file {cf}', spinner='dots') as spinner:
             with open(cf) as f:
                 project_spec = json.load(f)
-            try:
-                validate_project(schemata, project_spec)
-            except ValidationError as err:
-                err.print_friendly()
-                return
+            cli_validate_project(schemata, project_spec, cf)
 
-            spinner.succeed(f'Project \"{project_spec["name"]}\" in {cf} is valid.')
+
+def cli_validate_project(schemata, project_spec, filename):
+    with Halo(text=f'Validating project {project_spec["name"]} in {filename}', spinner='dots') as spinner:
+        try:
+            validate_project(schemata, project_spec)
+        except ValidationError as err:
+            spinner.fail(f'Error validating project \"{project_spec["name"]}\" in {filename}.\n')
+            err.print_friendly()
+            return False
+
+        spinner.succeed(f'Project \"{project_spec["name"]}\" in {filename} is valid.')
+    return True
 
 
 def validate_project(schemata, project_spec):
@@ -130,7 +146,7 @@ def validate_hit(schemata, hit_spec):
         if hit_spec['type'] == 'timeline':
             jsonschema.validate(schema=schemata.timeline_hit, instance=hit_spec)
         elif hit_spec['type'] == 'annotation':
-            jsonschema.validate(schema=schemata.timeline_hit, instance=hit_spec)
+            jsonschema.validate(schema=schemata.annotation_hit, instance=hit_spec)
         else:
             raise ValidationError('Invalid value for \'type\'. Must be one of [\'timeline\', \'annotation\']', None, hit_spec)
     except JsonValidationError as json_err:
@@ -148,10 +164,17 @@ def validate_task(schemata, task_spec):
     if 'type' not in task_spec:
         raise ValidationError('The type of the task must be specified in its \'type\' attribute.', None)
 
-    if task_spec['type'] not in schemata.task_types:
-        raise ValidationError(f'The \'type\' attribute must be one of the available task names: {list(schemata.tasks.keys())}', None, task_spec)
+    if task_spec['type'][-10:] == 'CustomTask':
+        # only validate the base task spec fields for custom tasks
+        try:
+            jsonschema.validate(schema=schemata.base_task, instance=task_spec)
+        except JsonValidationError as json_err:
+            raise ValidationError(json_err.message, json_err.path, json_err.instance)
+    else:
+        if task_spec['type'] not in schemata.task_types:
+            raise ValidationError(f'The \'type\' attribute must be one of the available task names: {list(schemata.tasks.keys())}', None, task_spec)
 
-    try:
-        jsonschema.validate(schema=schemata.tasks[task_spec['type']], instance=task_spec)
-    except JsonValidationError as json_err:
-        raise ValidationError(json_err.message, json_err.path, json_err.instance)
+        try:
+            jsonschema.validate(schema=schemata.tasks[task_spec['type']], instance=task_spec)
+        except JsonValidationError as json_err:
+            raise ValidationError(json_err.message, json_err.path, json_err.instance)

@@ -15,6 +15,7 @@ hitistances_tasks = db.Table('hitistances_tasks',
     db.Column('hitinstance_id', db.Integer, db.ForeignKey('hitinstances.id'), primary_key=True),
     db.Column('task_id', db.Integer, db.ForeignKey('tasks.id'), primary_key=True))
 
+
 class HIT(db.Model):
     """ Represents a set of tasks to be completed by one subject, ie. a HIT """
     __tablename__ = 'hits'
@@ -26,7 +27,6 @@ class HIT(db.Model):
     type = db.Column(db.String)
     name = db.Column(db.String)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
-    media = db.Column(db.JSON)
     extra = db.Column(db.JSON)
     instances = db.relationship("HITInstance", backref='hit', cascade="all, delete")
     tasks = db.relationship("Task", secondary=hits_tasks, backref='hits', cascade="all, delete", order_by='Task.order.asc(),Task.created_at.asc()')
@@ -47,17 +47,10 @@ class HIT(db.Model):
 
         self.update(id=id, hashstr=hashstr, repeat=repeat, **kwargs)
 
-    def update(self, id, hashstr, name, repeat=1, media=None, extra=None, interface={}, **kwargs):
+    def update(self, id, hashstr, name, repeat=1, extra=None, interface={}, **kwargs):
         hashstr = HIT.get_hashstr(hashstr, id)
         self.name = name
         self.interface = interface
-
-        # fix URLs
-        if media is not None:
-            for k, v in media.items():
-                if k[-3:] == 'url' and v[:4] != 'http':
-                    media[k] = os.path.join(app.config['MEDIA_URL'], v)
-        self.media = media
 
         if extra is not None:
             if 'url' in extra and extra['url'][:4] != 'http':

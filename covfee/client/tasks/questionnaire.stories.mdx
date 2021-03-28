@@ -1,6 +1,6 @@
 import { Meta, Story, Canvas, ArgsTable } from '@storybook/addon-docs/blocks'
 import QuestionnaireTask from './questionnaire'
-import schemata from '@shared/schemata.json'
+import schemata from '@server/schemata.json'
 import {TaskForm} from '@docs/utils/task_form'
 
 <Meta title="Tasks / Questionnaire" component={QuestionnaireTask} />
@@ -12,6 +12,7 @@ export const Template = (args) => <TaskVisualizer {...args } />
 The questionnaire task was created to support basic the creation of static questionnaires. These can be used to collect subject information as in a typical survey. The task can include media, which supports the use case of thin-slice annotations of video or audio.
 
 export const taskSpec = {
+    "name": "Example Questionnaire",
     "type": "QuestionnaireTask",
     "media": {
         "type": "video",
@@ -34,8 +35,9 @@ export const taskSpec = {
 }
 
 export const uiSchema = {
-    'ui:order': ['name', 'type', 'media','instructions','form','disabledUntilEnd'],
+    'ui:order': ['name', 'disabledUntilEnd', 'type','instructions', 'media','form'],
     type: {'ui:widget':'hidden'},
+    instructions: {'ui:widget':'textarea'},
     media: {
         type: {'ui:widget':'hidden'}
     },

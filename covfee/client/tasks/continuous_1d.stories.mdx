@@ -1,6 +1,6 @@
 import { Meta, Story, Canvas, ArgsTable } from '@storybook/addon-docs/blocks'
 import Continuous1DTask from './continuous_1d'
-import schemata from '@shared/schemata.json'
+import schemata from '@server/schemata.json'
 import {TaskForm} from '@docs/utils/task_form'
 
 <Meta title="Tasks / Continuous 1D" component={Continuous1DTask} />
@@ -20,13 +20,21 @@ export const taskSpec = {
         "mute": true,
     },
     "intensityInput": {
-        "device": "mousemove"
+        "mode": "gravity-keyboard",
+        "jump_speed": 0.1,
+        "acceleration_constant": 0.008,
+        "controls": {
+            "up": "a"
+        }
     }
 }
 
 export const uiSchema = {
-    'ui:order': ['name', 'type', 'media','controls','intensityInput'],
+    'ui:order': ['name', 'type', 'intensityInput', 'media','controls',],
     type: {'ui:widget':'hidden'},
+    intensityInput: {
+        mode: {'ui:widget':'hidden'}
+    }
 }
 
 <TaskForm spec={taskSpec} 

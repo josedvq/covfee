@@ -30,10 +30,8 @@ class Project(db.Model):
         for hit_dict in hits:
             hit = db.session.query(HIT).get(HIT.get_id(hashstr, hit_dict['id']))
             if hit is None:
-                print('creating HIT')
                 self.hits.append(HIT(**hit_dict, hashstr=hashstr))
             else:
-                print('updating HIT')
                 hit.update(**hit_dict, hashstr=hashstr)
 
     def get_dataframe(self):

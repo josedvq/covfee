@@ -25,7 +25,6 @@ const { Text, Title, Link } = Typography
 interface HITSpec {
     id: string,
     type: string,
-    media?: any,
     tasks: Array<any>,
     submitted: boolean
 }

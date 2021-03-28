@@ -20,18 +20,19 @@ setup(
     zip_safe=False,
     entry_points={
         'console_scripts': [
-            'covfee-installjs = covfee.commands:install_js',
-            'covfee-maker = covfee.commands:make_db',
+            'covfee-installjs = covfee.commands:cmd_install_js',
+            'covfee-maker = covfee.cli.maker:make_db',
             'covfee-filter = covfee.cli.filter:validate',
             'covfee-schemata = covfee.cli.filter:cmd_make_schemata',
             'covfee-update = covfee.commands:update_db',
-            'covfee-webpack = covfee.commands:webpack',
-            'covfee-dev = covfee.commands:start_dev',
-            'covfee-prod = covfee.commands:start_prod',
-            'covfee-build = covfee.commands:build',
+            'covfee-webpack = covfee.commands:cmd_start_webpack',
+            'covfee-dev = covfee.commands:cmd_start_dev',
+            'covfee-prod = covfee.commands:cmd_start_prod',
+            'covfee-build = covfee.commands:cmd_build',
             'covfee-env-production = covfee.commands:set_env_prod',
             'covfee-env-development = covfee.commands:set_env_dev',
-            'covfee-mkuser = covfee.commands:make_user'
+            'covfee-mkuser = covfee.commands:make_user',
+            'covfee-open = covfee.commands:cmd_open'
         ]
     },
     install_requires=[
