@@ -6,19 +6,15 @@ from pathlib import Path
 import click
 from halo import Halo
 from colorama import init, Fore
+init()
 
 from covfee.server.orm import app, db, Project, User
 from .utils import look_for_covfee_files, working_directory
 from .filter import cli_validate_project, cli_get_schemata
-from ..commands import start_dev, open_covfee_admin
+from ..commands import start_dev, start_prod, open_covfee_admin, build
+from .project_folder import ProjectFolder
 
-def cli_create_tables():
-    '''
-    Creates all the tables defined in the ORM
-    '''
-    with Halo(text='Creating tables', spinner='dots') as spinner:
-        db.create_all()
-        spinner.succeed('Created database tables.')
+
 
 
 @click.command()
@@ -27,29 +23,23 @@ def cli_create_tables():
 @click.option("--rms", is_flag=True, help="Re-makes the schemata for validation.")
 @click.argument("file_or_folder")
 def make_db(force, unsafe, rms, file_or_folder):
+    project_folder = ProjectFolder(os.getcwd())
+
     # ask user what to do if the database file exists
-    if os.path.exists(app.config['DATABASE_PATH']):
-        if os.path.isdir(file_or_folder):
-            if force:
-                res = input(Fore.RED+'This action will remove an existing database, including annotations. Are you sure you want to recreate the db? (y/n)')
-                if res == 'y':
-                    try:
-                        os.remove(app.config['DATABASE_PATH'])
-                        print(
-                            f'deleted existing database file {app.config["DATABASE_PATH"]}')
-                    except OSError:
-                        print(
-                            f'Error removing existing database file {app.config["DATABASE_PATH"]}')
-                        sys.exit(1)
-                    cli_create_tables()
-                else:
-                    sys.exit(1)
+    if project_folder.is_project():
+        if force:
+            res = input(Fore.RED+'This action will remove an existing database, including annotations. Are you sure you want to recreate the db? (y/n)')
+            if res == 'y':
+                project_folder.clear()
+                project_folder.init()
             else:
-                print(
-                    'Database already exists. Run with the --force option to overwrite.')
+                sys.exit(1)
+        else:
+            print(
+                'Database already exists. Run with the --force option to overwrite.')
     else:
         # create db
-        cli_create_tables()
+        project_folder.init()
 
     with Halo(text='Looking for .covfee.json files', spinner='dots') as spinner:
         covfee_files = look_for_covfee_files(file_or_folder)
@@ -92,21 +82,14 @@ def make_db(force, unsafe, rms, file_or_folder):
             spinner.succeed(f'Project {project_spec["name"]} created successfully from file {cf}')
 
     db.session.commit()
-    open_covfee_admin()
-    start_dev(unsafe=unsafe)
 
-
-@click.command()
-@click.argument("fpath")
-def update_db(fpath):
-    with open(fpath, 'r') as f:
-        proj_dict = json.load(f)
-
-    project = db.session.query(Project).get(Project.get_id(proj_dict['id']))
-    project.update(**proj_dict)
-    print(project.info())
-
-    db.session.commit()
+    if os.getenv('COVFEE_ENV') == 'development':
+        open_covfee_admin()
+        start_dev(unsafe=unsafe)
+    else:
+        build()
+        open_covfee_admin()
+        start_prod(unsafe=unsafe)
 
 
 @click.command()

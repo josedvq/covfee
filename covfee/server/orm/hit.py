@@ -23,7 +23,7 @@ class HIT(db.Model):
         db.UniqueConstraint('project_id', 'name'),
     )
 
-    id = db.Column(db.Binary, primary_key=True)
+    id = db.Column(db.LargeBinary, primary_key=True)
     type = db.Column(db.String)
     name = db.Column(db.String)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
@@ -123,8 +123,9 @@ class HITInstance(db.Model):
     """ Represents an instance of a HIT, to be performed by one user """
     __tablename__ = 'hitinstances'
 
-    id = db.Column(db.Binary, primary_key=True)
-    preview_id = db.Column(db.Binary, unique=True) # id used for visualization
+    id = db.Column(db.LargeBinary, primary_key=True)
+    # id used for visualization
+    preview_id = db.Column(db.LargeBinary, unique=True)
     hit_id = db.Column(db.Integer, db.ForeignKey('hits.id'))
     tasks = db.relationship("Task", secondary=hitistances_tasks, backref='hitinstances', cascade="delete, all", order_by='Task.order.asc(),Task.created_at.asc()')
     responses = db.relationship("TaskResponse", backref='hitinstance', lazy='dynamic')

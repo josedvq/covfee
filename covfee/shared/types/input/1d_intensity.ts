@@ -45,7 +45,7 @@ export type GravityKeyboardInputSpec = {
     jump_speed: number,
     /**
      * Acceleration constant.
-     * @default 0.008
+     * @default 0.0025
      */
     acceleration_constant: number
     controls: {

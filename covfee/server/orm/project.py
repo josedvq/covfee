@@ -12,7 +12,7 @@ class Project(db.Model):
     """ Represents a set of HITs which make up an experiment or annotation project """
     __tablename__ = 'projects'
 
-    id = db.Column(db.Binary, primary_key=True)
+    id = db.Column(db.LargeBinary, primary_key=True)
     name = db.Column(db.String)
     email = db.Column(db.String)
     hits = db.relationship("HIT", backref="project", cascade="all, delete-orphan")

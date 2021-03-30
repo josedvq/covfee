@@ -25,6 +25,7 @@ frontend = Blueprint('frontend', __name__,
     template_folder=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates'))
 
 
+# annotation app
 @frontend.route('/')
 def main():
     return render_template('app.html',
@@ -32,8 +33,6 @@ def main():
                            bundle_url=app.config['BUNDLE_URL'])
 
 # admin interface
-
-
 @frontend.route('/admin')
 @admin_required
 def admin():
@@ -42,14 +41,16 @@ def admin():
                            bundle_url=app.config['ADMIN_BUNDLE_URL'])
 
 
-@frontend.route('/static/<path:filename>')
-def static_file(filename):
-    return send_from_directory(app.config['STATIC_PATH'], filename,
+# project hidden www
+@frontend.route('/www/<path:filename>')
+def project_www_file(filename):
+    return send_from_directory(app.config['PROJECT_WWW_PATH'], filename,
                                conditional=True)
 
 
+# project media
 @frontend.route('/media/<path:filename>')
-def media_file(filename):
+def project_media_file(filename):
     print(app.config['MEDIA_PATH'])
     return send_from_directory(app.config['MEDIA_PATH'], filename,
                                conditional=True)

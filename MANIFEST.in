@@ -1,7 +1,6 @@
-include covfee/*.js covfee/*.json
-exclude covfee/alias.json
-recursive-include covfee/app *
-recursive-include covfee/static *
-recursive-include covfee/templates *
+include covfee/package.json
+include covfee/server/templates/*
+recursive-include covfee/client *
+recursive-include covfee/shared *
 
-global-exclude package-lock.json .DS_Store
+global-exclude package-lock.json .DS_Store *.stories.mdx *.stories.tsx

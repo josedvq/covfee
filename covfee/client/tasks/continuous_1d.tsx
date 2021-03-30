@@ -99,6 +99,7 @@ class Continuous1DTask extends React.Component<Props, State> {
 
     componentWillUnmount() {
         this.context.removeEvents(this.buttonEvents)
+        if (this.frameUpdateTimerId) clearInterval(this.frameUpdateTimerId)
     }
 
     back2s = () => {

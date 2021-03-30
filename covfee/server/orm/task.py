@@ -58,7 +58,7 @@ class TaskResponse(db.Model):
     index = db.Column(db.Integer)
     submitted = db.Column(db.Boolean)
     task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'))
-    hitinstance_id = db.Column(db.Binary, db.ForeignKey('hitinstances.id'))
+    hitinstance_id = db.Column(db.LargeBinary, db.ForeignKey('hitinstances.id'))
     data = db.Column(db.JSON)
     chunks = db.relationship("Chunk", backref='taskresponse', order_by="Chunk.index", cascade="all, delete-orphan")
 

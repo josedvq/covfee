@@ -1,8 +1,4 @@
 const path = require('path');
-const webpack = require('webpack');
-const { isObjectLiteralElement } = require('typescript');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-
 
 module.exports = env => {
     return {
@@ -13,7 +9,7 @@ module.exports = env => {
         },
         output: {
             filename: '[name].js',
-            path: path.resolve(__dirname, 'static'),
+            path: path.resolve(__dirname, '../server/static'),
             publicPath: 'http://localhost:8085/'
         },
         resolve: {

@@ -68,14 +68,14 @@ class OneDIntensity extends React.Component<Props, State> {
             key: 'ArrowUp',
             description: 'Increase',
             handler: () => {
-                this.intensity = this.intensity + 0.05
+                this.intensity = Math.min(1.0, this.intensity + 0.05)
             }
         },
         'down': {
             key: 'ArrowDown',
             description: 'Decrease',
             handler: () => {
-                this.intensity = this.intensity - 0.05
+                this.intensity = Math.max(0, this.intensity - 0.05)
             }
         }
     }
@@ -85,7 +85,8 @@ class OneDIntensity extends React.Component<Props, State> {
             key: 'a',
             description: 'Increase',
             handler: () => {
-                this.speed = this.props.input.jump_speed
+                this.intensity = 1
+                this.speed = 0//this.props.input.jump_speed
             }
         }
     }

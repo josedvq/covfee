@@ -52,7 +52,7 @@ export type InputFieldSpec = Pick<InputProps, "type" | "allowClear" | "bordered"
 * Props for the antd radio
 * @title radio
 */
-export type RadioSpec = Pick<RadioGroupProps, "optionType" | "buttonStyle" | "size"> &
+export type RadioSpec = //Pick<RadioGroupProps, "optionType" | "buttonStyle" | "size"> &
 { 
     /**
      * @default "Radio.Group"

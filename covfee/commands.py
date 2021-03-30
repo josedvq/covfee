@@ -6,6 +6,7 @@ from colorama import init, Fore
 
 import click
 from covfee.server.orm import app
+from .cli.utils import working_directory
 
 
 def prepare():
@@ -16,7 +17,7 @@ def prepare():
 
     # create a JSON file with constants for the front-end
     app_constants = {
-        'env': app.config['FLASK_ENV'],
+        'env': app.config['COVFEE_ENV'],
         'app_url': app.config['APP_URL'],
         'admin_url': app.config['ADMIN_URL'],
         'api_url': app.config['API_URL'],
@@ -43,10 +44,11 @@ def start_webpack():
 
     # run the dev server
     covfee_path = os.path.join(os.path.dirname(os.path.realpath(__file__)))
-    os.chdir(covfee_path)
-    os.system(os.path.join('node_modules', '.bin', 'webpack-dev-server') +
-     ' --env.COVFEE_WD=' + cwd +
-     ' --config ./client/webpack.dev.js')
+
+    with working_directory(covfee_path):
+        os.system(os.path.join('node_modules', '.bin', 'webpack-dev-server') +
+        ' --env.COVFEE_WD=' + cwd +
+        ' --config ./client/webpack.dev.js')
 
 
 @click.command()
@@ -68,7 +70,9 @@ def cmd_start_dev(unsafe):
     start_dev(unsafe)
 
 
-def start_prod():
+def start_prod(unsafe):
+    if unsafe:
+        os.environ['UNSAFE_MODE_ON'] = 'enable'
     os.environ['FLASK_ENV'] = 'production'
     os.environ['FLASK_APP'] = 'covfee.server.start:create_app'
     os.system(sys.executable + ' -m flask run')
@@ -84,13 +88,13 @@ def build():
 
     cwd = os.getcwd()
 
-    bundle_path = os.path.join(os.getcwd(), 'www')
+    bundle_path = app.config['PROJECT_WWW_PATH']
     covfee_path = os.path.dirname(os.path.realpath(__file__))
 
-    os.chdir(covfee_path)
-    os.system(os.path.join('..', 'node_modules', '.bin', 'webpack') +
-              ' --env.COVFEE_WD=' + cwd +
-              ' --config ./client/webpack.dev.js' + ' --output-path '+bundle_path)
+    with working_directory(covfee_path):
+        os.system(os.path.join('node_modules', '.bin', 'webpack') +
+                ' --env.COVFEE_WD=' + cwd +
+                ' --config ./client/webpack.dev.js' + ' --output-path '+bundle_path)
 
 
 @click.command()
@@ -115,8 +119,8 @@ def set_env_prod():
 
 def install_js():
     fpath = os.path.dirname(os.path.realpath(__file__))
-    os.chdir(fpath)
-    os.system('npm install')
+    with working_directory(fpath):
+        os.system('npm install')
 
 
 @click.command()
