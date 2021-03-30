@@ -1,8 +1,13 @@
+# python
 *__pycache__
+covfee.egg-info
 covfee/node_modules
-covfee/alias.json
-covfee/tmp
-covfee/storybook-static
+
+# generated files
+covfee/server/schemata.json
+covfee/server/tmp
+
+# file formats
 covfee/build-storybook.log
 *.DS_Store
 *.wav
@@ -10,11 +15,12 @@ covfee/build-storybook.log
 *package-lock.json
 *nohup.out
 .ipynb_checkpoints*
-database.db
-covfee.egg-info
-covfee/.docz
-samples/*/database.covfee.db
+
+
+# samples
+samples/*/.covfee
 samples/*/covfee_tasks/index.js
 samples/*/covfee_constants.json
 samples/conflab/media/*
 samples/memory/media/*
+samples/memory/media.zip
