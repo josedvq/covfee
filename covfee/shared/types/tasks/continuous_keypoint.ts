@@ -2,7 +2,7 @@ import { OpencvFlowPlayerMedia } from '../players/opencv';
 import { ContinuousTaskSpec } from '../task'
 
 export interface ContinuousKeypointTaskSpec extends ContinuousTaskSpec {
-    type: 'ContinuousKeypoint'
+    type: 'ContinuousKeypointTask'
     /**
      * Media file to be displayed.
      */

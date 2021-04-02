@@ -3,88 +3,75 @@ import sys
 import json
 from shutil import which
 from colorama import init, Fore
+from halo import Halo
 
 import click
 from covfee.server.orm import app
 from .cli.utils import working_directory
+from .cli.project_folder import ProjectFolder
 
 
-def prepare():
-    custom_tasks_path = os.path.join(os.getcwd(), 'covfee_tasks')
 
-    if not os.path.exists(custom_tasks_path):
-        os.mkdir(custom_tasks_path)
+@click.command()
+def cmd_start_webpack():
+    folder = ProjectFolder(os.getcwd())
+    if not folder.is_project():
+        return print(Fore.RED+'Working directory is not a valid covfee project folder. Did you run covfee-maker in the current folder?')
 
-    # create a JSON file with constants for the front-end
-    app_constants = {
-        'env': app.config['COVFEE_ENV'],
-        'app_url': app.config['APP_URL'],
-        'admin_url': app.config['ADMIN_URL'],
-        'api_url': app.config['API_URL'],
-        'auth_url': app.config['AUTH_URL'],
-        'media_url': app.config['MEDIA_URL']
-    }
-    constants_path = os.path.join(os.getcwd(), 'covfee_constants.json')
-    json.dump(app_constants, open(constants_path, 'w'), indent=2)
-
-    # create a javascript custom tasks module if it does not exist
-    fpaths = [os.path.join(custom_tasks_path, fname)
-              for fname in ['index.js', 'index.jsx', 'index.ts', 'index.tsx']]
-
-    fpaths_exist = [os.path.exists(fpath) for fpath in fpaths]
-    if not any(fpaths_exist):
-        with open(fpaths[0], 'w') as fh:
-            fh.write('export {}')
-
-
-def start_webpack():
-    prepare()
+    folder.init_frontend()
 
     cwd = os.getcwd()
-
     # run the dev server
     covfee_path = os.path.join(os.path.dirname(os.path.realpath(__file__)))
-
     with working_directory(covfee_path):
         os.system(os.path.join('node_modules', '.bin', 'webpack-dev-server') +
         ' --env.COVFEE_WD=' + cwd +
         ' --config ./client/webpack.dev.js')
 
 
-@click.command()
-def cmd_start_webpack():
-    start_webpack()
-
-
-def start_dev(unsafe):
-    if unsafe:
-        os.environ['UNSAFE_MODE_ON'] = 'enable'
+def start_dev():
+    os.environ['UNSAFE_MODE_ON'] = 'enable'
     os.environ['FLASK_ENV'] = 'development'
     os.environ['FLASK_APP'] = 'covfee.server.start:create_app'
     os.system(sys.executable + ' -m flask run')
 
 
 @click.command()
-@click.option('--unsafe', is_flag=True, help='Disables authentication.')
-def cmd_start_dev(unsafe):
-    start_dev(unsafe)
+def cmd_start_dev():
+    start_dev()
 
 
 def start_prod(unsafe):
+    folder = ProjectFolder(os.getcwd())
+    if not folder.is_project():
+        raise Exception('Working directory is not a valid covfee project folder.')
     if unsafe:
         os.environ['UNSAFE_MODE_ON'] = 'enable'
     os.environ['FLASK_ENV'] = 'production'
     os.environ['FLASK_APP'] = 'covfee.server.start:create_app'
-    os.system(sys.executable + ' -m flask run')
+    os.system(f'gunicorn -b {app.config["SERVER_SOCKET"]} \'covfee.server.start:create_app()\'')
 
 
 @click.command()
-def cmd_start_prod():
-    start_prod()
+@click.option('--unsafe', is_flag=True, help='Disables authentication.')
+@click.option('--no-launch', is_flag=True, help='Disables launching of the web browser.')
+def cmd_start_prod(unsafe, no_launch):
+    folder = ProjectFolder(os.getcwd())
+    if not folder.is_project():
+        return print(Fore.RED+'Working directory is not a valid covfee project folder. Did you run covfee-maker in the current folder?')
+
+    if not no_launch:
+        open_covfee_admin()
+
+    start_prod(unsafe)
 
 
 def build():
-    prepare()
+    folder = ProjectFolder(os.getcwd())
+    if not folder.is_project():
+        raise Exception('Working directory is not a valid covfee project folder.')
+
+    folder.init_frontend()
 
     cwd = os.getcwd()
 
@@ -94,27 +81,12 @@ def build():
     with working_directory(covfee_path):
         os.system(os.path.join('node_modules', '.bin', 'webpack') +
                 ' --env.COVFEE_WD=' + cwd +
-                ' --config ./client/webpack.dev.js' + ' --output-path '+bundle_path)
+                ' --config ./client/webpack.prod.js' + ' --output-path '+bundle_path)
 
 
 @click.command()
 def cmd_build():
     build()
-
-
-def set_env(env: str):
-    env_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'covfee.env.json')
-    json.dump({'FLASK_ENV': env}, open(env_path, 'w'), indent=2)
-
-
-@click.command()
-def set_env_dev():
-    return set_env('development')
-
-
-@click.command()
-def set_env_prod():
-    return set_env('production')
 
 
 def install_js():

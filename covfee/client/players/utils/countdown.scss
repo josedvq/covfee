@@ -1,0 +1,165 @@
+*, *:before, *:after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  $bgColor: #32386D;
+  
+  $numOfColBlocks: 3; // must be higher than 2
+  $deg: 360deg / $numOfColBlocks;
+  
+  $red: #FD3359;
+  $yellow: #F4D302;
+  $blue: #21BDFF;
+  
+  $blocksColors: (
+    1: $red,
+    2: $yellow,
+    3: $blue
+  );
+  
+  
+  $size: 140px;
+  $sizeBig: 140px;
+  $pad: 10px;
+  $numSize: 100px;
+  $totalAT: 1.5s;
+  $contBr: 20px;
+  
+  $num1Len: 72.1554946899414;
+  $num2Len: 136.02162170410156;
+  $num3Len: 144.4256591796875;
+  $numJoin1-2: 82.63925170898438;
+  $numJoin2-3: 42.81303787231445;
+  $numJoin3-0: 40;
+  
+  $totalLen: $num1Len + $num2Len + $num3Len + $numJoin1-2 + $numJoin2-3 + $numJoin3-0;
+  
+  body {
+    background: $bgColor;
+    font-family: Helvetica, Arial, sans-serif;
+  }
+  
+  .demo {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: $sizeBig;
+    height: $size;
+    margin-top: $size / -2;
+    padding: $pad;
+    border-radius: 20px;
+    transform: translateX(-50%);
+  
+    &__colored-blocks {
+      overflow: hidden;
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: $sizeBig;
+      height: 100%;
+      margin-left: $sizeBig/-2;
+      padding: $pad;
+      border-radius: 50%;
+      perspective: 1000px;
+  
+      &-rotater {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        animation: rotation 1.3s linear 1;
+      }
+  
+      &-inner {
+        overflow: hidden;
+        position: relative;
+        height: 100%;
+        background: $bgColor;
+        border-radius: inherit;
+      }
+    }
+  
+    &__colored-block {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 300%;
+      height: 300%;
+      transform-origin: 0 0;
+  
+      @for $i from 1 through $numOfColBlocks {
+        &:nth-child(#{$i}) {
+          $rt: $deg * ($i - 1);
+          $skew: 90deg - $deg;
+          transform: rotate($rt) skewX($skew);
+          background-color: map-get($blocksColors, $i);
+        }
+      }
+    }
+  
+    &__inner {
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+  
+    &__numbers {
+      overflow: visible;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: $numSize;
+      height: $numSize;
+      margin-left: $numSize/-2;
+      margin-top: $numSize/-2;
+  
+      &-path {
+        fill: none;
+        stroke-width: 10px;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 0, $totalLen;
+        stroke-dashoffset: 0;
+        animation: numAnim $totalAT ease-in-out 1;
+        opacity: 0;
+      }
+    }
+  }
+  
+  @keyframes numAnim {
+    5% {
+      stroke-dasharray: 0, $totalLen;
+      stroke-dashoffset: 0;
+      opacity: 0;
+    }
+    10%, 33% {
+      opacity: 1;
+      stroke-dasharray: $num3Len, $totalLen;
+      stroke-dashoffset: -$numJoin3-0;
+    }
+    43%, 64% {
+      stroke-dasharray: $num2Len, $totalLen;
+      stroke-dashoffset: -$num3Len - $numJoin2-3 -$numJoin3-0;
+    }
+    76% {
+      stroke-dasharray: $num1Len + $numJoin1-2/2, $totalLen;
+      stroke-dashoffset: -$num3Len - $numJoin2-3 - $num2Len - $numJoin1-2 -$numJoin3-0;
+    }
+    76%, 100% {
+      opacity: 1;
+      stroke-dasharray: $num1Len, $totalLen;
+      stroke-dashoffset: -$num3Len - $numJoin2-3 - $num2Len - $numJoin1-2 -$numJoin3-0;
+    }
+  }
+  
+  @keyframes rotation {
+    to {
+      transform: rotate(360deg);
+    }
+  }

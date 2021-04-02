@@ -17,7 +17,7 @@
                     "name": "Sample",
                     "media": {
                         "type": "video",
-                        "url": "sample.mp4"
+                        "url": ["video1.mp4", "video2.mp4", "video3.mp4", "video4.mp4", "video5.mp4"]
                     },
                     "intensityInput": {
                         "mode": "continuous-mousemove"
@@ -30,7 +30,7 @@
                         "type": "Continuous1DTask",
                         "media": {
                             "type": "video",
-                            "url": "sample.mp4"
+                            "url": ["video1.mp4", "video2.mp4", "video3.mp4", "video4.mp4", "video5.mp4"]
                         }
                     }
                 }

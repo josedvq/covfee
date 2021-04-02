@@ -3,7 +3,7 @@ import { withRouter } from 'react-router'
 
 import { LoadingOutlined } from '@ant-design/icons'
 
-const Constants = require('Constants')
+import Constants from 'Constants'
 import { fetcher, myerror, throwBadResponse } from '../utils'
 
 class InstanceList extends React.Component {

@@ -11,7 +11,7 @@ import {
 } from 'antd'
 import 'antd/dist/antd.css'
 import userContext from './userContext'
-const Constants = require('Constants')
+import Constants from 'Constants'
 import CovfeeLogo from './art/logo.svg'
 import './css/gui.css'
 

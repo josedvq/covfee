@@ -26,8 +26,14 @@ app_path = urlparse(app.config['BASE_URL']).path
 if app_path == '':
     app_path = '/'
 
-
 app.config.update(
+    # copy over secret key
+    JWT_SECRET_KEY=app.config['COVFEE_SECRET_KEY'],
+
+    # create sqlalchemy database uri
+    SQLALCHEMY_DATABASE_URI=f'sqlite:///{app.config["DATABASE_PATH"]}',
+
+    # create derived URLs
     APP_URL=app.config['BASE_URL'] + '/#',
     ADMIN_URL=app.config['BASE_URL'] + '/admin#',
     API_URL=app.config['BASE_URL'] + '/api',

@@ -1,0 +1,12 @@
+.html5player > .video-canvas {
+    display: block;
+    margin: 0 auto;
+    width: 100%;
+}
+.html5player .video-selector {
+    padding: 10px 0;
+    background-color: black;
+}
+.html5player .video-selector > video {
+    max-height: 400px;
+}

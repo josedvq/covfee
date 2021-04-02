@@ -29,7 +29,9 @@ export interface AnnotationHitSpec extends HitBaseSpec {
     /**
      * List of tasks specifications that users can create
      */
-    userTasks: Record<string, UserTaskSpec>
+    interface: {
+        userTasks: Record<string, UserTaskSpec>
+    }
 }
 
 export interface TimelineHitSpec extends HitBaseSpec {

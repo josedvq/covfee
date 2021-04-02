@@ -21,8 +21,9 @@ from .project_folder import ProjectFolder
 @click.option("--force", is_flag=True, help="Specify to overwrite existing databases.")
 @click.option("--unsafe", is_flag=True, help="Disables authentication for the covfee instance.")
 @click.option("--rms", is_flag=True, help="Re-makes the schemata for validation.")
+@click.option("--dev", is_flag=True, help="Do not launch the browser.")
 @click.argument("file_or_folder")
-def make_db(force, unsafe, rms, file_or_folder):
+def make_db(force, unsafe, rms, dev, file_or_folder):
     project_folder = ProjectFolder(os.getcwd())
 
     # ask user what to do if the database file exists
@@ -83,9 +84,8 @@ def make_db(force, unsafe, rms, file_or_folder):
 
     db.session.commit()
 
-    if os.getenv('COVFEE_ENV') == 'development':
-        open_covfee_admin()
-        start_dev(unsafe=unsafe)
+    if dev:
+        start_dev()
     else:
         build()
         open_covfee_admin()

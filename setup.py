@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='covfee',
-    version='0.1.0',
+    version='0.0.1',
     author="Jose Vargas",
     author_email="josedvq@gmail.com",
     description="Continuous video feedback tool",
@@ -16,19 +16,21 @@ setup(
     zip_safe=False,
     entry_points={
         'console_scripts': [
-            'covfee-installjs = covfee.commands:cmd_install_js',
+            # user CLI
+            'covfee = covfee.commands:cmd_start_prod',
+            'covfee-open = covfee.commands:cmd_open',
             'covfee-maker = covfee.cli.maker:make_db',
             'covfee-filter = covfee.cli.filter:validate',
+            'covfee-installjs = covfee.commands:cmd_install_js',
+            # for custom deployments (eg. apache_wsgi)
+            'covfee-build = covfee.commands:cmd_build',
+            # for user management
+            'covfee-mkuser = covfee.commands:make_user',
+            
+            # dev helper scripts
             'covfee-schemata = covfee.cli.filter:cmd_make_schemata',
-            'covfee-update = covfee.commands:update_db',
             'covfee-webpack = covfee.commands:cmd_start_webpack',
             'covfee-dev = covfee.commands:cmd_start_dev',
-            'covfee-prod = covfee.commands:cmd_start_prod',
-            'covfee-build = covfee.commands:cmd_build',
-            'covfee-env-production = covfee.commands:set_env_prod',
-            'covfee-env-development = covfee.commands:set_env_dev',
-            'covfee-mkuser = covfee.commands:make_user',
-            'covfee-open = covfee.commands:cmd_open'
         ]
     },
     install_requires=[

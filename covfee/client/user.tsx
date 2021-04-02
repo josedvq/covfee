@@ -1,6 +1,6 @@
 import * as React from 'react'
 import userContext from './userContext'
-const Constants = require('Constants')
+import Constants from 'Constants'
 import { fetcher, throwBadResponse, getCookieValue, myerror} from './utils'
 
 interface LoginInfo {

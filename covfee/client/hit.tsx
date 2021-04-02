@@ -23,7 +23,7 @@ import Collapsible from 'react-collapsible'
 const { Text } = Typography
 
 import classNames from 'classnames'
-const Constants = require('Constants')
+import Constants from 'Constants'
 import { myerror, fetcher, throwBadResponse} from './utils'
 import { getTaskClass, NewTaskModal} from './task_utils'
 import { Buffer, EventBuffer, DummyBuffer } from './buffer'

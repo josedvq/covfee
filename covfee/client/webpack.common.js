@@ -8,9 +8,7 @@ module.exports = env => {
             admin: './admin/index.js'
         },
         output: {
-            filename: '[name].js',
-            path: path.resolve(__dirname, '../server/static'),
-            publicPath: 'http://localhost:8085/'
+            filename: '[name].js'            
         },
         resolve: {
             extensions: [".ts", ".tsx", ".jsx", ".js"],
@@ -19,7 +17,7 @@ module.exports = env => {
                 'Tasks': path.resolve(__dirname, 'tasks'),
                 'Players': path.resolve(__dirname, 'players'),
                 'Input': path.resolve(__dirname, 'input'),
-                'Constants': path.resolve(env.COVFEE_WD, 'covfee_constants.json'),
+                'Constants': path.resolve(env.COVFEE_WD, '.covfee/covfee_constants.json'),
                 'CustomTasks': path.resolve(env.COVFEE_WD, 'covfee_tasks'),
             }
         },

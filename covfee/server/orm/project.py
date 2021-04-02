@@ -72,7 +72,7 @@ class Project(db.Model):
 
     @staticmethod
     def get_hashtr(id):
-        return id + app.config['COVFEE_SALT']
+        return id + app.config['COVFEE_SECRET_KEY']
 
     @staticmethod
     def get_id(id):

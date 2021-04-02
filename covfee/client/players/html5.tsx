@@ -1,4 +1,5 @@
 import * as React from 'react'
+import './html5.css'
 import { HTML5PlayerMedia } from '@covfee-types/players/html5'
 
 // video player using opencv to control playback speed
@@ -14,21 +15,33 @@ interface Props extends HTML5PlayerMedia {
 }
 
 class HTML5Player extends React.PureComponent<Props> {
-    private video_tag = React.createRef<HTMLVideoElement>()
+    canvasTag = React.createRef<HTMLCanvasElement>()
+    canvasCtx: CanvasRenderingContext2D
+    videoTags = Array<React.RefObject<HTMLVideoElement>>(this.props.url.length)
 
-    private req_id: any = false
-    private frame: number = 0
-    private time: number = 0
+
+    // state
+    active_idx = 0
+    frame: number = 0
+    time: number = 0
+
+    // Ids
+    videoFrameCallbackId: number = null
+
+    constructor(props: Props) {
+        super(props)
+
+        for(let i=0; i<this.props.url.length; i++) {
+            this.videoTags[i] = React.createRef<HTMLVideoElement>()
+        }
+    }
 
     componentDidMount() {
+        
+        this.canvasCtx = this.canvasTag.current.getContext('2d')
 
-        this.video_tag.current.addEventListener('loadedmetadata', (e: Event) => {
-            this.props.onLoad(this.video_tag.current)
-        })
-
-        this.video_tag.current.addEventListener('ended', (e: Event) => {
-            this.props.onEnded(e)
-            this.pause()
+        this.videoTags[this.active_idx].current.addEventListener('loadeddata', (e: Event) => {
+            this.setActiveVideo(0)
         })
     }
 
@@ -41,30 +54,63 @@ class HTML5Player extends React.PureComponent<Props> {
     }
 
     componentWillUnmount() {
-        if(this.req_id) {
-            cancelAnimationFrame(this.req_id)
+        if(this.videoFrameCallbackId) {
+            this.videoTags[this.active_idx].current.cancelVideoFrameCallback(this.videoFrameCallbackId)
         }
     }
 
-    processVideo = () => {
-        const time = this.video_tag.current.currentTime
+    handleEnd = (e: Event) => {
+        this.props.onEnded(e)
+        this.pause()
+    }
+
+    setActiveVideo = (idx:number) => {
+        // copy video to canvas
+        
+        this.videoTags[this.active_idx].current.removeEventListener('ended', this.handleEnd)
+        this.videoTags[idx].current.addEventListener('ended', this.handleEnd)
+
+        // copy over the currentTime of the previous active video
+        console.log([this.videoTags[idx].current.currentTime, this.videoTags[this.active_idx].current.currentTime])
+        this.videoTags[idx].current.currentTime = this.videoTags[this.active_idx].current.currentTime
+
+        this.active_idx = idx
+        this.copyVideoToCanvas()
+    }
+
+    copyVideoToCanvas = () => {
+        // copy the video content to the main canvas
+        const width = this.canvasTag.current.width
+        const height = this.canvasTag.current.height
+        this.canvasCtx.drawImage(this.videoTags[this.active_idx].current,0,0,width,height)
+    }
+
+    processVideo = (now, metadata) => {
+        // call the onFrame event
+        const time = metadata.mediaTime
         if(time !== this.time) {
             this.time = time
             this.frame = Math.round(time / this.props.fps)
             this.props.onFrame(this.frame)
         }
-        this.req_id = window.requestAnimationFrame(this.processVideo)
+        
+        this.copyVideoToCanvas()
+        this.videoFrameCallbackId = this.videoTags[this.active_idx].current.requestVideoFrameCallback(this.processVideo)
     }
 
     play() {
-        this.req_id = window.requestAnimationFrame(this.processVideo)
-        this.video_tag.current.play()
+        this.videoFrameCallbackId = this.videoTags[this.active_idx].current.requestVideoFrameCallback(this.processVideo)
+        this.videoTags.forEach(tag=>{
+            tag.current.play()
+        })
     }
 
     pause() {
-        window.cancelAnimationFrame(this.req_id)
-        this.req_id = false
-        this.video_tag.current.pause()
+        this.videoTags[this.active_idx].current.cancelVideoFrameCallback(this.videoFrameCallbackId)
+        this.videoFrameCallbackId = null
+        this.videoTags.forEach(tag=>{
+            tag.current.pause()
+        })
     }
 
     restart() {
@@ -73,11 +119,11 @@ class HTML5Player extends React.PureComponent<Props> {
 
     currentTime(t?: number) {
         if(t !== undefined) {
-            this.video_tag.current.currentTime = t
+            this.videoTags[this.active_idx].current.currentTime = t
             this.frame = Math.round(t * this.props.fps)
             this.props.pausePlay(true) // pause the video
         }
-        else return this.video_tag.current.currentTime
+        else return this.videoTags[this.active_idx].current.currentTime
     }
 
     currentFrame(t?: number) {
@@ -87,18 +133,21 @@ class HTML5Player extends React.PureComponent<Props> {
         else return this.frame
     }
 
-    // wrap the player in a div with a `data-vjs-player` attribute
-    // so videojs won't create additional wrapper in the DOM
-    // see https://github.com/videojs/video.js/pull/3856
-
-    // use `ref` to give Video JS a reference to the video DOM element: https://reactjs.org/docs/refs-and-the-dom
-    //style={{ display: 'none' }}
     render() {
-        return <>
-            <video ref={this.video_tag} width="100%" crossOrigin="Anonymous" preload="auto" muted> 
-                <source src={this.props.url} type={"video/mp4"}></source>
-            </video>
-        </>
+        return <div className='html5player'>
+            <canvas ref={this.canvasTag} className='video-canvas' width={800} height={450}/>
+            <div className='video-selector'>
+                {this.props.url.map((url, idx)=>{
+                    return <video 
+                        key={idx}
+                        style={{width: (100/this.props.url.length) + '%'}} 
+                        onClick={()=>{if(this.props.paused) this.setActiveVideo(idx)}}
+                        ref={this.videoTags[idx]} src={url} 
+                        crossOrigin="Anonymous" 
+                        preload="auto" muted/>
+                })}
+            </div>
+        </div>
     }
 }
 
