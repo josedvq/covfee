@@ -1,2 +1,2 @@
-import {BasicVideo} from './media'
-export type HTML5PlayerMedia = BasicVideo
+import { BasicVideo, MultiviewVideo} from './media'
+export type HTML5PlayerMedia = MultiviewVideo

@@ -56,22 +56,22 @@ class HTML5Player extends React.PureComponent<Props> {
         this.req_id = window.requestAnimationFrame(this.processVideo)
     }
 
-    public play() {
+    play() {
         this.req_id = window.requestAnimationFrame(this.processVideo)
         this.video_tag.current.play()
     }
 
-    public pause() {
+    pause() {
         window.cancelAnimationFrame(this.req_id)
         this.req_id = false
         this.video_tag.current.pause()
     }
 
-    public restart() {
+    restart() {
         this.currentTime(0)
     }
 
-    public currentTime(t?: number) {
+    currentTime(t?: number) {
         if(t !== undefined) {
             this.video_tag.current.currentTime = t
             this.frame = Math.round(t * this.props.fps)
@@ -80,7 +80,7 @@ class HTML5Player extends React.PureComponent<Props> {
         else return this.video_tag.current.currentTime
     }
 
-    public currentFrame(t?: number) {
+    currentFrame(t?: number) {
         if (t !== undefined) {
             this.currentTime(t / this.props.fps)
         }
