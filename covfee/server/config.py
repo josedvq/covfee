@@ -36,14 +36,14 @@ DATABASE_RELPATH = os.path.join('.covfee', 'database.covfee.db')
 DATABASE_PATH = os.path.join(os.getcwd(), DATABASE_RELPATH)
 
 # project www and bundle location
-PROJECT_WWW_PATH = os.path.join(os.getcwd(), '.covfee', 'www')
+PROJECT_WWW_PATH = os.path.join(os.getcwd(), 'www')
 PROJECT_WWW_URL = os.path.join(BASE_URL, 'www')
 BUNDLE_URL = os.path.join(PROJECT_WWW_URL, 'main.js')
 ADMIN_BUNDLE_URL = os.path.join(PROJECT_WWW_URL, 'admin.js')
 
 # for project media
-MEDIA_PATH = os.path.join(os.getcwd(), 'media')
-MEDIA_URL = os.path.join(BASE_URL, 'media')
+MEDIA_PATH = os.path.join(os.getcwd(), 'www')
+MEDIA_URL = os.path.join(BASE_URL, 'www')
 MEDIA_SERVER = True
 
 # for temporary (download) files

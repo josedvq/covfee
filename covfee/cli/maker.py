@@ -11,7 +11,7 @@ init()
 from covfee.server.orm import app, db, Project, User
 from .utils import look_for_covfee_files, working_directory
 from .filter import cli_validate_project, cli_get_schemata
-from ..commands import start_dev, start_prod, open_covfee_admin, build
+from ..commands import start_dev, start_prod, open_covfee_admin, build, print_admin_url
 from .project_folder import ProjectFolder
 
 
@@ -84,6 +84,7 @@ def make_db(force, unsafe, rms, dev, file_or_folder):
     db.session.commit()
 
     if dev:
+        print_admin_url()
         start_dev()
     else:
         build()

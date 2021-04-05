@@ -23,9 +23,13 @@ covfee/build-storybook.log
 *nohup.out
 .ipynb_checkpoints*
 
+# docs
+docs/schemata.json
 
 # samples
 *database.covfee.db
+samples/*/www/*.js
+samples/*/www/*.LICENSE.txt
 samples/*/.covfee
 samples/*/covfee_tasks/index.js
 samples/*/covfee_constants.json

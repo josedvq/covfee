@@ -47,14 +47,6 @@ def project_www_file(filename):
     return send_from_directory(app.config['PROJECT_WWW_PATH'], filename,
                                conditional=True)
 
-
-# project media
-@frontend.route('/media/<path:filename>')
-def project_media_file(filename):
-    print(app.config['MEDIA_PATH'])
-    return send_from_directory(app.config['MEDIA_PATH'], filename,
-                               conditional=True)
-
 @frontend.errorhandler(404)
 def page_not_found(e):
     # note that we set the 404 status explicitly

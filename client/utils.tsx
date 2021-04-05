@@ -3,12 +3,12 @@ import {message} from 'antd'
 import Constants from 'Constants'
 
 // read a cookie in the browser
-function getCookieValue(a: string) {
+export function getCookieValue(a: string) {
     var b = document.cookie.match('(^|;)\\s*' + a + '\\s*=\\s*([^;]+)')
     return b ? b.pop() : null
 }
 
-function getUrlQueryParam(name: string) {
+export function getUrlQueryParam(name: string) {
     // querystring is after the hash
     let search
     if (window.location.hash.indexOf('?') !== -1) {
@@ -23,7 +23,7 @@ function getUrlQueryParam(name: string) {
 // error method that
 //   prints an message to screen in production environment
 //   prints and logs a detailed error in dev mode
-function myerror(msg: string, error?: any) {
+export function myerror(msg: string, error?: any) {
     if(Constants.env == 'production') {
         message.error(msg + ' Please try again later or contact the organizer(s).')
     } else {
@@ -34,12 +34,12 @@ function myerror(msg: string, error?: any) {
     }
 }
 
-function myinfo(msg: string) {
+export function myinfo(msg: string) {
     message.info(msg)
 }
 
 // fetch wrapper that appends the csrf_access_token cookie for authentication
-function fetcher(input: RequestInfo, options?: RequestInit) {
+export function fetcher(input: RequestInfo, options?: RequestInit) {
     const cookie = getCookieValue('csrf_access_token')
     const newOptions = { ...options}
     if(cookie != null) {
@@ -52,7 +52,7 @@ function fetcher(input: RequestInfo, options?: RequestInit) {
 }
 
 // fetch then function that throws an error for error status codes
-const throwBadResponse = async (response: any) => {
+export const throwBadResponse = async (response: any) => {
     if (!response.ok) {
         const data = await response.json()
         if(data.hasOwnProperty('msg')) {
@@ -63,11 +63,26 @@ const throwBadResponse = async (response: any) => {
     return await response.json()
 }
 
-export { 
-    fetcher, 
-    myerror, 
-    myinfo, 
-    getUrlQueryParam,
-    getCookieValue,
-    throwBadResponse
+export function getFullscreen(element: HTMLElement) {
+    if (element.requestFullscreen) {
+        return element.requestFullscreen()
+    } else if (element.mozRequestFullScreen) {
+        return element.mozRequestFullScreen()
+    } else if (element.webkitRequestFullscreen) {
+        return element.webkitRequestFullscreen()
+    } else if (element.msRequestFullscreen) {
+        return element.msRequestFullscreen()
+    }
+}
+
+export function closeFullscreen() {
+    if (document.exitFullscreen) {
+        return document.exitFullscreen()
+    } else if (document.mozCancelFullScreen) { /* Firefox */
+        return document.mozCancelFullScreen()
+    } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+        return document.webkitExitFullscreen()
+    } else if (document.msExitFullscreen) { /* IE/Edge */
+        return document.msExitFullscreen()
+    }
 }

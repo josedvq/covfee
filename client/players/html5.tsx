@@ -34,11 +34,12 @@ class HTML5Player extends React.PureComponent<Props> {
         super(props)
 
         if(this.props.media.type == 'video-multiview') {
-            this.videoTags = [React.createRef<HTMLVideoElement>()]
-        } else {
+            this.videoTags = []
             for(let i=0; i<this.props.media.url.length; i++) {
                 this.videoTags.push(React.createRef<HTMLVideoElement>())
             }
+        } else {
+            this.videoTags = [React.createRef<HTMLVideoElement>()]
         }
     }
 

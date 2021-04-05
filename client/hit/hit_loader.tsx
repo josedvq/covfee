@@ -3,7 +3,7 @@ import * as React from 'react'
 import { withRouter } from 'react-router'
 import Annotation from './hit'
 import Constants from 'Constants'
-import { fetcher, getUrlQueryParam, throwBadResponse} from './utils'
+import { fetcher, getUrlQueryParam, throwBadResponse} from '../utils'
 
 import {
     LoadingOutlined,
@@ -20,7 +20,6 @@ import {
     Route,
 } from "react-router-dom"
 const { Text, Title, Link } = Typography
-// import {TaskSpec} from './tasks/types'
 
 interface HITSpec {
     id: string,

@@ -11,7 +11,9 @@
         "strictFunctionTypes": true,
         "sourceMap": true,
         "baseUrl": ".",
+        "resolveJsonModule": true,
         "paths": {
+            "Constants": ["../docs/covfee_constants.json"],
             "@covfee-types/*": ["../shared/types/*"],
             "@docs/*": ["../docs/*"]
         }

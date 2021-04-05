@@ -12,7 +12,7 @@ import { ColumnsType } from 'antd/es/table'
 const { Title, Paragraph} = Typography
 const { Option } = Select
 import 'antd/dist/antd.css'
-import {HITSpec} from '../hit_loader'
+import {HITSpec} from '../hit/hit_loader'
 import Constants from 'Constants'
 import { myerror, fetcher, throwBadResponse, myinfo } from '../utils'
 import { IdcardFilled, LoadingOutlined, RightOutlined } from '@ant-design/icons'

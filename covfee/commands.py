@@ -24,7 +24,6 @@ def cmd_start_webpack():
     # run the dev server
     covfee_client_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'client')
     with working_directory(covfee_client_path):
-        print(os.getcwd())
         os.system('npx webpack serve' +
         ' --env COVFEE_WD=' + cwd +
         ' --config ./webpack.dev.js')
@@ -100,6 +99,8 @@ def install_js():
 def cmd_install_js():
     install_js()
 
+def print_admin_url():
+    print(Fore.GREEN + f' * covfee is available at {app.config["ADMIN_URL"]}')
 
 def open_covfee_admin():
     if which('xdg-open') is not None:
@@ -107,7 +108,7 @@ def open_covfee_admin():
     elif sys.platform == 'darwin' and which('open') is not None:
         os.system(f'open {app.config["ADMIN_URL"]}')
     else:
-        print(f'covfee is available at {app.config["ADMIN_URL"]}')
+        print_admin_url()
 
 
 @click.command()

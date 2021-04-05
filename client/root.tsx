@@ -18,9 +18,8 @@ import {
     Route,
     Link,
 } from "react-router-dom"
-import {HITWithRouter} from './hit_loader'
+import {HITWithRouter} from './hit/hit_loader'
 
-const { SubMenu } = Menu;
 const { Header, Footer, Content, Sider } = Layout;
 
 function About() {
@@ -28,8 +27,6 @@ function About() {
 }
 
 class Root extends React.Component {
-    state: any
-
     componentDidMount() {
     }
 

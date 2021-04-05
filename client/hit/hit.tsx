@@ -1,10 +1,9 @@
 import * as React from 'react'
 import {unstable_batchedUpdates} from 'react-dom'
-import { withRouter, generatePath } from 'react-router'
+import { withRouter, generatePath, RouteComponentProps } from 'react-router'
 import {
-    EyeFilled, 
-    EditOutlined,
-    PlusCircleOutlined, QuestionCircleOutlined, PlusOutlined
+    QuestionCircleOutlined,
+    PlusOutlined
 } from '@ant-design/icons'
 import {
     Row,
@@ -24,87 +23,17 @@ const { Text } = Typography
 
 import classNames from 'classnames'
 import Constants from 'Constants'
-import { myerror, fetcher, throwBadResponse} from './utils'
-import { getTaskClass, NewTaskModal} from './task_utils'
-import { Buffer, EventBuffer, DummyBuffer } from './buffer'
-import { MarkdownLoader} from './tasks/instructions'
-import KeyboardManagerContext from './input/keyboard_manager'
-import CovfeeLogo from './art/logo.svg'
+import { myerror, fetcher, throwBadResponse} from '../utils'
+import { getTaskClass, NewTaskModal} from '../task_utils'
+import { Buffer, EventBuffer, DummyBuffer } from '../buffer'
+import { MarkdownLoader} from '../tasks/instructions'
+import KeyboardManagerContext from '../input/keyboard_manager'
+import {CovfeeMenuItem} from '../gui'
+import {TaskGroup} from './sidebar'
+import {getFullscreen, closeFullscreen} from '../utils'
 
-function getFullscreen(element: HTMLElement) {
-    if (element.requestFullscreen) {
-        return element.requestFullscreen()
-    } else if (element.mozRequestFullScreen) {
-        return element.mozRequestFullScreen()
-    } else if (element.webkitRequestFullscreen) {
-        return element.webkitRequestFullscreen()
-    } else if (element.msRequestFullscreen) {
-        return element.msRequestFullscreen()
-    }
-}
 
-function closeFullscreen() {
-    if (document.exitFullscreen) {
-        return document.exitFullscreen()
-    } else if (document.mozCancelFullScreen) { /* Firefox */
-        return document.mozCancelFullScreen()
-    } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
-        return document.webkitExitFullscreen()
-    } else if (document.msExitFullscreen) { /* IE/Edge */
-        return document.msExitFullscreen()
-    }
-}
 
-class TaskGroup extends React.Component<any, {}> {
-
-    render() {
-        return <ol className={'task-group'}>
-            {this.props.tasks.map((task, index) => 
-                <Task key={task.id} 
-                    id={index} 
-                    name={task.name} 
-                    editable={task.editable}
-                    active={index == this.props.currTask} 
-                    onActivate={this.props.onChangeActiveTask} 
-                    onClickEdit={this.props.onClickEdit}/>)}
-            <li>
-                <Button 
-                    type="primary" 
-                    disabled={!this.props.allowNewTasks}
-                    block={true} 
-                    onClick={this.props.onClickAdd} 
-                    icon={<PlusCircleOutlined />}>
-                        New Task
-                </Button>
-            </li>
-        </ol>
-    }
-}
-
-class Task extends React.Component {
-
-    handleEdit = () => {
-        this.props.onClickEdit(this.props.id)
-    }
-    
-    handleActivate = () => {
-        this.props.onActivate(this.props.id)
-    }
-
-    render() {
-        let editButton = <></>
-        if (this.props.editable)
-            editButton = <Button icon={<EditOutlined />} onClick={this.handleEdit}></Button>
-            
-        return <li className={classNames('task-li', { 'task-li-active': this.props.active})}>
-            <Input 
-                disabled={true} 
-                value={this.props.name} />
-            {editButton}
-            <Button icon={<EyeFilled />} onClick={this.handleActivate}></Button>
-        </li>
-    }
-}
 
 interface TimelineInterfaceProps {
     showProgress?: boolean,
@@ -115,7 +44,7 @@ interface AnnotationInterfaceProps {
     userTasks?: any,
 }
 
-interface HitProps {
+interface HitProps extends RouteComponentProps {
     previewMode: boolean,
     type: string,
     id: string,
@@ -134,37 +63,42 @@ interface HitState {
     /**
      * Index of the currently selected task
      */
-    currTask: number,
-    loadingTask: boolean,
-    error: string,
-    completionCode: string,
+    currTask: number
+    loadingTask: boolean
+    error: string
+    completionCode: string
     sidebar: {
         taskIds: Array<number>
     },
-    extraOpen: boolean,
-    fullscreen: boolean,
-    submittingTask: boolean,
+    extraOpen: boolean
+    fullscreen: boolean
+    submittingTask: boolean
     editTaskModal: {
-        taskId: number,
-        visible: boolean,
+        taskId: number
+        visible: boolean
         new: boolean
     },
     errorModal: {
-        visible: boolean,
-        message: string,
+        visible: boolean
+        message: string
         loading: boolean
     },
+    submitModal: {
+        visible: boolean
+    },
     overlay: {
-        visible: boolean,
-        submitted: boolean,
+        visible: boolean
+        submitted: boolean
         submitting: boolean
     },
     replay: {
-        dataIndex: number,
+        dataIndex: number
         enabled: boolean
     },
     currKey: number
 }
+
+
 class Hit extends React.Component<HitProps, HitState> {
     state:HitState = {
         currTask: null,
@@ -542,7 +476,7 @@ class Hit extends React.Component<HitProps, HitState> {
         })
     }
 
-    handleEditTaskDelete = (taskId) => {
+    handleEditTaskDelete = (taskId: number) => {
         // deleting existing task
         const url = Constants.api_url + '/tasks/' + taskId + '/delete'
 
@@ -608,7 +542,7 @@ class Hit extends React.Component<HitProps, HitState> {
         }
     } 
 
-    handleMenuClick = (e: object) => {
+    handleMenuClick = (e: any) => {
         if (e.key == 'extra') this.setState({extraOpen: !this.state.extraOpen})
     }
 
@@ -812,7 +746,9 @@ class Hit extends React.Component<HitProps, HitState> {
             <Row>
                 <Col span={24}>
                     <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark">
-                        <Menu.Item icon={<img src={CovfeeLogo} width={20} />} disabled></Menu.Item>
+                        <Menu.Item disabled>
+                            <CovfeeMenuItem/>
+                        </Menu.Item>
                         <Menu.Item key="task" disabled>
                             <Text strong style={{ color: 'white' }}>{props.name}</Text>
                         </Menu.Item>
@@ -833,13 +769,16 @@ class Hit extends React.Component<HitProps, HitState> {
                         <Menu.Item key="extra" icon={<PlusOutlined />}>Extra</Menu.Item>
                         :<></>}
                     </Menu>
-                    {taskExtra?
-                    <Collapsible open={this.state.extraOpen}>
-                        {taskExtra}
-                    </Collapsible>
-                    :<></>}
+                    
                 </Col>
             </Row>
+            
+            {taskExtra?
+                <Collapsible open={this.state.extraOpen}>
+                    <Row>
+                        <Col span={24}>{taskExtra}</Col>                    
+                    </Row>
+                </Collapsible>:<></>}
             <Row>
                 <Col span={20}>
                     {this.renderOverlay()}
@@ -864,8 +803,9 @@ class Hit extends React.Component<HitProps, HitState> {
             <Row>
                 <Col span={24}>
                     <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark">
-                        <Menu.Item icon={<img src={CovfeeLogo} width={20} />} disabled>&nbsp;</Menu.Item>
-                        
+                        <Menu.Item disabled>
+                            <CovfeeMenuItem/>
+                        </Menu.Item>
                         {taskInfo ?
                             <Menu.Item key="keyboard" style={{ padding: '0' }}>
                                 <Popover
@@ -912,5 +852,5 @@ class Hit extends React.Component<HitProps, HitState> {
     }
 }
 
-const AnnotationWithRouter = withRouter(Hit)
-export default AnnotationWithRouter
+const HitWithRouter = withRouter(Hit)
+export default HitWithRouter
