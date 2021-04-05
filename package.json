@@ -1,8 +1,9 @@
 {
     "private": true,
     "workspaces": [
-        "covfee",
-        "covfee-docs"
+        "client",
+        "docs",
+        "covfee/cli"
     ],
     "devDependencies": {
         "babel-plugin-inline-json-import": "^0.3.2",

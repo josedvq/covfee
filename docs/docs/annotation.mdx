@@ -1,0 +1,86 @@
+---
+title: Annotation HITs
+---
+
+import {Alert} from 'antd'
+import {HITVisualizer} from '../src/utils/hit_visualizer'
+import {CodeBlock, updateMarkdownLinks} from '../src/utils/utils'
+
+<Meta title="Annotation HITs"/>
+
+# Annotation HITs
+
+export const hitSpec = {
+    "type": "annotation",
+    "name": "1D annotation sample",
+    "media": {
+        "type": "video",
+        "url": "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4",
+    },
+    "tasks": [
+        {
+            "type": "Continuous1DTask",
+            "name": "Arousal"
+        },
+        {
+            "type": "Continuous1DTask",
+            "name": "Valence"
+        }
+    ]
+}
+
+HITs with a `type` of `annotation` are rendered in an annotation interface. These HITs consist of a set of tasks in no particular order, and are meant to be used for annotation of continuous variables. An annotation HIT is used to annotate a single media file, specified in its `media` attribute. The `tasks` specified for an annotation HIT all apply to the same media file.
+
+## Basic example
+
+A simple annotation HIT can be specified as:
+
+<CodeBlock code={hitSpec} />
+
+In this case two annotation tasks are expected to be completed for the same video. These can be seen as tracks, and here correspond to arousal and valence as two separate one-dimensional variables to be annotated continuously. This HIT will be rendered as:
+
+<Alert message="Note: this preview is not fully interactive. To be able to edit the tasks and submit data recreate the HIT in a local covfee install."/>
+<HITVisualizer hit={hitSpec}/>
+
+Predefined tasks can be set to be completed by annotators. Annotators can also be allowed to create and name their own tasks. These HITs will be rendered in an annotation interface where users can control the available continuous variables.
+
+## User-created tasks
+
+Annotation HITs may also allow the user to add new tasks. This is useful in cases in which the tracks or tasks are not known beforehand. This can be the case, for example, when there is an unknown number of subjects in the video, and the annotation task consists in annotating them all. For these cases we follow a simplistic approach by allowing annotators to add and name tracks at will. User-created tasks can be enabled by providing a list of allowed task types in the `interface.userTasks` attribute:
+
+export const hitSpec2 = {
+    "type": "annotation",
+    "name": "1D annotation sample",
+    "media": {
+        "type": "video",
+        "url": "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4",
+    },
+    "tasks": [{
+        "type": "Continuous1DTask",
+        "name": "Arousal"
+    }],
+    "interface": {
+        "userTasks": {
+            "1dvariable": {
+                "type": "Continuous1DTask"
+            }
+        }
+    }
+}
+
+In this example annotators will only be able to create tasks of type `Continuous1DTask`:
+
+<CodeBlock code={hitSpec2} />
+
+<Alert message="Note: this preview is not fully interactive. To be able to edit the tasks and submit data recreate the HIT in a local covfee install."/>
+<HITVisualizer hit={hitSpec2}/>
+
+Annotation HITs may contain a combination of fixed and user-created tasks, by specifying both the `tasks` and `userTasks` attributes. In this case user-created tasks will be editable, and removable, while fixed tasks will not.
+
+## Replay mode
+
+An important feature in continuous annotation tasks is the ability to replay the annotations. For tasks that support it, the annotation interface will give the user the option of replaying his/her annotations. 
+
+## Important notes
+
+- The task types specified in `tasks` or `userTasks` must support the media specification provided in `media`. This check is not done when the tasks are created. Providing invalid media will result in browser errors.

@@ -50,7 +50,6 @@ def make_db(force, unsafe, rms, dev, file_or_folder):
             return
         spinner.succeed(f'{len(covfee_files)} project files found.')
 
-    schemata = cli_get_schemata(remake=rms)
     for cf in covfee_files:
         # reading
         with Halo(text=f'Reading file {cf}', spinner='dots') as spinner:
@@ -59,7 +58,7 @@ def make_db(force, unsafe, rms, dev, file_or_folder):
             spinner.succeed(f'Project file {cf} read successfully')
 
         # validation
-        valid = cli_validate_project(schemata, project_spec, cf)
+        valid = cli_validate_project(project_spec, cf)
         if not valid:
             sys.exit(1)
 

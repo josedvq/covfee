@@ -1,0 +1,65 @@
+---
+title: Instructions
+---
+
+import { Typography, Space } from 'antd'
+import InstructionsTask from 'covfee-client/tasks/instructions'
+import {TaskForm} from '../../src/utils/task_form'
+
+The instructions task was created as a way to provide a page with instructions for participants or annotators. This also includes consent forms and *Thank you* pages. An instructions tasks consists in a text document followed by an optional form, which can be used to request consent or ask for basic participant information.
+
+Markdown is a simple document syntax that allows you to structure rich web documents, including media. Other than rich text formatting, Markdown supports the following useful features:
+
+- Hyperlinks
+- Displaying images
+- Displaying Youtube and other videos using HTML
+
+For more information about markdown:
+
+- [markdownguide.org](https://www.markdownguide.org/cheat-sheet/) for a quick and basic Markdown cheatsheet.
+- [GitLab guide](https://about.gitlab.com/handbook/markdown-guide/) for an in-depth guide, including how to display videos with HTML.
+
+# Basic
+
+The easiest way to provide instructions is to pass Markdown code directly to the `InstructionsTask`. Note however that this is only recommended for short instructions. The reason is that JSON does not preserve line breaks, and therefore any linebreaks must be explicitly input with <Typography.Text code>\\n</Typography.Text>:
+
+export const uiSchema = {
+    'ui:order': ['name', 'type', 'content', 'form'],
+    type: {'ui:widget':'hidden'},
+    content: {
+        type: {'ui:widget':'hidden'},
+        content: {'ui:widget': 'textarea'}
+    }
+}
+
+export const taskSpec = {
+    "name": "Instructions",
+    "type": "InstructionsTask",
+    "content": {
+        "type": "raw",
+        "content": "# Instructions\n\nThese are the instructions provided directly in Markdown.\n\n**We recommend that you use this mode for instructions that you can write using this interactive form. If you prefer to write the instructions in a separate markdown file, see below for how to link to your own Markdown file.**"
+    }
+}
+
+<TaskForm spec={taskSpec} 
+    schemaName='InstructionsTaskSpec'
+    uiSchema={uiSchema}
+    formEnabled={false}/>
+
+# Link to Markdown file
+
+You can also link to a Markdown file with experiment or annotation instructions. This is the best way to write instructions that are longer than a few sentences. Markdown also supports HTML tags.
+
+export const taskSpecMd = {
+    "name": "Instructions",
+    "type": "InstructionsTask",
+    "content": {
+        "type": "link",
+        "url": "https://gist.githubusercontent.com/benbalter/3914310/raw/f757a33411082da23f0ad4a124b45fcdacc1b43f/Example--text.txt"
+    }
+}
+
+<TaskForm spec={taskSpecMd} 
+    schemaName='InstructionsTaskSpec'
+    uiSchema={uiSchema}
+    formEnabled={false}/>

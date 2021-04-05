@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 # Configuration file specifying the default covfee behavior
 # Can be overwritten via project config
@@ -18,8 +19,9 @@ SQLALCHEMY_ENGINE_OPTIONS = {'isolation_level': "READ UNCOMMITTED"}
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # for storing the json schemata for validation
-SHARED_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../shared')
-SCHEMATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'schemata.json')
+SHARED_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'shared')
+DOCS_SCHEMATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'docs', 'schemata.json')
+FILTER_SCHEMATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'cli', 'schemata.json')
 
 # Configure application to store JWTs in cookies. Whenever you make
 # a request to a protected endpoint, you will need to send in the
@@ -30,18 +32,18 @@ JWT_COOKIE_CSRF_PROTECT = False
 # PROJECT FOLDER PATHS
 
 # database
-DATABASE_RELPATH = '.covfee/database.covfee.db'
+DATABASE_RELPATH = os.path.join('.covfee', 'database.covfee.db')
 DATABASE_PATH = os.path.join(os.getcwd(), DATABASE_RELPATH)
 
 # project www and bundle location
-PROJECT_WWW_PATH = os.path.join(os.getcwd(), '.covfee/www')
-PROJECT_WWW_URL = BASE_URL + '/www'
-BUNDLE_URL = PROJECT_WWW_URL + '/main.js'
-ADMIN_BUNDLE_URL = PROJECT_WWW_URL + '/admin.js'
+PROJECT_WWW_PATH = os.path.join(os.getcwd(), '.covfee', 'www')
+PROJECT_WWW_URL = os.path.join(BASE_URL, 'www')
+BUNDLE_URL = os.path.join(PROJECT_WWW_URL, 'main.js')
+ADMIN_BUNDLE_URL = os.path.join(PROJECT_WWW_URL, 'admin.js')
 
 # for project media
 MEDIA_PATH = os.path.join(os.getcwd(), 'media')
-MEDIA_URL = BASE_URL + '/media'
+MEDIA_URL = os.path.join(BASE_URL, 'media')
 MEDIA_SERVER = True
 
 # for temporary (download) files

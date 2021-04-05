@@ -22,11 +22,12 @@ def cmd_start_webpack():
 
     cwd = os.getcwd()
     # run the dev server
-    covfee_path = os.path.join(os.path.dirname(os.path.realpath(__file__)))
-    with working_directory(covfee_path):
-        os.system(os.path.join('node_modules', '.bin', 'webpack-dev-server') +
-        ' --env.COVFEE_WD=' + cwd +
-        ' --config ./client/webpack.dev.js')
+    covfee_client_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'client')
+    with working_directory(covfee_client_path):
+        print(os.getcwd())
+        os.system('npx webpack serve' +
+        ' --env COVFEE_WD=' + cwd +
+        ' --config ./webpack.dev.js')
 
 
 def start_dev():
@@ -76,12 +77,12 @@ def build():
     cwd = os.getcwd()
 
     bundle_path = app.config['PROJECT_WWW_PATH']
-    covfee_path = os.path.dirname(os.path.realpath(__file__))
+    covfee_client_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'client')
 
-    with working_directory(covfee_path):
-        os.system(os.path.join('node_modules', '.bin', 'webpack') +
-                ' --env.COVFEE_WD=' + cwd +
-                ' --config ./client/webpack.prod.js' + ' --output-path '+bundle_path)
+    with working_directory(covfee_client_path):
+        os.system('npx webpack' +
+                ' --env COVFEE_WD=' + cwd +
+                ' --config ./webpack.prod.js' + ' --output-path '+bundle_path)
 
 
 @click.command()

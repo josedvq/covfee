@@ -3,7 +3,12 @@
 covfee.egg-info
 build
 dist
-covfee/node_modules
+
+#js
+node_modules
+client/node_modules
+docs/node_modules
+yarn.lock
 
 # generated files
 covfee/server/schemata.json
@@ -27,3 +32,4 @@ samples/*/covfee_constants.json
 samples/conflab/media/*
 samples/memory/media/*
 samples/memory/media.zip
+

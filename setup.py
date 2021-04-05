@@ -43,7 +43,8 @@ setup(
         'pandas == 1.*',
         'jsonschema == 3.*',
         'halo == 0.*',
-        'colorama == 0.3.*'
+        'colorama == 0.3.*',
+        'pyzmq == 22.*'
     ],
     python_requires='>=3.6'
 )

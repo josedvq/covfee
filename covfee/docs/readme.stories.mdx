@@ -1,8 +1,0 @@
-import { Description } from '@storybook/addon-docs/blocks'
-import Readme from '../../README.md'
-import marked from 'marked'
-import {updateMarkdownLinks} from './utils/utils'
-
-<Meta title="Covfee"/>
-
-<Description>{updateMarkdownLinks(marked(Readme))}</Description>

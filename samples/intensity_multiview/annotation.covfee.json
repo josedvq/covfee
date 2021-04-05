@@ -1,22 +1,19 @@
 {
     "id": "1d_annot",
     "name": "Continuous annot sample",
-    "email": "j.d.vargasquiros@tudelft.nl",
+    "email": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Elementum curabitur vitae nunc sed velit dignissim sodales ut eu. Arcu vitae elementum curabitur vitae. Integer enim neque volutpat ac tincidunt vitae semper quis lectus. Tellus id interdum velit laoreet id donec ultrices tincidunt.",
     "hits": [
         {
             "id": "1d_annot",
-            "type": "annotation",
             "name": "1D annotation sample",
-            "extra": {
-                "html": "These are HIT-level instructions or auxiliary information for annotators."
-            },
+            "extra": {"content":"sdfjhsdkfhlsdf", "type": "raw"},
             "repeat": 2,
             "tasks": [
                 {
                     "type": "Continuous1DTask",
                     "name": "Sample",
                     "media": {
-                        "type": "video",
+                        "type": "video-multiview",
                         "url": ["video1.mp4", "video2.mp4", "video3.mp4", "video4.mp4", "video5.mp4"]
                     },
                     "intensityInput": {
@@ -29,7 +26,7 @@
                     "continuous": {
                         "type": "Continuous1DTask",
                         "media": {
-                            "type": "video",
+                            "type": "video-multiview",
                             "url": ["video1.mp4", "video2.mp4", "video3.mp4", "video4.mp4", "video5.mp4"]
                         }
                     }

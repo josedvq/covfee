@@ -27,7 +27,7 @@ class ProjectFolder:
         shutil.rmtree(os.path.join(self.path, '.covfee'))
 
     def init(self):
-        os.makedirs(os.path.join(self.path, '.covfee/www'))
+        os.makedirs(os.path.join(self.path, '.covfee', 'www'))
         cli_create_tables()
 
     def init_frontend(self):
@@ -40,20 +40,5 @@ class ProjectFolder:
             'auth_url': app.config['AUTH_URL'],
             'media_url': app.config['MEDIA_URL']
         }
-        constants_path = os.path.join(os.getcwd(), '.covfee/covfee_constants.json')
+        constants_path = os.path.join(os.getcwd(), '.covfee', 'covfee_constants.json')
         json.dump(app_constants, open(constants_path, 'w'), indent=2)
-
-        # TODO: remove all of this once webpack 5 is supported by storybook
-        custom_tasks_path = os.path.join(self.path, 'covfee_tasks')
-
-        if not os.path.exists(custom_tasks_path):
-            os.mkdir(custom_tasks_path)
-
-        # create a javascript custom tasks module if it does not exist
-        fpaths = [os.path.join(custom_tasks_path, fname)
-                for fname in ['index.js', 'index.jsx', 'index.ts', 'index.tsx']]
-
-        fpaths_exist = [os.path.exists(fpath) for fpath in fpaths]
-        if not any(fpaths_exist):
-            with open(fpaths[0], 'w') as fh:
-                fh.write('export {}')
