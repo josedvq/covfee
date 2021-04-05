@@ -90,8 +90,12 @@ def cmd_build():
 
 
 def install_js():
-    fpath = os.path.dirname(os.path.realpath(__file__))
-    with working_directory(fpath):
+    cli_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cli')
+    with working_directory(cli_path):
+        os.system('npm install')
+
+    client_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'client')
+    with working_directory(client_path):
         os.system('npm install')
 
 
