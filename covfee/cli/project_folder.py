@@ -27,18 +27,27 @@ class ProjectFolder:
         shutil.rmtree(os.path.join(self.path, '.covfee'))
 
     def init(self):
-        os.makedirs(os.path.join(self.path, '.covfee', 'www'))
+        covfee_hidden = os.path.join(self.path, '.covfee')
+        if not os.path.exists(covfee_hidden):
+            os.makedirs(covfee_hidden)
+        media_path = os.path.join(self.path, 'www', 'media')
+        if not os.path.exists(media_path):
+            os.makedirs(media_path)
         cli_create_tables()
 
-    def init_frontend(self):
-        # create a JSON file with constants for the front-end
-        app_constants = {
-            'env': app.config['COVFEE_ENV'],
-            'app_url': app.config['APP_URL'],
-            'admin_url': app.config['ADMIN_URL'],
-            'api_url': app.config['API_URL'],
-            'auth_url': app.config['AUTH_URL'],
-            'media_url': app.config['MEDIA_URL']
-        }
-        constants_path = os.path.join(os.getcwd(), '.covfee', 'covfee_constants.json')
-        json.dump(app_constants, open(constants_path, 'w'), indent=2)
+    def link_bundles(self):
+        bundle_path = os.path.join(app.config['PROJECT_WWW_PATH'], 'main.js')
+        if os.path.exists(bundle_path):
+            os.remove(bundle_path)
+        os.symlink(
+            os.path.join(app.config['MASTER_BUNDLE_PATH'], 'main.js'),
+            bundle_path
+        )
+
+        admin_bundle_path = os.path.join(app.config['PROJECT_WWW_PATH'], 'main.js')
+        if os.path.exists(admin_bundle_path):
+            os.remove(admin_bundle_path)
+        os.symlink(
+            os.path.join(app.config['MASTER_BUNDLE_PATH'], 'admin.js'),
+            admin_bundle_path
+        )

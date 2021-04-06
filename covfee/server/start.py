@@ -1,4 +1,5 @@
 import os
+import json
 
 from flask import request, jsonify, Blueprint, render_template, send_from_directory
 from flask_cors import CORS
@@ -29,6 +30,7 @@ frontend = Blueprint('frontend', __name__,
 @frontend.route('/')
 def main():
     return render_template('app.html',
+                           constants=json.dumps(app.config['FRONTEND_CONFIG']),
                            static_url=app.config['STATIC_URL'],
                            bundle_url=app.config['BUNDLE_URL'])
 
@@ -37,8 +39,9 @@ def main():
 @admin_required
 def admin():
     return render_template('admin.html',
+                           constants=json.dumps(app.config['FRONTEND_CONFIG']),
                            static_url=app.config['STATIC_URL'],
-                           bundle_url=app.config['ADMIN_BUNDLE_URL'])
+                           bundle_url=app.config['BUNDLE_URL'])
 
 
 # project hidden www

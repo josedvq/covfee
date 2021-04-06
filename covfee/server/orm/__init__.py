@@ -51,8 +51,16 @@ app.config.update(
 # point to webpack-dev-server bundles in dev mode
 if app.config['COVFEE_ENV'] == 'development':
     app.config['BUNDLE_URL'] = app.config['DEV_BUNDLE_URL']
-    app.config['ADMIN_BUNDLE_URL'] = app.config['DEV_ADMIN_BUNDLE_URL']
 
+# create the frontend config object:
+app.config['FRONTEND_CONFIG'] = {
+    'env': app.config['COVFEE_ENV'],
+    'app_url': app.config['APP_URL'],
+    'admin_url': app.config['ADMIN_URL'],
+    'api_url': app.config['API_URL'],
+    'auth_url': app.config['AUTH_URL'],
+    'media_url': app.config['MEDIA_URL']
+}
 
 app.app_context().push()
 db.init_app(app)

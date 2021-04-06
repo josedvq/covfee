@@ -18,8 +18,6 @@ def cmd_start_webpack():
     if not folder.is_project():
         return print(Fore.RED+'Working directory is not a valid covfee project folder. Did you run covfee-maker in the current folder?')
 
-    folder.init_frontend()
-
     cwd = os.getcwd()
     # run the dev server
     covfee_client_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'client')
@@ -71,8 +69,6 @@ def build():
     if not folder.is_project():
         raise Exception('Working directory is not a valid covfee project folder.')
 
-    folder.init_frontend()
-
     cwd = os.getcwd()
 
     bundle_path = app.config['PROJECT_WWW_PATH']
@@ -84,9 +80,20 @@ def build():
                 ' --config ./webpack.prod.js' + ' --output-path '+bundle_path)
 
 
+def build_master():
+    bundle_path = app.config['MASTER_BUNDLE_PATH']
+    covfee_client_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'client')
+    with working_directory(covfee_client_path):
+        os.system('npx webpack' +
+                    ' --config ./webpack.prod.js' + ' --output-path '+bundle_path)
+
 @click.command()
-def cmd_build():
-    build()
+@click.option('--master', is_flag=True, help='Builds the covfee master bundles.')
+def cmd_build(master):
+    if master:
+        build_master()
+    else:
+        build()
 
 
 def install_js():

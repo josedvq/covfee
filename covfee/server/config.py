@@ -38,8 +38,8 @@ DATABASE_PATH = os.path.join(os.getcwd(), DATABASE_RELPATH)
 # project www and bundle location
 PROJECT_WWW_PATH = os.path.join(os.getcwd(), 'www')
 PROJECT_WWW_URL = os.path.join(BASE_URL, 'www')
-BUNDLE_URL = os.path.join(PROJECT_WWW_URL, 'main.js')
-ADMIN_BUNDLE_URL = os.path.join(PROJECT_WWW_URL, 'admin.js')
+BUNDLE_URL = PROJECT_WWW_URL
+MASTER_BUNDLE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'client', 'bundles')
 
 # for project media
 MEDIA_PATH = os.path.join(os.getcwd(), 'www')
@@ -51,4 +51,3 @@ TMP_PATH = os.path.join(os.getcwd(), 'tmp')
 
 # DEV MODE SETTINGS
 DEV_BUNDLE_URL = 'http://localhost:8085/main.js'
-DEV_ADMIN_BUNDLE_URL = 'http://localhost:8085/admin.js'

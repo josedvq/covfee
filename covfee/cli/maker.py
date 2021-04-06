@@ -15,7 +15,8 @@ from ..commands import start_dev, start_prod, open_covfee_admin, build, print_ad
 from .project_folder import ProjectFolder
 
 
-
+def install_js_if_not_installed():
+    pass
 
 @click.command()
 @click.option("--force", is_flag=True, help="Specify to overwrite existing databases.")
@@ -24,6 +25,8 @@ from .project_folder import ProjectFolder
 @click.option("--dev", is_flag=True, help="Do not launch the browser.")
 @click.argument("file_or_folder")
 def make_db(force, unsafe, rms, dev, file_or_folder):
+    install_js_if_not_installed()
+    
     project_folder = ProjectFolder(os.getcwd())
 
     # ask user what to do if the database file exists
@@ -87,7 +90,7 @@ def make_db(force, unsafe, rms, dev, file_or_folder):
         print_admin_url()
         start_dev()
     else:
-        build()
+        project_folder.link_bundles()
         open_covfee_admin()
         start_prod(unsafe=unsafe)
 
