@@ -20,7 +20,7 @@ def cmd_start_webpack():
 
     cwd = os.getcwd()
     # run the dev server
-    covfee_client_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'client')
+    covfee_client_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'client')
     with working_directory(covfee_client_path):
         os.system('npx webpack serve' +
         ' --env COVFEE_WD=' + cwd +
@@ -72,7 +72,7 @@ def build():
     cwd = os.getcwd()
 
     bundle_path = app.config['PROJECT_WWW_PATH']
-    covfee_client_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'client')
+    covfee_client_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'client')
 
     with working_directory(covfee_client_path):
         os.system('npx webpack' +
@@ -82,7 +82,7 @@ def build():
 
 def build_master():
     bundle_path = app.config['MASTER_BUNDLE_PATH']
-    covfee_client_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'client')
+    covfee_client_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'client')
     with working_directory(covfee_client_path):
         os.system('npx webpack' +
                     ' --config ./webpack.prod.js' + ' --output-path '+bundle_path)
@@ -101,7 +101,7 @@ def install_js():
     with working_directory(cli_path):
         os.system('npm install')
 
-    client_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'client')
+    client_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'client')
     with working_directory(client_path):
         os.system('npm install')
 

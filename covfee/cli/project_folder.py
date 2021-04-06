@@ -44,7 +44,7 @@ class ProjectFolder:
             bundle_path
         )
 
-        admin_bundle_path = os.path.join(app.config['PROJECT_WWW_PATH'], 'main.js')
+        admin_bundle_path = os.path.join(app.config['PROJECT_WWW_PATH'], 'admin.js')
         if os.path.exists(admin_bundle_path):
             os.remove(admin_bundle_path)
         os.symlink(

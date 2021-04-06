@@ -18,8 +18,9 @@ COVFEE_SECRET_KEY = 'CHANGE_ME'
 SQLALCHEMY_ENGINE_OPTIONS = {'isolation_level': "READ UNCOMMITTED"}
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+
+SHARED_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'shared')
 # for storing the json schemata for validation
-SHARED_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'shared')
 DOCS_SCHEMATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'docs', 'schemata.json')
 FILTER_SCHEMATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'cli', 'schemata.json')
 
@@ -32,14 +33,14 @@ JWT_COOKIE_CSRF_PROTECT = False
 # PROJECT FOLDER PATHS
 
 # database
-DATABASE_RELPATH = os.path.join('.covfee', 'database.covfee.db')
+DATABASE_RELPATH = os.path.join(os.getcwd(), '.covfee', 'database.covfee.db')
 DATABASE_PATH = os.path.join(os.getcwd(), DATABASE_RELPATH)
 
 # project www and bundle location
 PROJECT_WWW_PATH = os.path.join(os.getcwd(), 'www')
 PROJECT_WWW_URL = os.path.join(BASE_URL, 'www')
 BUNDLE_URL = PROJECT_WWW_URL
-MASTER_BUNDLE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'client', 'bundles')
+MASTER_BUNDLE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'client', 'bundles')
 
 # for project media
 MEDIA_PATH = os.path.join(os.getcwd(), 'www')

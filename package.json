@@ -1,7 +1,7 @@
 {
     "private": true,
     "workspaces": [
-        "client",
+        "covfee/client",
         "docs",
         "covfee/cli"
     ],

@@ -6,8 +6,8 @@ dist
 
 #js
 node_modules
-client/bundles
-client/node_modules
+covfee/client/bundles
+covfee/client/node_modules
 docs/node_modules
 yarn.lock
 

@@ -264,9 +264,6 @@ class AdminProject extends React.Component<Props, State> {
                 </div>
             case 'empty': 
                 return <>
-                    <Title>
-                        Ooops!
-                    </Title>
                     <Paragraph>
                         <Empty description="There are no projects to show."/>
                     </Paragraph>
