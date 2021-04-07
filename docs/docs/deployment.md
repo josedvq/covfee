@@ -3,18 +3,16 @@ title: Deploying to a server
 slug: /
 ---
 
-Deploying covfee is only necessary if you want to make your HITs available to others over the internet. We do not recommend developing your tasks in deployment mode. It is normally more convenient to create your HIT specifications locally, deploy covfee, and then run `covfee-maker` on the deployed instance to initialize your database.
+Deploying covfee is only necessary if you want to make your HITs available to others over the internet. We do not recommend developing your tasks in deployment mode. It is normally more convenient to create your HIT specifications locally, deploy covfee, and then run `covfee make` on the deployed instance to initialize your database.
 
 ## Deployment configuration
-covfee reads its configuration from the folder in which it is run (ie. the project folder). When ran in production mode, covfee will look for the file `covfee.production.config.py` for its configuration. 
+covfee reads its configuration from the folder in which it is run (ie. the project folder). When ran in deployment mode, covfee will look for the file `covfee.deployment.config.py` for its configuration. 
 
 ### Basic configuration
 
-If you are deploying covfee, add a configuration file like the following to your project folder:
+If you are deploying covfee in a typical server, add a configuration file like the following to your project folder:
 
 ```
-FLASK_ENV = 'production'
-
 BASE_URL = 'http://example.com/covfee'
 APP_PORT = 80
 ```
@@ -23,7 +21,7 @@ The `BASE_URL` option should point to the public URL of your covfee instance.
 
 ### Hosting media files externally
 
-To host media files externally, add the following to your `covfee.production.config.py`:
+To host media files externally, add the following to your `covfee.deployment.config.py`:
 
 ```
 MEDIA_URL = 'http://example.com/covfee-media'

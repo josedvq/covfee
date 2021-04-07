@@ -1,10 +1,13 @@
+import os
 import json
 import datetime
 
-from .orm import db, app
+from flask import current_app as app
+
+from .db import db
 from .. import tasks
-import os
 pytype = type
+
 
 class Task(db.Model):
     """ Represents a single task, like eg. annotating one video """
@@ -33,9 +36,10 @@ class Task(db.Model):
             for k, v in spec['media'].items():
                 if k[-3:] == 'url':
                     if pytype(v) == list:
-                        spec['media'][k] = [app.config['MEDIA_URL'] + '/' + vi if vi[:4] != 'http' else vi for vi in v]
+                        spec['media'][k] = [app.config['PROJECT_WWW_URL'] + '/' + vi if vi[:4] != 'http' else vi for vi in v]
                     else:
-                        spec['media'][k] = app.config['MEDIA_URL'] + '/' + v if v[:4] != 'http' else v
+                        spec['media'][k] = app.config['PROJECT_WWW_URL'] + \
+                            '/' + v if v[:4] != 'http' else v
 
         self.spec = spec
 

@@ -1,17 +1,20 @@
 import shutil
 import os
-from urllib.parse import urljoin
 
-from .orm import db, app
+from flask import current_app as app
+
+from .db import db
 from .task import Task
 from hashlib import sha256
 from .task import TaskResponse
 
-hits_tasks = db.Table('hits_tasks',
+hits_tasks = db.Table(
+    'hits_tasks',
     db.Column('hit_id', db.Integer, db.ForeignKey('hits.id'), primary_key=True),
     db.Column('task_id', db.Integer, db.ForeignKey('tasks.id'), primary_key=True))
 
-hitistances_tasks = db.Table('hitistances_tasks',
+hitistances_tasks = db.Table(
+    'hitistances_tasks',
     db.Column('hitinstance_id', db.Integer, db.ForeignKey('hitinstances.id'), primary_key=True),
     db.Column('task_id', db.Integer, db.ForeignKey('tasks.id'), primary_key=True))
 
@@ -29,7 +32,8 @@ class HIT(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
     extra = db.Column(db.JSON)
     instances = db.relationship("HITInstance", backref='hit', cascade="all, delete")
-    tasks = db.relationship("Task", secondary=hits_tasks, backref='hits', cascade="all, delete", order_by='Task.order.asc(),Task.created_at.asc()')
+    tasks = db.relationship("Task", secondary=hits_tasks, backref='hits', cascade="all, delete", 
+                            order_by='Task.order.asc(),Task.created_at.asc()')
     interface = db.Column(db.JSON)
 
     def __init__(self, id, hashstr, type, repeat=1, tasks=[], **kwargs):
@@ -55,7 +59,7 @@ class HIT(db.Model):
         if extra is not None:
             if 'url' in extra and extra['url'][:4] != 'http':
                 extra['url'] = os.path.join(
-                    app.config['MEDIA_URL'], extra['url'])
+                    app.config['PROJECT_WWW_URL'], extra['url'])
         self.extra = extra
 
         # insert multiple hits/URLs according to the repeat param
@@ -91,7 +95,8 @@ class HIT(db.Model):
     def get_id(project_hashstr, id):
         return sha256(HIT.get_hashstr(project_hashstr, id).encode()).digest()
 
-    def as_dict(self, with_project=True, with_tasks=False, with_instances=False, with_instance_tasks=False):
+    def as_dict(self, with_project=True, with_tasks=False, with_instances=False,
+                with_instance_tasks=False):
         hit_dict = {c.name: getattr(self, c.name)
                     for c in self.__table__.columns}
         hit_dict['id'] = hit_dict['id'].hex()
@@ -127,7 +132,8 @@ class HITInstance(db.Model):
     # id used for visualization
     preview_id = db.Column(db.LargeBinary, unique=True)
     hit_id = db.Column(db.Integer, db.ForeignKey('hits.id'))
-    tasks = db.relationship("Task", secondary=hitistances_tasks, backref='hitinstances', cascade="delete, all", order_by='Task.order.asc(),Task.created_at.asc()')
+    tasks = db.relationship("Task", secondary=hitistances_tasks, backref='hitinstances',
+                            cascade="delete, all", order_by='Task.order.asc(),Task.created_at.asc()')
     responses = db.relationship("TaskResponse", backref='hitinstance', lazy='dynamic')
     submitted = db.Column(db.Boolean)
 
@@ -189,7 +195,7 @@ class HITInstance(db.Model):
     def make_download(self, base_dir=None, csv=False):
         if base_dir is None:
             base_dir = app.config['TMP_PATH']
-            
+
         # create a folder to store all the files
         dirpath = os.path.join(base_dir, self.id.hex())
         if os.path.exists(dirpath) and os.path.isdir(dirpath):

@@ -19,7 +19,6 @@ class PyJsonschemaValidator:
         schema = self.schemata['definitions'][schema_name]
         del self.schemata['definitions'][schema_name]
 
-        print(schema)
         schema['definitions'] = self.schemata['definitions']
         # jsonschema.validate(schema=schema, instance=instance)
         Draft7Validator(schema).validate(instance)

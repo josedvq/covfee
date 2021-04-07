@@ -1,5 +1,7 @@
-from .orm import db, app
+from .db import db
 from hashlib import pbkdf2_hmac
+
+from flask import current_app as app
 
 class User(db.Model):
     """ Represents a covfee user """

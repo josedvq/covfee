@@ -1,7 +1,8 @@
 import json
 
+from flask import current_app as app
 from flask import request, jsonify, Blueprint, send_from_directory, make_response
-from ..orm import db, app, Project, HIT, HITInstance, Task, TaskResponse, Chunk
+from ..orm import db, Project, HIT, HITInstance, Task, TaskResponse, Chunk
 from .auth import admin_required
 import shutil
 import os
@@ -13,12 +14,6 @@ def jsonify_or_404(res, **kwargs):
         return {'msg': 'not found'}, 404
     else:
         return jsonify(res.as_dict(**kwargs))
-
-@app.teardown_request
-def teardown_request(exception):
-    if exception:
-        db.session.rollback()
-    db.session.remove()
 
 # return all projects
 @api.route('/projects')
@@ -141,7 +136,6 @@ def instance_download(iid):
 
     instance = db.session.query(HITInstance).get(bytes.fromhex(iid))
     if instance is None:
-        print('here1')
         return jsonify({'msg': 'not found'}), 404
 
     try:

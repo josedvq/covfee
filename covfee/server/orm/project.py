@@ -1,12 +1,14 @@
-from .orm import db, app
+from .db import db
 from hashlib import sha256
-from copy import copy, deepcopy
-import json
-import pandas as pd
-
-from .hit import HIT
 import shutil
 import os
+import json
+
+import pandas as pd
+from flask import current_app as app
+
+from .hit import HIT
+
 
 class Project(db.Model):
     """ Represents a set of HITs which make up an experiment or annotation project """
@@ -100,7 +102,6 @@ class Project(db.Model):
         total_files = 0
         for hit in self.hits:
             for instance in hit.instances:
-                print(instance.id.hex())
                 instance_path, num_files = instance.make_download(base_dir=dirpath, csv=csv)
                 total_files += num_files
 

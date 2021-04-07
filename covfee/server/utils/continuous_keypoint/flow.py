@@ -33,7 +33,6 @@ def compute_flow(video: str, flow: str, width: int):
     out.release()
 
 def main(args):
-    print(type(args))
     compute_flow(**vars(args))
     
 if __name__ == '__main__':

@@ -1,6 +1,22 @@
 import os
 from pathlib import Path
 import contextlib
+from shutil import which
+
+
+class NPMPackage:
+    def __init__(self, path):
+        self.path = path
+
+    def is_npm_available(self):
+        return which('npm') is not None
+
+    def is_installed(self):
+        return os.path.exists(os.path.join(self.path, 'node_modules'))
+
+    def install(self):
+        with working_directory(self.path):
+            os.system('npm install')
 
 
 @contextlib.contextmanager
@@ -12,18 +28,3 @@ def working_directory(path):
         yield
     finally:
         os.chdir(prev_cwd)
-
-
-def look_for_covfee_files(file_or_folder):
-    covfee_files = []
-
-    # database exists and tables are created
-    if os.path.isdir(file_or_folder):
-        for json_path in Path(file_or_folder).rglob('*.covfee.json'):
-            covfee_files.append(json_path)
-    elif os.path.isfile(file_or_folder):
-        covfee_files.append(file_or_folder)
-    else:
-        return None
-
-    return covfee_files
