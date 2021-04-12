@@ -1,8 +1,8 @@
-class Continuous1DTask:
-    def __init__(self):
-        pass
+from .base import BaseCovfeeTask
 
-    @staticmethod
-    def aggregate_chunks(chunks):
+
+class Continuous1DTask(BaseCovfeeTask):
+
+    def aggregate_chunks(self, chunks):
         # concatenate all chunks together
         return [x for y in chunks for x in y]

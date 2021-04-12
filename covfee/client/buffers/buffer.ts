@@ -9,6 +9,7 @@ export type LogSample = Array<number | string>
 
 /**
  * Holds a data record from continuous annotation as an array of values.
+ * Format is [timestamp, sample_counter, [data_sample]]
  * The first must be the (shifted) unix timestamp of the received data sample
  * The second number must be the value of a counter indicating the absolute position of the record
  */
@@ -23,43 +24,77 @@ export type LogRecord = [number, number, LogSample]
  * Holds a data packet to be sent to the server.
  */
 export type OutChunk = {
+    index: number,
     data: Array<DataRecord>
-    rwnd: Array<DataRecord>
-    log: Array<LogRecord>
+    log_data: Array<LogRecord>
+}
+
+export interface ChunkRange {
+    ini_time: number,
+    end_time: number,
+    data: Array<OutChunk>
 }
 
 /**
  * Abstract class for different buffer implementations.
  */
-export abstract class DataCaptureBuffer {
+export interface DataCaptureBuffer {
+    /**
+     * True if the buffer has received data or logs since it was instantiated
+     */
+    receivedData: boolean
     /**
      * Pushes a timestamped data sample into the buffer
      * A data sample is meant to be a valid rating provided by the subject in a continuous task 
      * @param timestamp 
      * @param data 
      */
-    abstract data(timestamp: number, data: DataSample): void | DataSample
+    data(timestamp: number, data: DataSample): void | DataSample
     /**
      * Pushes a timestamped log event into the buffer
      * In contrast with data, log events are auxiliary information about the user experience (eg. user resizes the window)
      * @param timestamp 
      * @param data 
      */
-    abstract log(timestamp: number, data: LogSample): void
+    log(timestamp: number, data: LogSample): void
     /**
      * Returns true if it is possible to rewind the head until 'to' and false otherwise
      * @param to 
      */
-    abstract can_rewind(to: number): boolean
+    canRewind(to: number): boolean
     /**
      * Rewinds the head until it reaches a sample with timestamp <= to and returns that sample
      * @param to 
      */
-    abstract rewind(to: number): DataSample
+    rewind(to: number): DataSample
     /**
      * async function that should return a promise that is resolved until the buffer is cleared (all data submitted to the server) or error out after a provided timeout
      * If the promise is resolved succesfully the buffer can be destructed without risk of data loss.
      * @param timeout - max time, in milliseconds to wait for the buffer to clear.
      */
-    abstract awaitClear(timeout: number): Promise<unknown>
+    flush(timeout?: number): Promise<unknown>
 }
+
+export type PlaybackDataSample = void | [DataSample, Array<LogSample>]
+export type PlaybackDataPromise = Promise<PlaybackDataSample>
+/**
+ * Abstract class for different buffer implementations.
+ */
+export interface DataPlaybackBuffer {
+    /**
+     * Will populate the buffer with data.
+     */
+    _load(): Promise<void>
+    /**
+     * Reads the next data point
+     * @param until 
+     */
+    read(until: number, callback: (arg0: PlaybackDataSample) => void): void
+    /**
+     * Seeks to the given timestamp, which might be at any point in the recording.
+     * @param timestamp 
+     */
+    seekTo?(timestamp: number): PlaybackDataPromise
+}
+
+export interface BidirectionalBuffer extends DataCaptureBuffer, DataPlaybackBuffer {}

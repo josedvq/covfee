@@ -8,11 +8,11 @@ import {
 import VideojsPlayer from '../players/videojs'
 import WaveSurferBasicPlayer from '../players/wavesurfer_basic'
 import {Form} from '../input/form'
-import { BaseTaskProps } from './props'
+import { BaseTaskProps, CovfeeComponent } from './base'
 import { QuestionnaireTaskSpec } from '@covfee-types/tasks/questionnaire'
-import { TaskObject } from '@covfee-types/task'
+import { TaskType } from '@covfee-types/task'
 
-interface Props extends TaskObject, BaseTaskProps {
+interface Props extends TaskType, BaseTaskProps {
     spec: QuestionnaireTaskSpec
 }
 
@@ -28,7 +28,7 @@ interface State {
     }
 }
 
-class QuestionnaireTask extends React.Component<Props, State> {
+class QuestionnaireTask extends CovfeeComponent<Props, State> {
 
     state: State = {
         media: {

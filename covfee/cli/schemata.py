@@ -33,11 +33,17 @@ class Schemata:
     def make(self):
         # make the typescript into json schemata
         with working_directory(app.config['SHARED_PATH']):
-            os.system('npx typescript-json-schema tsconfig.json "*" --titles '
+            os.system('npx typescript-json-schema tsconfig.json "MyProjectSpec" --titles '
                       f'--ignoreErrors --required -o {app.config["DOCS_SCHEMATA_PATH"]}')
 
         # process the schemata for validation
-        self.schemata = json.load(open(app.config["DOCS_SCHEMATA_PATH"]))
+        schemata = json.load(open(app.config["DOCS_SCHEMATA_PATH"]))
+        defs_only = {
+            '$schema': schemata['$schema'],
+            'definitions': schemata['definitions']
+        }
+        json.dump(defs_only, open(app.config["DOCS_SCHEMATA_PATH"], 'w'))
+        self.schemata = defs_only
 
         if self.with_discriminators:
             self.schemata['definitions'] = {
@@ -53,6 +59,11 @@ class Schemata:
 
         def resolve(node):
             # Returns a list of the resolved children nodes of a node up to nodes with properties
+            if 'allOf' in node:
+                raise Exception('found allOf in schema.')
+
+            if 'oneOf' in node:
+                raise Exception('found oneOf in node')
 
             if '$ref' in node:
                 return resolve(self.get_ref(node['$ref']))
@@ -75,12 +86,6 @@ class Schemata:
             if '$ref' in node:
                 return node
 
-            if 'allOf' in node:
-                raise 'found allOf in schema.'
-
-            if 'oneOf' in node:
-                raise 'found oneOf in node'
-
             if 'anyOf' in node:
                 # resolve children
                 children = resolve(node)
@@ -91,7 +96,7 @@ class Schemata:
                 if count != len(children_const_props):
                     raise 'found a default const element for some but not all of children nodes'
 
-                if most_common == False:
+                if most_common is False:
                     node['anyOf'] = [recursive_dfs(n) for n in node['anyOf']]
                     return node
 

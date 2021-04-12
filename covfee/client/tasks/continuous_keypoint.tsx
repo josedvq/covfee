@@ -16,11 +16,11 @@ import MouseTracker from '../input/mouse_tracker'
 import MouseVisualizer from '../input/mouse_visualizer'
 import { myerror } from '../utils'
 import { withCookies, Cookies } from 'react-cookie'
-import { ReplayableTaskProps} from './props'
+import { CovfeeComponent, ReplayableTaskProps} from './base'
 import { ContinuousKeypointTaskSpec} from '@covfee-types/tasks/continuous_keypoint'
-import { TaskObject } from '@covfee-types/task';
+import { TaskInfo, TaskType } from '@covfee-types/task';
 
-interface Props extends TaskObject, ReplayableTaskProps {
+interface Props extends TaskType, ReplayableTaskProps {
     spec: ContinuousKeypointTaskSpec,
     cookies: Cookies
 }
@@ -43,7 +43,11 @@ interface State {
         data: Array<number>
     }
 }
-export class ContinuousKeypointTask extends React.Component<Props, State> {
+export class ContinuousKeypointTask extends CovfeeComponent<Props, State> {
+    static taskInfo: TaskInfo = {
+        continuous: true,
+    }
+
     state: State = {
         paused: true,
         occluded: false,

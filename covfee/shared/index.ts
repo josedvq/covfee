@@ -1,1 +1,3 @@
-import * from './types/project'
+import { ProjectSpec} from './types/project'
+
+export type MyProjectSpec = [ProjectSpec]

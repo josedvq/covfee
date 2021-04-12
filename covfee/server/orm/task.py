@@ -14,10 +14,9 @@ class Task(db.Model):
     __tablename__ = 'tasks'
 
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String)
     name = db.Column(db.String)
-
     order = db.Column(db.Integer)
+    config = db.Column(db.JSON)
     spec = db.Column(db.JSON)
     responses = db.relationship("TaskResponse", backref='task', cascade="all, delete-orphan")
     # backref hits
@@ -26,10 +25,14 @@ class Task(db.Model):
     created_at = db.Column(db.Date, default=datetime.datetime.now)
     updated_at = db.Column(db.Date, onupdate=datetime.datetime.now)
 
-    def __init__(self, type, order=0, name=None, **spec):
-        self.type = type
+    def __init__(self, order=0, name=None, maxSubmissions=0, autoSubmit=False, timer=None, **spec):
         self.order = order
         self.name = name
+        self.config = {
+            maxSubmissions: maxSubmissions,
+            autoSubmit: autoSubmit,
+            timer: timer
+        }
 
         # fix URLs
         if 'media' in spec:
@@ -44,8 +47,10 @@ class Task(db.Model):
         self.spec = spec
 
     def as_dict(self, editable=False):
-        task_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns if c != 'spec'}
-        task_dict = {**task_dict, 'spec': self.spec}
+        task_dict = {c.name: getattr(
+            self, c.name) for c in self.__table__.columns if c not in ['responses']}
+        task_dict['responses'] = [response.as_dict() for response in self.responses]
+        # task_dict = {**task_dict, 'spec': self.spec}
         task_dict['editable'] = editable
         return task_dict
 
@@ -67,7 +72,9 @@ class TaskResponse(db.Model):
     task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'))
     hitinstance_id = db.Column(db.LargeBinary, db.ForeignKey('hitinstances.id'))
     data = db.Column(db.JSON)
-    chunks = db.relationship("Chunk", backref='taskresponse', order_by="Chunk.index", cascade="all, delete-orphan")
+    chunks = db.relationship("Chunk", backref='taskresponse', order_by="Chunk.index", cascade="all, delete-orphan", lazy="dynamic")
+    has_chunk_data = db.Column(db.Boolean)
+    # backref task
 
     def __init__(self, task_id, hitinstance_id, index, submitted=False, data=None, chunks=None):
         self.task_id = task_id
@@ -77,20 +84,17 @@ class TaskResponse(db.Model):
         self.data = data
         self.chunks = chunks
 
-    def as_dict(self, with_chunk_data=False):
-        response_dict = {c.name: getattr(self, c.name)
-            for c in self.__table__.columns}
+    def as_dict(self):
+        response_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
         response_dict['hitinstance_id'] = response_dict['hitinstance_id'].hex()
-        if with_chunk_data:
-            response_dict['chunk_data'] = self.aggregate()['data']
 
         return response_dict
 
     def aggregate(self):
         # apply task-specific aggregation method
-        if hasattr(tasks, self.task.type):
-            task_class = getattr(tasks, self.task.type)
+        if hasattr(tasks, self.task.spec.type):
+            task_class = getattr(tasks, self.task.spec.type)
             chunk_data = [chunk.data for chunk in self.chunks]
             return task_class.process_response(self.data, chunk_data, self.hitinstance, self.task)
         else:
@@ -126,6 +130,7 @@ class TaskResponse(db.Model):
 db.Index('taskresponse_index', TaskResponse.task_id,
       TaskResponse.hitinstance_id, TaskResponse.index)
 
+
 # represents a chunk of task response (for continuous responses)
 class Chunk(db.Model):
     """ Represents a chunk of or partial task response"""
@@ -133,13 +138,27 @@ class Chunk(db.Model):
 
     # for order-keeping of the chunks
     index = db.Column(db.Integer, primary_key=True)
+    ini_time = db.Column(db.Float, index=True)
+    end_time = db.Column(db.Float, index=True)
     taskresponse_id = db.Column(db.Integer, db.ForeignKey(
         'taskresponses.id'), primary_key=True)
     data = db.Column(db.JSON)
+    log_data = db.Column(db.JSON)
 
-    def __init__(self, index, data):
+    def __init__(self, index, data, log_data=None):
         self.index = index
+        self.update(data, log_data)
+
+    def update(self, data, log_data=None):
         self.data = data
+        self.log_data = log_data
+        self.ini_time = data[0][0]
+        self.end_time = data[-1][0]
+
+    def as_dict(self):
+        chunk_dict = {c.name: getattr(
+            self, c.name) for c in self.__table__.columns}
+        return chunk_dict
 
     def __str__(self):
         return f' idx={self.index}'

@@ -1,4 +1,4 @@
-import { BaseTaskSpec } from '../task'
+import { CommonTaskSpec } from '../task'
 import {CheckboxSpec, FormSpec, InputFieldSpec, RadioSpec} from './questionnaire'
 import {MarkdownContentSpec} from './utils'
 
@@ -7,7 +7,7 @@ type InputSpec = CheckboxSpec | InputFieldSpec | RadioSpec
 /**
 * @TJS-additionalProperties false
 */
-export interface InstructionsTaskSpec extends BaseTaskSpec {
+export interface InstructionsTaskBaseSpec {
     /**
      * @default "InstructionsTask"
      */
@@ -21,3 +21,5 @@ export interface InstructionsTaskSpec extends BaseTaskSpec {
     */
     form?: FormSpec
 }
+
+export interface InstructionsTaskSpec extends InstructionsTaskBaseSpec, CommonTaskSpec {}

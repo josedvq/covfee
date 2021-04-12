@@ -1,4 +1,4 @@
-import { BaseTaskSpec } from '../task'
+import { CommonTaskSpec } from '../task'
 import {CheckboxProps, InputProps, RadioGroupProps, SliderSingleProps} from 'antd'
 import { WavesurferPlayerMedia } from '../players/wavesurfer'
 import { VideojsPlayerMedia } from 'types/players/videojs'
@@ -139,7 +139,7 @@ export interface FormSpec {
 /**
 * @TJS-additionalProperties false
 */
-export interface QuestionnaireTaskSpec extends BaseTaskSpec {
+export interface QuestionnaireTaskBaseSpec {
     /**
      * @default "QuestionnaireTask"
      */
@@ -161,3 +161,5 @@ export interface QuestionnaireTaskSpec extends BaseTaskSpec {
      */
     disabledUntilEnd?: boolean
 }
+
+export interface QuestionnaireTaskSpec extends QuestionnaireTaskBaseSpec, CommonTaskSpec {}

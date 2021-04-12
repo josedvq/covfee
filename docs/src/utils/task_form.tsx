@@ -1,13 +1,15 @@
 import * as React from 'react'
 import 'covfee-client/css/docs.css'
-import Form from '@rjsf/core'
+import { withTheme } from '@rjsf/core';
+import { Theme as AntDTheme } from '@rjsf/antd';
 import { Button, Tabs} from 'antd'
 const { TabPane } = Tabs
 import { ArrowUpOutlined } from '@ant-design/icons'
-import KeyboardManagerContext from '@client/input/keyboard_manager'
 import { CodeBlock, LivePreviewFrame} from './utils'
 import { HITVisualizer} from './hit_visualizer'
 import schemata from '@schemata'
+
+const Form = withTheme(AntDTheme)
 
 interface Props {
     spec: TaskSpec
@@ -81,6 +83,7 @@ export class TaskForm extends React.Component<Props, State> {
         }
 
         return <>
+            
             <LivePreviewFrame>
                 <HITVisualizer hit={hitProps} key={this.state.currKey}></HITVisualizer>
             </LivePreviewFrame>

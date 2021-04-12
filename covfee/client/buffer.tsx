@@ -1,5 +1,5 @@
 abstract class Buffer {
-    abstract async awaitQueueClear(timeout: number) : Promise<unknown>
+    abstract awaitQueueClear(timeout: number) : Promise<unknown>
     abstract data(timestamp: number, data: Array<any>): void
 }
 

@@ -5,6 +5,8 @@ import { LoadingOutlined } from '@ant-design/icons'
 
 import Constants from 'Constants'
 import { fetcher, myerror, throwBadResponse } from '../utils'
+import { Table } from 'antd'
+import { Link } from 'react-router-dom'
 
 class InstanceList extends React.Component {
     render() {

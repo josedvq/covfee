@@ -1,4 +1,4 @@
-import {fetchWithTimeout } from './utils'
+import { fetchWithTimeout, dummyFetch} from './utils'
 import { 
     DataCaptureBuffer, 
     DataSample, 
@@ -6,7 +6,7 @@ import {
     LogSample, 
     LogRecord,
     OutChunk
-} from './dc_buffer'
+} from './buffer'
 
 /**
  * This class implements a custom circular array data buffer as main data structure via nested arrays.
@@ -15,7 +15,8 @@ import {
  * The tailptr chunk (containing the oldest data) is then moved to the outBuffer to be sent to the server, and tailptr is incremented.
  * Correction of data by decrementing headptr is supported until headptr reaches tailptr.
  */
-class CircularDataCaptureBuffer extends DataCaptureBuffer {
+type OnErrorCallback = (arg0: string) => void
+class CircularDataCaptureBuffer implements DataCaptureBuffer {
     dataBuffer: Array<Array<DataRecord>>
     rwndStack: Array<DataRecord>
     logBuffer: Array<LogRecord>
@@ -26,9 +27,11 @@ class CircularDataCaptureBuffer extends DataCaptureBuffer {
     numChunks: number
     outBufferLength: number
     url: string
-    onError: Function
+    disabled: boolean
+    onError: OnErrorCallback
 
     // state
+    receivedData = false
     sampleCounter = 0 // counts the total number of data and log samples
     headptr = {// points to the head of the data buffer
         chunk: 0,
@@ -37,17 +40,19 @@ class CircularDataCaptureBuffer extends DataCaptureBuffer {
     tailptr = 0
     rwndptr = 0
     numChunksFilled = 0
+    chunkIndex = 0
 
     awaitClearPending = false
     awaitClearPromise:Promise<void> = null
-    fetch_fn: Function = fetchWithTimeout
+    fetch_fn: (arg0: any, arg1:any)=>Promise<any> = fetchWithTimeout
 
-    constructor(chunkLength: number, numChunks: number, url: string, onError=()=>{}, outBufferLength = 5) {
-        super()
+    constructor(chunkLength: number, numChunks: number, url: string, onError: OnErrorCallback, disabled=false, outBufferLength = 5) {
         this.chunkLength = chunkLength
         this.numChunks = numChunks
         this.outBufferLength = outBufferLength
         this.url = url
+        this.disabled = disabled
+        if (disabled) this.fetch_fn = dummyFetch
         this.onError = onError
 
         // initialize data structures
@@ -67,6 +72,7 @@ class CircularDataCaptureBuffer extends DataCaptureBuffer {
      * @param data - A data sample / row
      */
     data = (timestamp: number, data: DataSample) => {
+        this.receivedData = true
         // raise exception if the write would overwrite non-submitted data
         // data writes should have been stopped by the client when onError was called
         if(this.isOutBufferFull() && this.headptr.chunk === this.tailptr) {
@@ -130,7 +136,7 @@ class CircularDataCaptureBuffer extends DataCaptureBuffer {
     }
 
 
-    can_rewind = (to: number) => {
+    canRewind = (to: number) => {
         // can only rewind to the past
         this._headptr_backward()
         if (to > this.dataBuffer[this.headptr.chunk][this.headptr.sample][0]) return false
@@ -143,7 +149,7 @@ class CircularDataCaptureBuffer extends DataCaptureBuffer {
 
     
     rewind = (to: number) => {
-        if (!this.can_rewind(to)) 
+        if (!this.canRewind(to)) 
             throw Error('Cannot rewind to timestamp to. Value is beyond buffered interval.')
         
         this._headptr_backward()
@@ -158,6 +164,7 @@ class CircularDataCaptureBuffer extends DataCaptureBuffer {
     }
 
     log = (timestamp: number, data: LogSample) => {
+        this.receivedData = true
         // raise exception if the write would overwrite non-submitted data
         // data writes should have been stopped by the client when onError was called
         if (this.isOutBufferFull() && this.headptr === this.headptr) {
@@ -173,9 +180,9 @@ class CircularDataCaptureBuffer extends DataCaptureBuffer {
     advanceTail = () => {
         
         this.outBuffer.push({
+            index: this.chunkIndex++,
             data: this.dataBuffer[this.tailptr],
-            rwnd: this.rwndStack,
-            log: this.logBuffer
+            log_data: this.logBuffer
         })
 
         if (this.isOutBufferFull()) {
@@ -189,7 +196,8 @@ class CircularDataCaptureBuffer extends DataCaptureBuffer {
     /**
      * Move all the remaining data into the outBuffer
      */
-    flush = () => {
+    flush = async (timeout=8000) => {
+        if (!this.receivedData) return Promise.resolve()
         while(this.tailptr !== this.headptr.chunk) {
             this.advanceTail()
         }
@@ -197,19 +205,20 @@ class CircularDataCaptureBuffer extends DataCaptureBuffer {
         // tailptr = headptr
         if(this.headptr.sample > 0) {
             this.outBuffer.push({
+                index: this.chunkIndex++,
                 data: this.dataBuffer[this.tailptr].slice(0, this.headptr.sample),
-                rwnd: this.rwndStack,
-                log: this.logBuffer
+                log_data: this.logBuffer
             })
-            this.awaitClear(8000)
+            return this.awaitClear(timeout)
         }
+        return Promise.resolve()
     }
 
     submitChunk = async (timeout=8000) => {
         const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: this.outBuffer[0] }),
+            body: JSON.stringify(this.outBuffer[0]),
             timeout: timeout
         }
 
@@ -246,18 +255,4 @@ class CircularDataCaptureBuffer extends DataCaptureBuffer {
     }
 }
 
-class DummyDataCaptureBuffer extends Buffer {
-    awaitClear = async (timeout: number) => {
-        return Promise.resolve()
-    }
-
-    data = (timestamp: number, data: DataRecord) => {
-        return
-    }
-
-    log = (timestamp: number, data: LogSample) => {
-        return
-    }
-}
-
-export { CircularDataCaptureBuffer, DummyDataCaptureBuffer }
+export { CircularDataCaptureBuffer }

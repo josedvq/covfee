@@ -10,11 +10,12 @@ import HTML5Player from '../players/html5'
 import '../css/gui.css'
 import { OneDIntensity } from '../input/1d_intensity'
 import keyboardManagerContext from '../input/keyboard_manager_context'
-import { TaskObject} from '@covfee-types/task'
-import { ReplayableTaskProps } from './props'
+import { TaskInfo, TaskType} from '@covfee-types/task'
+import { ContinuousTaskProps, CovfeeComponent } from './base'
 import { Continuous1DTaskSpec} from '@covfee-types/tasks/continuous_1d'
+import { PlaybackDataSample } from 'buffers/buffer';
 
-interface Props extends TaskObject, ReplayableTaskProps {
+interface Props extends TaskType, ContinuousTaskProps {
     spec: Continuous1DTaskSpec
 }
 
@@ -31,7 +32,12 @@ interface State {
         data: Array<number>
     }
 }
-class Continuous1DTask extends React.Component<Props, State> {
+class Continuous1DTask extends CovfeeComponent<Props, State> {
+    static taskInfo: TaskInfo = {
+        continuous: true,
+        can_visualize: true
+    }
+    
     state: State = {
         paused: true,
         duration: 0,
@@ -58,8 +64,8 @@ class Continuous1DTask extends React.Component<Props, State> {
             key: ' ',
             description: 'Play/pause the video and data capture.',
             handler: (e: Event) => {
-                if (this.state.paused) this.props.buffer(this.player.current.currentFrame(), ['play'])
-                else this.props.buffer(this.player.current.currentFrame(), ['pause'])
+                if (this.state.paused) this.props.buffer.log(this.player.current.currentFrame(), ['play'])
+                else this.props.buffer.log(this.player.current.currentFrame(), ['pause'])
                 this.togglePlayPause()
             }
         },
@@ -68,7 +74,7 @@ class Continuous1DTask extends React.Component<Props, State> {
             description: 'Go back 2 seconds',
             handler: () => {
                 this.back2s()
-                this.props.buffer(this.player.current.currentFrame(), ['back2s'])
+                this.props.buffer.log(this.player.current.currentFrame(), ['back2s'])
             }
         },
         'back10s': {
@@ -76,7 +82,7 @@ class Continuous1DTask extends React.Component<Props, State> {
             description: 'Go back 10 seconds',
             handler: () => {
                 this.back10s()
-                this.props.buffer(this.player.current.currentFrame(), ['back10s'])
+                this.props.buffer.log(this.player.current.currentFrame(), ['back10s'])
             }
         }
     }
@@ -94,7 +100,6 @@ class Continuous1DTask extends React.Component<Props, State> {
 
     componentDidMount() {
         this.context.addEvents(this.buttonEvents)
-        this.props.setInstructionsFn(this.instructions)
     }
 
     componentWillUnmount() {
@@ -125,10 +130,10 @@ class Continuous1DTask extends React.Component<Props, State> {
     // Takes care of replaying an annotation given a log
     // writes output to the buffer on every frame
     handleFrame = (frame: number) => {
-        if (this.props.replayMode) {
+        if (this.props.visualizationModeOn) {
             this.replayUntilFrame(frame)
         } else {
-            this.props.buffer(
+            this.props.buffer.data(
                 frame,
                 [this.intensity]
             )
@@ -137,12 +142,18 @@ class Continuous1DTask extends React.Component<Props, State> {
 
     // recreate annotation (replay mode) until the given frame
     replayUntilFrame = (frame: number) => {
-        let action = this.props.getCurrReplayAction()
+        this.props.visualizationBuffer.read(frame, (res: PlaybackDataSample)=>{
+            let data, actions
+            if (res) { [data, actions] = res}
 
-        while (action != null && action[2] <= frame) {
-            this.replayAction(action)
-            action = this.props.getNextReplayAction()
-        }
+            this.setIntensity(data[0])
+
+            if(actions && this.props.visualizeActionsOn) {
+                actions.forEach(action => {
+                    this.replayAction(action)
+                })
+            }
+        })
     }
 
     replayAction = (action: Array<any>) => {
@@ -272,9 +283,10 @@ class Continuous1DTask extends React.Component<Props, State> {
                 </Col>
                 <Col span={4}>
                     <OneDIntensity
-                        disabled={this.props.replayMode}
                         setIntensity={this.setIntensity}
-                        input={this.props.spec.intensityInput} />
+                        getIntensity={()=>{return this.intensity}}
+                        input={this.props.spec.intensityInput}
+                        visualizationModeOn={this.props.visualizationModeOn}/>
                 </Col>
             </Row>
         </>
@@ -290,6 +302,8 @@ class Continuous1DTask extends React.Component<Props, State> {
             </Row>
         </>
     }
+
+
 }
 Continuous1DTask.contextType = keyboardManagerContext
 export default Continuous1DTask

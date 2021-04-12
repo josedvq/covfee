@@ -115,10 +115,10 @@ def install_npm_packages_if_not_installed():
 @click.option("--unsafe", is_flag=True, help="Disables authentication for the covfee instance.")
 @click.option("--rms", is_flag=True, help="Re-makes the schemata for validation.")
 @click.option("--build", is_flag=True, help="Build the bundles (necessary for including custom tasks.)")
+@click.option("--no-launch", is_flag=True, help="Do not launch covfee, only make the DB")
 @click.option("--no-browser", is_flag=True, help="Do not launch in the browser")
 @click.argument("file_or_folder")
-def make(force, unsafe, rms, build, no_browser, file_or_folder):
-    # print(ctx.obj['COVFEE_ENV'])
+def make(force, unsafe, rms, build, no_browser, no_launch, file_or_folder):
     install_npm_packages_if_not_installed()
     project_folder = CovfeeFolder(os.getcwd())
 
@@ -151,6 +151,9 @@ def make(force, unsafe, rms, build, no_browser, file_or_folder):
         project_folder.push_projects(force=force, interactive=True)
     except ProjectExistsException: 
         return print(' Add --force option to overwrite.')
+        
+    if no_launch: 
+        return
 
     # open covfee
     if app.config['COVFEE_ENV'] == 'dev':

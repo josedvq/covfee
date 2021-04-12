@@ -8,15 +8,15 @@ import {
 import 'antd/dist/antd.css'
 import { InstructionsTaskSpec } from '@covfee-types/tasks/instructions'
 import {MarkdownLoader} from './utils/markdown_loader'
-import { BaseTaskProps } from './props'
-import { TaskObject } from '@covfee-types/task'
+import { BaseTaskProps, CovfeeComponent } from './base'
+import { TaskType } from '@covfee-types/task'
 
-interface Props extends TaskObject, BaseTaskProps {
+interface Props extends TaskType, BaseTaskProps {
     spec: InstructionsTaskSpec
 }
 
 
-class InstructionsTask extends React.Component<Props> {
+class InstructionsTask extends CovfeeComponent<Props, any> {
     handleSubmit = () => {
         this.props.onSubmit({})
     }

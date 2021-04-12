@@ -159,7 +159,7 @@ class HITInstance(db.Model):
     def get_completion_code(self):
         return sha256((self.id.hex() + app.config['COVFEE_SALT']).encode()).digest().hex()[:12]
 
-    def as_dict(self, with_tasks=False, with_responses=False):
+    def as_dict(self, with_tasks=False, with_response_info=False):
         instance_dict = {c.name: getattr(self, c.name)
                          for c in self.__table__.columns}
         hit_dict = self.hit.as_dict(with_tasks=with_tasks)
@@ -175,17 +175,16 @@ class HITInstance(db.Model):
             instance_tasks = [task.as_dict(editable=True) for task in self.tasks]
             instance_dict['tasks'] = [*hit_dict['tasks'], *instance_tasks]
 
-            if with_responses:
+            if with_response_info:
                 for task in instance_dict['tasks']:
                     task_id = task['id']
                     # query the latest response
                     # only include submitted responses
-                    lastResponse = self.responses.filter_by(
-                        task_id=task_id, submitted=True).order_by(TaskResponse.index.desc()).first()
-                    if lastResponse is None:
-                        task['response'] = None
-                    else:
-                        task['response'] = lastResponse.as_dict()
+                    taskResponses = self.responses.filter_by(
+                        task_id=task_id).order_by(TaskResponse.index.desc())
+                    lastResponse = taskResponses.first()
+                    task['has_unsubmitted_response'] = lastResponse is not None and lastResponse.submitted == False
+                    task['num_submissions'] = taskResponses.filter_by(submitted=True).count()
 
         if self.submitted:
             instance_dict['completion_code'] = self.get_completion_code()

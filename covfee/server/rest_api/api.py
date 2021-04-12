@@ -1,5 +1,3 @@
-import json
-
 from flask import current_app as app
 from flask import request, jsonify, Blueprint, send_from_directory, make_response
 from ..orm import db, Project, HIT, HITInstance, Task, TaskResponse, Chunk
@@ -8,12 +6,14 @@ import shutil
 import os
 api = Blueprint('api', __name__)
 
+
 # PROJECTS
 def jsonify_or_404(res, **kwargs):
     if res is None:
         return {'msg': 'not found'}, 404
     else:
         return jsonify(res.as_dict(**kwargs))
+
 
 # return all projects
 @api.route('/projects')
@@ -25,6 +25,7 @@ def projects():
         return jsonify([])
     else:
         return jsonify([p.as_dict(with_hits=with_hits) for p in res])
+
 
 # return one project
 @api.route('/projects/<pid>')
@@ -71,6 +72,7 @@ def project_download(pid):
 
     return send_from_directory(app.config['TMP_PATH'], 'download.zip', as_attachment=True)
 
+
 # HITS
 # return one hit
 @api.route('/hits/<hid>')
@@ -80,9 +82,9 @@ def hit(hid):
     with_instance_tasks = request.args.get('with_instance_tasks', False)
     res = db.session.query(HIT).get(bytes.fromhex(hid))
     return jsonify_or_404(res,
-        with_tasks=with_tasks, 
-        with_instances=with_instances, 
-        with_instance_tasks=with_instance_tasks)
+                          with_tasks=with_tasks, 
+                          with_instances=with_instances, 
+                          with_instance_tasks=with_instance_tasks)
 
 
 @api.route('/hits/<hid>/instances/add')
@@ -103,20 +105,22 @@ def instance_add(hid):
                           with_instances=with_instances,
                           with_instance_tasks=with_instance_tasks)
 
+
 # INSTANCES
 # return one HIT instance
 @api.route('/instances/<iid>')
 def instance(iid):
     with_tasks = request.args.get('with_tasks', True)
-    with_responses = request.args.get('with_responses', True)
+    with_response_info = request.args.get('with_response_info', True)
     res = db.session.query(HITInstance).get(bytes.fromhex(iid))
-    return jsonify_or_404(res, with_tasks=with_tasks, with_responses=with_responses)
+    return jsonify_or_404(res, with_tasks=with_tasks, with_response_info=with_response_info)
 
 
 @api.route('/instance-previews/<iid>')
 def instance_preview(iid):
     res = HITInstance.query.filter_by(preview_id=bytes.fromhex(iid)).first()
     return jsonify_or_404(res, with_tasks=True, with_responses=False)
+
 
 # submit a hit (when finished)
 @api.route('/instances/<iid>/submit', methods=['POST'])
@@ -170,6 +174,7 @@ def task_add_to_instance(iid):
     db.session.commit()
     return jsonify(task.as_dict(editable=True))
 
+
 # edit an existing task
 @api.route('/tasks/<kid>/edit', methods=['POST'])
 def task_edit(kid):
@@ -181,6 +186,7 @@ def task_edit(kid):
     task.name = request.json['name']
     db.session.commit()
     return jsonify(task.as_dict(editable=True))
+
 
 # delete an existing task
 @api.route('/tasks/<kid>/delete')
@@ -197,7 +203,6 @@ def task_delete(kid):
 
 @api.route('/instances/<iid>/tasks/<kid>/responses')
 def response(iid, kid):
-    with_chunk_data = request.args.get('with_chunk_data', True)
     lastResponse = TaskResponse.query.filter_by(
         hitinstance_id=bytes.fromhex(iid), 
         task_id=int(kid), 
@@ -206,17 +211,18 @@ def response(iid, kid):
     if lastResponse is None:
         return jsonify(msg='No submitted responses found.'), 403
 
-    response_dict = lastResponse.as_dict(with_chunk_data=with_chunk_data)
+    response_dict = lastResponse.as_dict()
     # response_dict['chunk_data'] = lastResponse.aggregate()
     return jsonify(response_dict)
-    
+
+
 # record a response to a task
 # task kid may or may not be associated to instance iid
 @api.route('/instances/<iid>/tasks/<kid>/submit', methods=['POST'])
 def response_submit(iid, kid):
-    with_chunk_data = request.args.get('with_chunk_data', True)
     lastResponse = TaskResponse.query.filter_by(
-        hitinstance_id=bytes.fromhex(iid), task_id=int(kid)).order_by(TaskResponse.index.desc()).first()
+        hitinstance_id=bytes.fromhex(iid), task_id=int(kid)
+        ).order_by(TaskResponse.index.desc()).first()
 
     if lastResponse is not None and not lastResponse.submitted:
         # there is an open (not submitted) response:
@@ -224,7 +230,7 @@ def response_submit(iid, kid):
         lastResponse.submitted = True
 
         db.session.commit()
-        return jsonify(lastResponse.as_dict(with_chunk_data=with_chunk_data))
+        return jsonify(lastResponse.as_dict())
 
     if lastResponse is None:
         response_index = 0  # first response
@@ -242,13 +248,14 @@ def response_submit(iid, kid):
 
     db.session.add(response)
     db.session.commit()
-    return jsonify(response.as_dict(with_chunk_data=with_chunk_data))
-        
+    return jsonify(response.as_dict())
+
 
 # receive a chunk of a response, for continuous responses
 @api.route('/instances/<iid>/tasks/<kid>/chunk', methods=['POST'])
 def response_chunk(iid, kid):
-    response = TaskResponse.query.filter_by(hitinstance_id=bytes.fromhex(iid), task_id=int(kid)).order_by(TaskResponse.index.desc()).first()
+    response = TaskResponse.query.filter_by(hitinstance_id=bytes.fromhex(iid), task_id=int(kid)
+                                            ).order_by(TaskResponse.index.desc()).first()
     # no responses or only submitted responses
     # -> create new response
     if response is None or response.submitted:
@@ -265,18 +272,40 @@ def response_chunk(iid, kid):
             chunks=[])
 
     # if there is a previous chunk with the same index, overwrite it
-    if len(response.chunks) > 0:
-        sent_index = request.json['index']
-        chunk = next(
-            (chunk for chunk in response.chunks if chunk.index == sent_index), None)
-        if chunk is not None:
-            chunk.data = request.json['data']
-            db.session.commit()
-            return jsonify({'success': True}), 201
+    # if len(response.chunks) > 0:
+    #     sent_index = request.json['index']
+    #     chunk = next(
+    #         (chunk for chunk in response.chunks if chunk.index == sent_index), None)
+    #     if chunk is not None:
+    #         chunk.update(
+    #             data=request.json['data'],
+    #             log_data=request.json.get('log_data', None),
+    #             rwnd_data=request.json.get('rwnd_data', None))
+
+    #         db.session.commit()
+    #         return jsonify({'success': True}), 201
 
     # no previous chunk with the same index -> append the chunk
+    print(request.json)
     chunk = Chunk(**request.json)
     response.chunks.append(chunk)
     db.session.add(response)
     db.session.commit()
     return jsonify({'success': True}), 201
+
+
+# query chunks
+@api.route('/responses/<rid>/chunks')
+def query_chunks(rid):
+    response = db.session.query(TaskResponse).get(int(rid))
+    from_time = request.args.get('from', 0)
+    to_time = request.args.get('to', float('inf'))
+
+    chunks = response.chunks.order_by(Chunk.index.desc()).all()
+    print(len(chunks))
+    # .filter(
+    #     Chunk.end_time >= from_time, Chunk.ini_time <= to_time)
+
+    
+
+    return jsonify([chunk.as_dict() for chunk in chunks]), 200

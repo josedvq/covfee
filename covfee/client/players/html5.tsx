@@ -21,6 +21,8 @@ class HTML5Player extends React.PureComponent<Props> {
     canvasCtx: CanvasRenderingContext2D
     videoTags = Array<React.RefObject<HTMLVideoElement>>()
 
+    // props
+    isMultiview: boolean
 
     // state
     active_idx = 0
@@ -33,7 +35,9 @@ class HTML5Player extends React.PureComponent<Props> {
     constructor(props: Props) {
         super(props)
 
-        if(this.props.media.type == 'video-multiview') {
+        this.isMultiview = (this.props.media.type == 'video-multiview')
+
+        if (this.isMultiview) {
             this.videoTags = []
             for(let i=0; i<this.props.media.url.length; i++) {
                 this.videoTags.push(React.createRef<HTMLVideoElement>())
@@ -44,7 +48,7 @@ class HTML5Player extends React.PureComponent<Props> {
     }
 
     componentDidMount() {
-        if(this.props.media.type == 'video-multiview')
+        if (this.isMultiview)
             this.canvasCtx = this.canvasTag.current.getContext('2d')
 
         this.videoTags[this.active_idx].current.addEventListener('loadeddata', (e: Event) => {
@@ -78,11 +82,12 @@ class HTML5Player extends React.PureComponent<Props> {
         this.videoTags[idx].current.addEventListener('ended', this.handleEnd)
 
         // copy over the currentTime of the previous active video
-        console.log([this.videoTags[idx].current.currentTime, this.videoTags[this.active_idx].current.currentTime])
-        this.videoTags[idx].current.currentTime = this.videoTags[this.active_idx].current.currentTime
+        if (this.isMultiview) {
+            this.videoTags[idx].current.currentTime = this.videoTags[this.active_idx].current.currentTime
 
-        this.active_idx = idx
-        this.copyVideoToCanvas()
+            this.active_idx = idx
+            this.copyVideoToCanvas()
+        }
     }
 
     copyVideoToCanvas = () => {
@@ -97,8 +102,8 @@ class HTML5Player extends React.PureComponent<Props> {
         const time = metadata.mediaTime
         if(time !== this.time) {
             this.time = time
-            this.frame = Math.round(time / this.props.fps)
-            this.props.onFrame(this.frame)
+            // this.frame = Math.round(time / this.props.fps)
+            this.props.onFrame(this.time)
         }
         
         if(this.props.media.type == 'video-multiview')

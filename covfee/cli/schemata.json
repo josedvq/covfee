@@ -72,10 +72,11 @@
           "type": "string"
         },
         "interface": {
-          "description": "List of tasks specifications that users can create",
+          "description": "Interface configuration options",
           "properties": {
             "userTasks": {
-              "$ref": "#/definitions/Record<string,UserTaskSpec>",
+              "$ref": "#/definitions/PresetsSpec",
+              "description": "Allow the user to create tasks from the given map of id => task_spec",
               "title": "userTasks"
             }
           },
@@ -101,8 +102,13 @@
             "description": "One of the supported task specs",
             "oneOf": [
               {
-                "additionalProperties": false,
                 "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
                   "controls": {
                     "description": "sets the input button controls for the task",
                     "properties": {
@@ -238,6 +244,12 @@
                       "mode"
                     ]
                   },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
                   "media": {
                     "description": "Media file to be displayed.",
                     "title": "media",
@@ -305,6 +317,22 @@
                     "title": "name",
                     "type": "string"
                   },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
+                  },
                   "type": {
                     "default": "Continuous1DTask",
                     "enum": [
@@ -324,8 +352,13 @@
                 "type": "object"
               },
               {
-                "additionalProperties": false,
                 "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
                   "controls": {
                     "description": "sets the input button controls for the task",
                     "properties": {
@@ -368,6 +401,12 @@
                     "title": "controls",
                     "type": "object"
                   },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
                   "media": {
                     "$ref": "#/definitions/OpencvFlowPlayerMedia",
                     "description": "Media file to be displayed.",
@@ -377,6 +416,22 @@
                     "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                     "title": "name",
                     "type": "string"
+                  },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
                   },
                   "type": {
                     "default": "ContinuousKeypointTask",
@@ -396,8 +451,13 @@
                 "type": "object"
               },
               {
-                "additionalProperties": false,
                 "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
                   "disabledUntilEnd": {
                     "description": "If true, the form will only become active after the media playback ends",
                     "title": "disabledUntilEnd",
@@ -412,6 +472,12 @@
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
                     "type": "string"
+                  },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
                   },
                   "media": {
                     "description": "Media file to be displayed.",
@@ -478,6 +544,22 @@
                     "title": "name",
                     "type": "string"
                   },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
+                  },
                   "type": {
                     "default": "QuestionnaireTask",
                     "enum": [
@@ -498,8 +580,13 @@
                 "type": "object"
               },
               {
-                "additionalProperties": false,
                 "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
                   "content": {
                     "description": "Main static content of the page (eg. consent terms, instructions)",
                     "title": "content",
@@ -567,10 +654,32 @@
                     "description": "a form to display after the content.",
                     "title": "form"
                   },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
                   "name": {
                     "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                     "title": "name",
                     "type": "string"
+                  },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
                   },
                   "type": {
                     "default": "InstructionsTask",
@@ -612,26 +721,11 @@
       },
       "required": [
         "id",
-        "interface",
         "name",
         "tasks",
         "type"
       ],
       "title": "AnnotationHitSpec",
-      "type": "object"
-    },
-    "BaseTaskSpec": {
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-          "title": "name",
-          "type": "string"
-        }
-      },
-      "required": [
-        "name"
-      ],
       "type": "object"
     },
     "BasicAudio": {
@@ -680,22 +774,6 @@
         "url"
       ],
       "title": "BasicVideo",
-      "type": "object"
-    },
-    "CascaderSpec": {
-      "properties": {
-        "inputType": {
-          "default": "Cascader",
-          "enum": [
-            "Cascader"
-          ],
-          "title": "inputType",
-          "type": "string"
-        }
-      },
-      "required": [
-        "inputType"
-      ],
       "type": "object"
     },
     "CheckboxGroupSpec": {
@@ -754,8 +832,13 @@
       "type": "object"
     },
     "Continuous1DTaskSpec": {
-      "additionalProperties": false,
       "properties": {
+        "autoSubmit": {
+          "default": false,
+          "description": "Tasks will be submitted automatically when the media or timer ends.",
+          "title": "autoSubmit",
+          "type": "boolean"
+        },
         "controls": {
           "description": "sets the input button controls for the task",
           "properties": {
@@ -891,6 +974,12 @@
             "mode"
           ]
         },
+        "maxSubmissions": {
+          "default": 0,
+          "description": "Maximum number of submissions a user can make for the task.",
+          "title": "maxSubmissions",
+          "type": "number"
+        },
         "media": {
           "description": "Media file to be displayed.",
           "title": "media",
@@ -958,6 +1047,22 @@
           "title": "name",
           "type": "string"
         },
+        "timer": {
+          "description": "Timing config",
+          "properties": {
+            "maxTime": {
+              "default": 0,
+              "description": "Max time (in seconds) the user may take to complete the task",
+              "title": "maxTime",
+              "type": "number"
+            }
+          },
+          "required": [
+            "maxTime"
+          ],
+          "title": "timer",
+          "type": "object"
+        },
         "type": {
           "default": "Continuous1DTask",
           "enum": [
@@ -1017,8 +1122,13 @@
       "type": "object"
     },
     "ContinuousKeypointTaskSpec": {
-      "additionalProperties": false,
       "properties": {
+        "autoSubmit": {
+          "default": false,
+          "description": "Tasks will be submitted automatically when the media or timer ends.",
+          "title": "autoSubmit",
+          "type": "boolean"
+        },
         "controls": {
           "description": "sets the input button controls for the task",
           "properties": {
@@ -1061,6 +1171,12 @@
           "title": "controls",
           "type": "object"
         },
+        "maxSubmissions": {
+          "default": 0,
+          "description": "Maximum number of submissions a user can make for the task.",
+          "title": "maxSubmissions",
+          "type": "number"
+        },
         "media": {
           "$ref": "#/definitions/OpencvFlowPlayerMedia",
           "description": "Media file to be displayed.",
@@ -1070,6 +1186,22 @@
           "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
           "title": "name",
           "type": "string"
+        },
+        "timer": {
+          "description": "Timing config",
+          "properties": {
+            "maxTime": {
+              "default": 0,
+              "description": "Max time (in seconds) the user may take to complete the task",
+              "title": "maxTime",
+              "type": "number"
+            }
+          },
+          "required": [
+            "maxTime"
+          ],
+          "title": "timer",
+          "type": "object"
         },
         "type": {
           "default": "ContinuousKeypointTask",
@@ -1103,20 +1235,6 @@
         "mode"
       ],
       "title": "ContinuousMousemoveInputSpec",
-      "type": "object"
-    },
-    "ContinuousTaskSpec": {
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-          "title": "name",
-          "type": "string"
-        }
-      },
-      "required": [
-        "name"
-      ],
       "type": "object"
     },
     "FieldSpec": {
@@ -1465,1905 +1583,6 @@
       "title": "GravityKeyboardInputSpec",
       "type": "object"
     },
-    "HTML5PlayerMedia": {
-      "oneOf": [
-        {
-          "description": "Identifies a single video file",
-          "properties": {
-            "type": {
-              "default": "video",
-              "enum": [
-                "video"
-              ],
-              "title": "type",
-              "type": "string"
-            },
-            "url": {
-              "description": "URL to hosted video file",
-              "title": "url",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type",
-            "url"
-          ],
-          "title": "BasicVideo",
-          "type": "object"
-        },
-        {
-          "properties": {
-            "type": {
-              "default": "video-multiview",
-              "enum": [
-                "video-multiview"
-              ],
-              "title": "type",
-              "type": "string"
-            },
-            "url": {
-              "description": "URL to video files",
-              "items": {
-                "type": "string"
-              },
-              "title": "url",
-              "type": "array"
-            }
-          },
-          "required": [
-            "type",
-            "url"
-          ],
-          "title": "MultiviewVideo",
-          "type": "object"
-        }
-      ],
-      "discriminator": {
-        "propertyName": "type"
-      },
-      "required": [
-        "type"
-      ]
-    },
-    "HitBaseSpec": {
-      "additionalProperties": false,
-      "properties": {
-        "extra": {
-          "description": "Extra hit-level information to display",
-          "title": "extra",
-          "oneOf": [
-            {
-              "additionalProperties": false,
-              "description": "Props for raw Markdown/HTML data",
-              "properties": {
-                "content": {
-                  "description": "A valid Markdown/HTML string",
-                  "title": "content",
-                  "type": "string"
-                },
-                "type": {
-                  "default": "raw",
-                  "enum": [
-                    "raw"
-                  ],
-                  "title": "type",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "content",
-                "type"
-              ],
-              "title": "MarkdownContentRawSpec",
-              "type": "object"
-            },
-            {
-              "additionalProperties": false,
-              "description": "Supplied is a link to a Markdown/HTML file.",
-              "properties": {
-                "type": {
-                  "default": "link",
-                  "enum": [
-                    "link"
-                  ],
-                  "title": "type",
-                  "type": "string"
-                },
-                "url": {
-                  "description": "A url pointing to a valid Markdown/HTML file.",
-                  "title": "url",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "type",
-                "url"
-              ],
-              "title": "MarkdownContentLinkSpec",
-              "type": "object"
-            }
-          ],
-          "discriminator": {
-            "propertyName": "type"
-          },
-          "required": [
-            "type"
-          ]
-        },
-        "id": {
-          "description": "unique ID of the hit",
-          "title": "id",
-          "type": "string"
-        },
-        "name": {
-          "description": "HIT name (for display)",
-          "title": "name",
-          "type": "string"
-        },
-        "repeat": {
-          "description": "number of copies or instances of the HIT",
-          "title": "repeat",
-          "type": "number"
-        },
-        "tasks": {
-          "description": "list of tasks in the HIT",
-          "items": {
-            "description": "One of the supported task specs",
-            "oneOf": [
-              {
-                "additionalProperties": false,
-                "properties": {
-                  "controls": {
-                    "description": "sets the input button controls for the task",
-                    "properties": {
-                      "back10s": {
-                        "title": "back10s",
-                        "type": "string"
-                      },
-                      "back2s": {
-                        "title": "back2s",
-                        "type": "string"
-                      },
-                      "play-pause": {
-                        "title": "play-pause",
-                        "type": "string"
-                      }
-                    },
-                    "title": "controls",
-                    "type": "object"
-                  },
-                  "intensityInput": {
-                    "description": "sets the type of intensity input",
-                    "title": "intensityInput",
-                    "oneOf": [
-                      {
-                        "properties": {
-                          "mode": {
-                            "default": "continuous-mousemove",
-                            "enum": [
-                              "continuous-mousemove"
-                            ],
-                            "title": "mode",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "mode"
-                        ],
-                        "title": "ContinuousMousemoveInputSpec",
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "controls": {
-                            "properties": {
-                              "down": {
-                                "default": "a",
-                                "description": "Decrease intensity",
-                                "title": "down",
-                                "type": "string"
-                              },
-                              "up": {
-                                "default": "s",
-                                "description": "Increase intensity",
-                                "title": "up",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "down",
-                              "up"
-                            ],
-                            "title": "controls",
-                            "type": "object"
-                          },
-                          "mode": {
-                            "default": "continuous-keyboard",
-                            "enum": [
-                              "continuous-keyboard"
-                            ],
-                            "title": "mode",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "controls",
-                          "mode"
-                        ],
-                        "title": "ContinuousKeyboardInputSpec",
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "acceleration_constant": {
-                            "default": 0.0025,
-                            "description": "Acceleration constant.",
-                            "title": "acceleration_constant",
-                            "type": "number"
-                          },
-                          "controls": {
-                            "properties": {
-                              "up": {
-                                "default": "a",
-                                "description": "Increase intensity",
-                                "title": "up",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "up"
-                            ],
-                            "title": "controls",
-                            "type": "object"
-                          },
-                          "jump_speed": {
-                            "default": 0.1,
-                            "description": "Initial speed when a key is pressed",
-                            "title": "jump_speed",
-                            "type": "number"
-                          },
-                          "mode": {
-                            "default": "gravity-keyboard",
-                            "enum": [
-                              "gravity-keyboard"
-                            ],
-                            "title": "mode",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "acceleration_constant",
-                          "controls",
-                          "jump_speed",
-                          "mode"
-                        ],
-                        "title": "GravityKeyboardInputSpec",
-                        "type": "object"
-                      }
-                    ],
-                    "discriminator": {
-                      "propertyName": "mode"
-                    },
-                    "required": [
-                      "mode"
-                    ]
-                  },
-                  "media": {
-                    "description": "Media file to be displayed.",
-                    "title": "media",
-                    "oneOf": [
-                      {
-                        "description": "Identifies a single video file",
-                        "properties": {
-                          "type": {
-                            "default": "video",
-                            "enum": [
-                              "video"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          },
-                          "url": {
-                            "description": "URL to hosted video file",
-                            "title": "url",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "url"
-                        ],
-                        "title": "BasicVideo",
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "type": {
-                            "default": "video-multiview",
-                            "enum": [
-                              "video-multiview"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          },
-                          "url": {
-                            "description": "URL to video files",
-                            "items": {
-                              "type": "string"
-                            },
-                            "title": "url",
-                            "type": "array"
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "url"
-                        ],
-                        "title": "MultiviewVideo",
-                        "type": "object"
-                      }
-                    ],
-                    "discriminator": {
-                      "propertyName": "type"
-                    },
-                    "required": [
-                      "type"
-                    ]
-                  },
-                  "name": {
-                    "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-                    "title": "name",
-                    "type": "string"
-                  },
-                  "type": {
-                    "default": "Continuous1DTask",
-                    "enum": [
-                      "Continuous1DTask"
-                    ],
-                    "title": "type",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "intensityInput",
-                  "media",
-                  "name",
-                  "type"
-                ],
-                "title": "Continuous1DTaskSpec",
-                "type": "object"
-              },
-              {
-                "additionalProperties": false,
-                "properties": {
-                  "controls": {
-                    "description": "sets the input button controls for the task",
-                    "properties": {
-                      "back10s": {
-                        "description": "go back 10s in video time",
-                        "title": "back10s",
-                        "type": "string"
-                      },
-                      "back2s": {
-                        "description": "go back 2s in video time",
-                        "title": "back2s",
-                        "type": "string"
-                      },
-                      "play-pause": {
-                        "description": "toggle play/pause",
-                        "title": "play-pause",
-                        "type": "string"
-                      },
-                      "speed-down": {
-                        "description": "slow down video playback",
-                        "title": "speed-down",
-                        "type": "string"
-                      },
-                      "speed-up": {
-                        "description": "speed up video playback",
-                        "title": "speed-up",
-                        "type": "string"
-                      },
-                      "toggle-occluded": {
-                        "description": "toggle the occlusion flag (for occluded objects/parts)",
-                        "title": "toggle-occluded",
-                        "type": "string"
-                      },
-                      "toggle-of": {
-                        "description": "toggle the optical-flow-based speed adjustment",
-                        "title": "toggle-of",
-                        "type": "string"
-                      }
-                    },
-                    "title": "controls",
-                    "type": "object"
-                  },
-                  "media": {
-                    "$ref": "#/definitions/OpencvFlowPlayerMedia",
-                    "description": "Media file to be displayed.",
-                    "title": "media"
-                  },
-                  "name": {
-                    "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-                    "title": "name",
-                    "type": "string"
-                  },
-                  "type": {
-                    "default": "ContinuousKeypointTask",
-                    "enum": [
-                      "ContinuousKeypointTask"
-                    ],
-                    "title": "type",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "media",
-                  "name",
-                  "type"
-                ],
-                "title": "ContinuousKeypointTaskSpec",
-                "type": "object"
-              },
-              {
-                "additionalProperties": false,
-                "properties": {
-                  "disabledUntilEnd": {
-                    "description": "If true, the form will only become active after the media playback ends",
-                    "title": "disabledUntilEnd",
-                    "type": "boolean"
-                  },
-                  "form": {
-                    "$ref": "#/definitions/FormSpec",
-                    "description": "Specification of the form to be created.",
-                    "title": "form"
-                  },
-                  "instructions": {
-                    "description": "Instructions to be displayed before the form",
-                    "title": "instructions",
-                    "type": "string"
-                  },
-                  "media": {
-                    "description": "Media file to be displayed.",
-                    "title": "media",
-                    "oneOf": [
-                      {
-                        "description": "Identifies a single video file",
-                        "properties": {
-                          "type": {
-                            "default": "video",
-                            "enum": [
-                              "video"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          },
-                          "url": {
-                            "description": "URL to hosted video file",
-                            "title": "url",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "url"
-                        ],
-                        "title": "BasicVideo",
-                        "type": "object"
-                      },
-                      {
-                        "description": "Identifies a single audio file",
-                        "properties": {
-                          "type": {
-                            "default": "audio",
-                            "enum": [
-                              "audio"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          },
-                          "url": {
-                            "description": "URL to hosted video file",
-                            "title": "url",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "url"
-                        ],
-                        "title": "BasicAudio",
-                        "type": "object"
-                      }
-                    ],
-                    "discriminator": {
-                      "propertyName": "type"
-                    },
-                    "required": [
-                      "type"
-                    ]
-                  },
-                  "name": {
-                    "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-                    "title": "name",
-                    "type": "string"
-                  },
-                  "type": {
-                    "default": "QuestionnaireTask",
-                    "enum": [
-                      "QuestionnaireTask"
-                    ],
-                    "title": "type",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "form",
-                  "instructions",
-                  "media",
-                  "name",
-                  "type"
-                ],
-                "title": "QuestionnaireTaskSpec",
-                "type": "object"
-              },
-              {
-                "additionalProperties": false,
-                "properties": {
-                  "content": {
-                    "description": "Main static content of the page (eg. consent terms, instructions)",
-                    "title": "content",
-                    "oneOf": [
-                      {
-                        "additionalProperties": false,
-                        "description": "Props for raw Markdown/HTML data",
-                        "properties": {
-                          "content": {
-                            "description": "A valid Markdown/HTML string",
-                            "title": "content",
-                            "type": "string"
-                          },
-                          "type": {
-                            "default": "raw",
-                            "enum": [
-                              "raw"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "content",
-                          "type"
-                        ],
-                        "title": "MarkdownContentRawSpec",
-                        "type": "object"
-                      },
-                      {
-                        "additionalProperties": false,
-                        "description": "Supplied is a link to a Markdown/HTML file.",
-                        "properties": {
-                          "type": {
-                            "default": "link",
-                            "enum": [
-                              "link"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          },
-                          "url": {
-                            "description": "A url pointing to a valid Markdown/HTML file.",
-                            "title": "url",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "url"
-                        ],
-                        "title": "MarkdownContentLinkSpec",
-                        "type": "object"
-                      }
-                    ],
-                    "discriminator": {
-                      "propertyName": "type"
-                    },
-                    "required": [
-                      "type"
-                    ]
-                  },
-                  "form": {
-                    "$ref": "#/definitions/FormSpec",
-                    "description": "a form to display after the content.",
-                    "title": "form"
-                  },
-                  "name": {
-                    "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-                    "title": "name",
-                    "type": "string"
-                  },
-                  "type": {
-                    "default": "InstructionsTask",
-                    "enum": [
-                      "InstructionsTask"
-                    ],
-                    "title": "type",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "content",
-                  "name",
-                  "type"
-                ],
-                "title": "InstructionsTaskSpec",
-                "type": "object"
-              }
-            ],
-            "discriminator": {
-              "propertyName": "type"
-            },
-            "required": [
-              "type"
-            ]
-          },
-          "title": "tasks",
-          "type": "array"
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "tasks"
-      ],
-      "type": "object"
-    },
-    "HitProps": {
-      "properties": {
-        "numSubmissions": {
-          "description": "unique ID of the hit",
-          "title": "numSubmissions",
-          "type": "number"
-        }
-      },
-      "required": [
-        "numSubmissions"
-      ],
-      "type": "object"
-    },
-    "HitSpec": {
-      "oneOf": [
-        {
-          "additionalProperties": false,
-          "properties": {
-            "extra": {
-              "description": "Extra hit-level information to display",
-              "title": "extra",
-              "oneOf": [
-                {
-                  "additionalProperties": false,
-                  "description": "Props for raw Markdown/HTML data",
-                  "properties": {
-                    "content": {
-                      "description": "A valid Markdown/HTML string",
-                      "title": "content",
-                      "type": "string"
-                    },
-                    "type": {
-                      "default": "raw",
-                      "enum": [
-                        "raw"
-                      ],
-                      "title": "type",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "content",
-                    "type"
-                  ],
-                  "title": "MarkdownContentRawSpec",
-                  "type": "object"
-                },
-                {
-                  "additionalProperties": false,
-                  "description": "Supplied is a link to a Markdown/HTML file.",
-                  "properties": {
-                    "type": {
-                      "default": "link",
-                      "enum": [
-                        "link"
-                      ],
-                      "title": "type",
-                      "type": "string"
-                    },
-                    "url": {
-                      "description": "A url pointing to a valid Markdown/HTML file.",
-                      "title": "url",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "type",
-                    "url"
-                  ],
-                  "title": "MarkdownContentLinkSpec",
-                  "type": "object"
-                }
-              ],
-              "discriminator": {
-                "propertyName": "type"
-              },
-              "required": [
-                "type"
-              ]
-            },
-            "id": {
-              "description": "unique ID of the hit",
-              "title": "id",
-              "type": "string"
-            },
-            "interface": {
-              "description": "List of tasks specifications that users can create",
-              "properties": {
-                "userTasks": {
-                  "$ref": "#/definitions/Record<string,UserTaskSpec>",
-                  "title": "userTasks"
-                }
-              },
-              "required": [
-                "userTasks"
-              ],
-              "title": "interface",
-              "type": "object"
-            },
-            "name": {
-              "description": "HIT name (for display)",
-              "title": "name",
-              "type": "string"
-            },
-            "repeat": {
-              "description": "number of copies or instances of the HIT",
-              "title": "repeat",
-              "type": "number"
-            },
-            "tasks": {
-              "description": "list of tasks in the HIT",
-              "items": {
-                "description": "One of the supported task specs",
-                "oneOf": [
-                  {
-                    "additionalProperties": false,
-                    "properties": {
-                      "controls": {
-                        "description": "sets the input button controls for the task",
-                        "properties": {
-                          "back10s": {
-                            "title": "back10s",
-                            "type": "string"
-                          },
-                          "back2s": {
-                            "title": "back2s",
-                            "type": "string"
-                          },
-                          "play-pause": {
-                            "title": "play-pause",
-                            "type": "string"
-                          }
-                        },
-                        "title": "controls",
-                        "type": "object"
-                      },
-                      "intensityInput": {
-                        "description": "sets the type of intensity input",
-                        "title": "intensityInput",
-                        "oneOf": [
-                          {
-                            "properties": {
-                              "mode": {
-                                "default": "continuous-mousemove",
-                                "enum": [
-                                  "continuous-mousemove"
-                                ],
-                                "title": "mode",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "mode"
-                            ],
-                            "title": "ContinuousMousemoveInputSpec",
-                            "type": "object"
-                          },
-                          {
-                            "properties": {
-                              "controls": {
-                                "properties": {
-                                  "down": {
-                                    "default": "a",
-                                    "description": "Decrease intensity",
-                                    "title": "down",
-                                    "type": "string"
-                                  },
-                                  "up": {
-                                    "default": "s",
-                                    "description": "Increase intensity",
-                                    "title": "up",
-                                    "type": "string"
-                                  }
-                                },
-                                "required": [
-                                  "down",
-                                  "up"
-                                ],
-                                "title": "controls",
-                                "type": "object"
-                              },
-                              "mode": {
-                                "default": "continuous-keyboard",
-                                "enum": [
-                                  "continuous-keyboard"
-                                ],
-                                "title": "mode",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "controls",
-                              "mode"
-                            ],
-                            "title": "ContinuousKeyboardInputSpec",
-                            "type": "object"
-                          },
-                          {
-                            "properties": {
-                              "acceleration_constant": {
-                                "default": 0.0025,
-                                "description": "Acceleration constant.",
-                                "title": "acceleration_constant",
-                                "type": "number"
-                              },
-                              "controls": {
-                                "properties": {
-                                  "up": {
-                                    "default": "a",
-                                    "description": "Increase intensity",
-                                    "title": "up",
-                                    "type": "string"
-                                  }
-                                },
-                                "required": [
-                                  "up"
-                                ],
-                                "title": "controls",
-                                "type": "object"
-                              },
-                              "jump_speed": {
-                                "default": 0.1,
-                                "description": "Initial speed when a key is pressed",
-                                "title": "jump_speed",
-                                "type": "number"
-                              },
-                              "mode": {
-                                "default": "gravity-keyboard",
-                                "enum": [
-                                  "gravity-keyboard"
-                                ],
-                                "title": "mode",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "acceleration_constant",
-                              "controls",
-                              "jump_speed",
-                              "mode"
-                            ],
-                            "title": "GravityKeyboardInputSpec",
-                            "type": "object"
-                          }
-                        ],
-                        "discriminator": {
-                          "propertyName": "mode"
-                        },
-                        "required": [
-                          "mode"
-                        ]
-                      },
-                      "media": {
-                        "description": "Media file to be displayed.",
-                        "title": "media",
-                        "oneOf": [
-                          {
-                            "description": "Identifies a single video file",
-                            "properties": {
-                              "type": {
-                                "default": "video",
-                                "enum": [
-                                  "video"
-                                ],
-                                "title": "type",
-                                "type": "string"
-                              },
-                              "url": {
-                                "description": "URL to hosted video file",
-                                "title": "url",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "url"
-                            ],
-                            "title": "BasicVideo",
-                            "type": "object"
-                          },
-                          {
-                            "properties": {
-                              "type": {
-                                "default": "video-multiview",
-                                "enum": [
-                                  "video-multiview"
-                                ],
-                                "title": "type",
-                                "type": "string"
-                              },
-                              "url": {
-                                "description": "URL to video files",
-                                "items": {
-                                  "type": "string"
-                                },
-                                "title": "url",
-                                "type": "array"
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "url"
-                            ],
-                            "title": "MultiviewVideo",
-                            "type": "object"
-                          }
-                        ],
-                        "discriminator": {
-                          "propertyName": "type"
-                        },
-                        "required": [
-                          "type"
-                        ]
-                      },
-                      "name": {
-                        "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-                        "title": "name",
-                        "type": "string"
-                      },
-                      "type": {
-                        "default": "Continuous1DTask",
-                        "enum": [
-                          "Continuous1DTask"
-                        ],
-                        "title": "type",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "intensityInput",
-                      "media",
-                      "name",
-                      "type"
-                    ],
-                    "title": "Continuous1DTaskSpec",
-                    "type": "object"
-                  },
-                  {
-                    "additionalProperties": false,
-                    "properties": {
-                      "controls": {
-                        "description": "sets the input button controls for the task",
-                        "properties": {
-                          "back10s": {
-                            "description": "go back 10s in video time",
-                            "title": "back10s",
-                            "type": "string"
-                          },
-                          "back2s": {
-                            "description": "go back 2s in video time",
-                            "title": "back2s",
-                            "type": "string"
-                          },
-                          "play-pause": {
-                            "description": "toggle play/pause",
-                            "title": "play-pause",
-                            "type": "string"
-                          },
-                          "speed-down": {
-                            "description": "slow down video playback",
-                            "title": "speed-down",
-                            "type": "string"
-                          },
-                          "speed-up": {
-                            "description": "speed up video playback",
-                            "title": "speed-up",
-                            "type": "string"
-                          },
-                          "toggle-occluded": {
-                            "description": "toggle the occlusion flag (for occluded objects/parts)",
-                            "title": "toggle-occluded",
-                            "type": "string"
-                          },
-                          "toggle-of": {
-                            "description": "toggle the optical-flow-based speed adjustment",
-                            "title": "toggle-of",
-                            "type": "string"
-                          }
-                        },
-                        "title": "controls",
-                        "type": "object"
-                      },
-                      "media": {
-                        "$ref": "#/definitions/OpencvFlowPlayerMedia",
-                        "description": "Media file to be displayed.",
-                        "title": "media"
-                      },
-                      "name": {
-                        "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-                        "title": "name",
-                        "type": "string"
-                      },
-                      "type": {
-                        "default": "ContinuousKeypointTask",
-                        "enum": [
-                          "ContinuousKeypointTask"
-                        ],
-                        "title": "type",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "media",
-                      "name",
-                      "type"
-                    ],
-                    "title": "ContinuousKeypointTaskSpec",
-                    "type": "object"
-                  },
-                  {
-                    "additionalProperties": false,
-                    "properties": {
-                      "disabledUntilEnd": {
-                        "description": "If true, the form will only become active after the media playback ends",
-                        "title": "disabledUntilEnd",
-                        "type": "boolean"
-                      },
-                      "form": {
-                        "$ref": "#/definitions/FormSpec",
-                        "description": "Specification of the form to be created.",
-                        "title": "form"
-                      },
-                      "instructions": {
-                        "description": "Instructions to be displayed before the form",
-                        "title": "instructions",
-                        "type": "string"
-                      },
-                      "media": {
-                        "description": "Media file to be displayed.",
-                        "title": "media",
-                        "oneOf": [
-                          {
-                            "description": "Identifies a single video file",
-                            "properties": {
-                              "type": {
-                                "default": "video",
-                                "enum": [
-                                  "video"
-                                ],
-                                "title": "type",
-                                "type": "string"
-                              },
-                              "url": {
-                                "description": "URL to hosted video file",
-                                "title": "url",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "url"
-                            ],
-                            "title": "BasicVideo",
-                            "type": "object"
-                          },
-                          {
-                            "description": "Identifies a single audio file",
-                            "properties": {
-                              "type": {
-                                "default": "audio",
-                                "enum": [
-                                  "audio"
-                                ],
-                                "title": "type",
-                                "type": "string"
-                              },
-                              "url": {
-                                "description": "URL to hosted video file",
-                                "title": "url",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "url"
-                            ],
-                            "title": "BasicAudio",
-                            "type": "object"
-                          }
-                        ],
-                        "discriminator": {
-                          "propertyName": "type"
-                        },
-                        "required": [
-                          "type"
-                        ]
-                      },
-                      "name": {
-                        "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-                        "title": "name",
-                        "type": "string"
-                      },
-                      "type": {
-                        "default": "QuestionnaireTask",
-                        "enum": [
-                          "QuestionnaireTask"
-                        ],
-                        "title": "type",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "form",
-                      "instructions",
-                      "media",
-                      "name",
-                      "type"
-                    ],
-                    "title": "QuestionnaireTaskSpec",
-                    "type": "object"
-                  },
-                  {
-                    "additionalProperties": false,
-                    "properties": {
-                      "content": {
-                        "description": "Main static content of the page (eg. consent terms, instructions)",
-                        "title": "content",
-                        "oneOf": [
-                          {
-                            "additionalProperties": false,
-                            "description": "Props for raw Markdown/HTML data",
-                            "properties": {
-                              "content": {
-                                "description": "A valid Markdown/HTML string",
-                                "title": "content",
-                                "type": "string"
-                              },
-                              "type": {
-                                "default": "raw",
-                                "enum": [
-                                  "raw"
-                                ],
-                                "title": "type",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "content",
-                              "type"
-                            ],
-                            "title": "MarkdownContentRawSpec",
-                            "type": "object"
-                          },
-                          {
-                            "additionalProperties": false,
-                            "description": "Supplied is a link to a Markdown/HTML file.",
-                            "properties": {
-                              "type": {
-                                "default": "link",
-                                "enum": [
-                                  "link"
-                                ],
-                                "title": "type",
-                                "type": "string"
-                              },
-                              "url": {
-                                "description": "A url pointing to a valid Markdown/HTML file.",
-                                "title": "url",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "url"
-                            ],
-                            "title": "MarkdownContentLinkSpec",
-                            "type": "object"
-                          }
-                        ],
-                        "discriminator": {
-                          "propertyName": "type"
-                        },
-                        "required": [
-                          "type"
-                        ]
-                      },
-                      "form": {
-                        "$ref": "#/definitions/FormSpec",
-                        "description": "a form to display after the content.",
-                        "title": "form"
-                      },
-                      "name": {
-                        "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-                        "title": "name",
-                        "type": "string"
-                      },
-                      "type": {
-                        "default": "InstructionsTask",
-                        "enum": [
-                          "InstructionsTask"
-                        ],
-                        "title": "type",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "content",
-                      "name",
-                      "type"
-                    ],
-                    "title": "InstructionsTaskSpec",
-                    "type": "object"
-                  }
-                ],
-                "discriminator": {
-                  "propertyName": "type"
-                },
-                "required": [
-                  "type"
-                ]
-              },
-              "title": "tasks",
-              "type": "array"
-            },
-            "type": {
-              "default": "annotation",
-              "description": "type of HIT.",
-              "enum": [
-                "annotation"
-              ],
-              "title": "type",
-              "type": "string"
-            }
-          },
-          "required": [
-            "id",
-            "interface",
-            "name",
-            "tasks",
-            "type"
-          ],
-          "title": "AnnotationHitSpec",
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "extra": {
-              "description": "Extra hit-level information to display",
-              "title": "extra",
-              "oneOf": [
-                {
-                  "additionalProperties": false,
-                  "description": "Props for raw Markdown/HTML data",
-                  "properties": {
-                    "content": {
-                      "description": "A valid Markdown/HTML string",
-                      "title": "content",
-                      "type": "string"
-                    },
-                    "type": {
-                      "default": "raw",
-                      "enum": [
-                        "raw"
-                      ],
-                      "title": "type",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "content",
-                    "type"
-                  ],
-                  "title": "MarkdownContentRawSpec",
-                  "type": "object"
-                },
-                {
-                  "additionalProperties": false,
-                  "description": "Supplied is a link to a Markdown/HTML file.",
-                  "properties": {
-                    "type": {
-                      "default": "link",
-                      "enum": [
-                        "link"
-                      ],
-                      "title": "type",
-                      "type": "string"
-                    },
-                    "url": {
-                      "description": "A url pointing to a valid Markdown/HTML file.",
-                      "title": "url",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "type",
-                    "url"
-                  ],
-                  "title": "MarkdownContentLinkSpec",
-                  "type": "object"
-                }
-              ],
-              "discriminator": {
-                "propertyName": "type"
-              },
-              "required": [
-                "type"
-              ]
-            },
-            "id": {
-              "description": "unique ID of the hit",
-              "title": "id",
-              "type": "string"
-            },
-            "name": {
-              "description": "HIT name (for display)",
-              "title": "name",
-              "type": "string"
-            },
-            "repeat": {
-              "description": "number of copies or instances of the HIT",
-              "title": "repeat",
-              "type": "number"
-            },
-            "tasks": {
-              "description": "list of tasks in the HIT",
-              "items": {
-                "description": "One of the supported task specs",
-                "oneOf": [
-                  {
-                    "additionalProperties": false,
-                    "properties": {
-                      "controls": {
-                        "description": "sets the input button controls for the task",
-                        "properties": {
-                          "back10s": {
-                            "title": "back10s",
-                            "type": "string"
-                          },
-                          "back2s": {
-                            "title": "back2s",
-                            "type": "string"
-                          },
-                          "play-pause": {
-                            "title": "play-pause",
-                            "type": "string"
-                          }
-                        },
-                        "title": "controls",
-                        "type": "object"
-                      },
-                      "intensityInput": {
-                        "description": "sets the type of intensity input",
-                        "title": "intensityInput",
-                        "oneOf": [
-                          {
-                            "properties": {
-                              "mode": {
-                                "default": "continuous-mousemove",
-                                "enum": [
-                                  "continuous-mousemove"
-                                ],
-                                "title": "mode",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "mode"
-                            ],
-                            "title": "ContinuousMousemoveInputSpec",
-                            "type": "object"
-                          },
-                          {
-                            "properties": {
-                              "controls": {
-                                "properties": {
-                                  "down": {
-                                    "default": "a",
-                                    "description": "Decrease intensity",
-                                    "title": "down",
-                                    "type": "string"
-                                  },
-                                  "up": {
-                                    "default": "s",
-                                    "description": "Increase intensity",
-                                    "title": "up",
-                                    "type": "string"
-                                  }
-                                },
-                                "required": [
-                                  "down",
-                                  "up"
-                                ],
-                                "title": "controls",
-                                "type": "object"
-                              },
-                              "mode": {
-                                "default": "continuous-keyboard",
-                                "enum": [
-                                  "continuous-keyboard"
-                                ],
-                                "title": "mode",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "controls",
-                              "mode"
-                            ],
-                            "title": "ContinuousKeyboardInputSpec",
-                            "type": "object"
-                          },
-                          {
-                            "properties": {
-                              "acceleration_constant": {
-                                "default": 0.0025,
-                                "description": "Acceleration constant.",
-                                "title": "acceleration_constant",
-                                "type": "number"
-                              },
-                              "controls": {
-                                "properties": {
-                                  "up": {
-                                    "default": "a",
-                                    "description": "Increase intensity",
-                                    "title": "up",
-                                    "type": "string"
-                                  }
-                                },
-                                "required": [
-                                  "up"
-                                ],
-                                "title": "controls",
-                                "type": "object"
-                              },
-                              "jump_speed": {
-                                "default": 0.1,
-                                "description": "Initial speed when a key is pressed",
-                                "title": "jump_speed",
-                                "type": "number"
-                              },
-                              "mode": {
-                                "default": "gravity-keyboard",
-                                "enum": [
-                                  "gravity-keyboard"
-                                ],
-                                "title": "mode",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "acceleration_constant",
-                              "controls",
-                              "jump_speed",
-                              "mode"
-                            ],
-                            "title": "GravityKeyboardInputSpec",
-                            "type": "object"
-                          }
-                        ],
-                        "discriminator": {
-                          "propertyName": "mode"
-                        },
-                        "required": [
-                          "mode"
-                        ]
-                      },
-                      "media": {
-                        "description": "Media file to be displayed.",
-                        "title": "media",
-                        "oneOf": [
-                          {
-                            "description": "Identifies a single video file",
-                            "properties": {
-                              "type": {
-                                "default": "video",
-                                "enum": [
-                                  "video"
-                                ],
-                                "title": "type",
-                                "type": "string"
-                              },
-                              "url": {
-                                "description": "URL to hosted video file",
-                                "title": "url",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "url"
-                            ],
-                            "title": "BasicVideo",
-                            "type": "object"
-                          },
-                          {
-                            "properties": {
-                              "type": {
-                                "default": "video-multiview",
-                                "enum": [
-                                  "video-multiview"
-                                ],
-                                "title": "type",
-                                "type": "string"
-                              },
-                              "url": {
-                                "description": "URL to video files",
-                                "items": {
-                                  "type": "string"
-                                },
-                                "title": "url",
-                                "type": "array"
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "url"
-                            ],
-                            "title": "MultiviewVideo",
-                            "type": "object"
-                          }
-                        ],
-                        "discriminator": {
-                          "propertyName": "type"
-                        },
-                        "required": [
-                          "type"
-                        ]
-                      },
-                      "name": {
-                        "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-                        "title": "name",
-                        "type": "string"
-                      },
-                      "type": {
-                        "default": "Continuous1DTask",
-                        "enum": [
-                          "Continuous1DTask"
-                        ],
-                        "title": "type",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "intensityInput",
-                      "media",
-                      "name",
-                      "type"
-                    ],
-                    "title": "Continuous1DTaskSpec",
-                    "type": "object"
-                  },
-                  {
-                    "additionalProperties": false,
-                    "properties": {
-                      "controls": {
-                        "description": "sets the input button controls for the task",
-                        "properties": {
-                          "back10s": {
-                            "description": "go back 10s in video time",
-                            "title": "back10s",
-                            "type": "string"
-                          },
-                          "back2s": {
-                            "description": "go back 2s in video time",
-                            "title": "back2s",
-                            "type": "string"
-                          },
-                          "play-pause": {
-                            "description": "toggle play/pause",
-                            "title": "play-pause",
-                            "type": "string"
-                          },
-                          "speed-down": {
-                            "description": "slow down video playback",
-                            "title": "speed-down",
-                            "type": "string"
-                          },
-                          "speed-up": {
-                            "description": "speed up video playback",
-                            "title": "speed-up",
-                            "type": "string"
-                          },
-                          "toggle-occluded": {
-                            "description": "toggle the occlusion flag (for occluded objects/parts)",
-                            "title": "toggle-occluded",
-                            "type": "string"
-                          },
-                          "toggle-of": {
-                            "description": "toggle the optical-flow-based speed adjustment",
-                            "title": "toggle-of",
-                            "type": "string"
-                          }
-                        },
-                        "title": "controls",
-                        "type": "object"
-                      },
-                      "media": {
-                        "$ref": "#/definitions/OpencvFlowPlayerMedia",
-                        "description": "Media file to be displayed.",
-                        "title": "media"
-                      },
-                      "name": {
-                        "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-                        "title": "name",
-                        "type": "string"
-                      },
-                      "type": {
-                        "default": "ContinuousKeypointTask",
-                        "enum": [
-                          "ContinuousKeypointTask"
-                        ],
-                        "title": "type",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "media",
-                      "name",
-                      "type"
-                    ],
-                    "title": "ContinuousKeypointTaskSpec",
-                    "type": "object"
-                  },
-                  {
-                    "additionalProperties": false,
-                    "properties": {
-                      "disabledUntilEnd": {
-                        "description": "If true, the form will only become active after the media playback ends",
-                        "title": "disabledUntilEnd",
-                        "type": "boolean"
-                      },
-                      "form": {
-                        "$ref": "#/definitions/FormSpec",
-                        "description": "Specification of the form to be created.",
-                        "title": "form"
-                      },
-                      "instructions": {
-                        "description": "Instructions to be displayed before the form",
-                        "title": "instructions",
-                        "type": "string"
-                      },
-                      "media": {
-                        "description": "Media file to be displayed.",
-                        "title": "media",
-                        "oneOf": [
-                          {
-                            "description": "Identifies a single video file",
-                            "properties": {
-                              "type": {
-                                "default": "video",
-                                "enum": [
-                                  "video"
-                                ],
-                                "title": "type",
-                                "type": "string"
-                              },
-                              "url": {
-                                "description": "URL to hosted video file",
-                                "title": "url",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "url"
-                            ],
-                            "title": "BasicVideo",
-                            "type": "object"
-                          },
-                          {
-                            "description": "Identifies a single audio file",
-                            "properties": {
-                              "type": {
-                                "default": "audio",
-                                "enum": [
-                                  "audio"
-                                ],
-                                "title": "type",
-                                "type": "string"
-                              },
-                              "url": {
-                                "description": "URL to hosted video file",
-                                "title": "url",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "url"
-                            ],
-                            "title": "BasicAudio",
-                            "type": "object"
-                          }
-                        ],
-                        "discriminator": {
-                          "propertyName": "type"
-                        },
-                        "required": [
-                          "type"
-                        ]
-                      },
-                      "name": {
-                        "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-                        "title": "name",
-                        "type": "string"
-                      },
-                      "type": {
-                        "default": "QuestionnaireTask",
-                        "enum": [
-                          "QuestionnaireTask"
-                        ],
-                        "title": "type",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "form",
-                      "instructions",
-                      "media",
-                      "name",
-                      "type"
-                    ],
-                    "title": "QuestionnaireTaskSpec",
-                    "type": "object"
-                  },
-                  {
-                    "additionalProperties": false,
-                    "properties": {
-                      "content": {
-                        "description": "Main static content of the page (eg. consent terms, instructions)",
-                        "title": "content",
-                        "oneOf": [
-                          {
-                            "additionalProperties": false,
-                            "description": "Props for raw Markdown/HTML data",
-                            "properties": {
-                              "content": {
-                                "description": "A valid Markdown/HTML string",
-                                "title": "content",
-                                "type": "string"
-                              },
-                              "type": {
-                                "default": "raw",
-                                "enum": [
-                                  "raw"
-                                ],
-                                "title": "type",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "content",
-                              "type"
-                            ],
-                            "title": "MarkdownContentRawSpec",
-                            "type": "object"
-                          },
-                          {
-                            "additionalProperties": false,
-                            "description": "Supplied is a link to a Markdown/HTML file.",
-                            "properties": {
-                              "type": {
-                                "default": "link",
-                                "enum": [
-                                  "link"
-                                ],
-                                "title": "type",
-                                "type": "string"
-                              },
-                              "url": {
-                                "description": "A url pointing to a valid Markdown/HTML file.",
-                                "title": "url",
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "url"
-                            ],
-                            "title": "MarkdownContentLinkSpec",
-                            "type": "object"
-                          }
-                        ],
-                        "discriminator": {
-                          "propertyName": "type"
-                        },
-                        "required": [
-                          "type"
-                        ]
-                      },
-                      "form": {
-                        "$ref": "#/definitions/FormSpec",
-                        "description": "a form to display after the content.",
-                        "title": "form"
-                      },
-                      "name": {
-                        "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-                        "title": "name",
-                        "type": "string"
-                      },
-                      "type": {
-                        "default": "InstructionsTask",
-                        "enum": [
-                          "InstructionsTask"
-                        ],
-                        "title": "type",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "content",
-                      "name",
-                      "type"
-                    ],
-                    "title": "InstructionsTaskSpec",
-                    "type": "object"
-                  }
-                ],
-                "discriminator": {
-                  "propertyName": "type"
-                },
-                "required": [
-                  "type"
-                ]
-              },
-              "title": "tasks",
-              "type": "array"
-            },
-            "type": {
-              "default": "timeline",
-              "description": "type of HIT.",
-              "enum": [
-                "timeline"
-              ],
-              "title": "type",
-              "type": "string"
-            }
-          },
-          "required": [
-            "id",
-            "name",
-            "tasks",
-            "type"
-          ],
-          "title": "TimelineHitSpec",
-          "type": "object"
-        }
-      ],
-      "discriminator": {
-        "propertyName": "type"
-      },
-      "required": [
-        "type"
-      ]
-    },
     "InputFieldSpec": {
       "description": "Props for the antd input field",
       "properties": {
@@ -3433,277 +1652,14 @@
       "title": "InputFieldSpec",
       "type": "object"
     },
-    "InputSpec": {
-      "oneOf": [
-        {
-          "description": "Props for the antd checkbox",
-          "properties": {
-            "defaultChecked": {
-              "title": "defaultChecked",
-              "type": "boolean"
-            },
-            "inputType": {
-              "default": "Checkbox",
-              "enum": [
-                "Checkbox"
-              ],
-              "title": "inputType",
-              "type": "string"
-            }
-          },
-          "required": [
-            "inputType"
-          ],
-          "title": "CheckboxSpec",
-          "type": "object"
-        },
-        {
-          "description": "Props for the antd checkbox group",
-          "properties": {
-            "defaultValue": {
-              "items": {
-                "type": "string"
-              },
-              "title": "defaultValue",
-              "type": "array"
-            },
-            "inputType": {
-              "default": "Checkbox.Group",
-              "enum": [
-                "Checkbox.Group"
-              ],
-              "title": "inputType",
-              "type": "string"
-            },
-            "options": {
-              "items": {
-                "type": "string"
-              },
-              "title": "options",
-              "type": "array"
-            }
-          },
-          "required": [
-            "inputType",
-            "options"
-          ],
-          "title": "CheckboxGroupSpec",
-          "type": "object"
-        },
-        {
-          "description": "Props for the antd input field",
-          "properties": {
-            "allowClear": {
-              "title": "allowClear",
-              "type": "boolean"
-            },
-            "bordered": {
-              "title": "bordered",
-              "type": "boolean"
-            },
-            "defaultValue": {
-              "title": "defaultValue",
-              "type": "string"
-            },
-            "inputType": {
-              "default": "Input",
-              "enum": [
-                "Input"
-              ],
-              "title": "inputType",
-              "type": "string"
-            },
-            "maxLength": {
-              "title": "maxLength",
-              "type": "number"
-            },
-            "minLength": {
-              "title": "minLength",
-              "type": "number"
-            },
-            "size": {
-              "enum": [
-                "large",
-                "middle",
-                "small"
-              ],
-              "title": "size",
-              "type": "string"
-            },
-            "type": {
-              "enum": [
-                "checkbox",
-                "color",
-                "date",
-                "datetime-local",
-                "email",
-                "month",
-                "number",
-                "password",
-                "radio",
-                "range",
-                "string",
-                "tel",
-                "text",
-                "time",
-                "url",
-                "week"
-              ],
-              "title": "type",
-              "type": "string"
-            }
-          },
-          "required": [
-            "inputType"
-          ],
-          "title": "InputFieldSpec",
-          "type": "object"
-        },
-        {
-          "description": "Props for the antd radio",
-          "properties": {
-            "buttonStyle": {
-              "enum": [
-                "outline",
-                "solid"
-              ],
-              "title": "buttonStyle",
-              "type": "string"
-            },
-            "defaultValue": {
-              "title": "defaultValue",
-              "type": "string"
-            },
-            "inputType": {
-              "default": "Radio.Group",
-              "enum": [
-                "Radio.Group"
-              ],
-              "title": "inputType",
-              "type": "string"
-            },
-            "optionType": {
-              "enum": [
-                "button",
-                "default"
-              ],
-              "title": "optionType",
-              "type": "string"
-            },
-            "options": {
-              "items": {
-                "type": "string"
-              },
-              "title": "options",
-              "type": "array"
-            },
-            "size": {
-              "enum": [
-                "large",
-                "middle",
-                "small"
-              ],
-              "title": "size",
-              "type": "string"
-            }
-          },
-          "required": [
-            "inputType",
-            "options"
-          ],
-          "title": "RadioSpec",
-          "type": "object"
-        },
-        {
-          "description": "Props for the antd slider",
-          "properties": {
-            "defaultValue": {
-              "description": "Initial slider value",
-              "title": "defaultValue",
-              "type": "number"
-            },
-            "dots": {
-              "description": "Whether the thumb can drag over tick only",
-              "title": "dots",
-              "type": "boolean"
-            },
-            "inputType": {
-              "default": "Slider",
-              "enum": [
-                "Slider"
-              ],
-              "title": "inputType",
-              "type": "string"
-            },
-            "marks": {
-              "additionalProperties": false,
-              "default": "{0: \"0\", 1: \"1\", 2: \"2\"}",
-              "patternProperties": {
-                "^[0-9]+$": {
-                  "properties": {
-                    "label": {
-                      "title": "label",
-                      "type": [
-                        "string",
-                        "number"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "label"
-                  ],
-                  "type": "object"
-                }
-              },
-              "title": "marks",
-              "type": "object"
-            },
-            "max": {
-              "default": 7,
-              "description": "The maximum value the slider can slide to",
-              "title": "max",
-              "type": "number"
-            },
-            "min": {
-              "default": 0,
-              "description": "The minimum value the slider can slide to",
-              "title": "min",
-              "type": "number"
-            },
-            "range": {
-              "description": "Dual thumb mode",
-              "title": "range",
-              "type": "boolean"
-            },
-            "step": {
-              "default": 1,
-              "description": "The granularity the slider can step through values. Must greater than 0, and be divided by (max - min) . When marks no null, step can be null",
-              "title": "step",
-              "type": "number"
-            },
-            "vertical": {
-              "description": "If true, the slider will be vertical",
-              "title": "vertical",
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "inputType"
-          ],
-          "title": "SliderSpec",
-          "type": "object"
-        }
-      ],
-      "discriminator": {
-        "propertyName": "inputType"
-      },
-      "required": [
-        "inputType"
-      ]
-    },
     "InstructionsTaskSpec": {
-      "additionalProperties": false,
       "properties": {
+        "autoSubmit": {
+          "default": false,
+          "description": "Tasks will be submitted automatically when the media or timer ends.",
+          "title": "autoSubmit",
+          "type": "boolean"
+        },
         "content": {
           "description": "Main static content of the page (eg. consent terms, instructions)",
           "title": "content",
@@ -3771,10 +1727,32 @@
           "description": "a form to display after the content.",
           "title": "form"
         },
+        "maxSubmissions": {
+          "default": 0,
+          "description": "Maximum number of submissions a user can make for the task.",
+          "title": "maxSubmissions",
+          "type": "number"
+        },
         "name": {
           "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
           "title": "name",
           "type": "string"
+        },
+        "timer": {
+          "description": "Timing config",
+          "properties": {
+            "maxTime": {
+              "default": 0,
+              "description": "Max time (in seconds) the user may take to complete the task",
+              "title": "maxTime",
+              "type": "number"
+            }
+          },
+          "required": [
+            "maxTime"
+          ],
+          "title": "timer",
+          "type": "object"
         },
         "type": {
           "default": "InstructionsTask",
@@ -3792,120 +1770,6 @@
       ],
       "title": "InstructionsTaskSpec",
       "type": "object"
-    },
-    "Intensity1DInputSpec": {
-      "oneOf": [
-        {
-          "properties": {
-            "mode": {
-              "default": "continuous-mousemove",
-              "enum": [
-                "continuous-mousemove"
-              ],
-              "title": "mode",
-              "type": "string"
-            }
-          },
-          "required": [
-            "mode"
-          ],
-          "title": "ContinuousMousemoveInputSpec",
-          "type": "object"
-        },
-        {
-          "properties": {
-            "controls": {
-              "properties": {
-                "down": {
-                  "default": "a",
-                  "description": "Decrease intensity",
-                  "title": "down",
-                  "type": "string"
-                },
-                "up": {
-                  "default": "s",
-                  "description": "Increase intensity",
-                  "title": "up",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "down",
-                "up"
-              ],
-              "title": "controls",
-              "type": "object"
-            },
-            "mode": {
-              "default": "continuous-keyboard",
-              "enum": [
-                "continuous-keyboard"
-              ],
-              "title": "mode",
-              "type": "string"
-            }
-          },
-          "required": [
-            "controls",
-            "mode"
-          ],
-          "title": "ContinuousKeyboardInputSpec",
-          "type": "object"
-        },
-        {
-          "properties": {
-            "acceleration_constant": {
-              "default": 0.0025,
-              "description": "Acceleration constant.",
-              "title": "acceleration_constant",
-              "type": "number"
-            },
-            "controls": {
-              "properties": {
-                "up": {
-                  "default": "a",
-                  "description": "Increase intensity",
-                  "title": "up",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "up"
-              ],
-              "title": "controls",
-              "type": "object"
-            },
-            "jump_speed": {
-              "default": 0.1,
-              "description": "Initial speed when a key is pressed",
-              "title": "jump_speed",
-              "type": "number"
-            },
-            "mode": {
-              "default": "gravity-keyboard",
-              "enum": [
-                "gravity-keyboard"
-              ],
-              "title": "mode",
-              "type": "string"
-            }
-          },
-          "required": [
-            "acceleration_constant",
-            "controls",
-            "jump_speed",
-            "mode"
-          ],
-          "title": "GravityKeyboardInputSpec",
-          "type": "object"
-        }
-      ],
-      "discriminator": {
-        "propertyName": "mode"
-      },
-      "required": [
-        "mode"
-      ]
     },
     "MarkdownContentLinkSpec": {
       "additionalProperties": false,
@@ -3956,66 +1820,6 @@
       ],
       "title": "MarkdownContentRawSpec",
       "type": "object"
-    },
-    "MarkdownContentSpec": {
-      "oneOf": [
-        {
-          "additionalProperties": false,
-          "description": "Props for raw Markdown/HTML data",
-          "properties": {
-            "content": {
-              "description": "A valid Markdown/HTML string",
-              "title": "content",
-              "type": "string"
-            },
-            "type": {
-              "default": "raw",
-              "enum": [
-                "raw"
-              ],
-              "title": "type",
-              "type": "string"
-            }
-          },
-          "required": [
-            "content",
-            "type"
-          ],
-          "title": "MarkdownContentRawSpec",
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "description": "Supplied is a link to a Markdown/HTML file.",
-          "properties": {
-            "type": {
-              "default": "link",
-              "enum": [
-                "link"
-              ],
-              "title": "type",
-              "type": "string"
-            },
-            "url": {
-              "description": "A url pointing to a valid Markdown/HTML file.",
-              "title": "url",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type",
-            "url"
-          ],
-          "title": "MarkdownContentLinkSpec",
-          "type": "object"
-        }
-      ],
-      "discriminator": {
-        "propertyName": "type"
-      },
-      "required": [
-        "type"
-      ]
     },
     "MultiviewVideo": {
       "properties": {
@@ -4110,6 +1914,10 @@
       "title": "OpencvFlowPlayerMedia",
       "type": "object"
     },
+    "PresetsSpec": {
+      "title": "PresetsSpec",
+      "type": "object"
+    },
     "ProjectSpec": {
       "additionalProperties": false,
       "properties": {
@@ -4193,10 +2001,11 @@
                     "type": "string"
                   },
                   "interface": {
-                    "description": "List of tasks specifications that users can create",
+                    "description": "Interface configuration options",
                     "properties": {
                       "userTasks": {
-                        "$ref": "#/definitions/Record<string,UserTaskSpec>",
+                        "$ref": "#/definitions/PresetsSpec",
+                        "description": "Allow the user to create tasks from the given map of id => task_spec",
                         "title": "userTasks"
                       }
                     },
@@ -4222,8 +2031,13 @@
                       "description": "One of the supported task specs",
                       "oneOf": [
                         {
-                          "additionalProperties": false,
                           "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
                             "controls": {
                               "description": "sets the input button controls for the task",
                               "properties": {
@@ -4359,6 +2173,12 @@
                                 "mode"
                               ]
                             },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
                             "media": {
                               "description": "Media file to be displayed.",
                               "title": "media",
@@ -4426,6 +2246,22 @@
                               "title": "name",
                               "type": "string"
                             },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
+                            },
                             "type": {
                               "default": "Continuous1DTask",
                               "enum": [
@@ -4445,8 +2281,13 @@
                           "type": "object"
                         },
                         {
-                          "additionalProperties": false,
                           "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
                             "controls": {
                               "description": "sets the input button controls for the task",
                               "properties": {
@@ -4489,6 +2330,12 @@
                               "title": "controls",
                               "type": "object"
                             },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
                             "media": {
                               "$ref": "#/definitions/OpencvFlowPlayerMedia",
                               "description": "Media file to be displayed.",
@@ -4498,6 +2345,22 @@
                               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                               "title": "name",
                               "type": "string"
+                            },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
                             },
                             "type": {
                               "default": "ContinuousKeypointTask",
@@ -4517,8 +2380,13 @@
                           "type": "object"
                         },
                         {
-                          "additionalProperties": false,
                           "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
                             "disabledUntilEnd": {
                               "description": "If true, the form will only become active after the media playback ends",
                               "title": "disabledUntilEnd",
@@ -4533,6 +2401,12 @@
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
                               "type": "string"
+                            },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
                             },
                             "media": {
                               "description": "Media file to be displayed.",
@@ -4599,6 +2473,22 @@
                               "title": "name",
                               "type": "string"
                             },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
+                            },
                             "type": {
                               "default": "QuestionnaireTask",
                               "enum": [
@@ -4619,8 +2509,13 @@
                           "type": "object"
                         },
                         {
-                          "additionalProperties": false,
                           "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
                             "content": {
                               "description": "Main static content of the page (eg. consent terms, instructions)",
                               "title": "content",
@@ -4688,10 +2583,32 @@
                               "description": "a form to display after the content.",
                               "title": "form"
                             },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
                             "name": {
                               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                               "title": "name",
                               "type": "string"
+                            },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
                             },
                             "type": {
                               "default": "InstructionsTask",
@@ -4733,7 +2650,6 @@
                 },
                 "required": [
                   "id",
-                  "interface",
                   "name",
                   "tasks",
                   "type"
@@ -4811,6 +2727,18 @@
                     "title": "id",
                     "type": "string"
                   },
+                  "interface": {
+                    "description": "Interface configuration options",
+                    "properties": {
+                      "showProgress": {
+                        "description": "Display a bar indicating progress in the timeline",
+                        "title": "showProgress",
+                        "type": "boolean"
+                      }
+                    },
+                    "title": "interface",
+                    "type": "object"
+                  },
                   "name": {
                     "description": "HIT name (for display)",
                     "title": "name",
@@ -4827,8 +2755,13 @@
                       "description": "One of the supported task specs",
                       "oneOf": [
                         {
-                          "additionalProperties": false,
                           "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
                             "controls": {
                               "description": "sets the input button controls for the task",
                               "properties": {
@@ -4964,6 +2897,12 @@
                                 "mode"
                               ]
                             },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
                             "media": {
                               "description": "Media file to be displayed.",
                               "title": "media",
@@ -5031,6 +2970,22 @@
                               "title": "name",
                               "type": "string"
                             },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
+                            },
                             "type": {
                               "default": "Continuous1DTask",
                               "enum": [
@@ -5050,8 +3005,13 @@
                           "type": "object"
                         },
                         {
-                          "additionalProperties": false,
                           "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
                             "controls": {
                               "description": "sets the input button controls for the task",
                               "properties": {
@@ -5094,6 +3054,12 @@
                               "title": "controls",
                               "type": "object"
                             },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
                             "media": {
                               "$ref": "#/definitions/OpencvFlowPlayerMedia",
                               "description": "Media file to be displayed.",
@@ -5103,6 +3069,22 @@
                               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                               "title": "name",
                               "type": "string"
+                            },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
                             },
                             "type": {
                               "default": "ContinuousKeypointTask",
@@ -5122,8 +3104,13 @@
                           "type": "object"
                         },
                         {
-                          "additionalProperties": false,
                           "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
                             "disabledUntilEnd": {
                               "description": "If true, the form will only become active after the media playback ends",
                               "title": "disabledUntilEnd",
@@ -5138,6 +3125,12 @@
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
                               "type": "string"
+                            },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
                             },
                             "media": {
                               "description": "Media file to be displayed.",
@@ -5204,6 +3197,22 @@
                               "title": "name",
                               "type": "string"
                             },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
+                            },
                             "type": {
                               "default": "QuestionnaireTask",
                               "enum": [
@@ -5224,8 +3233,13 @@
                           "type": "object"
                         },
                         {
-                          "additionalProperties": false,
                           "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
                             "content": {
                               "description": "Main static content of the page (eg. consent terms, instructions)",
                               "title": "content",
@@ -5293,10 +3307,32 @@
                               "description": "a form to display after the content.",
                               "title": "form"
                             },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
                             "name": {
                               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                               "title": "name",
                               "type": "string"
+                            },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
                             },
                             "type": {
                               "default": "InstructionsTask",
@@ -5373,11 +3409,17 @@
         "id",
         "name"
       ],
+      "title": "ProjectSpec",
       "type": "object"
     },
     "QuestionnaireTaskSpec": {
-      "additionalProperties": false,
       "properties": {
+        "autoSubmit": {
+          "default": false,
+          "description": "Tasks will be submitted automatically when the media or timer ends.",
+          "title": "autoSubmit",
+          "type": "boolean"
+        },
         "disabledUntilEnd": {
           "description": "If true, the form will only become active after the media playback ends",
           "title": "disabledUntilEnd",
@@ -5392,6 +3434,12 @@
           "description": "Instructions to be displayed before the form",
           "title": "instructions",
           "type": "string"
+        },
+        "maxSubmissions": {
+          "default": 0,
+          "description": "Maximum number of submissions a user can make for the task.",
+          "title": "maxSubmissions",
+          "type": "number"
         },
         "media": {
           "description": "Media file to be displayed.",
@@ -5457,6 +3505,22 @@
           "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
           "title": "name",
           "type": "string"
+        },
+        "timer": {
+          "description": "Timing config",
+          "properties": {
+            "maxTime": {
+              "default": 0,
+              "description": "Max time (in seconds) the user may take to complete the task",
+              "title": "maxTime",
+              "type": "number"
+            }
+          },
+          "required": [
+            "maxTime"
+          ],
+          "title": "timer",
+          "type": "object"
         },
         "type": {
           "default": "QuestionnaireTask",
@@ -5530,10 +3594,6 @@
         "options"
       ],
       "title": "RadioSpec",
-      "type": "object"
-    },
-    "Record<string,UserTaskSpec>": {
-      "title": "Record<string,UserTaskSpec>",
       "type": "object"
     },
     "SliderSpec": {
@@ -5615,595 +3675,6 @@
       "title": "SliderSpec",
       "type": "object"
     },
-    "TaskObject": {
-      "properties": {
-        "id": {
-          "title": "id",
-          "type": "number"
-        },
-        "name": {
-          "title": "name",
-          "type": "string"
-        },
-        "order": {
-          "title": "order",
-          "type": "number"
-        },
-        "responses": {
-          "items": {
-            "$ref": "#/definitions/TaskResponse"
-          },
-          "title": "responses",
-          "type": "array"
-        },
-        "spec": {
-          "additionalProperties": true,
-          "properties": {},
-          "title": "spec",
-          "type": "object"
-        },
-        "type": {
-          "title": "type",
-          "type": "string"
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "order",
-        "responses",
-        "spec",
-        "type"
-      ],
-      "type": "object"
-    },
-    "TaskResponse": {
-      "properties": {
-        "chunk_data": {
-          "additionalProperties": true,
-          "properties": {},
-          "title": "chunk_data",
-          "type": "object"
-        },
-        "data": {
-          "additionalProperties": true,
-          "properties": {},
-          "title": "data",
-          "type": "object"
-        },
-        "hitinstance_id": {
-          "title": "hitinstance_id",
-          "type": "string"
-        },
-        "id": {
-          "title": "id",
-          "type": "number"
-        },
-        "index": {
-          "title": "index",
-          "type": "number"
-        },
-        "submitted": {
-          "title": "submitted",
-          "type": "boolean"
-        },
-        "task_id": {
-          "title": "task_id",
-          "type": "number"
-        }
-      },
-      "required": [
-        "chunk_data",
-        "data",
-        "hitinstance_id",
-        "id",
-        "index",
-        "submitted",
-        "task_id"
-      ],
-      "title": "TaskResponse",
-      "type": "object"
-    },
-    "TaskSpec": {
-      "description": "One of the supported task specs",
-      "oneOf": [
-        {
-          "additionalProperties": false,
-          "properties": {
-            "controls": {
-              "description": "sets the input button controls for the task",
-              "properties": {
-                "back10s": {
-                  "title": "back10s",
-                  "type": "string"
-                },
-                "back2s": {
-                  "title": "back2s",
-                  "type": "string"
-                },
-                "play-pause": {
-                  "title": "play-pause",
-                  "type": "string"
-                }
-              },
-              "title": "controls",
-              "type": "object"
-            },
-            "intensityInput": {
-              "description": "sets the type of intensity input",
-              "title": "intensityInput",
-              "oneOf": [
-                {
-                  "properties": {
-                    "mode": {
-                      "default": "continuous-mousemove",
-                      "enum": [
-                        "continuous-mousemove"
-                      ],
-                      "title": "mode",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "title": "ContinuousMousemoveInputSpec",
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "controls": {
-                      "properties": {
-                        "down": {
-                          "default": "a",
-                          "description": "Decrease intensity",
-                          "title": "down",
-                          "type": "string"
-                        },
-                        "up": {
-                          "default": "s",
-                          "description": "Increase intensity",
-                          "title": "up",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "down",
-                        "up"
-                      ],
-                      "title": "controls",
-                      "type": "object"
-                    },
-                    "mode": {
-                      "default": "continuous-keyboard",
-                      "enum": [
-                        "continuous-keyboard"
-                      ],
-                      "title": "mode",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "controls",
-                    "mode"
-                  ],
-                  "title": "ContinuousKeyboardInputSpec",
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "acceleration_constant": {
-                      "default": 0.0025,
-                      "description": "Acceleration constant.",
-                      "title": "acceleration_constant",
-                      "type": "number"
-                    },
-                    "controls": {
-                      "properties": {
-                        "up": {
-                          "default": "a",
-                          "description": "Increase intensity",
-                          "title": "up",
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "up"
-                      ],
-                      "title": "controls",
-                      "type": "object"
-                    },
-                    "jump_speed": {
-                      "default": 0.1,
-                      "description": "Initial speed when a key is pressed",
-                      "title": "jump_speed",
-                      "type": "number"
-                    },
-                    "mode": {
-                      "default": "gravity-keyboard",
-                      "enum": [
-                        "gravity-keyboard"
-                      ],
-                      "title": "mode",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "acceleration_constant",
-                    "controls",
-                    "jump_speed",
-                    "mode"
-                  ],
-                  "title": "GravityKeyboardInputSpec",
-                  "type": "object"
-                }
-              ],
-              "discriminator": {
-                "propertyName": "mode"
-              },
-              "required": [
-                "mode"
-              ]
-            },
-            "media": {
-              "description": "Media file to be displayed.",
-              "title": "media",
-              "oneOf": [
-                {
-                  "description": "Identifies a single video file",
-                  "properties": {
-                    "type": {
-                      "default": "video",
-                      "enum": [
-                        "video"
-                      ],
-                      "title": "type",
-                      "type": "string"
-                    },
-                    "url": {
-                      "description": "URL to hosted video file",
-                      "title": "url",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "type",
-                    "url"
-                  ],
-                  "title": "BasicVideo",
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "type": {
-                      "default": "video-multiview",
-                      "enum": [
-                        "video-multiview"
-                      ],
-                      "title": "type",
-                      "type": "string"
-                    },
-                    "url": {
-                      "description": "URL to video files",
-                      "items": {
-                        "type": "string"
-                      },
-                      "title": "url",
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "type",
-                    "url"
-                  ],
-                  "title": "MultiviewVideo",
-                  "type": "object"
-                }
-              ],
-              "discriminator": {
-                "propertyName": "type"
-              },
-              "required": [
-                "type"
-              ]
-            },
-            "name": {
-              "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-              "title": "name",
-              "type": "string"
-            },
-            "type": {
-              "default": "Continuous1DTask",
-              "enum": [
-                "Continuous1DTask"
-              ],
-              "title": "type",
-              "type": "string"
-            }
-          },
-          "required": [
-            "intensityInput",
-            "media",
-            "name",
-            "type"
-          ],
-          "title": "Continuous1DTaskSpec",
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "controls": {
-              "description": "sets the input button controls for the task",
-              "properties": {
-                "back10s": {
-                  "description": "go back 10s in video time",
-                  "title": "back10s",
-                  "type": "string"
-                },
-                "back2s": {
-                  "description": "go back 2s in video time",
-                  "title": "back2s",
-                  "type": "string"
-                },
-                "play-pause": {
-                  "description": "toggle play/pause",
-                  "title": "play-pause",
-                  "type": "string"
-                },
-                "speed-down": {
-                  "description": "slow down video playback",
-                  "title": "speed-down",
-                  "type": "string"
-                },
-                "speed-up": {
-                  "description": "speed up video playback",
-                  "title": "speed-up",
-                  "type": "string"
-                },
-                "toggle-occluded": {
-                  "description": "toggle the occlusion flag (for occluded objects/parts)",
-                  "title": "toggle-occluded",
-                  "type": "string"
-                },
-                "toggle-of": {
-                  "description": "toggle the optical-flow-based speed adjustment",
-                  "title": "toggle-of",
-                  "type": "string"
-                }
-              },
-              "title": "controls",
-              "type": "object"
-            },
-            "media": {
-              "$ref": "#/definitions/OpencvFlowPlayerMedia",
-              "description": "Media file to be displayed.",
-              "title": "media"
-            },
-            "name": {
-              "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-              "title": "name",
-              "type": "string"
-            },
-            "type": {
-              "default": "ContinuousKeypointTask",
-              "enum": [
-                "ContinuousKeypointTask"
-              ],
-              "title": "type",
-              "type": "string"
-            }
-          },
-          "required": [
-            "media",
-            "name",
-            "type"
-          ],
-          "title": "ContinuousKeypointTaskSpec",
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "disabledUntilEnd": {
-              "description": "If true, the form will only become active after the media playback ends",
-              "title": "disabledUntilEnd",
-              "type": "boolean"
-            },
-            "form": {
-              "$ref": "#/definitions/FormSpec",
-              "description": "Specification of the form to be created.",
-              "title": "form"
-            },
-            "instructions": {
-              "description": "Instructions to be displayed before the form",
-              "title": "instructions",
-              "type": "string"
-            },
-            "media": {
-              "description": "Media file to be displayed.",
-              "title": "media",
-              "oneOf": [
-                {
-                  "description": "Identifies a single video file",
-                  "properties": {
-                    "type": {
-                      "default": "video",
-                      "enum": [
-                        "video"
-                      ],
-                      "title": "type",
-                      "type": "string"
-                    },
-                    "url": {
-                      "description": "URL to hosted video file",
-                      "title": "url",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "type",
-                    "url"
-                  ],
-                  "title": "BasicVideo",
-                  "type": "object"
-                },
-                {
-                  "description": "Identifies a single audio file",
-                  "properties": {
-                    "type": {
-                      "default": "audio",
-                      "enum": [
-                        "audio"
-                      ],
-                      "title": "type",
-                      "type": "string"
-                    },
-                    "url": {
-                      "description": "URL to hosted video file",
-                      "title": "url",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "type",
-                    "url"
-                  ],
-                  "title": "BasicAudio",
-                  "type": "object"
-                }
-              ],
-              "discriminator": {
-                "propertyName": "type"
-              },
-              "required": [
-                "type"
-              ]
-            },
-            "name": {
-              "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-              "title": "name",
-              "type": "string"
-            },
-            "type": {
-              "default": "QuestionnaireTask",
-              "enum": [
-                "QuestionnaireTask"
-              ],
-              "title": "type",
-              "type": "string"
-            }
-          },
-          "required": [
-            "form",
-            "instructions",
-            "media",
-            "name",
-            "type"
-          ],
-          "title": "QuestionnaireTaskSpec",
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "content": {
-              "description": "Main static content of the page (eg. consent terms, instructions)",
-              "title": "content",
-              "oneOf": [
-                {
-                  "additionalProperties": false,
-                  "description": "Props for raw Markdown/HTML data",
-                  "properties": {
-                    "content": {
-                      "description": "A valid Markdown/HTML string",
-                      "title": "content",
-                      "type": "string"
-                    },
-                    "type": {
-                      "default": "raw",
-                      "enum": [
-                        "raw"
-                      ],
-                      "title": "type",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "content",
-                    "type"
-                  ],
-                  "title": "MarkdownContentRawSpec",
-                  "type": "object"
-                },
-                {
-                  "additionalProperties": false,
-                  "description": "Supplied is a link to a Markdown/HTML file.",
-                  "properties": {
-                    "type": {
-                      "default": "link",
-                      "enum": [
-                        "link"
-                      ],
-                      "title": "type",
-                      "type": "string"
-                    },
-                    "url": {
-                      "description": "A url pointing to a valid Markdown/HTML file.",
-                      "title": "url",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "type",
-                    "url"
-                  ],
-                  "title": "MarkdownContentLinkSpec",
-                  "type": "object"
-                }
-              ],
-              "discriminator": {
-                "propertyName": "type"
-              },
-              "required": [
-                "type"
-              ]
-            },
-            "form": {
-              "$ref": "#/definitions/FormSpec",
-              "description": "a form to display after the content.",
-              "title": "form"
-            },
-            "name": {
-              "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
-              "title": "name",
-              "type": "string"
-            },
-            "type": {
-              "default": "InstructionsTask",
-              "enum": [
-                "InstructionsTask"
-              ],
-              "title": "type",
-              "type": "string"
-            }
-          },
-          "required": [
-            "content",
-            "name",
-            "type"
-          ],
-          "title": "InstructionsTaskSpec",
-          "type": "object"
-        }
-      ],
-      "discriminator": {
-        "propertyName": "type"
-      },
-      "required": [
-        "type"
-      ]
-    },
     "TimelineHitSpec": {
       "additionalProperties": false,
       "properties": {
@@ -6274,6 +3745,18 @@
           "title": "id",
           "type": "string"
         },
+        "interface": {
+          "description": "Interface configuration options",
+          "properties": {
+            "showProgress": {
+              "description": "Display a bar indicating progress in the timeline",
+              "title": "showProgress",
+              "type": "boolean"
+            }
+          },
+          "title": "interface",
+          "type": "object"
+        },
         "name": {
           "description": "HIT name (for display)",
           "title": "name",
@@ -6290,8 +3773,13 @@
             "description": "One of the supported task specs",
             "oneOf": [
               {
-                "additionalProperties": false,
                 "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
                   "controls": {
                     "description": "sets the input button controls for the task",
                     "properties": {
@@ -6427,6 +3915,12 @@
                       "mode"
                     ]
                   },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
                   "media": {
                     "description": "Media file to be displayed.",
                     "title": "media",
@@ -6494,6 +3988,22 @@
                     "title": "name",
                     "type": "string"
                   },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
+                  },
                   "type": {
                     "default": "Continuous1DTask",
                     "enum": [
@@ -6513,8 +4023,13 @@
                 "type": "object"
               },
               {
-                "additionalProperties": false,
                 "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
                   "controls": {
                     "description": "sets the input button controls for the task",
                     "properties": {
@@ -6557,6 +4072,12 @@
                     "title": "controls",
                     "type": "object"
                   },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
                   "media": {
                     "$ref": "#/definitions/OpencvFlowPlayerMedia",
                     "description": "Media file to be displayed.",
@@ -6566,6 +4087,22 @@
                     "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                     "title": "name",
                     "type": "string"
+                  },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
                   },
                   "type": {
                     "default": "ContinuousKeypointTask",
@@ -6585,8 +4122,13 @@
                 "type": "object"
               },
               {
-                "additionalProperties": false,
                 "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
                   "disabledUntilEnd": {
                     "description": "If true, the form will only become active after the media playback ends",
                     "title": "disabledUntilEnd",
@@ -6601,6 +4143,12 @@
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
                     "type": "string"
+                  },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
                   },
                   "media": {
                     "description": "Media file to be displayed.",
@@ -6667,6 +4215,22 @@
                     "title": "name",
                     "type": "string"
                   },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
+                  },
                   "type": {
                     "default": "QuestionnaireTask",
                     "enum": [
@@ -6687,8 +4251,13 @@
                 "type": "object"
               },
               {
-                "additionalProperties": false,
                 "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
                   "content": {
                     "description": "Main static content of the page (eg. consent terms, instructions)",
                     "title": "content",
@@ -6756,10 +4325,32 @@
                     "description": "a form to display after the content.",
                     "title": "form"
                   },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
                   "name": {
                     "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                     "title": "name",
                     "type": "string"
+                  },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
                   },
                   "type": {
                     "default": "InstructionsTask",
@@ -6806,70 +4397,6 @@
         "type"
       ],
       "title": "TimelineHitSpec",
-      "type": "object"
-    },
-    "UserTaskSpec": {
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "description": "Task type",
-          "title": "type",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "VideoSpec": {
-      "properties": {
-        "type": {
-          "default": "video",
-          "enum": [
-            "video"
-          ],
-          "title": "type",
-          "type": "string"
-        },
-        "url": {
-          "description": "URL to hosted video file",
-          "title": "url",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type",
-        "url"
-      ],
-      "type": "object"
-    },
-    "VideojsPlayerMedia": {
-      "$ref": "#/definitions/BasicVideo",
-      "description": "Identifies a single video file"
-    },
-    "WavesurferPlayerMedia": {
-      "description": "Identifies a single audio file",
-      "properties": {
-        "type": {
-          "default": "audio",
-          "enum": [
-            "audio"
-          ],
-          "title": "type",
-          "type": "string"
-        },
-        "url": {
-          "description": "URL to hosted video file",
-          "title": "url",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type",
-        "url"
-      ],
-      "title": "audio",
       "type": "object"
     }
   }

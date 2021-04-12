@@ -45,7 +45,7 @@ class Login extends React.Component {
         return <Row style={{marginTop: '40px'}}>
             <Col xs={{span: 16, offset: 4}} lg={{span: 8, offset: 8}}>
                 <div className={'covfee-banner'}>
-                    <img src={CovfeeLogo} width={70}/> covfee
+                    <CovfeeLogo width="70" height="70" /> covfee
                 </div>
                 <Form
                 {...layout}

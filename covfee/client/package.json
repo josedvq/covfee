@@ -11,6 +11,7 @@
     "@babel/preset-typescript": "^7.10.1",
     "@mdx-js/mdx": "^1.6.16",
     "@rjsf/core": "^2.5.1",
+    "@svgr/webpack": "^5.5.0",
     "@types/classnames": "^2.2.10",
     "@types/downloadjs": "^1.4.2",
     "@types/events": "^3.0.0",
@@ -29,9 +30,6 @@
     "webpack-dev-server": "^3.11.2"
   },
   "scripts": {
-    "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook",
-    "chromatic": "npx chromatic --project-token 681awumx8cs --auto-accept-changes",
     "test": "mocha --require ts-node/register ./client/test/*.ts"
   },
   "keywords": [],
@@ -53,7 +51,6 @@
     "react-markdown": "^5.0.3",
     "react-router-dom": "^5.2.0",
     "style-loader": "^1.2.1",
-    "svg-url-loader": "^6.0.0",
     "ts-loader": "^7.0.5",
     "typescript-json-schema": "^0.50.0",
     "video.js": "^7.8.4",

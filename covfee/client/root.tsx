@@ -18,7 +18,7 @@ import {
     Route,
     Link,
 } from "react-router-dom"
-import {HITWithRouter} from './hit/hit_loader'
+import { HitLoaderWithRouter} from './hit/hit_loader'
 
 const { Header, Footer, Content, Sider } = Layout;
 
@@ -44,7 +44,7 @@ class Root extends React.Component {
                                     <LoginWithRouter />
                                 </Route>
                                 <Route path="/hits/:hitId">
-                                    <HITWithRouter/>
+                                    <HitLoaderWithRouter/>
                                 </Route>
                             </Switch>
                         </Layout>

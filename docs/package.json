@@ -1,5 +1,5 @@
 {
-  "name": "covfee-docs",
+  "name": "docs",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -14,13 +14,25 @@
     "write-heading-ids": "docusaurus write-heading-ids"
   },
   "dependencies": {
+    "@ant-design/icons": "^4.6.2",
     "@docusaurus/core": "2.0.0-alpha.72",
     "@docusaurus/preset-classic": "2.0.0-alpha.72",
     "@mdx-js/react": "^1.6.21",
+    "@rjsf/antd": "^2.5.1",
+    "@rjsf/core": "^2.5.1",
+    "antd": "^4.15.0",
+    "babel-plugin-inline-json-import": "^0.3.2",
+    "babel-plugin-module-resolver": "^4.1.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
     "clsx": "^1.1.1",
+    "covfee-client": "*",
+    "dayjs": "^1.10.4",
+    "less": "^4.1.1",
+    "less-loader": "^7.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "covfee-client": "0.1.0"
+    "style-loader": "^2.0.0",
+    "webpack": "^4.46.0"
   },
   "browserslist": {
     "production": [

@@ -1,7 +1,7 @@
 
 import * as React from 'react'
 import { withRouter } from 'react-router'
-import Annotation from './hit'
+import Hit from './hit'
 import Constants from 'Constants'
 import { fetcher, getUrlQueryParam, throwBadResponse} from '../utils'
 
@@ -9,47 +9,38 @@ import {
     LoadingOutlined,
 } from '@ant-design/icons';
 import {
-    Row,
-    Col,
-    Space,
-    Typography
-} from 'antd';
-import {
-    HashRouter as Router,
-    Switch,
-    Route,
+    Route, RouteComponentProps,
 } from "react-router-dom"
-const { Text, Title, Link } = Typography
+import {HitType} from '@covfee-types/hit'
 
-interface HITSpec {
-    id: string,
-    type: string,
-    tasks: Array<any>,
-    submitted: boolean
+interface MatchParams {
+    hitId: string
 }
 
-interface HITState {
+interface Props extends RouteComponentProps<MatchParams> {}
+
+interface State {
     status: string,
     previewMode: boolean,
     error: string,
-    hit: HITSpec
+    hit: HitType
 }
 
 /**
- * Retrieves the HIT and renders and annotation component. Stores the preview state.
+ * Retrieves the HIT and renders and Hit component. Stores the preview state.
  */
-class HIT extends React.Component<any, HITState> {
+class HitLoader extends React.Component<Props, State> {
     id: string
     url: string
 
-    state: HITState = {
+    state: State = {
         status: 'loading',
         previewMode: false,
         error: null,
         hit: null,
     }
 
-    constructor(props) {
+    constructor(props: Props) {
         super(props)
 
         this.id = props.match.params.hitId
@@ -61,7 +52,7 @@ class HIT extends React.Component<any, HITState> {
     componentDidMount() {
         fetch(this.url)
             .then(throwBadResponse)
-            .then((hit: HITSpec) => {
+            .then((hit: HitType) => {
                 if (hit.submitted) {
                     this.setState({
                         status: 'finished',
@@ -109,9 +100,8 @@ class HIT extends React.Component<any, HITState> {
                 </div>
             case 'ready':
                 return <Route path={`${this.props.match.path}/:taskId?`}>
-                    <Annotation
+                    <Hit
                         {...this.state.hit}
-                        url={this.url}
                         routingEnabled={true}
                         previewMode={this.state.previewMode}
                         onSubmit={this.handleSubmit} />
@@ -122,6 +112,6 @@ class HIT extends React.Component<any, HITState> {
     }
 }
 
-const HITWithRouter = withRouter(HIT)
+const HitLoaderWithRouter = withRouter(HitLoader)
 
-export { HITSpec, HITWithRouter}
+export { HitLoaderWithRouter}

@@ -1,6 +1,5 @@
 import * as React from 'react'
 import classNames from 'classnames'
-import $ from 'jquery'
 
 export const getTaskClass = (type: string) => {
     if (type in AvailableTasks) {
@@ -9,28 +8,6 @@ export const getTaskClass = (type: string) => {
     } else {
         return null
     }
-}
-
-// removes relative links in Markdown
-// used to clean github docs for storybook
-export const updateMarkdownLinks = (doc: string) => {
-    const html = $($.parseHTML('<div>' + doc + '</div>'))
-    html.find('a')
-        .filter(function () {
-            const pattern = /^((http|https|ftp):\/\/)/
-            const href = $(this).attr("href")
-            return !pattern.test(href)
-        })
-        .each(function () {
-            $(this).attr('href', null)
-            $(this).css({
-                'pointer-events': 'none',
-                cursor: 'default',
-                'text-decoration': 'none',
-                'color': 'black'
-            })
-        })
-    return html.html()
 }
 
 export class CodeBlock extends React.Component {

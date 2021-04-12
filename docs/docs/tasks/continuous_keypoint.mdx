@@ -2,12 +2,7 @@
 title: Continuous Keypoint
 ---
 
-import {ContinuousKeypointTask} from 'covfee-client/tasks/continuous_keypoint'
 import {TaskForm} from '../../src/utils/task_form'
-
-# Continuous Keypoint Task
-
-<Meta title="Tasks / Continuous Keypoint" component={ContinuousKeypointTask} />
 
 The continuous keypoint task was created for annotation of keypoints in a video. In the original application these keypoints corresponded to extremities of people in a social interaction. The task makes use of an optical flow video to play the video slower when the mouse cursor is close to moving parts, to aid annotators in the process. Skeletal keypoints were annotated one-by-one continuously, instead of traditional frame-based annotation in which some image frames are annotated to then be interpolated. In general, this task is especially useful when the target keypoint are visible for long periods of time.
 
@@ -42,6 +37,3 @@ export const uiSchema = {
 <TaskForm spec={taskSpec} 
     schemaName='ContinuousKeypointTaskSpec'
     uiSchema={uiSchema}/>
-
-## Component Props (for developers)
-<ArgsTable of={ContinuousKeypointTask}/>

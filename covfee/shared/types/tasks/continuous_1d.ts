@@ -1,11 +1,11 @@
 import { Intensity1DInputSpec } from 'types/input/1d_intensity';
-import {ContinuousTaskSpec} from '../task'
+import {CommonContinuousTaskSpec} from '../task'
 import { HTML5PlayerMedia} from '../players/html5'
 
 /**
 * @TJS-additionalProperties false
 */
-export interface Continuous1DTaskSpec extends ContinuousTaskSpec {
+export interface Continuous1DTaskBaseSpec {
     /**
      * @default "Continuous1DTask"
      */
@@ -27,3 +27,5 @@ export interface Continuous1DTaskSpec extends ContinuousTaskSpec {
      */
     intensityInput: Intensity1DInputSpec 
 }
+
+export interface Continuous1DTaskSpec extends Continuous1DTaskBaseSpec, CommonContinuousTaskSpec {}

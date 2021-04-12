@@ -14,8 +14,8 @@ export class CovfeeMenuItem extends React.Component {
     render() {
         return <div style={{'display': 'flex',
                     'alignItems': 'center',
-                    'height': '100%'}}>
-            <object style={{display: 'block', margin: '0 auto', width: '25px'}} data={CovfeeLogo} type="image/svg+xml"/>
+                    'height': '46px'}}>
+            <CovfeeLogo width="30" height="30"/>
         </div>
     }
 }

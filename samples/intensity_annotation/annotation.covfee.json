@@ -8,7 +8,8 @@
             "type": "annotation",
             "name": "1D annotation sample",
             "extra": {
-                "html": "These are HIT-level instructions or auxiliary information for annotators."
+                "type": "raw",
+                "content": "These are HIT-level instructions or auxiliary information for annotators."
             },
             "repeat": 2,
             "tasks": [

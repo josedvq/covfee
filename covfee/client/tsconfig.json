@@ -13,9 +13,9 @@
         "baseUrl": ".",
         "resolveJsonModule": true,
         "paths": {
-            "Constants": ["../docs/covfee_constants.json"],
+            "Constants": ["../../docs/covfee_constants.json"],
             "@covfee-types/*": ["../shared/types/*"],
-            "@docs/*": ["../docs/*"]
+            "@docs/*": ["../../docs/*"]
         }
     },
     "include": [

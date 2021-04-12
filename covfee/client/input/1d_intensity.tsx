@@ -5,24 +5,25 @@ import { Intensity1DInputSpec} from '@covfee-types/input/1d_intensity'
 
 interface Props {
     /**
-     * Disables input. Used for visualization.
-     */
-    disabled: boolean
-    /*
-     * Value of intensity reading.
-     */
-    getIntensity?: number
-    /**
      * Called by the component to update the intensity reading. Should not call setState as it is called inside a requestAnimationFrame.
      */
     setIntensity: Function
+    /*
+     * Returns the value of the intensity reading.
+     */
+    getIntensity?: ()=>number
     /**
      * Indicates how the intensity is input
      */
     input: Intensity1DInputSpec
+    /**
+     * Turns on visualization where the UI is fully controlled by the parent.
+     * The component will read its data via getIntensity()
+     */
+    visualizationModeOn?: boolean
 }
 
-class OneDIntensity extends React.Component<Props, State> {
+class OneDIntensity extends React.Component<Props> {
 
     static defaultProps = {
         controls: 'mousemove'
@@ -45,7 +46,9 @@ class OneDIntensity extends React.Component<Props, State> {
         })
         this.observer.observe(this.container.current)
         
-        this.startInput()
+        if(!this.props.visualizationModeOn)
+            this.startInput()
+        requestAnimationFrame(this.animate)
     }
 
     componentWillUnmount() {
@@ -110,28 +113,29 @@ class OneDIntensity extends React.Component<Props, State> {
             this.context.addEvents(this.buttonEventsGravityKeyboard)
         } else {
             myerror('Unrecognized input device.')
-        }
-
-        requestAnimationFrame(this.animate)
+        }        
     }
 
 
     animate = (timestamp: number) => {
-        if (this.props.input.mode == 'continuous-mousemove') {
-            //pass
-        } else if (this.props.input.mode == 'continuous-keyboard') {
-            //pass
-        } else if (this.props.input.mode == 'gravity-keyboard') {
-            let delta_time = 1
-            // TODO: implement delta_time calculation
-            this.intensity = Math.max(0, Math.min(1, this.intensity + this.speed * delta_time))
-            this.speed = this.speed - this.props.input.acceleration_constant * delta_time
+        if(this.props.visualizationModeOn) {
+            this.intensity = this.props.getIntensity()
+        } else {
+            if (this.props.input.mode == 'continuous-mousemove') {
+                //pass
+            } else if (this.props.input.mode == 'continuous-keyboard') {
+                //pass
+            } else if (this.props.input.mode == 'gravity-keyboard') {
+                let delta_time = 1
+                // TODO: implement delta_time calculation
+                this.intensity = Math.max(0, Math.min(1, this.intensity + this.speed * delta_time))
+                this.speed = this.speed - this.props.input.acceleration_constant * delta_time
+            }
+            this.props.setIntensity(this.intensity)
         }
 
-        this.props.setIntensity(this.intensity)
         const position = Math.round(this.intensity * this.containerHeight)
         this.indicator.current.style.bottom = position.toString() + 'px'
-
         this.animationId = requestAnimationFrame(this.animate)
     }
 

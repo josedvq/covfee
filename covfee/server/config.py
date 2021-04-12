@@ -50,4 +50,4 @@ MASTER_BUNDLE_PATH = os.path.join(COVFEE_BASE_PATH, 'client', 'bundles')
 TMP_PATH = os.path.join(os.getcwd(), 'tmp')
 
 # DEV MODE SETTINGS
-DEV_BUNDLE_URL = 'http://localhost:8085/main.js'
+DEV_BUNDLE_URL = 'http://localhost:8085'

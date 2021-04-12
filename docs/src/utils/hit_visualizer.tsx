@@ -1,8 +1,5 @@
 import * as React from 'react'
-import {
-    HashRouter
-} from 'react-router-dom'
-import Hit from 'covfee-client/hit'
+import BrowserOnly from '@docusaurus/BrowserOnly'
 
 export interface HITVisualizerProps {
     hit: HITSpec
@@ -27,15 +24,20 @@ export class HITVisualizer extends React.Component<HITVisualizerProps, HITVisual
             task.id = idx
             return task
         })
+        return <BrowserOnly fallback={<div>The fallback content to display on prerendering</div>}>
+            {()=>{
+                const HashRouter = require('react-router-dom').HashRouter
+                const Hit = require('covfee-client/hit/hit').default
 
-        const content = <Hit
-            {...hitProps}
-            url={null}
-            previewMode={true}
-            onSubmit={() => { }} />
-
-        return <HashRouter><div style={{ minHeight: '300px', 'border': '1px solid #969696' }}>
-            {content}
-        </div></HashRouter>
+                return <HashRouter><div style={{ minHeight: '300px', 'border': '1px solid #969696' }}>
+                        <Hit
+                            {...hitProps}
+                            routingEnabled={false}
+                            url={null}
+                            previewMode={true}
+                            onSubmit={() => { }} />
+                </div></HashRouter>
+            }}
+        </BrowserOnly>
     }
 }

@@ -1,3 +1,4 @@
+const path = require ('path')
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports = {
   title: 'covfee: continuous video feedback tool',
@@ -13,9 +14,19 @@ module.exports = {
     'https://cdn.jsdelivr.net/gh/josedvq/covfee@master/covfee/static/js/opencv.js'
   ],
   stylesheets: [
-    'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'
+    // 'https://unpkg.com/antd@4.8.2/dist/antd.min.css'
+    // 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'
   ],
+  plugins: [path.resolve(__dirname, 'webpack-config-plugin')],
   themeConfig: {
+    colorMode: {
+      // "light" | "dark"
+      defaultMode: 'light',
+
+      // Hides the switch in the navbar
+      // Useful if you want to support a single color mode
+      disableSwitch: true
+    },
     navbar: {
       title: 'covfee',
       logo: {
