@@ -1,22 +1,13 @@
 import * as React from 'react'
 import './html5.css'
 
-import { HTML5PlayerMedia } from '@covfee-types/players/html5'
+import { HTML5PlayerSpec } from '@covfee-types/players/html5'
+import { BasePlayerProps } from '@covfee-types/players/base'
 
-// video player using opencv to control playback speed
-interface Props {
-    /**
-     * Indicates if the video is paused or playing
-     */
-    media: HTML5PlayerMedia,
-    paused: boolean,
-    onLoad: Function,
-    onFrame: Function,
-    onEnded: Function,
-    pausePlay: Function
-}
 
-class HTML5Player extends React.PureComponent<Props> {
+export interface Props extends BasePlayerProps, HTML5PlayerSpec {}
+
+export class HTML5Player extends React.PureComponent<Props> {
     canvasTag = React.createRef<HTMLCanvasElement>()
     canvasCtx: CanvasRenderingContext2D
     videoTags = Array<React.RefObject<HTMLVideoElement>>()
@@ -26,7 +17,6 @@ class HTML5Player extends React.PureComponent<Props> {
 
     // state
     active_idx = 0
-    frame: number = 0
     time: number = 0
 
     // Ids
@@ -51,7 +41,9 @@ class HTML5Player extends React.PureComponent<Props> {
         if (this.isMultiview)
             this.canvasCtx = this.canvasTag.current.getContext('2d')
 
-        this.videoTags[this.active_idx].current.addEventListener('loadeddata', (e: Event) => {
+        const activeVideoTag = this.videoTags[this.active_idx].current
+        activeVideoTag.addEventListener('loadeddata', (e: Event) => {
+            this.props.onLoad(activeVideoTag.duration)
             this.setActiveVideo(0)
         })
     }
@@ -66,12 +58,15 @@ class HTML5Player extends React.PureComponent<Props> {
 
     componentWillUnmount() {
         if(this.videoFrameCallbackId) {
-            this.videoTags[this.active_idx].current.cancelVideoFrameCallback(this.videoFrameCallbackId)
+            if(this.props.useRequestAnimationFrame) 
+                cancelAnimationFrame(this.videoFrameCallbackId)
+            else
+                this.videoTags[this.active_idx].current.cancelVideoFrameCallback(this.videoFrameCallbackId)
         }
     }
 
     handleEnd = (e: Event) => {
-        this.props.onEnded(e)
+        this.props.onEnd(e)
         this.pause()
     }
 
@@ -85,6 +80,7 @@ class HTML5Player extends React.PureComponent<Props> {
         if (this.isMultiview) {
             this.videoTags[idx].current.currentTime = this.videoTags[this.active_idx].current.currentTime
 
+            this.props.onEvent('vidswitch', this.active_idx, idx)
             this.active_idx = idx
             this.copyVideoToCanvas()
         }
@@ -97,29 +93,46 @@ class HTML5Player extends React.PureComponent<Props> {
         this.canvasCtx.drawImage(this.videoTags[this.active_idx].current,0,0,width,height)
     }
 
-    processVideo = (now, metadata) => {
-        // call the onFrame event
-        const time = metadata.mediaTime
-        if(time !== this.time) {
+    onFrame = (time: number) => {
+        if (time !== this.time) {
             this.time = time
-            // this.frame = Math.round(time / this.props.fps)
             this.props.onFrame(this.time)
         }
-        
-        if(this.props.media.type == 'video-multiview')
+
+        if (this.props.media.type == 'video-multiview')
             this.copyVideoToCanvas()
-        this.videoFrameCallbackId = this.videoTags[this.active_idx].current.requestVideoFrameCallback(this.processVideo)
+    }
+
+    onVideoFrameCallback = (now: number, metadata: any) => {
+        // call the onFrame event
+        const time = metadata.mediaTime
+        this.onFrame(time)
+        this.videoFrameCallbackId = this.videoTags[this.active_idx].current.requestVideoFrameCallback(this.onVideoFrameCallback)
+    }
+
+    onRequestAnimationFrame = () => {
+        // call the onFrame event
+        const time = this.videoTags[this.active_idx].current.currentTime
+        this.onFrame(time)
+        this.videoFrameCallbackId = requestAnimationFrame(this.onRequestAnimationFrame)
     }
 
     play() {
-        this.videoFrameCallbackId = this.videoTags[this.active_idx].current.requestVideoFrameCallback(this.processVideo)
+        if(this.props.useRequestAnimationFrame)
+            this.videoFrameCallbackId = requestAnimationFrame(this.onRequestAnimationFrame)
+        else
+            this.videoFrameCallbackId = this.videoTags[this.active_idx].current.requestVideoFrameCallback(this.onVideoFrameCallback)
+        
         this.videoTags.forEach(tag=>{
             tag.current.play()
         })
     }
 
     pause() {
-        this.videoTags[this.active_idx].current.cancelVideoFrameCallback(this.videoFrameCallbackId)
+        if (this.props.useRequestAnimationFrame)
+            cancelAnimationFrame(this.videoFrameCallbackId)
+        else
+            this.videoTags[this.active_idx].current.cancelVideoFrameCallback(this.videoFrameCallbackId)
         this.videoFrameCallbackId = null
         this.videoTags.forEach(tag=>{
             tag.current.pause()
@@ -133,20 +146,14 @@ class HTML5Player extends React.PureComponent<Props> {
     currentTime(t?: number) {
         if(t !== undefined) {
             this.videoTags[this.active_idx].current.currentTime = t
-            this.frame = Math.round(t * this.props.fps)
-            this.props.pausePlay(true) // pause the video
+            this.props.setPaused(true) // pause the video
+        } else {
+            return this.videoTags[this.active_idx].current.currentTime
         }
-        else return this.videoTags[this.active_idx].current.currentTime
-    }
-
-    currentFrame(t?: number) {
-        if (t !== undefined) {
-            this.currentTime(t / this.props.fps)
-        }
-        else return this.frame
     }
 
     renderMultiview = () => {
+        if(this.props.media.type !== 'video-multiview') return
         return <div className='html5player'>
             <canvas ref={this.canvasTag} className='video-canvas' width={800} height={450}/>
             <div className='video-selector'>
@@ -164,6 +171,7 @@ class HTML5Player extends React.PureComponent<Props> {
     }
 
     renderSingleview = () => {
+        if (this.props.media.type !== 'video') return
         return <div className='html5player'>
             <video style={{width: '100%'}} 
                 ref={this.videoTags[0]} 

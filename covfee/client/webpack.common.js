@@ -18,6 +18,9 @@ module.exports = env => {
             extensions: [".ts", ".tsx", ".jsx", ".js"],
             'alias': {
                 'CustomTasks': customTasksPaths,
+            },
+            fallback: {
+                util: require.resolve("util")
             }
         },
         module: {
@@ -39,8 +42,6 @@ module.exports = env => {
                         ],
                         plugins: [
                             require.resolve("@babel/plugin-proposal-class-properties"),
-                            require.resolve("react-hot-loader/babel"),
-                            require.resolve("babel-plugin-typescript-to-proptypes")
                         ]
                     }
                 },
@@ -49,8 +50,8 @@ module.exports = env => {
                     use: ['@svgr/webpack']
                 },
                 {
-                    test: /\.css$/i,
-                    use: ['style-loader', 'css-loader']
+                    test: /\.(scss|css)$/,
+                    use: ['style-loader', 'css-loader', 'sass-loader'],
                 }
             ]
         },

@@ -11,12 +11,11 @@ import {
 const { Title, Text } = Typography
 import { CaretRightOutlined, ClockCircleOutlined, CloseOutlined } from '@ant-design/icons';
 import OpencvFlowPlayer from '../players/opencv'
-import '../css/gui.css'
 import MouseTracker from '../input/mouse_tracker'
 import MouseVisualizer from '../input/mouse_visualizer'
 import { myerror } from '../utils'
 import { withCookies, Cookies } from 'react-cookie'
-import { CovfeeComponent, ReplayableTaskProps} from './base'
+import { CovfeeComponent} from './base'
 import { ContinuousKeypointTaskSpec} from '@covfee-types/tasks/continuous_keypoint'
 import { TaskInfo, TaskType } from '@covfee-types/task';
 

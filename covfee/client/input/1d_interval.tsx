@@ -1,5 +1,5 @@
 import * as React from 'react';
-import keyboardManagerContext from './keyboard_manager_context';
+import buttonManagerContext from './button_manager_context';
 
 interface Props {
     /**
@@ -74,7 +74,7 @@ class OneDInterval extends React.Component<Props, State> {
     }
 
     componentWillUnmount() {
-        this.context.removeEvents(this.keyboardEvents)
+        // this.context.removeEvents(this.keyboardEvents)
         cancelAnimationFrame(this.reqId)
         this.observer.disconnect()
     }
@@ -114,5 +114,5 @@ class OneDInterval extends React.Component<Props, State> {
     }
 }
 
-OneDInterval.contextType = keyboardManagerContext
+OneDInterval.contextType = buttonManagerContext
 export { OneDInterval }

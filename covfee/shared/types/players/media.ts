@@ -11,6 +11,11 @@ export interface BasicVideo {
      * URL to hosted video file
      */
     url: string
+    /**
+     * Frames per second of the video file.
+     * Some tasks use it to collect data once per frame.
+     */
+    fps?: number
 }
 
 export interface MultiviewVideo {
@@ -21,7 +26,12 @@ export interface MultiviewVideo {
     /**
      * URL to video files
      */
-    url: Array<string>
+    url: Array<string>,
+    /**
+     * Frames per second of the video file.
+     * Some tasks use it to collect data once per frame.
+     */
+    fps?: number
 }
 
 export interface VideoSpec extends BasicVideo {

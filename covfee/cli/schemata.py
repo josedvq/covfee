@@ -103,6 +103,8 @@ class Schemata:
                 pivot_prop = most_common
                 # there is a default const property in all children
                 # modify the schema accordingly
+                for child in children:
+                    child['additionalProperties'] = False
                 node['oneOf'] = children
                 del node['anyOf']
                 node['discriminator'] = {'propertyName': pivot_prop}

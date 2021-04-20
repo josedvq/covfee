@@ -1,6 +1,5 @@
 from .db import db
 from hashlib import sha256
-import shutil
 import os
 import json
 
@@ -90,19 +89,8 @@ class Project(db.Model):
 
         return Project(**proj_dict)
 
-    def make_download(self, csv=False):
-        # create a folder to store all the files
-        dirpath = os.path.join(app.config['TMP_PATH'], self.id.hex())
-        if os.path.exists(dirpath) and os.path.isdir(dirpath):
-            shutil.rmtree(dirpath)
-
-        os.mkdir(dirpath)
-
-        # go over all hit instances in the project
-        total_files = 0
+    def stream_download(self, z, base_path, csv=False):
         for hit in self.hits:
             for instance in hit.instances:
-                instance_path, num_files = instance.make_download(base_dir=dirpath, csv=csv)
-                total_files += num_files
-
-        return dirpath, total_files
+                for chunk in instance.stream_download(z, os.path.join(base_path, instance.id.hex()), csv=csv):
+                    yield chunk

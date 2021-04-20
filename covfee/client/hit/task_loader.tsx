@@ -1,9 +1,7 @@
 import * as React from 'react'
 import {
-    Typography,
     Button,
     Modal,
-    Popover,
 } from 'antd';
 import classNames from 'classnames'
 
@@ -11,22 +9,26 @@ import Constants from 'Constants'
 import { myerror, fetcher, throwBadResponse } from '../utils'
 import { getTaskClass } from '../task_utils'
 import { TaskResponse, TaskType } from '@covfee-types/task'
-import {CircularDataCaptureBuffer} from '../buffers/circular_dc_buffer'
-import { DataCaptureBuffer, DataPlaybackBuffer } from '../buffers/buffer';
-import { SimplePlaybackBuffer } from '../buffers/playback_buffer';
+import { AnnotationBuffer } from '../buffers/buffer';
 import { TaskOverlay } from './overlay';
-import KeyboardManagerContext from '../input/keyboard_manager';
-import { QuestionCircleOutlined } from '@ant-design/icons';
+import ButtonEventManagerContext from '../input/button_manager';
+import { TaskPlayer } from './task_player';
 
 interface State {
-    status: 'loading' | 'initready' | 'annotready' | 'annotstarted' | 'annotended' | 'annotsubmitted' | 'replayready' | 'replaystarted' | 'replayended'
     /**
-     * Replay options
+     * Lifecycle states of the loader
+     * loading: nothing displayed yet. Querying responses to decide how to display the task
+     * 
      */
-    replay: {
-        dataIndex: number
-        enabled: boolean
-    },
+    status: 'loading' | 'initready' | 'annotready' | 'replayready' | 'annotended' | 'replayended' | 'annotsubmitted'
+    /**
+     * Player state
+     */
+    player : {
+        currTask: number
+        replayMode: boolean
+        paused: boolean
+    }
     /**
      * State of the error modal 
      */
@@ -46,7 +48,7 @@ interface State {
 
 interface Props {
     task: TaskType
-    url: string,
+    parent: TaskType
     previewMode: boolean
     onSubmit: ()=>void
 }
@@ -54,16 +56,22 @@ interface Props {
 export class TaskLoader extends React.Component<Props, State> {
 
     response: TaskResponse
-    captureBuffer: DataCaptureBuffer
-    visualizationBuffer: DataPlaybackBuffer
+    parentResponse: TaskResponse
     taskClass: any
-    taskElement:any = null
+    taskPlayer: TaskPlayer
 
+    playerLoadPromise: Promise<void>
+    playerLoadCallback: () => void
+
+    endTaskResult: any = null
+    endTaskBuffer: AnnotationBuffer = null
+    
     state: State = {
         status: 'loading',
-        replay: {
-            enabled: false,
-            dataIndex: 0
+        player: {
+            currTask: 0,
+            replayMode: false,
+            paused: true
         },
         errorModal: {visible: false},
         overlay: {visible: false}
@@ -72,82 +80,91 @@ export class TaskLoader extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props)
         this.taskClass = getTaskClass(this.props.task.spec.type)
+        this.playerLoadPromise = this.getPlayerLoadPromise()
+    }
+
+    getPlayerLoadPromise = () => {
+        return new Promise<void>((resolve, _) => {
+            this.playerLoadCallback = () => {
+                resolve()
+            }
+        })
     }
 
     componentDidMount = () => {
-        // if the task has previous responses, query them
-        if (this.props.task.num_submissions > 0) {
-            this.fetchTaskResponse()
-        } else {
-            // no previous responses, prepare task
-            this.loadTaskForAnnotation()
-        }
+        console.log('mount')
+        // read the taks and parent responses.
+        Promise.all([
+            this.props.task.num_submissions > 0 && this.fetchTaskResponse(),
+            this.props.parent && this.props.parent.num_submissions > 0 && this.fetchParentResponse()
+        ]).then(_ => {
+            console.log(['here', this.props.task.num_submissions])
+            this.setState({
+                status: 'initready',
+            })
+            // load for annotation if there are no submissions
+            if (this.props.task.num_submissions == 0)
+                this.loadTask(true)
+        })
     }
 
     fetchTaskResponse = () => {
-        const url = this.props.url +'/responses?' + new URLSearchParams({
+        const url = this.props.task.url +'/responses?' + new URLSearchParams({
         })
-        fetcher(url)
+        return fetcher(url)
             .then(throwBadResponse)
             .then((data: TaskResponse) => {
                 this.response = data
-                this.setState({
-                    status: 'initready',
-                })
             }).catch(error => {
                 myerror('Error fetching task response.', error)
             })
     }
 
-    startDataCapture = async (dummy: boolean = false) => {
-        this.captureBuffer = new CircularDataCaptureBuffer(
-            200, // chunkLength
-            8, //numChunks
-            this.props.url + '/chunk',
-            this.handleBufferError,
-            dummy)
-
-        return Promise.resolve()
+    fetchParentResponse = () => {
+        const url = this.props.parent.url + '/responses?' + new URLSearchParams({
+        })
+        const p = fetcher(url)
+            .then(throwBadResponse)
+            .then((response: TaskResponse) => {
+                this.parentResponse = response
+                
+            })
+            
+        p.catch(error => {
+            myerror('Error fetching task response.', error)
+        })
+        return p
     }
 
-    startPlaybackBuffer = async (dummy: boolean = false) => {
-        const url = Constants.api_url + '/responses/' + this.response.id + '/chunks'
-        this.visualizationBuffer = new SimplePlaybackBuffer(
-            url,
-            this.handleBufferError)
-        return this.visualizationBuffer._load()
-    }
-
-    loadTaskForAnnotation = () => {
-        this.setState({status: 'loading'}, async ()=>{
-            if (this.taskClass.taskInfo.continuous) {
-                await this.startDataCapture(this.props.previewMode)
-                await this.startPlaybackBuffer(true) // dummy playback buffer
+    loadTask = (annot = true) => {
+        console.log('loadTask')
+        this.setState({
+            player: {
+                ...this.state.player, 
+                currTask: 0,
+                replayMode: !annot
             }
-            this.setState({
-                status: 'annotready',
-            })
+        }, async () => {
+            if (this.taskClass.taskInfo.continuous) {
+                await this.taskPlayer.loadBuffers()
+            }
+            this.setState({status: annot ? 'annotready' : 'replayready'})
         })
     }
 
-    // Overlay actions
-    loadTaskForReplay = () => {
-        this.setState({ status: 'loading' }, async () => {
-            await this.startDataCapture(true) // dummy DC buffer
-            await this.startPlaybackBuffer()
-            this.setState({
-                status: 'replayready',
-            })
-        })
-    }
+    loadTaskForAnnotation = () => { this.loadTask(true)}
+    loadTaskForReplay = () => { this.loadTask(false) }
 
-    submitTask = (taskResult: any) => {
+
+    handleTaskSubmit = (taskResult: any, buffer: AnnotationBuffer) => {
+        if (!['annotready'].includes(this.state.status))
+            console.error(`submit() called in invalid state ${this.state.status}.`)
         if (this.props.previewMode) {
             return this.props.onSubmit()
         }
 
         let sendResult = () => {
-            const url = this.props.url + '/submit?' + new URLSearchParams({
+            const url = this.props.task.url + '/submit?' + new URLSearchParams({
             })
 
             const requestOptions = {
@@ -160,7 +177,7 @@ export class TaskLoader extends React.Component<Props, State> {
             return fetch(url, requestOptions)
         }
 
-        this.captureBuffer.flush()
+        buffer.flush()
             .then(sendResult)
             .then(throwBadResponse)
             .then((data) => {
@@ -178,24 +195,14 @@ export class TaskLoader extends React.Component<Props, State> {
 
     }
 
-    handleTaskEnd = () => {
+    handleTaskEnd = (taskResult: any, buffer: AnnotationBuffer, timer=false) => {
         if (!['annotready', 'replayready'].includes(this.state.status))
             console.error(`onEnd called in invalid state ${this.state.status}.`)
+        this.endTaskResult = taskResult
+        this.endTaskBuffer = buffer
         this.setState({
             status: this.state.status === 'annotready' ? 'annotended' : 'replayended'
         })
-    }
-
-    handleTimerEnd = () => {
-        if (!['annotready', 'replayready'].includes(this.state.status))
-            console.error(`timer ended in invalid state ${this.state.status}.`)
-        this.setState({
-            status: this.state.status === 'annotready' ? 'annotended' : 'replayended'
-        })
-    }
-
-    handleClickSubmit = () => {
-
     }
 
     /**
@@ -222,18 +229,18 @@ export class TaskLoader extends React.Component<Props, State> {
             }
         })
 
-        this.captureBuffer.flush(5000)
-        .then(() => {
-            this.setState({ errorModal: { ...this.state.errorModal, visible: false, loading: false } })
-        }).catch(() => {
-            this.setState({
-                errorModal: {
-                    visible: true,
-                    message: modalMessage + ' Unable to send the data. Please communicate with the organizers if the problems persist.',
-                    loading: false
-                }
-            })
-        })
+        // this.buffer.flush(5000)
+        // .then(() => {
+        //     this.setState({ errorModal: { ...this.state.errorModal, visible: false, loading: false } })
+        // }).catch(() => {
+        //     this.setState({
+        //         errorModal: {
+        //             visible: true,
+        //             message: modalMessage + ' Unable to send the data. Please communicate with the organizers if the problems persist.',
+        //             loading: false
+        //         }
+        //     })
+        // })
     }
 
     handleErrorCancel = () => {
@@ -266,7 +273,7 @@ export class TaskLoader extends React.Component<Props, State> {
             mainOptions: [
                 <Button
                     type="primary"
-                    onClick={this.handleStartTimeTask}
+                    onClick={()=>{}}
                 >Start</Button>
             ]
         }
@@ -314,7 +321,7 @@ export class TaskLoader extends React.Component<Props, State> {
 
                 <Button
                     type="primary"
-                    onClick={this.submitTask}
+                    onClick={()=>{this.handleTaskSubmit(this.endTaskResult, this.endTaskBuffer)}}
                     loading={this.state.overlay.submitting}
                     >Submit</Button>
             ],
@@ -369,51 +376,63 @@ export class TaskLoader extends React.Component<Props, State> {
         return <></>
     }
 
-    createTaskRef = (element:any) => {
-        this.taskElement = element
-        this.setState(this.state) // triger re-render
-    }
+    // createTaskRef = (element:any) => {
+    //     this.taskElement = element
+    //     this.setState(this.state) // triger re-render
+    // }
 
-    renderTaskInfo = () => {
-        return this.taskElement && <Popover
-                    placement="bottom"
-                    content={()=>{
-                        return this.taskElement.instructions()
-                    }}
-                    trigger="click">
-            <div className="task-instructions-button">
-                <QuestionCircleOutlined/> Instructions
-            </div>
-        </Popover>
+    // renderTaskInfo = () => {
+    //     return this.taskElement && <Popover
+    //                 placement="bottom"
+    //                 content={()=>{
+    //                     return this.taskElement.instructions()
+    //                 }}
+    //                 trigger="click">
+    //         <div className="task-instructions-button">
+    //             <QuestionCircleOutlined/> Instructions
+    //         </div>
+    //     </Popover>
+    // }
+
+    renderVideoTaskWithParent = () => {
+        const tasks = [this.props.task]
+        const responses = [this.response]
+        let media = this.props.task.spec.media
+        if (this.props.parent) {
+            tasks.push(this.props.parent)
+            responses.push(this.parentResponse)
+            media = this.props.parent.spec.media
+        }
+        
+        return <TaskPlayer
+            ref={e => { this.taskPlayer = e }}
+            media={media}
+            tasks={tasks}
+            responses={responses}
+            currTask={this.state.player.currTask}
+            replayMode={this.state.player.replayMode}
+            onVideoLoad={this.playerLoadCallback}
+            onBufferError={this.handleBufferError}
+            onEnd={this.handleTaskEnd} />
     }
 
     render() {
-
-        const task = React.createElement(this.taskClass, {
-            // task props
-            ref: this.createTaskRef,
-            spec: this.props.task.spec,
-
-            // base task props
-            onSubmit: this.submitTask,
-            visualizationModeOn: ['replayready', 'replaystarted'].includes(this.state.status),
-            visualizationData: {},
-
-            // Continuous task props
-            buffer: this.captureBuffer,
-            onEnd: this.handleTaskEnd,
-            visualizationBuffer: this.visualizationBuffer,
-        }, null)
+        
 
         return <>
             {this.renderOverlay()}
             {this.renderErrorModal()}
-            {this.renderTaskInfo()}
-            <div className={classNames('task-container')}>
-                
-                <KeyboardManagerContext>
-                    {task}
-                </KeyboardManagerContext>
+            {/* {this.renderTaskInfo()} */}
+            <div className={classNames('task')}>
+                <ButtonEventManagerContext>
+                    {(()=>{
+                        if(this.state.status == 'loading') return <></>
+
+                        if(this.taskClass.taskInfo.continuous) {
+                            return this.renderVideoTaskWithParent()
+                        }
+                    })()}
+                </ButtonEventManagerContext>
             </div>
         </>
     }

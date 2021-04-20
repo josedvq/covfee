@@ -10,11 +10,10 @@ import {
 const { Title, Text } = Typography
 import { ReloadOutlined, CaretRightOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import HTML5Player from '../players/html5'
-import '../css/gui.css'
 import classNames from 'classnames'
 import { OneDIntensity } from '../input/1d_intensity'
 import { BaseTaskProps, ReplayableTaskProps } from './task'
-import keyboardManagerContext from '../input/keyboard_manager_context'
+import buttonManagerContext from '../input/button_manager_context'
 
 interface Props extends BaseTaskProps, ReplayableTaskProps { }
 
@@ -97,7 +96,7 @@ class VideoRecallTask extends React.Component<Props, State> {
     }
 
     componentWillUnmount() {
-        this.context.removeEvents(this.keyboardEvents)
+        // this.context.removeEvents(this.keyboardEvents)
     }
 
     back2s = () => {
@@ -236,5 +235,5 @@ class VideoRecallTask extends React.Component<Props, State> {
         </>
     }
 }
-VideoRecallTask.contextType = keyboardManagerContext
+VideoRecallTask.contextType = buttonManagerContext
 export default VideoRecallTask

@@ -22,4 +22,7 @@ export interface InstructionsTaskBaseSpec {
     form?: FormSpec
 }
 
+/**
+* @TJS-additionalProperties false
+*/
 export interface InstructionsTaskSpec extends InstructionsTaskBaseSpec, CommonTaskSpec {}

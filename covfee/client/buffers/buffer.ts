@@ -1,7 +1,7 @@
 /**
  * Data sample submitted by the client
  */
-export type DataSample = Array<number | string>
+export type DataSample = number[]
 /**
  * Logged event and auxiliary data from continuous annotation as submitted by the client
  */
@@ -38,7 +38,7 @@ export interface ChunkRange {
 /**
  * Abstract class for different buffer implementations.
  */
-export interface DataCaptureBuffer {
+export interface AnnotationBuffer {
     /**
      * True if the buffer has received data or logs since it was instantiated
      */
@@ -58,29 +58,16 @@ export interface DataCaptureBuffer {
      */
     log(timestamp: number, data: LogSample): void
     /**
-     * Returns true if it is possible to rewind the head until 'to' and false otherwise
-     * @param to 
-     */
-    canRewind(to: number): boolean
-    /**
      * Rewinds the head until it reaches a sample with timestamp <= to and returns that sample
      * @param to 
      */
-    rewind(to: number): DataSample
+    // seek(to: number): DataSample
     /**
      * async function that should return a promise that is resolved until the buffer is cleared (all data submitted to the server) or error out after a provided timeout
      * If the promise is resolved succesfully the buffer can be destructed without risk of data loss.
      * @param timeout - max time, in milliseconds to wait for the buffer to clear.
      */
     flush(timeout?: number): Promise<unknown>
-}
-
-export type PlaybackDataSample = void | [DataSample, Array<LogSample>]
-export type PlaybackDataPromise = Promise<PlaybackDataSample>
-/**
- * Abstract class for different buffer implementations.
- */
-export interface DataPlaybackBuffer {
     /**
      * Will populate the buffer with data.
      */
@@ -89,12 +76,5 @@ export interface DataPlaybackBuffer {
      * Reads the next data point
      * @param until 
      */
-    read(until: number, callback: (arg0: PlaybackDataSample) => void): void
-    /**
-     * Seeks to the given timestamp, which might be at any point in the recording.
-     * @param timestamp 
-     */
-    seekTo?(timestamp: number): PlaybackDataPromise
+    read(until: number): number[]
 }
-
-export interface BidirectionalBuffer extends DataCaptureBuffer, DataPlaybackBuffer {}

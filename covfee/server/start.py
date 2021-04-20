@@ -7,7 +7,8 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
 from .orm import db, load_config
-from .rest_api import api, auth, admin_required, add_claims_to_access_token, user_identity_lookup, user_loader_callback
+from .rest_api import api, auth, admin_required, add_claims_to_access_token, user_identity_lookup, \
+    user_loader_callback
 
 
 def create_app(mode):
@@ -35,7 +36,7 @@ def create_app(mode):
 
 # APP ROUTES
 frontend = Blueprint('frontend', __name__,
-    template_folder=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates'))
+                     template_folder=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates'))
 
 
 # annotation app

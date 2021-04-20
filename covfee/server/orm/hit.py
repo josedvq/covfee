@@ -1,5 +1,6 @@
-import shutil
 import os
+import json
+from io import BytesIO
 
 from flask import current_app as app
 
@@ -46,7 +47,7 @@ class HIT(db.Model):
             if 'name' not in task:
                 task['name'] = str(i)
             task['order'] = i
-            task_objects.append(Task(**task))
+            task_objects.append(Task(**task, _hit_object=self))
         self.tasks = task_objects
 
         self.update(id=id, hashstr=hashstr, repeat=repeat, **kwargs)
@@ -157,7 +158,7 @@ class HITInstance(db.Model):
         return f'{app.config["APP_URL"]}/hits/{self.preview_id.hex():s}?preview=1'
 
     def get_completion_code(self):
-        return sha256((self.id.hex() + app.config['COVFEE_SALT']).encode()).digest().hex()[:12]
+        return sha256((self.id.hex() + app.config['COVFEE_SECRET_KEY']).encode()).digest().hex()[:12]
 
     def as_dict(self, with_tasks=False, with_response_info=False):
         instance_dict = {c.name: getattr(self, c.name)
@@ -174,46 +175,46 @@ class HITInstance(db.Model):
             # join instance and HIT tasks
             instance_tasks = [task.as_dict(editable=True) for task in self.tasks]
             instance_dict['tasks'] = [*hit_dict['tasks'], *instance_tasks]
+            # add the urls
+            for task in instance_dict['tasks']:
+                task['url'] = f'{app.config["API_URL"]}/instances/{self.id.hex()}/tasks/{task["id"]}'
+                for child in task['children']:
+                    child['url'] = f'{app.config["API_URL"]}/instances/{self.id.hex()}/tasks/{child["id"]}'
 
-            if with_response_info:
-                for task in instance_dict['tasks']:
-                    task_id = task['id']
-                    # query the latest response
-                    # only include submitted responses
-                    taskResponses = self.responses.filter_by(
-                        task_id=task_id).order_by(TaskResponse.index.desc())
-                    lastResponse = taskResponses.first()
-                    task['has_unsubmitted_response'] = lastResponse is not None and lastResponse.submitted == False
-                    task['num_submissions'] = taskResponses.filter_by(submitted=True).count()
+            # if with_response_info:
+            #     for task in instance_dict['tasks']:
+            #         task_id = task['id']
+            #         # query the latest response
+            #         # only include submitted responses
+            #         taskResponses = self.responses.filter_by(
+            #             task_id=task_id).order_by(TaskResponse.index.desc())
+            #         lastResponse = taskResponses.first()
+            #         task['has_unsubmitted_response'] = lastResponse is not None and lastResponse.submitted is False
+            #         task['num_submissions'] = taskResponses.filter_by(submitted=True).count()
 
         if self.submitted:
             instance_dict['completion_code'] = self.get_completion_code()
 
         return instance_dict
 
-    def make_download(self, base_dir=None, csv=False):
-        if base_dir is None:
-            base_dir = app.config['TMP_PATH']
-
-        # create a folder to store all the files
-        dirpath = os.path.join(base_dir, self.id.hex())
-        if os.path.exists(dirpath) and os.path.isdir(dirpath):
-            shutil.rmtree(dirpath)
-
-        os.mkdir(dirpath)
-
-        # go over all submitted responses to this HIT instance
+    def stream_download(self, z, base_path, csv=False):
         responses = self.responses.filter_by(submitted=True).all()
 
-        if len(responses) == 0:
-            return None, 0
-
-        num_success = 0
         for response in responses:
             if csv:
-                res = response.write_csv(dirpath)
-            else:
-                res = response.write_json(dirpath)
-            num_success += int(res)
+                # write the CSV data
+                df = response.get_dataframe()
+                stream = BytesIO()
+                df.to_csv(stream, mode='wb')
+                stream.seek(0)
+                z.write_iter(os.path.join(base_path, response.get_download_filename() + '.csv'), stream)
 
-        return dirpath, num_success
+            # write the json response
+            response_dict = response.get_json(with_chunk_data=not csv)   # important
+            stream = BytesIO()
+            stream.write(json.dumps(response_dict).encode())
+            stream.seek(0)
+            z.write_iter(os.path.join(base_path, response.get_download_filename() + '.json'), stream)
+
+            for chunk in z:
+                yield chunk

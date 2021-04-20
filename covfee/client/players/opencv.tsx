@@ -4,7 +4,7 @@ import { OpencvFlowPlayerMedia } from '@covfee-types/players/opencv';
 import { myinfo } from '../utils'
 
 // video player using opencv to control playback speed
-interface Props extends OpencvFlowPlayerMedia {
+export interface Props extends OpencvFlowPlayerMedia {
     /**
      * If true, the player will pause. The parent element can play/pause playback through changing this prop.
      */
@@ -42,7 +42,7 @@ interface Props extends OpencvFlowPlayerMedia {
      */
     onEnded?: Function,
 }
-class OpencvFlowPlayer extends React.PureComponent<Props> {
+export class OpencvFlowPlayer extends React.PureComponent<Props> {
     private video_tag = React.createRef<HTMLVideoElement>()
     private flow_tag = React.createRef<HTMLVideoElement>()
     private cap: cv.VideoCapture

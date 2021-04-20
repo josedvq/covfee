@@ -43,7 +43,7 @@ export interface AnnotationHitSpec extends HitBaseSpec {
         /**
          * Allow the user to create tasks from the given map of id => task_spec
          */
-        userTasks: PresetsSpec
+        userTasks?: PresetsSpec
     }
 }
 

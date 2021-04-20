@@ -5,7 +5,7 @@ import {
 import WaveSurfer from 'wavesurfer.js'
 import { WavesurferPlayerMedia } from '@covfee-types/players/wavesurfer'
 
-interface Props extends WavesurferPlayerMedia {
+export interface Props extends WavesurferPlayerMedia {
     /**
      * called when the audio starts playing
      */
@@ -32,7 +32,7 @@ interface State {
     paused: boolean
 }
 
-class WaveSurferBasicPlayer extends React.PureComponent<Props, State> {
+export class WaveSurferBasicPlayer extends React.PureComponent<Props, State> {
     state: State = {
         paused: true
     }

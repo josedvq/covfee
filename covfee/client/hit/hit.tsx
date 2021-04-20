@@ -2,7 +2,6 @@ import * as React from 'react'
 import {unstable_batchedUpdates} from 'react-dom'
 import { withRouter, generatePath, RouteComponentProps } from 'react-router'
 import {
-    QuestionCircleOutlined,
     PlusOutlined
 } from '@ant-design/icons'
 import {
@@ -13,7 +12,6 @@ import {
     Button, 
     Modal,
     Collapse,
-    Popover,
     Progress
 } from 'antd';
 const { Panel } = Collapse
@@ -53,9 +51,10 @@ type HitProps = HitType & RouteComponentProps<MatchParams> & {
 interface HitState {
     /**
      * Index of the currently selected task.
-     * Points to the task specs held outside of the state
+     * The first number points to a parent task
+     * The second number, if not null, points to a child task within the parent
      */
-    currTask: number
+    currTask: [number, number]
     /**
      * True if currTask is currently being loaded
      */
@@ -66,9 +65,10 @@ interface HitState {
     sidebar: {
         /**
          * taskIds that are being displayed.
-         * Point to the task specs held outside of the state
+         * The first number is the parent number and points to this.tasks
+         * The second number is the child number and points to the children list within each parent.
          */
-        taskIds: Array<number>
+        taskIds: [number, number[]][]
     },
     /**
      * Used to trigger remounting of tasks
@@ -113,18 +113,27 @@ export class Hit extends React.Component<HitProps, HitState> {
         this.tasks = this.props.tasks
 
         // calculate the current task using the route and the HIT
-        let currTask = 0
+        let parentTask = 0
         if (props.match !== undefined && props.match.params.taskId !== undefined && this.tasks.length < parseInt(props.match.params.taskId)) {
-            currTask = parseInt(props.match.params.taskId)
+            parentTask = parseInt(props.match.params.taskId)
         }
-        
+
+        // Initialize the sidebar state
         this.state = {
             ...this.state,
-            currTask: currTask,
+            currTask: [parentTask, null],
             sidebar: {
-                taskIds: [...this.tasks.keys()]
+                'taskIds': this.makeSidebarTaskIds()
             }
         }        
+    }
+
+    makeSidebarTaskIds = () => {
+        const taskIds = this.props.tasks.map((task, idx) => {
+            const childrenIndices = task.children.map((_, i) => i)
+            return [idx, childrenIndices] as [number, number[]]
+        })
+        return taskIds
     }
 
     isTimeline = () => {return (this.props.type == 'timeline')}
@@ -134,16 +143,83 @@ export class Hit extends React.Component<HitProps, HitState> {
         this.handleChangeActiveTask(this.state.currTask)
     }
 
-    handleChangeActiveTask = (taskIndex: number) => {
+    getTask = (taskId: [number, number]) => {
+        if(taskId[1] == null) {
+            return this.tasks[taskId[0]]
+        } else {
+            return this.tasks[taskId[0]].children[taskId[1]]
+        }
+    }
+
+    /**
+     * sequence for prevChild: null, 0, 1, 2, 3, null, null, 0, 1, 2, 3
+     *                         0     0, 0, 0, 0, 1,    2,    2, 2, 2, 2
+     * @param taskId 
+     * @returns 
+     */
+    getPrevTask = (taskId: [number, number]) => {
+        const parent = taskId[0]
+        const child = taskId[1] == null ? 0 : taskId[1] + 1
+
+        let prevParent, prevChild
+
+        if(child === 0) {
+            if(parent === 0) return [null, null] as [number, number]
+            prevParent = parent-1
+            prevChild = this.tasks[prevParent].children.length
+        } else {
+            prevParent = parent
+            prevChild = child - 1
+        }
+        prevChild = prevChild ? prevChild - 1 : null
+        return [prevParent, prevChild] as [number, number]
+    }
+
+    /**
+     * sequence for prevChild: -1  , 0, 1, 2, 3, -1  , -1  , 0, 1, 2, 3, -1
+     *                         0     0, 0, 0, 0, 1,    2,    2, 2, 2, 2, 3
+     * @param taskId 
+     * @returns 
+     */
+    getNextTask = (taskId: [number, number]) => {
+        const curr = this.getTask(taskId)
+        const parent = taskId[0]
+        const child  = taskId[1] == null ? 0 : taskId[1] + 1
+
+        let nextParent, nextChild
+
+        nextChild  = (child + 1) % (curr.children.length + 1)
+        nextParent = parent + Number(nextChild === 0)
+
+        nextChild  = nextChild ? nextChild - 1 : null
+
+        if(nextParent === this.tasks.length) nextParent = null
+            
+        return [nextParent, nextChild] as [number, number]
+    }
+
+    handleChangeActiveTask = (taskPointer: [number, number]) => {
         // IMPORTANT: order matters here
         // buffer must be created before the render triggered by setState
         this.replayIndex = 0
         this.instructionsFn = null
         this.setState({
-            currTask: taskIndex,
+            currTask: taskPointer,
             currKey: this.state.currKey + 1
         })
-        this.updateUrl(taskIndex)
+        this.updateUrl(taskPointer[0])
+    }
+
+    gotoNextTask = () => {
+        const curr = this.getTask(this.state.currTask)
+        // if done with tasks
+        if (this.state.currTask[0] === this.tasks.length - 1 &&
+            this.state.currTask[1] === curr.children.length) {
+            this.handleHitSubmit()
+        } else {
+            // go to next task
+            this.handleChangeActiveTask(this.getNextTask(this.state.currTask))
+        }
     }
 
     handleTaskSubmit = () => {
@@ -159,36 +235,27 @@ export class Hit extends React.Component<HitProps, HitState> {
         }
     }
 
-    gotoNextTask = () => {
-        // if done with tasks
-        if (this.state.currTask == this.tasks.length - 1) {
-            this.handleHitSubmit()
-        } else {
-            // go to next task
-            const nextTaskIndex = this.state.currTask + 1
-            this.setState({
-                currTask: nextTaskIndex,
-                currKey: this.state.currKey+1
-            })
-            this.updateUrl(nextTaskIndex)
-        }
-    }    
-
-    handleTaskDelete = (taskIndex: number) => {
+    handleTaskDelete = (taskId: [number, number]) => {
         // deleting existing task
-        const taskId = this.tasks[taskIndex].id
-        const url = Constants.api_url + '/tasks/' + taskId + '/delete'
+        const curr = this.getTask(taskId)
+        const url = Constants.api_url + '/tasks/' + curr.id + '/delete'
 
         return fetch(url)
             .then(throwBadResponse)
-            .then(data => {
-                this.tasks.splice(taskIndex, 1)
-                const newTaskIds = [...this.tasks.keys()]
+            .then(_ => {
+                if(taskId[1] == null)
+                    this.tasks.splice(taskId[0], 1)
+                else
+                    curr.children.splice(taskId[1], 1)
+
                 unstable_batchedUpdates(() => {
                     this.setState({
-                        sidebar: { taskIds: newTaskIds }
+                        sidebar: { taskIds: this.makeSidebarTaskIds() }
                     })
-                    this.handleChangeActiveTask(Math.max(0, this.state.currTask-1) - 1)
+                    if(this.tasks.length === 0) return
+                    let nextTask = this.getPrevTask(this.state.currTask)
+                    if (nextTask[0] == null) nextTask = this.getNextTask(this.state.currTask)
+                    this.handleChangeActiveTask(nextTask)
                 })
             })
             .catch(error => {
@@ -196,10 +263,11 @@ export class Hit extends React.Component<HitProps, HitState> {
             })
     }
 
-    handleTaskEdit = (taskIndex: number, task: EditableTaskFields) => {
+    handleTaskEdit = (taskId: [number, number], task: EditableTaskFields) => {
+        if(taskId[0] == null) return
         // editing existing task
-        const taskId = this.tasks[taskIndex].id
-        const url = Constants.api_url + '/tasks/' + taskId + '/edit'
+        const curr = this.getTask(taskId)
+        const url = Constants.api_url + '/tasks/' + curr.id + '/edit'
         const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -209,14 +277,20 @@ export class Hit extends React.Component<HitProps, HitState> {
         return fetch(url, requestOptions)
             .then(throwBadResponse)
             .then(data => {
-                this.tasks[taskIndex] = data
+                if(taskId[1] != null)
+                    this.tasks[taskId[0]].children[taskId[1]] = data
+                else
+                    this.tasks[taskId[0]] = {
+                        ...data,
+                        children: this.tasks[taskId[0]].children
+                    }
             })
             .catch(error => {
                 myerror('Error creating the new task.', error)
             })
     }
 
-    handleTaskCreate = (task: EditableTaskFields) => {
+    handleTaskCreate = (parentId: number, task: EditableTaskFields) => {
         // adding new task
         const url = this.url + '/tasks/add'
         const requestOptions = {
@@ -228,12 +302,18 @@ export class Hit extends React.Component<HitProps, HitState> {
         return fetch(url, requestOptions)
             .then(throwBadResponse)
             .then(data => {
-                this.tasks.push(data)
-                const newTaskIds = [...this.tasks.keys()]
+                let pid: number , cid: number
+                if(parentId == null) {
+                    this.tasks.unshift(data)
+                    pid = cid = null
+                } else
+                    pid = parentId
+                    cid = 0
+                    this.tasks[parentId].children.unshift(data)
                 this.setState({
-                    sidebar: { taskIds: newTaskIds }
+                    sidebar: { taskIds: this.makeSidebarTaskIds() }
                 }, () => {
-                    this.handleChangeActiveTask(this.tasks.length - 1)
+                    this.handleChangeActiveTask([pid, cid])
                 })
             })
             .catch(error => {
@@ -264,7 +344,7 @@ export class Hit extends React.Component<HitProps, HitState> {
 
     renderMenu = () => {
         if(this.props.type !== 'annotation') return
-        const tasks = this.state.sidebar.taskIds.map(taskId => this.tasks[taskId])
+        const tasks = this.state.sidebar.taskIds.map(row => this.tasks[row[0]])
         return <>
             <Collapse defaultActiveKey={1}>
                 <Panel header={this.props.name} key="1">
@@ -287,15 +367,16 @@ export class Hit extends React.Component<HitProps, HitState> {
     }
 
     getHitExtra = () => {
-        if(this.state.loadingTask) return false
-        
         if (this.props.extra) return <MarkdownLoader content={this.props.extra} />
         else return false
     }
 
     render() {
-        const taskProps = this.tasks[this.state.currTask]
-        const taskUrl = this.url + '/tasks/' + taskProps.id
+        const taskProps = this.getTask(this.state.currTask)
+        const parentProps = this.state.currTask[1] != null ? 
+                            this.getTask([this.state.currTask[0], null]) : 
+                            null
+
         const hitExtra = this.getHitExtra()
 
         return <div className="tool-container">
@@ -315,25 +396,26 @@ export class Hit extends React.Component<HitProps, HitState> {
                 </Col>
             </Row>
             {hitExtra &&
-            <Collapsible open={this.state.extraOpen}>
-                <Row>
-                    <Col span={24}>{hitExtra}</Col>                    
-                </Row>
-            </Collapsible>}
+                <Collapsible open={this.state.extraOpen}>
+                    <Row>
+                        <Col span={24}>{hitExtra}</Col>                    
+                    </Row>
+                </Collapsible>}
             {this.props.interface.showProgress &&
             <Row>
                 <Col span={24}>
                         <Progress
-                            percent={100 * this.state.currTask / this.tasks.length}
+                            percent={100 * this.state.currTask[0] / this.tasks.length}
                             // steps={this.tasks.length}
                             showInfo={false}/>
                 </Col>
             </Row>}
             <Row>
                 <Col span={20}>
-                    <TaskLoader 
+                    <TaskLoader
+                        key={this.state.currKey}
                         task={taskProps}
-                        url={taskUrl} 
+                        parent={parentProps}
                         previewMode={this.props.previewMode}
                         onSubmit={this.handleTaskSubmit} />
                 </Col>

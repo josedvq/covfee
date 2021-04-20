@@ -13,7 +13,6 @@ import 'antd/dist/antd.css'
 import userContext from './userContext'
 import Constants from 'Constants'
 import CovfeeLogo from './art/logo.svg'
-import './css/gui.css'
 
 class Login extends React.Component {
     state = {

@@ -31,7 +31,9 @@ setup(
         'jsonschema == 3.*',
         'halo == 0.*',
         'colorama == 0.3.*',
-        'pyzmq == 22.*'
+        'pyzmq == 22.*',
+        'numpy == 1.*',
+        'zipstream == 1.*'
     ],
     python_requires='>=3.6'
 )

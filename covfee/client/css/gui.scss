@@ -58,7 +58,7 @@ a.header-covfee {
 
 /* Task instructions tab button */
 .task-instructions-button {
-    width: 120px;
+    width: 100px;
     position: absolute;
     left: 50%;
     transform: translate(-50%, 0);
@@ -71,6 +71,7 @@ a.header-covfee {
     border-color: white;
     background-color: rgb(199, 138, 24);
     padding: 0 8px;
+    font-size: 0.85em;
 }
 .task-instructions-button:hover {
   cursor: pointer;
@@ -80,31 +81,32 @@ a.header-covfee {
 .task-container {
   width: 100%;
 }
-.task-overlay-off {
-  display: none;
-}
 .task-overlay {
   position: fixed;
   padding: 1em 0;
-  width: 100%;
+  width: 50%;
+  margin: 0 25%;
   top: 35%;
   transform: translate(0, -100%);
   background-color: rgba(0, 0, 0, .7);
-  border-width: 3px 0;
+  border-width: 3px;
   border-style: solid;
   border-color: #363636;
   z-index: 2;
-}
-.task-overlay .main-option {
-  display: inline-block;
-  margin: 0 5px;
-}
-.task-overlay-nav {
-  /* position: absolute; */
-  width: 100%;
-  /* top: 50%; */
-  /* margin-top: -20px; */
-  text-align: center;
+
+  &-off {
+    display: none;
+  }
+
+  .main-option {
+    display: inline-block;
+    margin: 0 5px;
+  }
+
+  nav {
+    width: 100%;
+    text-align: center;
+  }
 }
 .video-overlay-nav>button {
   margin: 0 5px;
@@ -115,72 +117,93 @@ a.header-covfee {
   width: 100%;
   padding: 5px;
   background-color: gray;
-}
-.mouse-tracker > .video-container {
+
+  > .video-container {
     position: relative;
     width: 100%;
     height: auto;
     cursor: crosshair;
-}
-.mouse-tracker.mouse-tracker-active {
-  background-color: red;
-}
-.mouse-tracker.mouse-tracker-occluded {
-  background-color: blue;
-}
+  }
 
-/* .mouse-tracker.mouse-tracker-occluded > .video-container {
-  cursor: progress;
-} */
+  &-active {
+    background-color: red;
+  }
+
+  &-occluded {
+    background-color: blue;
+  }
+}
 
 /* Mouse visualization component */
 .mouse-visualizer {
   position: relative;
   width: 100%;
-}
-.mouse-visualizer > .mouse-visualizer-pointer {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  margin-top: -4px;
-  margin-left: -4px;
-  background-color: red;
-  border-radius: 50%;
+
+  >.mouse-visualizer-pointer {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    margin-top: -4px;
+    margin-left: -4px;
+    background-color: red;
+    border-radius: 50%;
+  }
 }
 
-.task-group {
-  max-height: calc(100vh - 54px);
-  overflow-y: scroll;
-  list-style-type: none;
-  margin: 0;
-  padding: 2%;
-}
-.task-li {
-  display: block;
-  width: 100%;
-  margin: 2% 0;
-  padding: 5px;
-  border: 1px solid gray;
-  
-  border-radius: 3px;
-}
-.task-li-active {
-  background-color: green;
-}
-.task-li input {
-  width: 50%;
-}
-.task-li .btn {
-  display: inline-block;
-  margin: 0;
-  padding: 4px 11px;
-}
-.task-li .btn:hover {
-  cursor: pointer;
-}
-.task-add-btn{
-  width: 96%;
-  margin: 2%;
+/* Sidebar buttons */
+.sidebar {
+  .task-group {
+    max-height: calc(100vh - 54px);
+    overflow-y: scroll;
+    list-style-type: none;
+    margin: 0;
+    padding: 1.333%;
+  }
+
+  &-children {
+    list-style-type: none;
+    margin: 0;
+    padding-left: 25px;
+  }
+
+  &-btn {
+    border: 1px solid gray;
+    border-radius: 3px;
+    margin: 2px;
+
+    &-name {
+      color: #d5d5d5;
+      width: calc(100% - 36px);
+      overflow-x: hidden;
+      display: block;
+      padding: 5px;
+
+      &:hover {
+        cursor: pointer;
+      }
+    }
+
+    &-icon {
+      display: block;
+      float: right;
+      width: 20px;
+      height: 20px;
+      margin: 8px;
+      color:#d5d5d5;
+    }
+
+    &-parent {
+      background-color: #262626;
+    }
+
+    &-child {
+      background-color: #232323;
+    }
+
+    &-active {
+      background-color: green;
+    }
+  }
 }
 
 /* Gallery img */
@@ -194,21 +217,24 @@ a.header-covfee {
 .annot-bar {
   background-color: black;
   color: #f5f5f5;
-}
-.annot-bar-section, .annot-bar-header{
-  display: inline-block;
-  padding: 5px 15px;
-  font-size:0.8em;
-  border-right: 1px solid #363636;
-}
-.annot-bar-right {
-  float: right;
-  padding: 5px 15px;
-  font-size:0.8em;
-  border-right: 1px solid #363636;
-}
-.annot-bar-header {
-  font-size: 1em;
+
+  &-section, &-header {
+    display: inline-block;
+    padding: 5px 15px;
+    font-size:0.8em;
+    border-right: 1px solid #363636;
+  }
+
+  &-header {
+    font-size: 1em;
+  }
+
+  &-right {
+    float: right;
+    padding: 5px 15px;
+    font-size:0.8em;
+    border-right: 1px solid #363636;
+  }
 }
 
 .tool-container {
@@ -221,10 +247,11 @@ a.header-covfee {
   margin: 1em auto 2em;
   text-align: center;
   font-size: 2em;
-}
-.covfee-banner > img {
-  display: inline-block;
-  margin-right: 0.5em;
+
+  >img {
+    display: inline-block;
+    margin-right: 0.5em;
+  }
 }
 
 /*GUI elements */

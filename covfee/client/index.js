@@ -1,14 +1,12 @@
-import 'react-hot-loader/patch';
 import * as React from 'react';
 import ReactDOM from 'react-dom';
 
-import { AppContainer } from 'react-hot-loader';
 import RootContainer from './root';
 
 const title = 'covfee: the continuous video feedback tool';
 
 const render = () => {
-    ReactDOM.render(<AppContainer><RootContainer /></AppContainer>, document.getElementById('app'));
+    ReactDOM.render(<RootContainer />, document.getElementById('app'));
 }
 
 render(RootContainer)

@@ -48,4 +48,7 @@ export interface ContinuousKeypointTaskBaseSpec {
     }
 }
 
+/**
+* @TJS-additionalProperties false
+*/
 export interface ContinuousKeypointTaskSpec extends ContinuousKeypointTaskBaseSpec, CommonContinuousTaskSpec {}

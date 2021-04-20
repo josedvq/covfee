@@ -162,4 +162,7 @@ export interface QuestionnaireTaskBaseSpec {
     disabledUntilEnd?: boolean
 }
 
+/**
+* @TJS-additionalProperties false
+*/
 export interface QuestionnaireTaskSpec extends QuestionnaireTaskBaseSpec, CommonTaskSpec {}

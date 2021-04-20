@@ -1,8 +1,9 @@
 import CovfeeTasks from './tasks'
 import CustomTasks from 'CustomTasks'
+import CovfeePlayers, { PlayerProps } from './players'
 
 
-const getTaskClass = (type: string) => {
+export const getTaskClass = (type: string) => {
     if (type in CovfeeTasks) {
         const taskClass = CovfeeTasks[type]
         return taskClass
@@ -15,6 +16,11 @@ const getTaskClass = (type: string) => {
     }
 }
 
-export { 
-    getTaskClass, 
+export const getPlayerClass = (type: string) => {
+    if (type in CovfeePlayers) {
+        const taskClass = CovfeePlayers[type]
+        return taskClass
+    } else {
+        return null
+    }
 }

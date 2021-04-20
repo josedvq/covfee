@@ -1,9 +1,8 @@
-from flask import current_app as app
-from flask import request, jsonify, Blueprint, send_from_directory, make_response
+from flask import request, jsonify, Blueprint, send_file, make_response, Response, stream_with_context
 from ..orm import db, Project, HIT, HITInstance, Task, TaskResponse, Chunk
 from .auth import admin_required
-import shutil
-import os
+from io import BytesIO
+import zipstream
 api = Blueprint('api', __name__)
 
 
@@ -19,6 +18,11 @@ def jsonify_or_404(res, **kwargs):
 @api.route('/projects')
 @admin_required
 def projects():
+    """Lists all the projects currently in covfee
+
+    Returns:
+        [type]: list of project objects
+    """
     with_hits = request.args.get('with_hits', False)
     res = db.session.query(Project).all()
     if res is None:
@@ -31,6 +35,11 @@ def projects():
 @api.route('/projects/<pid>')
 @admin_required
 def project(pid):
+    """Returns a project object
+
+    Args:
+        pid (str): project ID
+    """
     with_hits = request.args.get('with_hits', False)
     with_instances = request.args.get('with_instances', False)
     res = db.session.query(Project).get(bytes.fromhex(pid))
@@ -40,6 +49,16 @@ def project(pid):
 @api.route('/projects/<pid>/csv')
 @admin_required
 def project_csv(pid):
+    """Creates a CSV file with links and completion codes for HITs
+    This file can be used in human intelligence marketplaces or to directly send the 
+    links in it to study participants.
+
+    Args:
+        pid ([str]): ID of the project
+
+    Returns:
+        [type]: CSV file with a hit instance per line
+    """
     project = db.session.query(Project).get(bytes.fromhex(pid))
     if project is None:
         return {'msg': 'not found'}, 404
@@ -54,29 +73,41 @@ def project_csv(pid):
 @api.route('/projects/<pid>/download')
 @admin_required
 def project_download(pid):
+    """Generates a downloadable with all the responses in a project.
+    It gathers the responses for all hit instances in the project
+    This endpoint migh be slow for large projects.
+
+    Args:
+        pid (str): project ID
+
+    Returns:
+        [type]: stream response with a compressed archive. 204 if the project has no responses
+    """
     is_csv = bool(request.args.get('csv', False))
 
     project = db.session.query(Project).get(bytes.fromhex(pid))
     if project is None:
         return {'msg': 'not found'}, 404
 
-    dirpath, num_files = project.make_download(csv=is_csv)
+    def generator():
+        z = zipstream.ZipFile(mode='w', compression=zipstream.ZIP_DEFLATED)
+        for chunk in project.stream_download(z, './', csv=is_csv):
+            yield chunk
 
-    if dirpath is None or num_files == 0:
-        # nothing to download
-        return '', 204
-
-    fname = os.path.join(app.config['TMP_PATH'], 'download')
-    shutil.make_archive(fname, 'zip', dirpath)
-    shutil.rmtree(dirpath)
-
-    return send_from_directory(app.config['TMP_PATH'], 'download.zip', as_attachment=True)
+    response = Response(stream_with_context(generator()), mimetype='application/zip')
+    response.headers['Content-Disposition'] = 'attachment; filename={}'.format('results.zip')
+    return response
 
 
 # HITS
 # return one hit
 @api.route('/hits/<hid>')
 def hit(hid):
+    """Returns a HIT specification.
+
+    Args:
+        hid (str): hit ID
+    """ 
     with_tasks = request.args.get('with_tasks', True)
     with_instances = request.args.get('with_instances', False)
     with_instance_tasks = request.args.get('with_instance_tasks', False)
@@ -89,17 +120,25 @@ def hit(hid):
 
 @api.route('/hits/<hid>/instances/add')
 def instance_add(hid):
+    """Adds an instance (link) to the HIT
+
+    Args:
+        hid (str): HIT ID
+
+    Returns:
+        json: the added instance object
+    """
     num_instances = request.args.get('num_instances', 1)
     hit = db.session.query(HIT).get(bytes.fromhex(hid))
     if hit is None:
         return {'msg': 'not found'}, 404
-    
+
     hit.add_instances(num_instances)
 
     with_tasks = request.args.get('with_tasks', True)
     with_instances = request.args.get('with_instances', True)
     with_instance_tasks = request.args.get('with_instance_tasks', False)
-    
+
     return jsonify_or_404(hit,
                           with_tasks=with_tasks,
                           with_instances=with_instances,
@@ -129,33 +168,36 @@ def instance_submit(iid):
     if instance is None:
         return jsonify({'msg': 'invalid instance'}), 400
     instance.submitted = True
-    
+
     return jsonify(instance.as_dict(with_tasks=True))
 
 
 @api.route('/instances/<iid>/download')
 @admin_required
 def instance_download(iid):
+    """Generates a downloadable file with the results for a task instance
+    It bundles together the results of individual tasks into a zip archive
+
+    Args:
+        iid ([type]): instance id
+
+    Returns:
+        [type]: zip file with task results
+    """
     is_csv = request.args.get('csv', False)
 
     instance = db.session.query(HITInstance).get(bytes.fromhex(iid))
     if instance is None:
         return jsonify({'msg': 'not found'}), 404
 
-    try:
-        dirpath, num_files = instance.make_download(csv=is_csv)
-    except NotImplementedError:
-        return jsonify({'msg': 'File aggregation not implemented for this task.'}), 404
+    def generator():
+        z = zipstream.ZipFile(mode='w', compression=zipstream.ZIP_DEFLATED)
+        for chunk in instance.stream_download(z, './', csv=is_csv):
+            yield chunk
 
-    if dirpath is None or num_files == 0:
-        # nothing to download
-        return '', 204
-
-    fname = os.path.join(app.config['TMP_PATH'], 'download')
-    shutil.make_archive(fname, 'zip', dirpath)
-    shutil.rmtree(dirpath)
-
-    return send_from_directory(app.config['TMP_PATH'], 'download.zip', as_attachment=True)
+    response = Response(stream_with_context(generator()), mimetype='application/zip')
+    response.headers['Content-Disposition'] = 'attachment; filename={}'.format('results.zip')
+    return response
 
 
 # TASKS
@@ -212,22 +254,37 @@ def response(iid, kid):
         return jsonify(msg='No submitted responses found.'), 403
 
     response_dict = lastResponse.as_dict()
-    # response_dict['chunk_data'] = lastResponse.aggregate()
     return jsonify(response_dict)
+
+
+@api.route('/instances/<iid>/tasks/<kid>/chunks', methods=['GET'])
+def query_chunks(iid, kid):
+    response = TaskResponse.query.filter_by(
+        hitinstance_id=bytes.fromhex(iid),
+        task_id=int(kid),
+        submitted=True).order_by(TaskResponse.index.desc()).first()
+
+    if response is None:
+        return jsonify(msg='No submitted responses found.'), 403
+
+    print(response.id)
+
+    chunk_bytes = response.pack_chunks()
+    return send_file(BytesIO(chunk_bytes), mimetype='application/octet-stream'), 200
 
 
 # record a response to a task
 # task kid may or may not be associated to instance iid
 @api.route('/instances/<iid>/tasks/<kid>/submit', methods=['POST'])
 def response_submit(iid, kid):
-    lastResponse = TaskResponse.query.filter_by(
-        hitinstance_id=bytes.fromhex(iid), task_id=int(kid)
-        ).order_by(TaskResponse.index.desc()).first()
+    task = db.session.query(Task).get(int(kid))
+    lastResponse = task.responses.filter_by(hitinstance_id=bytes.fromhex(iid)).order_by(TaskResponse.index.desc()).first()
 
     if lastResponse is not None and not lastResponse.submitted:
         # there is an open (not submitted) response:
         lastResponse.data = request.json
         lastResponse.submitted = True
+        task.has_unsubmitted_response = False
 
         db.session.commit()
         return jsonify(lastResponse.as_dict())
@@ -245,6 +302,7 @@ def response_submit(iid, kid):
         data=request.json,
         chunks=[],
         submitted=True)
+    task.has_unsubmitted_response = False
 
     db.session.add(response)
     db.session.commit()
@@ -254,11 +312,16 @@ def response_submit(iid, kid):
 # receive a chunk of a response, for continuous responses
 @api.route('/instances/<iid>/tasks/<kid>/chunk', methods=['POST'])
 def response_chunk(iid, kid):
-    response = TaskResponse.query.filter_by(hitinstance_id=bytes.fromhex(iid), task_id=int(kid)
-                                            ).order_by(TaskResponse.index.desc()).first()
+    sent_index = int(request.args.get('index'))
+    length = int(request.args.get('length'))
+
+    task = db.session.query(Task).get(int(kid))
+    response = task.responses.filter_by(hitinstance_id=bytes.fromhex(iid)).order_by(TaskResponse.index.desc()).first()
+
     # no responses or only submitted responses
     # -> create new response
     if response is None or response.submitted:
+        print('no responses or only submitted responses')
         response_index = 0
         # increment index of last response
         if response is not None and response.submitted:
@@ -270,42 +333,23 @@ def response_chunk(iid, kid):
             index=response_index,
             submitted=False,
             chunks=[])
+        task.has_unsubmitted_response = True
+
+    print(f'response id is {response.id}')
 
     # if there is a previous chunk with the same index, overwrite it
-    # if len(response.chunks) > 0:
-    #     sent_index = request.json['index']
-    #     chunk = next(
-    #         (chunk for chunk in response.chunks if chunk.index == sent_index), None)
-    #     if chunk is not None:
-    #         chunk.update(
-    #             data=request.json['data'],
-    #             log_data=request.json.get('log_data', None),
-    #             rwnd_data=request.json.get('rwnd_data', None))
+    if response.chunks.count() > 0:
+        chunk = next((chunk for chunk in response.chunks if chunk.index == sent_index), None)
+        if chunk is not None:
+            print('overwriting chunk')
+            chunk.update(data=request.get_data(), length=length)
 
-    #         db.session.commit()
-    #         return jsonify({'success': True}), 201
+            db.session.commit()
+            return jsonify({'success': True}), 201
 
     # no previous chunk with the same index -> append the chunk
-    print(request.json)
-    chunk = Chunk(**request.json)
+    chunk = Chunk(index=sent_index, length=length, data=request.get_data())
     response.chunks.append(chunk)
     db.session.add(response)
     db.session.commit()
     return jsonify({'success': True}), 201
-
-
-# query chunks
-@api.route('/responses/<rid>/chunks')
-def query_chunks(rid):
-    response = db.session.query(TaskResponse).get(int(rid))
-    from_time = request.args.get('from', 0)
-    to_time = request.args.get('to', float('inf'))
-
-    chunks = response.chunks.order_by(Chunk.index.desc()).all()
-    print(len(chunks))
-    # .filter(
-    #     Chunk.end_time >= from_time, Chunk.ini_time <= to_time)
-
-    
-
-    return jsonify([chunk.as_dict() for chunk in chunks]), 200

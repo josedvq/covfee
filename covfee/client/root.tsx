@@ -7,6 +7,7 @@ import {
     Typography
 } from 'antd'
 import 'antd/dist/antd.css'
+import './css/gui.scss'
 
 const { Title, Paragraph, Text } = Typography;
 import { LoginWithRouter} from './login'

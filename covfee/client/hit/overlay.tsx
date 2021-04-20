@@ -15,7 +15,7 @@ export class TaskOverlay extends React.Component<Props>{
     
     render() {
         return <div className={classNames('task-overlay', { 'task-overlay-off': !this.props.visible })}>
-            <div className="task-overlay-nav">
+            <nav>
                 {this.props.title && 
                     <Title style={{color: 'white'}}>{this.props.title}</Title>}
                 {this.props.subtext && 
@@ -30,7 +30,7 @@ export class TaskOverlay extends React.Component<Props>{
                         if (node) return <span key={index} className='secondary-option'>{node}</span>
                     })}
                 </div>
-            </div>
+            </nav>
         </div>
     }
 }

@@ -4,6 +4,14 @@ import { ContinuousKeypointTaskSpec, ContinuousKeypointTaskBaseSpec } from "./ta
 import { InstructionsTaskSpec, InstructionsTaskBaseSpec } from "./tasks/instructions";
 import { QuestionnaireTaskSpec, QuestionnaireTaskBaseSpec } from "./tasks/questionnaire";
 
+type DistributiveOmit<T, K extends keyof T> = T extends unknown
+    ? Omit<T, K>
+    : never;
+
+type DistributivePick<T, K extends keyof T> = T extends unknown
+    ? Pick<T, K>
+    : never;
+
 /**
 * @TJS-additionalProperties false
 */
@@ -44,6 +52,10 @@ export interface CommonTaskSpec {
      * @default false
      */
     autoSubmit?: boolean
+    /**
+     * children tasks
+     */
+    children?: Array<ChildTaskSpec>
 }
 
 /**
@@ -54,7 +66,9 @@ export interface CommonContinuousTaskSpec extends CommonTaskSpec { }
 /**
  * One of the supported task specs
  */
-export type TaskSpec = Continuous1DTaskSpec | ContinuousKeypointTaskSpec | InstructionsTaskSpec | QuestionnaireTaskSpec
+
+export type TaskSpec =  Continuous1DTaskSpec | ContinuousKeypointTaskSpec | InstructionsTaskSpec | QuestionnaireTaskSpec
+export type ChildTaskSpec = DistributiveOmit<TaskSpec, 'media'>
 export type BaseTaskSpec = Continuous1DTaskBaseSpec | ContinuousKeypointTaskBaseSpec | InstructionsTaskBaseSpec | QuestionnaireTaskBaseSpec
 
 export interface TaskResponse {
@@ -71,11 +85,15 @@ export interface TaskType extends CommonTaskSpec {
     /**
      * Unique ID of the task
      */
-    id: number,
+    id: number
+    /**
+     * URL to task api endpoint
+     */
+    url: string
     /**
      * Task specification as provided by the user
      */
-    spec: BaseTaskSpec,
+    spec: BaseTaskSpec
     /**
      * number of times the task has been submitted
      */
@@ -112,5 +130,7 @@ export interface TaskInfo {
      * If true the option to visualize task results will be shown by default after a continuous task.
      */
     can_visualize?: boolean
+    supportsParent?: boolean
+    supportsChildren?: boolean
 }
 

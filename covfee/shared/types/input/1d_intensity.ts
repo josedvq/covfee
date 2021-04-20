@@ -1,6 +1,26 @@
 /**
  * @title continuous-mousemove
  */
+export interface BinaryInputSpec {
+    /**
+     * @default "binary"
+     */
+    mode: "binary",
+    /**
+     * Button controls
+     */
+    controls?: {
+        /**
+         * Activate 
+         * @default "a"
+         */
+        up?: string
+    }
+}
+
+/**
+ * @title continuous-mousemove
+ */
 export interface ContinuousMousemoveInputSpec {
     /**
      * @default "continuous-mousemove"
@@ -16,17 +36,17 @@ export interface ContinuousKeyboardInputSpec {
      * @default "continuous-keyboard"
      */
     mode: "continuous-keyboard",
-    controls: {
+    controls?: {
         /**
          * Increase intensity
          * @default "s"
          */
-        up: string,
+        up?: string,
         /**
          * Decrease intensity
          * @default "a"
          */
-        down: string
+        down?: string
     }
 }
 
@@ -42,19 +62,19 @@ export interface GravityKeyboardInputSpec {
      * Initial speed when a key is pressed
      * @default 0.1
      */
-    jump_speed: number,
+    jump_speed?: number,
     /**
      * Acceleration constant.
      * @default 0.0025
      */
-    acceleration_constant: number
-    controls: {
+    acceleration_constant?: number
+    controls?: {
         /**
          * Increase intensity
          * @default "a"
          */
-        up: string
+        up?: string
     }
 }
 
-export type Intensity1DInputSpec = ContinuousMousemoveInputSpec | ContinuousKeyboardInputSpec | GravityKeyboardInputSpec
+export type Intensity1DInputSpec = BinaryInputSpec | ContinuousMousemoveInputSpec | ContinuousKeyboardInputSpec | GravityKeyboardInputSpec
