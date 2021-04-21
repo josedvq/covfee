@@ -4,6 +4,7 @@ import './html5.css'
 import { HTML5PlayerSpec } from '@covfee-types/players/html5'
 import { BasePlayerProps } from '@covfee-types/players/base'
 
+import { url_replacer} from '../utils'
 
 export interface Props extends BasePlayerProps, HTML5PlayerSpec {}
 
@@ -46,6 +47,8 @@ export class HTML5Player extends React.PureComponent<Props> {
             this.props.onLoad(activeVideoTag.duration)
             this.setActiveVideo(0)
         })
+
+        if (this.props.media.speed) activeVideoTag.playbackRate = this.props.media.speed
     }
 
     componentDidUpdate(prevProps: Props) {
@@ -53,6 +56,10 @@ export class HTML5Player extends React.PureComponent<Props> {
         if (this.props.paused !== prevProps.paused) {
             if(this.props.paused) this.pause()
             else this.play()
+        }
+        if (this.props.speed !== prevProps.speed) {
+            const activeVideoTag = this.videoTags[this.active_idx].current
+            activeVideoTag.playbackRate = this.props.speed
         }
     }
 
@@ -70,7 +77,7 @@ export class HTML5Player extends React.PureComponent<Props> {
         this.pause()
     }
 
-    setActiveVideo = (idx:number) => {
+    setActiveVideo = (idx:number, notrigger: boolean) => {
         // copy video to canvas
         
         this.videoTags[this.active_idx].current.removeEventListener('ended', this.handleEnd)
@@ -80,7 +87,8 @@ export class HTML5Player extends React.PureComponent<Props> {
         if (this.isMultiview) {
             this.videoTags[idx].current.currentTime = this.videoTags[this.active_idx].current.currentTime
 
-            this.props.onEvent('vidswitch', this.active_idx, idx)
+            if(!notrigger)
+                this.props.onEvent('vidswitch', this.active_idx, idx)
             this.active_idx = idx
             this.copyVideoToCanvas()
         }
@@ -156,15 +164,18 @@ export class HTML5Player extends React.PureComponent<Props> {
         if(this.props.media.type !== 'video-multiview') return
         return <div className='html5player'>
             <canvas ref={this.canvasTag} className='video-canvas' width={800} height={450}/>
-            <div className='video-selector'>
+            <div className='video-multiview-selector'>
                 {this.props.media.url.map((url, idx)=>{
+                    const isCurrent = (idx === this.active_idx)
                     return <video 
                         key={idx}
                         style={{width: (100/this.props.media.url.length) + '%'}} 
                         onClick={()=>{if(this.props.paused) this.setActiveVideo(idx)}}
-                        ref={this.videoTags[idx]} src={url} 
+                        ref={this.videoTags[idx]}
+                        src={url_replacer(url)}
                         crossOrigin="Anonymous" 
-                        preload="auto" muted/>
+                        preload="auto"
+                        muted={this.props.media.muted || !isCurrent}/>
                 })}
             </div>
         </div>
@@ -177,7 +188,8 @@ export class HTML5Player extends React.PureComponent<Props> {
                 ref={this.videoTags[0]} 
                 src={this.props.media.url} 
                 crossOrigin="Anonymous" 
-                preload="auto" muted/>
+                preload="auto"
+                muted={this.props.media.muted}/>
         </div>
     }
 

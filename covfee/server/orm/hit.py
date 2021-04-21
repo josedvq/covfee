@@ -1,23 +1,15 @@
 import os
-import json
-from io import BytesIO
 
 from flask import current_app as app
 
 from .db import db
-from .task import Task
 from hashlib import sha256
-from .task import TaskResponse
+from covfee.server.orm.task import TaskSpec
 
-hits_tasks = db.Table(
-    'hits_tasks',
+hits_taskspecs = db.Table(
+    'hits_taskspecs',
     db.Column('hit_id', db.Integer, db.ForeignKey('hits.id'), primary_key=True),
-    db.Column('task_id', db.Integer, db.ForeignKey('tasks.id'), primary_key=True))
-
-hitistances_tasks = db.Table(
-    'hitistances_tasks',
-    db.Column('hitinstance_id', db.Integer, db.ForeignKey('hitinstances.id'), primary_key=True),
-    db.Column('task_id', db.Integer, db.ForeignKey('tasks.id'), primary_key=True))
+    db.Column('taskspec_id', db.Integer, db.ForeignKey('taskspecs.id'), primary_key=True))
 
 
 class HIT(db.Model):
@@ -28,82 +20,60 @@ class HIT(db.Model):
     )
 
     id = db.Column(db.LargeBinary, primary_key=True)
-    type = db.Column(db.String)
-    name = db.Column(db.String)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
+    # backref projec
+
+    instances = db.relationship(
+        "HITInstance", backref='hit', cascade="all, delete")
+    taskspecs = db.relationship(
+        "TaskSpec", secondary=hits_taskspecs, backref='hits', cascade="all, delete")
+
+    name = db.Column(db.String)
+    type = db.Column(db.String)
     extra = db.Column(db.JSON)
-    instances = db.relationship("HITInstance", backref='hit', cascade="all, delete")
-    tasks = db.relationship("Task", secondary=hits_tasks, backref='hits', cascade="all, delete", 
-                            order_by='Task.order.asc(),Task.created_at.asc()')
     interface = db.Column(db.JSON)
 
-    def __init__(self, id, hashstr, type, repeat=1, tasks=[], **kwargs):
-        hashstr = HIT.get_hashstr(hashstr, id)
-        self.id = sha256(hashstr.encode()).digest()
+    def __init__(self, id, project_id, name, type, interface={}, extra=None, tasks=[], **kwargs):
+        # hashstr = HIT.get_hashstr(hashstr, id)
+        self.id = sha256(f'{id}_{project_id}_{app.config["COVFEE_SECRET_KEY"]}'.encode()).digest()
+        self.name = name
         self.type = type
 
-        task_objects = []
-        for i, task in enumerate(tasks):
-            if 'name' not in task:
-                task['name'] = str(i)
-            task['order'] = i
-            task_objects.append(Task(**task, _hit_object=self))
-        self.tasks = task_objects
-
-        self.update(id=id, hashstr=hashstr, repeat=repeat, **kwargs)
-
-    def update(self, id, hashstr, name, repeat=1, extra=None, interface={}, **kwargs):
-        hashstr = HIT.get_hashstr(hashstr, id)
-        self.name = name
         self.interface = interface
+
+        task_specs = []
+        for i, spec in enumerate(tasks):
+            if 'name' not in spec:
+                spec['name'] = str(i)
+            spec['order'] = i
+            task_specs.append(TaskSpec(**spec))
+        self.taskspecs = task_specs
 
         if extra is not None:
             if 'url' in extra and extra['url'][:4] != 'http':
-                extra['url'] = os.path.join(
-                    app.config['PROJECT_WWW_URL'], extra['url'])
+                extra['url'] = os.path.join(app.config['PROJECT_WWW_URL'], extra['url'])
         self.extra = extra
 
+    def get_hashstr(self, id):
+        return self.id.hex() + id
+
+    def instantiate(self):
         # insert multiple hits/URLs according to the repeat param
         # for annotation hits, tasks belong to instances
         # for timeline hits, tasks belong to HITs
         # instances are always created
-        for j in range(len(self.instances), repeat):
-            self.instances.append(HITInstance(
-                id=sha256(f'{hashstr}_{j:d}'.encode()).digest(),
-                submitted=False,
-                tasks=[]
-            ))
-        # for i, task_dict in enumerate(tasks_dict):
-        #     task_dict['order'] = i
+        instance = HITInstance(
+            id=sha256(self.get_hashstr(f'instance{len(self.instances)}').encode()).digest(),
+            submitted=False,
+            taskspecs=self.taskspecs
+        )
+        self.instances.append(instance)
+        return
 
-        #     if 'name' not in task_dict:
-        #         task_dict['name'] = str(i)
-
-        #     tasks_with_name = [t for t in self.tasks if t.name == task_dict['name']]
-        #     if len(tasks_with_name):
-        #         # the task exists already
-        #         task = tasks_with_name[0]
-        #         task.update(**task_dict)
-        #     else:
-        #         # append the task
-        #         self.tasks.append(Task(**task_dict))
-
-    @staticmethod
-    def get_hashstr(project_hashstr, id):
-        return project_hashstr + id
-
-    @staticmethod
-    def get_id(project_hashstr, id):
-        return sha256(HIT.get_hashstr(project_hashstr, id).encode()).digest()
-
-    def as_dict(self, with_project=True, with_tasks=False, with_instances=False,
-                with_instance_tasks=False):
+    def as_dict(self, with_project=True, with_instances=False, with_instance_tasks=False):
         hit_dict = {c.name: getattr(self, c.name)
                     for c in self.__table__.columns}
         hit_dict['id'] = hit_dict['id'].hex()
-
-        if with_tasks:
-            hit_dict['tasks'] = [task.as_dict(editable=False) for task in self.tasks]
 
         if with_instances:
             hit_dict['instances'] = [instance.as_dict(
@@ -115,15 +85,6 @@ class HIT(db.Model):
 
         return hit_dict
 
-    def showinfo(self):
-        s = [instance.get_url() + '\n - ' + instance.get_api_url() + '\n'
-             for instance in self.instances]
-        return '\n'.join(s)
-
-    def __str__(self):
-        txt = f'{self.get_url()}'
-        return txt
-
 
 class HITInstance(db.Model):
     """ Represents an instance of a HIT, to be performed by one user """
@@ -132,21 +93,20 @@ class HITInstance(db.Model):
     id = db.Column(db.LargeBinary, primary_key=True)
     # id used for visualization
     preview_id = db.Column(db.LargeBinary, unique=True)
-    hit_id = db.Column(db.Integer, db.ForeignKey('hits.id'))
-    tasks = db.relationship("Task", secondary=hitistances_tasks, backref='hitinstances',
-                            cascade="delete, all", order_by='Task.order.asc(),Task.created_at.asc()')
-    responses = db.relationship("TaskResponse", backref='hitinstance', lazy='dynamic')
+    hit_id = db.Column(db.LargeBinary, db.ForeignKey('hits.id'))
+    # backref hit
+
+    tasks = db.relationship("Task", backref='hitinstance', cascade="all, delete")
+
     submitted = db.Column(db.Boolean)
 
-    def __init__(self, id, tasks=[], submitted=False):
+    def __init__(self, id, taskspecs=[], submitted=False):
         self.id = id
         self.preview_id = sha256((id + 'preview'.encode())).digest()
         self.submitted = submitted
 
-        task_objects = [Task.from_dict(
-            task
-        ) for task in tasks]
-        self.tasks = task_objects
+        for spec in taskspecs:
+            self.tasks.append(spec.instantiate())
 
     def get_api_url(self):
         return f'{app.config["API_URL"]}/instances/{self.id.hex():s}'
@@ -161,9 +121,9 @@ class HITInstance(db.Model):
         return sha256((self.id.hex() + app.config['COVFEE_SECRET_KEY']).encode()).digest().hex()[:12]
 
     def as_dict(self, with_tasks=False, with_response_info=False):
-        instance_dict = {c.name: getattr(self, c.name)
-                         for c in self.__table__.columns}
-        hit_dict = self.hit.as_dict(with_tasks=with_tasks)
+        instance_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        hit_dict = self.hit.as_dict()
+
         instance_dict['id'] = instance_dict['id'].hex()
         instance_dict['hit_id'] = instance_dict['hit_id'].hex()
         instance_dict['preview_id'] = instance_dict['preview_id'].hex()
@@ -172,25 +132,7 @@ class HITInstance(db.Model):
         instance_dict = {**hit_dict, **instance_dict}
 
         if with_tasks:
-            # join instance and HIT tasks
-            instance_tasks = [task.as_dict(editable=True) for task in self.tasks]
-            instance_dict['tasks'] = [*hit_dict['tasks'], *instance_tasks]
-            # add the urls
-            for task in instance_dict['tasks']:
-                task['url'] = f'{app.config["API_URL"]}/instances/{self.id.hex()}/tasks/{task["id"]}'
-                for child in task['children']:
-                    child['url'] = f'{app.config["API_URL"]}/instances/{self.id.hex()}/tasks/{child["id"]}'
-
-            # if with_response_info:
-            #     for task in instance_dict['tasks']:
-            #         task_id = task['id']
-            #         # query the latest response
-            #         # only include submitted responses
-            #         taskResponses = self.responses.filter_by(
-            #             task_id=task_id).order_by(TaskResponse.index.desc())
-            #         lastResponse = taskResponses.first()
-            #         task['has_unsubmitted_response'] = lastResponse is not None and lastResponse.submitted is False
-            #         task['num_submissions'] = taskResponses.filter_by(submitted=True).count()
+            instance_dict['tasks'] = [task.as_dict() for task in self.tasks]
 
         if self.submitted:
             instance_dict['completion_code'] = self.get_completion_code()
@@ -198,23 +140,7 @@ class HITInstance(db.Model):
         return instance_dict
 
     def stream_download(self, z, base_path, csv=False):
-        responses = self.responses.filter_by(submitted=True).all()
+        tasks = self.tasks
 
-        for response in responses:
-            if csv:
-                # write the CSV data
-                df = response.get_dataframe()
-                stream = BytesIO()
-                df.to_csv(stream, mode='wb')
-                stream.seek(0)
-                z.write_iter(os.path.join(base_path, response.get_download_filename() + '.csv'), stream)
-
-            # write the json response
-            response_dict = response.get_json(with_chunk_data=not csv)   # important
-            stream = BytesIO()
-            stream.write(json.dumps(response_dict).encode())
-            stream.seek(0)
-            z.write_iter(os.path.join(base_path, response.get_download_filename() + '.json'), stream)
-
-            for chunk in z:
-                yield chunk
+        for task in tasks:
+            yield from task.stream_download(z, base_path, csv)

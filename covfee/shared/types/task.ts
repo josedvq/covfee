@@ -15,18 +15,6 @@ type DistributivePick<T, K extends keyof T> = T extends unknown
 /**
 * @TJS-additionalProperties false
 */
-export interface UserTaskSpec {
-    /**
-     * Task type 
-     */
-    type: string
-}
-
-export type PresetsSpec = Record<string, UserTaskSpec>
-
-/**
-* @TJS-additionalProperties false
-*/
 export interface CommonTaskSpec {
     /**
      * Name of the task. It is displayed in covfee (eg. "Video 3")

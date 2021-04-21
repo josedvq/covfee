@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { myerror } from '../utils'
-import buttonManagerContext from './button_manager_context'
 import { BinaryInputSpec, ContinuousKeyboardInputSpec, GravityKeyboardInputSpec, Intensity1DInputSpec} from '@covfee-types/input/1d_intensity'
 
 interface Props {
@@ -21,9 +20,11 @@ interface Props {
      * The component will read its data via getIntensity()
      */
     visualizationModeOn?: boolean
+    buttons: any
 }
 
-class OneDIntensity extends React.Component<Props> {
+
+export class OneDIntensity extends React.Component<Props> {
 
     static defaultProps = {
     }
@@ -49,7 +50,7 @@ class OneDIntensity extends React.Component<Props> {
         cancelAnimationFrame(this.animationId)
         this.inputProps = this.applyInputPropDefaults()
         this.setState(this.state, ()=>{
-            requestAnimationFrame(this.animate)
+            this.animationId = requestAnimationFrame(this.animate)
         })
     }
 
@@ -93,11 +94,11 @@ class OneDIntensity extends React.Component<Props> {
         
         if(!this.props.visualizationModeOn)
             this.startInput()
-        requestAnimationFrame(this.animate)
+        this.animationId = requestAnimationFrame(this.animate)
     }
 
     componentWillUnmount() {
-        // this.context.removeEvents()
+        // this.props.buttons.removeEvents()
         document.removeEventListener('mousemove', this.mousemove, false)
         this.observer.disconnect()
         if(this.animationId) {
@@ -113,34 +114,34 @@ class OneDIntensity extends React.Component<Props> {
 
     addBinaryKeyboardEvents = () => {
         const controls = (this.inputProps as BinaryInputSpec).controls
-        this.context.addListener('up', 'q', 'Activate')
-        if (controls) this.context.applyMap(controls)
+        this.props.buttons.addListener('up', 'q', 'Activate')
+        if (controls) this.props.buttons.applyMap(controls)
     }
 
     addContinuousKeyboardEvents = () => {
-        this.context.addListener('up', 'ArrowUp', 'Increase')
+        this.props.buttons.addListener('up', 'ArrowUp', 'Increase')
             .addEvent('keydown', () => {
                 this.intensity = Math.min(1.0, this.intensity + 0.05)
             })
 
-        this.context.addListener('down', 'ArrowDown', 'Decrease')
+        this.props.buttons.addListener('down', 'ArrowDown', 'Decrease')
             .addEvent('keydown', () => {
                 this.intensity = Math.max(0, this.intensity - 0.05)
             })
             
         const controls = (this.inputProps as ContinuousKeyboardInputSpec).controls
-        if (controls) this.context.applyMap(controls)
+        if (controls) this.props.buttons.applyMap(controls)
     }
 
     addGravityKeyboardEvents = () => {
-        this.context.addListener('up', 'a', 'Increase')
+        this.props.buttons.addListener('up', 'a', 'Increase')
             .addEvent('keydown', () => {
                 this.intensity = 1
                 this.speed = 0//this.props.input.jump_speed
             })
         
         const controls = (this.inputProps as GravityKeyboardInputSpec).controls
-        if (controls) this.context.applyMap(controls)
+        if (controls) this.props.buttons.applyMap(controls)
     }
 
     startInput = () => {
@@ -177,7 +178,7 @@ class OneDIntensity extends React.Component<Props> {
             this.intensity = this.props.getIntensity()
         } else {
             if (this.inputProps.mode == 'binary') 
-                this.intensity = this.context.getStatus('up') ? 1 : 0
+                this.intensity = this.props.buttons.getStatus('up') ? 1 : 0
             if (this.inputProps.mode == 'continuous-mousemove')
                 { } //pass  
             if (this.inputProps.mode == 'continuous-keyboard')
@@ -203,6 +204,3 @@ class OneDIntensity extends React.Component<Props> {
         </div>
     }
 }
-
-OneDIntensity.contextType = buttonManagerContext
-export { OneDIntensity }

@@ -1,9 +1,9 @@
 import * as React from 'react'
-import { Button, Input, Modal, Select, Form, Typography } from 'antd'
+import { Button, Input, Modal, Select, Form, Typography, Alert } from 'antd'
 const { Option } = Select
 const { Text } = Typography
 
-import { PresetsSpec, TaskSpec, TaskType, EditableTaskFields} from '@covfee-types/task'
+import { EditableTaskFields, TaskSpec} from '@covfee-types/task'
 
 interface Props {
     visible: boolean
@@ -14,7 +14,7 @@ interface Props {
     /**
      * Spec of the types of tasks that can be created
      */
-    presets: PresetsSpec
+    presets: { [key: string]: TaskSpec }
     /**
      * Initial content to be edited
      */
@@ -121,7 +121,7 @@ export class TaskEditorModal extends React.Component<Props, State> {
             ]}>
             <TaskEditorForm
                 key={this.state.formKey}
-                presets={{enabled: true, presets:this.props.presets}}
+                presets={this.props.presets}
                 task={this.state.task}
                 onChange={this.handleChange}/>
             
@@ -136,41 +136,39 @@ export class TaskEditorModal extends React.Component<Props, State> {
  * Receives an optional set of presets that the user can pick from
  */
 interface FormProps {
-    presets: {
-        enabled : boolean,
-        presets: PresetsSpec
-    },
+    presets: { [key: string]: TaskSpec }
     task: EditableTaskFields
     onChange: (arg0: any) => void
 }
 
 interface FormState {
+    error: string
     preset: string,
 }
 class TaskEditorForm extends React.Component<FormProps, FormState> {
 
+    state: FormState = {
+        error: null,
+        preset: ''
+    }
+
+    constructor(props: FormProps) {
+        super(props)
+        if(props.task === undefined && !props.presets)
+            this.state.error = 'Task or presets must be given.'
+
+        if (props.task === undefined) {
+            props.onChange(Object.values(this.props.presets)[0])
+            this.state.preset = Object.keys(this.props.presets)[0]
+        }
+    }
+
     componentDidMount() {
-        if (this.props.task === undefined) { 
-            // empty task, set default settings
-            this.props.onChange({
-                name: '',
-                type: this.props.presets.enabled ? Object.values(this.props.presets.presets)[0].type : ''
-            })
-        }
-        if(this.props.presets.enabled) {
-            this.setState({ preset: Object.keys(this.props.presets.presets)[0] })
-        }
     }
 
     handlePresetChange = (value: string) => {
         this.setState({ preset: value })
-        this.props.onChange({
-            type: Object.values(this.props.presets.presets)[0].type
-        })
-    }
-
-    handleTypeChange = (value: string) => {
-        this.props.onChange({ type: value })
+        this.props.onChange(this.props.presets[value])
     }
 
     handleNameChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
@@ -178,31 +176,26 @@ class TaskEditorForm extends React.Component<FormProps, FormState> {
     }
 
     render() {
-        if(this.props.task === undefined) return <></>
+        if(this.props.task === undefined) return null
 
-        let presetSelect = <></>
-        let typeSelect = <></>
-        
-        if (this.props.presets.enabled) {
-            presetSelect = <Form.Item label="Preset">
+        if(this.state.error)
+            return <Alert message={this.state.error} type="error"/>
+
+        return <>
+            {this.props.presets &&
+            <Form.Item label="Preset">
                 <Select value={this.state.preset} style={{ width: 120 }} onChange={this.handlePresetChange} >
-                    {Object.entries(this.props.presets.presets).map(([key, value], i) => {
+                    {Object.entries(this.props.presets).map(([key, _]) => {
                         return <Option key={key} value={key}>{key}</Option>
                     })}
                 </Select>
+            </Form.Item>}
+
+            <Form.Item label="Type">
+                <Select value={this.props.task.type} style={{ width: 120 }} disabled>
+                    <Option key={0} value={this.props.task.type}>{this.props.task.type}</Option>
+                </Select>
             </Form.Item>
-        }
-
-        typeSelect = <Form.Item label="Type">
-            <Select value={this.props.task.spec.type} style={{ width: 120 }} onChange={this.handleTypeChange} disabled>
-                <Option key={0} value={this.props.task.spec.type}>{this.props.task.spec.type}</Option>
-            </Select>
-        </Form.Item>
-
-        return <>
-            {presetSelect}
-
-            {typeSelect}
 
             <Form.Item label="Name">
                 <Input value={this.props.task.name} onChange={this.handleNameChange} />

@@ -4,7 +4,9 @@ import {
     Col,
 } from 'antd'
 import ReactMarkdown from 'react-markdown/with-html'
-import { MarkdownContentSpec } from "@covfee-types/tasks/utils";
+import { MarkdownContentSpec } from "@covfee-types/tasks/utils"
+import Constants from 'Constants'
+import { fetcher } from '../../utils'
 
 interface Props {
     content: MarkdownContentSpec
@@ -28,11 +30,11 @@ export class MarkdownLoader extends React.Component<Props, State> {
                 markdown: this.props.content.content
             })
         } else {
-            fetch(this.props.content.url)
+            fetcher(this.props.content.url)
                 .then(res => res.text())
                 .then(doc => {
                     this.setState({
-                        markdown: doc
+                        markdown: doc.replace(/\$\$www\$\$/g, Constants.www_url)
                     })
                 }).catch(error => {
                     this.setState({

@@ -2,6 +2,7 @@ import * as React from 'react'
 import {
     Button,
     Modal,
+    Popover,
 } from 'antd';
 import classNames from 'classnames'
 
@@ -13,6 +14,8 @@ import { AnnotationBuffer } from '../buffers/buffer';
 import { TaskOverlay } from './overlay';
 import ButtonEventManagerContext from '../input/button_manager';
 import { TaskPlayer } from './task_player';
+import buttonManagerContext from '../input/button_manager_context';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 
 interface State {
     /**
@@ -21,6 +24,7 @@ interface State {
      * 
      */
     status: 'loading' | 'initready' | 'annotready' | 'replayready' | 'annotended' | 'replayended' | 'annotsubmitted'
+    renderAs: string
     /**
      * Player state
      */
@@ -59,6 +63,7 @@ export class TaskLoader extends React.Component<Props, State> {
     parentResponse: TaskResponse
     taskClass: any
     taskPlayer: TaskPlayer
+    taskElement: React.ReactElement
 
     playerLoadPromise: Promise<void>
     playerLoadCallback: () => void
@@ -68,6 +73,7 @@ export class TaskLoader extends React.Component<Props, State> {
     
     state: State = {
         status: 'loading',
+        renderAs: null,
         player: {
             currTask: 0,
             replayMode: false,
@@ -81,6 +87,14 @@ export class TaskLoader extends React.Component<Props, State> {
         super(props)
         this.taskClass = getTaskClass(this.props.task.spec.type)
         this.playerLoadPromise = this.getPlayerLoadPromise()
+        this.state.renderAs = this.getTaskRenderAs()
+    }
+
+    getTaskRenderAs = () => {
+        const taskInfo = this.taskClass.taskInfo
+        if (taskInfo) {
+            if (taskInfo.continuous) return 'continuous-video'
+        } else return 'default'
     }
 
     getPlayerLoadPromise = () => {
@@ -92,13 +106,11 @@ export class TaskLoader extends React.Component<Props, State> {
     }
 
     componentDidMount = () => {
-        console.log('mount')
         // read the taks and parent responses.
         Promise.all([
             this.props.task.num_submissions > 0 && this.fetchTaskResponse(),
             this.props.parent && this.props.parent.num_submissions > 0 && this.fetchParentResponse()
         ]).then(_ => {
-            console.log(['here', this.props.task.num_submissions])
             this.setState({
                 status: 'initready',
             })
@@ -137,7 +149,6 @@ export class TaskLoader extends React.Component<Props, State> {
     }
 
     loadTask = (annot = true) => {
-        console.log('loadTask')
         this.setState({
             player: {
                 ...this.state.player, 
@@ -145,7 +156,7 @@ export class TaskLoader extends React.Component<Props, State> {
                 replayMode: !annot
             }
         }, async () => {
-            if (this.taskClass.taskInfo.continuous) {
+            if (this.state.renderAs == 'continuous-video') {
                 await this.taskPlayer.loadBuffers()
             }
             this.setState({status: annot ? 'annotready' : 'replayready'})
@@ -376,23 +387,23 @@ export class TaskLoader extends React.Component<Props, State> {
         return <></>
     }
 
-    // createTaskRef = (element:any) => {
-    //     this.taskElement = element
-    //     this.setState(this.state) // triger re-render
-    // }
+    createTaskRef = (element:any) => {
+        this.taskElement = element
+        // this.setState(this.state) // triger re-render
+    }
 
-    // renderTaskInfo = () => {
-    //     return this.taskElement && <Popover
-    //                 placement="bottom"
-    //                 content={()=>{
-    //                     return this.taskElement.instructions()
-    //                 }}
-    //                 trigger="click">
-    //         <div className="task-instructions-button">
-    //             <QuestionCircleOutlined/> Instructions
-    //         </div>
-    //     </Popover>
-    // }
+    renderTaskInfo = () => {
+        return this.taskElement && this.taskElement.instructions && <Popover
+                    placement="bottom"
+                    content={()=>{
+                        return this.taskElement.instructions()
+                    }}
+                    trigger="click">
+            <div className="task-instructions-button">
+                <QuestionCircleOutlined/> Instructions
+            </div>
+        </Popover>
+    }
 
     renderVideoTaskWithParent = () => {
         const tasks = [this.props.task]
@@ -406,6 +417,7 @@ export class TaskLoader extends React.Component<Props, State> {
         
         return <TaskPlayer
             ref={e => { this.taskPlayer = e }}
+            createTaskRef={this.createTaskRef}
             media={media}
             tasks={tasks}
             responses={responses}
@@ -416,20 +428,38 @@ export class TaskLoader extends React.Component<Props, State> {
             onEnd={this.handleTaskEnd} />
     }
 
-    render() {
-        
+    renderTaskDefault = () => {
+        const taskClass = getTaskClass(this.props.task.spec.type)
+        return React.createElement(taskClass, {
+            ref: this.createTaskRef,
+            // task props
+            spec: this.props.task.spec,
 
+            // visualization
+            visualizationModeOn: this.state.player.replayMode,
+            response: this.response,
+
+            onEnd: () => { },
+            onSubmit: this.handleTaskSubmit
+        }, null)
+    }
+
+    
+
+    render() {
         return <>
             {this.renderOverlay()}
             {this.renderErrorModal()}
-            {/* {this.renderTaskInfo()} */}
+            {this.renderTaskInfo()}
             <div className={classNames('task')}>
                 <ButtonEventManagerContext>
                     {(()=>{
                         if(this.state.status == 'loading') return <></>
-
-                        if(this.taskClass.taskInfo.continuous) {
-                            return this.renderVideoTaskWithParent()
+                        switch (this.state.renderAs) {
+                            case 'continuous-video':
+                                return this.renderVideoTaskWithParent()
+                            default:
+                                return this.renderTaskDefault()
                         }
                     })()}
                 </ButtonEventManagerContext>
@@ -437,3 +467,4 @@ export class TaskLoader extends React.Component<Props, State> {
         </>
     }
 }
+TaskPlayer.contextType = buttonManagerContext

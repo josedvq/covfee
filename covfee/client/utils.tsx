@@ -38,8 +38,13 @@ export function myinfo(msg: string) {
     message.info(msg)
 }
 
+export function url_replacer(url: string) {
+    return url.replace(/\$\$www\$\$/g, Constants.www_url)
+}
+
 // fetch wrapper that appends the csrf_access_token cookie for authentication
 export function fetcher(input: RequestInfo, options?: RequestInit) {
+    if (typeof input == 'string') input = url_replacer(input)
     const cookie = getCookieValue('csrf_access_token')
     const newOptions = { ...options}
     if(cookie != null) {

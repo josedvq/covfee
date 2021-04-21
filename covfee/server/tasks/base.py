@@ -8,48 +8,6 @@ class BaseCovfeeTask:
     def __init__(self, response):
         self.response = response
 
-    def aggregate_data_chunks(self, chunks: List[Tuple[bytes, int]]) -> np.ndarray:
-        """This method takes care of aggregating a list of binary data chunks into a single numpy array.
-        Normally this method would not be implemented in subclasses.
-        Does not affect the data in the database.
-
-        Args:
-            data_chunks (list[bytes]): list of chunks as sent from the server. Size of the chunks may vary.
-
-        Returns:
-            np.ndarray: single numpy array with the aggregated data
-        """
-        if not chunks:
-            return None
-
-        idxs_chunks = list()
-        data_chunks = list()
-
-        for chunk, chunk_length in chunks:
-            if len(chunk) % chunk_length != 0:
-                raise Exception('Chunk byte length is not.')
-            bytes_per_record = len(chunk) // chunk_length
-
-            if (bytes_per_record - 4) % 8 != 0:
-                raise Exception('Number of data bytes per record is not an 8-multiple.')
-            datapoints_per_record = (bytes_per_record - 4) // 8
-            idxs_chunks.append(np.frombuffer(
-                chunk,
-                dtype=np.uint32,
-                count=chunk_length,
-                offset=0).astype(np.float64).reshape(-1, 1))
-            data_chunks.append(np.frombuffer(
-                chunk,
-                dtype=np.float64,
-                count=chunk_length * datapoints_per_record,
-                offset=4 * chunk_length).reshape(-1, datapoints_per_record))
-
-        idxs = np.vstack(idxs_chunks)
-        data = np.vstack(data_chunks)
-        assert len(idxs) == len(data)
-
-        return np.hstack([idxs, data])
-
     def to_dict(self, response: object, data: np.ndarray = None) -> dict:
         """Processes a task response to return a friendly dict (JSON) with task results and metadata
         Called when data is downloaded in JSON format.

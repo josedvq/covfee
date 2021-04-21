@@ -75,9 +75,26 @@
           "description": "Interface configuration options",
           "properties": {
             "userTasks": {
-              "$ref": "#/definitions/PresetsSpec",
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/Continuous1DTaskSpec"
+                  },
+                  {
+                    "$ref": "#/definitions/ContinuousKeypointTaskSpec"
+                  },
+                  {
+                    "$ref": "#/definitions/QuestionnaireTaskSpec"
+                  },
+                  {
+                    "$ref": "#/definitions/InstructionsTaskSpec"
+                  }
+                ],
+                "description": "One of the supported task specs"
+              },
               "description": "Allow the user to create tasks from the given map of id => task_spec",
-              "title": "userTasks"
+              "title": "userTasks",
+              "type": "object"
             }
           },
           "title": "interface",
@@ -291,6 +308,16 @@
                             "title": "fps",
                             "type": "number"
                           },
+                          "muted": {
+                            "description": "Video should be played without audio",
+                            "title": "muted",
+                            "type": "boolean"
+                          },
+                          "speed": {
+                            "description": "Speed of the video in multiples of real time (1x)",
+                            "title": "speed",
+                            "type": "number"
+                          },
                           "type": {
                             "default": "video",
                             "enum": [
@@ -318,6 +345,16 @@
                           "fps": {
                             "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                             "title": "fps",
+                            "type": "number"
+                          },
+                          "muted": {
+                            "description": "Video should be played without audio",
+                            "title": "muted",
+                            "type": "boolean"
+                          },
+                          "speed": {
+                            "description": "Speed of the video in multiples of real time (1x)",
+                            "title": "speed",
                             "type": "number"
                           },
                           "type": {
@@ -554,6 +591,16 @@
                           "fps": {
                             "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                             "title": "fps",
+                            "type": "number"
+                          },
+                          "muted": {
+                            "description": "Video should be played without audio",
+                            "title": "muted",
+                            "type": "boolean"
+                          },
+                          "speed": {
+                            "description": "Speed of the video in multiples of real time (1x)",
+                            "title": "speed",
                             "type": "number"
                           },
                           "type": {
@@ -840,6 +887,16 @@
         "fps": {
           "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
           "title": "fps",
+          "type": "number"
+        },
+        "muted": {
+          "description": "Video should be played without audio",
+          "title": "muted",
+          "type": "boolean"
+        },
+        "speed": {
+          "description": "Speed of the video in multiples of real time (1x)",
+          "title": "speed",
           "type": "number"
         },
         "type": {
@@ -1688,6 +1745,16 @@
                   "title": "fps",
                   "type": "number"
                 },
+                "muted": {
+                  "description": "Video should be played without audio",
+                  "title": "muted",
+                  "type": "boolean"
+                },
+                "speed": {
+                  "description": "Speed of the video in multiples of real time (1x)",
+                  "title": "speed",
+                  "type": "number"
+                },
                 "type": {
                   "default": "video",
                   "enum": [
@@ -1715,6 +1782,16 @@
                 "fps": {
                   "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                   "title": "fps",
+                  "type": "number"
+                },
+                "muted": {
+                  "description": "Video should be played without audio",
+                  "title": "muted",
+                  "type": "boolean"
+                },
+                "speed": {
+                  "description": "Speed of the video in multiples of real time (1x)",
+                  "title": "speed",
                   "type": "number"
                 },
                 "type": {
@@ -2558,6 +2635,16 @@
           "title": "fps",
           "type": "number"
         },
+        "muted": {
+          "description": "Video should be played without audio",
+          "title": "muted",
+          "type": "boolean"
+        },
+        "speed": {
+          "description": "Speed of the video in multiples of real time (1x)",
+          "title": "speed",
+          "type": "number"
+        },
         "type": {
           "default": "video-multiview",
           "enum": [
@@ -3142,6 +3229,11 @@
           "title": "fps",
           "type": "number"
         },
+        "muted": {
+          "description": "Video should be played without audio",
+          "title": "muted",
+          "type": "boolean"
+        },
         "res": {
           "description": "Video resolution.",
           "items": [
@@ -3156,6 +3248,11 @@
           "minItems": 2,
           "title": "res",
           "type": "array"
+        },
+        "speed": {
+          "description": "Speed of the video in multiples of real time (1x)",
+          "title": "speed",
+          "type": "number"
         },
         "type": {
           "default": "video",
@@ -3180,10 +3277,6 @@
         "url"
       ],
       "title": "OpencvFlowPlayerMedia",
-      "type": "object"
-    },
-    "PresetsSpec": {
-      "title": "PresetsSpec",
       "type": "object"
     },
     "ProjectSpec": {
@@ -3272,9 +3365,26 @@
                     "description": "Interface configuration options",
                     "properties": {
                       "userTasks": {
-                        "$ref": "#/definitions/PresetsSpec",
+                        "additionalProperties": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/Continuous1DTaskSpec"
+                            },
+                            {
+                              "$ref": "#/definitions/ContinuousKeypointTaskSpec"
+                            },
+                            {
+                              "$ref": "#/definitions/QuestionnaireTaskSpec"
+                            },
+                            {
+                              "$ref": "#/definitions/InstructionsTaskSpec"
+                            }
+                          ],
+                          "description": "One of the supported task specs"
+                        },
                         "description": "Allow the user to create tasks from the given map of id => task_spec",
-                        "title": "userTasks"
+                        "title": "userTasks",
+                        "type": "object"
                       }
                     },
                     "title": "interface",
@@ -3488,6 +3598,16 @@
                                       "title": "fps",
                                       "type": "number"
                                     },
+                                    "muted": {
+                                      "description": "Video should be played without audio",
+                                      "title": "muted",
+                                      "type": "boolean"
+                                    },
+                                    "speed": {
+                                      "description": "Speed of the video in multiples of real time (1x)",
+                                      "title": "speed",
+                                      "type": "number"
+                                    },
                                     "type": {
                                       "default": "video",
                                       "enum": [
@@ -3515,6 +3635,16 @@
                                     "fps": {
                                       "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                                       "title": "fps",
+                                      "type": "number"
+                                    },
+                                    "muted": {
+                                      "description": "Video should be played without audio",
+                                      "title": "muted",
+                                      "type": "boolean"
+                                    },
+                                    "speed": {
+                                      "description": "Speed of the video in multiples of real time (1x)",
+                                      "title": "speed",
                                       "type": "number"
                                     },
                                     "type": {
@@ -3751,6 +3881,16 @@
                                     "fps": {
                                       "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                                       "title": "fps",
+                                      "type": "number"
+                                    },
+                                    "muted": {
+                                      "description": "Video should be played without audio",
+                                      "title": "muted",
+                                      "type": "boolean"
+                                    },
+                                    "speed": {
+                                      "description": "Speed of the video in multiples of real time (1x)",
+                                      "title": "speed",
                                       "type": "number"
                                     },
                                     "type": {
@@ -4296,6 +4436,16 @@
                                       "title": "fps",
                                       "type": "number"
                                     },
+                                    "muted": {
+                                      "description": "Video should be played without audio",
+                                      "title": "muted",
+                                      "type": "boolean"
+                                    },
+                                    "speed": {
+                                      "description": "Speed of the video in multiples of real time (1x)",
+                                      "title": "speed",
+                                      "type": "number"
+                                    },
                                     "type": {
                                       "default": "video",
                                       "enum": [
@@ -4323,6 +4473,16 @@
                                     "fps": {
                                       "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                                       "title": "fps",
+                                      "type": "number"
+                                    },
+                                    "muted": {
+                                      "description": "Video should be played without audio",
+                                      "title": "muted",
+                                      "type": "boolean"
+                                    },
+                                    "speed": {
+                                      "description": "Speed of the video in multiples of real time (1x)",
+                                      "title": "speed",
                                       "type": "number"
                                     },
                                     "type": {
@@ -4559,6 +4719,16 @@
                                     "fps": {
                                       "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                                       "title": "fps",
+                                      "type": "number"
+                                    },
+                                    "muted": {
+                                      "description": "Video should be played without audio",
+                                      "title": "muted",
+                                      "type": "boolean"
+                                    },
+                                    "speed": {
+                                      "description": "Speed of the video in multiples of real time (1x)",
+                                      "title": "speed",
                                       "type": "number"
                                     },
                                     "type": {
@@ -4893,6 +5063,16 @@
                 "fps": {
                   "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                   "title": "fps",
+                  "type": "number"
+                },
+                "muted": {
+                  "description": "Video should be played without audio",
+                  "title": "muted",
+                  "type": "boolean"
+                },
+                "speed": {
+                  "description": "Speed of the video in multiples of real time (1x)",
+                  "title": "speed",
                   "type": "number"
                 },
                 "type": {
@@ -5416,6 +5596,16 @@
                             "title": "fps",
                             "type": "number"
                           },
+                          "muted": {
+                            "description": "Video should be played without audio",
+                            "title": "muted",
+                            "type": "boolean"
+                          },
+                          "speed": {
+                            "description": "Speed of the video in multiples of real time (1x)",
+                            "title": "speed",
+                            "type": "number"
+                          },
                           "type": {
                             "default": "video",
                             "enum": [
@@ -5443,6 +5633,16 @@
                           "fps": {
                             "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                             "title": "fps",
+                            "type": "number"
+                          },
+                          "muted": {
+                            "description": "Video should be played without audio",
+                            "title": "muted",
+                            "type": "boolean"
+                          },
+                          "speed": {
+                            "description": "Speed of the video in multiples of real time (1x)",
+                            "title": "speed",
                             "type": "number"
                           },
                           "type": {
@@ -5679,6 +5879,16 @@
                           "fps": {
                             "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                             "title": "fps",
+                            "type": "number"
+                          },
+                          "muted": {
+                            "description": "Video should be played without audio",
+                            "title": "muted",
+                            "type": "boolean"
+                          },
+                          "speed": {
+                            "description": "Speed of the video in multiples of real time (1x)",
+                            "title": "speed",
                             "type": "number"
                           },
                           "type": {

@@ -6,7 +6,7 @@ import buttonManagerContext from './button_manager_context'
 
 type ButtonEventHandler = (arg0: KeyboardEvent) => void
 interface ButtonEventSpec {
-    [key: string]: { 
+    [key: string]: {    // event name
         /**
          * keyboard key to be used as event trigger
          */
@@ -18,7 +18,7 @@ interface ButtonEventSpec {
         /**
          * event handler
          */
-        events: { [key: string]: ButtonEventHandler}
+        events: { [key: string]: ButtonEventHandler[]}
     }
 }
 interface ButtonEventOptions {
@@ -50,10 +50,6 @@ class ButtonEventManagerContext extends React.Component {
         removeEventListener("keyup", this.keyup)
     }
 
-    getStatus = (listener:string) => {
-        return this.listenerStatus[listener]
-    }
-
     keydown = (e: KeyboardEvent) => {
         // ignore if event occurs in input elements
         const tagName = e.target.tagName.toLowerCase()
@@ -70,7 +66,7 @@ class ButtonEventManagerContext extends React.Component {
         e.preventDefault()
 
         if ('keydown' in this.listeners[id].events)
-            this.listeners[id].events['keydown'](e)
+            this.listeners[id].events['keydown'].forEach(fn=>{fn(e)})
     }
 
     keyup = (e: KeyboardEvent) => {
@@ -88,7 +84,7 @@ class ButtonEventManagerContext extends React.Component {
         this.listenerStatus[id] = false
 
         if ('keyup' in this.listeners[id].events)
-            this.listeners[id].events['keyup'](e)
+            this.listeners[id].events['keyup'].forEach(fn => { fn(e) })
     }
 
     addListener = (id: string, defaultKey: string, description: string) => {
@@ -104,7 +100,9 @@ class ButtonEventManagerContext extends React.Component {
 
         return {
             addEvent: function (eventName: string, callback: ButtonEventHandler) {
-                self.listeners[id].events[eventName] = callback
+                if (!(eventName in self.listeners[id].events))
+                    self.listeners[id].events[eventName] = []
+                self.listeners[id].events[eventName].push(callback)
                 return this
             }
         }
@@ -114,10 +112,43 @@ class ButtonEventManagerContext extends React.Component {
         // TODO: implement code for removing events
     }
 
-    applyMap = (buttonMap: {[key:string]:string}) => {
+    applyMap = (buttonMap: { [key: string]: string }) => {
         for (const [id, key] of Object.entries(buttonMap)) {
-            if(key in this.keysToListeners)
+            if (key in this.keysToListeners)
                 this.keysToListeners[key] = id
+        }
+    }
+
+    getStatus = (listener: string) => {
+        return this.listenerStatus[listener]
+    }
+
+
+    getContext = () => {
+        return {
+            addListener: this.addListener,
+            removeListener: this.removeListener,
+            applyMap: this.applyMap,
+            getStatus: this.getStatus,
+            renderInfo: this.renderInfo
+        }
+    }
+
+    getDummyContext = () => {
+        return {
+            addListener: () => {
+                // method chaining to add events
+                const self = this
+                return {
+                    addEvent: function () {
+                        return this
+                    }
+                }
+            },
+            removeListener: () => {},
+            applyMap: () => {},
+            getStatus: () => {},
+            renderInfo: () => {return null as any}
         }
     }
 
@@ -138,10 +169,8 @@ class ButtonEventManagerContext extends React.Component {
 
     render() {
         return <buttonManagerContext.Provider value={{
-                    addListener: this.addListener,
-                    applyMap: this.applyMap,
-                    getStatus: this.getStatus,
-                    removeListener: this.removeListener,
+                    getContext: this.getContext,
+                    getDummyContext: this.getDummyContext,
                     renderInfo: this.renderInfo}}>
             {this.props.children}
         </buttonManagerContext.Provider>

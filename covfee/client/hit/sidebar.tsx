@@ -7,7 +7,7 @@ import classNames from 'classnames'
 
 import { TaskEditorModal } from './task_editor'
 
-import { EditableTaskFields, PresetsSpec, TaskSpec, ChildTaskSpec, TaskType, UserTaskSpec} from '@covfee-types/task'
+import { EditableTaskFields, TaskSpec, TaskType} from '@covfee-types/task'
 
 interface Props {
     /**
@@ -49,7 +49,7 @@ interface Props {
         /**
          * Spec of the types of tasks that can be created
          */
-        presets: PresetsSpec
+        presets: { [key: string]: TaskSpec }
     }
 }
 interface State {
@@ -105,29 +105,41 @@ export class Sidebar extends React.Component<Props, State> {
 
     render() {
         return <nav className="sidebar">
-            {/* {this.props.editMode.enabled &&
-                <TaskEditorModal
-                    visible={this.state.editTaskModal.visible}
-                    new={this.state.editTaskModal.new}
-                    presets={this.props.editMode.presets}
-                    task={this.props.tasks[this.state.editTaskModal.taskId]}
-                    onSubmit={(task)=>{
-                        return this.state.editTaskModal.new ?
-                            this.props.editMode.onTaskCreate(task) :
-                            this.props.editMode.onTaskEdit(this.state.editTaskModal.taskId, task)
-                    }}
-                    onClose={this.handleEditTaskCancel}
-                    onDelete={() => { return this.props.editMode.onTaskDelete(this.state.editTaskModal.taskIndex)}} />
-            } */}
+            {this.props.editMode.enabled &&
+                ((()=>{
+                    let task
+                    if (!this.state.editTaskModal.new) {
+                        const taskId = this.state.editTaskModal.taskId
+                        task = taskId[1] ?
+                            this.props.tasks[taskId[0]].children[taskId[1]].spec :
+                            this.props.tasks[taskId[0]].spec
+                    } else task=null
+
+                    return <TaskEditorModal
+                        visible={this.state.editTaskModal.visible}
+                        new={this.state.editTaskModal.new}
+                        presets={this.props.editMode.presets}
+                        task={task}
+                        onSubmit={(task) => {
+                            return this.state.editTaskModal.new ?
+                                this.props.editMode.onTaskCreate(this.state.editTaskModal.taskId[0], task) :
+                                this.props.editMode.onTaskEdit(this.state.editTaskModal.taskId, task)
+                        }}
+                        onClose={this.handleEditTaskCancel}
+                        onDelete={() => { return this.props.editMode.onTaskDelete(this.state.editTaskModal.taskIndex) }} />
+                })())
+                
+            }
             <ol className={'task-group'}>
                 {this.props.tasks.map((task, index) => 
                     <TaskSection
                         key={task.id} 
-                        name={task.name} 
+                        name={task.spec.name} 
                         children={task.children.map((child, idx) =>{
                             return {
-                                name: child.name,
-                                active: (idx === this.props.currTask[1]),
+                                name: child.spec.name,
+                                active: (index === this.props.currTask[0] && 
+                                        idx === this.props.currTask[1]),
                                 editable: true // TODO: fix
                             }
                         })}
@@ -170,13 +182,13 @@ export class TaskSection extends React.Component<TaskSectionProps> {
                 className={{"sidebar-btn-parent": true}}
                 active={this.props.active}
                 editable={false}
-                expandable={true}
+                expandable={!!this.props.children}
                 onClickActivate={()=>{this.props.onClickActivate(null)}}
                 onClickExpand={this.toggleExpand}/>
             
             {this.props.editable &&
-            <div onClick={()=>{this.props.onClickEdit(null)}}>
-                edit task <EditOutlined />
+            <div className={classNames(['sidebar-group-editbtn', 'background'])} onClick={()=>{this.props.onClickEdit(null)}}>
+                <span>edit task</span>
             </div>}
             <ol className="sidebar-children">
                 {this.props.children.map((child, index)=>{
@@ -186,7 +198,7 @@ export class TaskSection extends React.Component<TaskSectionProps> {
                             className={{ "sidebar-btn-child": true }}
                             active={child.active}
                             editable={false}
-                            expandable={true}
+                            expandable={false}
                             onClickActivate={()=>{this.props.onClickActivate(index)}}
                             onClickExpand={this.toggleExpand} />
                     </li>

@@ -152,12 +152,55 @@ a.header-covfee {
 
 /* Sidebar buttons */
 .sidebar {
+  padding: 1.333%;
+
   .task-group {
     max-height: calc(100vh - 54px);
     overflow-y: scroll;
     list-style-type: none;
     margin: 0;
-    padding: 1.333%;
+    padding: 0;
+  }
+
+  &-group {
+    &-editbtn {
+      font-size: 0.8em;
+      line-height: 14px;
+      color: #5c5252;
+      text-align: right;
+      text-transform: uppercase;
+
+      &:hover {
+        cursor: pointer;
+      }
+    }
+
+    &-editbtn.background {
+      position: relative;
+      z-index: 1;
+
+      &:before {
+        border-top: 2px solid #dfdfdf;
+        content: "";
+        margin: 0 auto;
+        /* this centers the line to the full width specified */
+        position: absolute;
+        /* positioning must be absolute here, and relative positioning must be applied to the parent */
+        top: 50%;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 95%;
+        z-index: -1;
+      }
+
+      span {
+        /* to hide the lines from behind the text, you have to set the background color the same as the container */
+        background: #f0f2f5;
+        padding: 0 5px;
+      }
+    }
+
   }
 
   &-children {
@@ -260,3 +303,14 @@ a.header-covfee {
   padding: 2em;
   margin: 2em 0;
 }
+
+
+/* Multiview video */
+.video-multiview-selector{
+  padding: 5px;
+  background-color: black;
+
+  >video {
+    max-height: 100px;
+  }
+} 

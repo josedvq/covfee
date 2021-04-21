@@ -3,7 +3,6 @@
 These commands launch or build covfee and are supported for the typical use case.
 """
 import os
-from shutil import which
 import sys
 from colorama import init as colorama_init, Fore
 import click

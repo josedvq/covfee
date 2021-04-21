@@ -284,6 +284,7 @@ export class Hit extends React.Component<HitProps, HitState> {
                         ...data,
                         children: this.tasks[taskId[0]].children
                     }
+                this.setState(this.state)
             })
             .catch(error => {
                 myerror('Error creating the new task.', error)
@@ -303,13 +304,17 @@ export class Hit extends React.Component<HitProps, HitState> {
             .then(throwBadResponse)
             .then(data => {
                 let pid: number , cid: number
+                console.log(parentId)
                 if(parentId == null) {
-                    this.tasks.unshift(data)
-                    pid = cid = null
-                } else
+                    console.log(data)
+                    this.tasks.push(data)
+                    pid = this.tasks.length - 1
+                    cid = null
+                } else {
                     pid = parentId
                     cid = 0
-                    this.tasks[parentId].children.unshift(data)
+                    this.tasks[parentId].children.push(data)
+                }
                 this.setState({
                     sidebar: { taskIds: this.makeSidebarTaskIds() }
                 }, () => {
@@ -387,7 +392,7 @@ export class Hit extends React.Component<HitProps, HitState> {
                             <CovfeeMenuItem/>
                         </Menu.Item>
                         <Menu.Item key="task" disabled>
-                            <Text strong style={{ color: 'white' }}>{taskProps.name}</Text>
+                            <Text strong style={{ color: 'white' }}>{taskProps.spec.name}</Text>
                         </Menu.Item>
                         {hitExtra && 
                         <Menu.Item key="extra" icon={<PlusOutlined />}>Extra</Menu.Item>}

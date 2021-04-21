@@ -2,8 +2,6 @@ import * as React from 'react'
 import { CookiesProvider } from 'react-cookie'
 import { 
     Layout, 
-    Menu, 
-    Breadcrumb,
     Typography
 } from 'antd'
 import 'antd/dist/antd.css'
@@ -51,7 +49,7 @@ class Root extends React.Component {
                         </Layout>
                         <Footer>
                             <Text style={{float: 'right'}}>
-                                Experiment developed with <a href="https://github.com/josedvq/covfee">covfee</a>
+                                Interface created with <a href="https://github.com/josedvq/covfee">covfee</a>
                             </Text>
                         </Footer>
                     </Layout>

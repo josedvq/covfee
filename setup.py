@@ -33,7 +33,8 @@ setup(
         'colorama == 0.3.*',
         'pyzmq == 22.*',
         'numpy == 1.*',
-        'zipstream == 1.*'
+        'zipstream-new == 1.*',
+        'construct == 2.*'
     ],
     python_requires='>=3.6'
 )

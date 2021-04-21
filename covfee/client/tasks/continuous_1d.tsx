@@ -5,9 +5,7 @@ import {
     Typography
 } from 'antd'
 const { Title } = Typography
-import { ClockCircleOutlined } from '@ant-design/icons';
 import { OneDIntensity } from '../input/1d_intensity'
-import keyboardManagerContext from '../input/button_manager_context'
 import { TaskInfo, TaskType} from '@covfee-types/task'
 import { CovfeeComponent, PlayerTaskProps } from './base'
 import { Continuous1DTaskSpec} from '@covfee-types/tasks/continuous_1d'
@@ -62,20 +60,20 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
     }
 
     componentDidMount() {
-        this.context.addListener('play-pause', ' ', 'Play/pause the video and data capture.')
+        this.props.buttons.addListener('play-pause', ' ', 'Play/pause the video and data capture.')
             .addEvent('keydown', (e: Event) => {
                 if (this.props.paused) this.props.buffer.log(this.props.currentTime(), ['play'])
                 else this.props.buffer.log(this.props.currentTime(), ['pause'])
                 this.togglePlayPause()
             })
             
-        this.context.addListener('back2s', 's', 'Go back 2 seconds')
+        this.props.buttons.addListener('back2s', 's', 'Go back 2 seconds')
             .addEvent('keydown', () => {
                 this.back2s()
                 this.props.buffer.log(this.props.currentTime(), ['back2s'])
             })
 
-        this.context.addListener('back10s', 'a', 'Go back 10 seconds')
+        this.props.buttons.addListener('back10s', 'a', 'Go back 10 seconds')
             .addEvent('keydown', () => {
                 this.back10s()
                 this.props.buffer.log(this.props.currentTime(), ['back10s'])
@@ -83,7 +81,7 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
             
         // update default keyboard keys with props
         if (this.props.spec.controls) {
-            this.context.applyMap(this.props.spec.controls)
+            this.props.buttons.applyMap(this.props.spec.controls)
         }
 
         // start listening to the player
@@ -96,9 +94,9 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
     }
 
     componentWillUnmount() {
-        this.context.removeListener('play-pause')
-        this.context.removeListener('back2s')
-        this.context.removeListener('back10s')
+        this.props.buttons.removeListener('play-pause')
+        this.props.buttons.removeListener('back2s')
+        this.props.buttons.removeListener('back10s')
         if (this.frameUpdateTimerId) clearInterval(this.frameUpdateTimerId)
     }
 
@@ -119,6 +117,7 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
     }
 
     handleVideoSwitch = (from: number, to: number) => {
+        if(this.props.visualizationModeOn) return
         this.props.buffer.log(this.props.currentTime(), ['vidswitch', from, to])
     }
 
@@ -141,36 +140,28 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
 
     // recreate annotation (replay mode) until the given frame
     replayUntil = (time: number) => {
-        const data: number[] = this.props.buffer.read(time)
-        if(!data) return
+        // const data: number[] = this.props.buffer.read(time)
+        // if(!data) return
+        let data, logs
+        [data, logs] = this.props.buffer.read(time)
 
-        this.setIntensity(data[1])
+        if(data)
+            this.setIntensity(data[1])
 
-        // if(actions && this.props.visualizeActionsOn) {
-        //     actions.forEach(action => {
-        //         this.replayAction(action)
-        //     })
-        // }
+        if(logs) {
+            logs.forEach(log => {
+                this.replayAction(log[2])
+            })
+        }
     }
 
     replayAction = (action: Array<any>) => {
-        if (typeof action[3] == 'number') {
-            this.setState({
-                replayMode: {
-                    ...this.state.replayMode,
-                    data: [action[3], action[4]]
-                }
-            })
-            return
-        }
-        switch (action[1]) {
-            case 'back2s':
-                this.back2s()
-                break
-            case 'back10s':
-                this.back10s()
+        switch (action[0]) {
+            case 'vidswitch':
+                this.props.setActiveVideo(action[2])
                 break
             default:
+                break
         }
     }
 
@@ -238,7 +229,6 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
     }
 
     render() {
-        
         if (this.props.player) {   // if it is a child (active) task
             return <>
                 <Row>
@@ -247,6 +237,7 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
                     </Col>
                     <Col span={4}>
                         <OneDIntensity
+                            buttons={this.props.buttons}
                             setIntensity={this.setIntensity}
                             getIntensity={()=>{return this.intensity}}
                             input={this.props.spec.intensityInput}
@@ -262,15 +253,10 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
             <Row>
                 <Col span={24}>
                     <Title level={4}>Keyboard controls</Title>
-                    {this.context.renderInfo()}
+                    {this.props.buttons.renderInfo()}
                 </Col>
             </Row>
         </>
     }
-
-    
-
-
 }
-Continuous1DTask.contextType = keyboardManagerContext
 export default Continuous1DTask

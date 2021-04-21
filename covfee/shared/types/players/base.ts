@@ -8,6 +8,14 @@ export interface BasePlayerProps {
      */
     paused: boolean
     /**
+     * Controls playback speed. A value of 1 should correspond to real-time playback.
+     */
+    speed: number
+    /**
+     * Controls whether the player is muted
+     */
+    muted: boolean
+    /**
      * Changes the value of the paused prop
      */
     setPaused: (arg0: boolean) => void

@@ -15,7 +15,15 @@ export interface BasicVideo {
      * Frames per second of the video file.
      * Some tasks use it to collect data once per frame.
      */
-    fps?: number
+    fps?: number,
+    /**
+     * Video should be played without audio
+     */
+    muted?: boolean,
+    /**
+     * Speed of the video in multiples of real time (1x)
+     */
+    speed?: number
 }
 
 export interface MultiviewVideo {
@@ -32,6 +40,14 @@ export interface MultiviewVideo {
      * Some tasks use it to collect data once per frame.
      */
     fps?: number
+    /**
+     * Video should be played without audio
+     */
+    muted?: boolean,
+    /**
+     * Speed of the video in multiples of real time (1x)
+     */
+    speed?: number
 }
 
 export interface VideoSpec extends BasicVideo {

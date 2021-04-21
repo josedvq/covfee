@@ -5,7 +5,11 @@ import { TaskType } from '@covfee-types/task'
 import { AnnotationBuffer } from '../buffers/buffer';
 import { BasePlayerProps, PlayerListenerProps } from '@covfee-types/players/base';
 import { BinaryDataCaptureBuffer } from '../buffers/binary_dc_buffer';
-import { ClockCircleOutlined } from '@ant-design/icons';
+import { CaretRightOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { Slider } from 'antd';
+
+import buttonManagerContext from '../input/button_manager_context'
+import { CovfeeComponent } from 'tasks/base';
 
 interface State {
     status: 'loading' | 'initready' | 'replayready' | 'replaystarted' | 'replayended'
@@ -13,6 +17,7 @@ interface State {
     refsReady: boolean
     playerLoaded: boolean
     paused: boolean
+    playerSpeed: number
 }
 
 interface Props {
@@ -28,6 +33,7 @@ interface Props {
     onBufferError: (arg0: string) => void
     onEnd: (taskResult: any, buffer: AnnotationBuffer, timer:boolean) => void
     // renderPlayer: (arg0: RenderPlayerProps) => React.ReactElement
+    createTaskRef: (e: React.ReactElement) => {}
 }
 
 
@@ -49,7 +55,8 @@ export class TaskPlayer extends React.Component<Props, State> {
         status: 'loading',
         refsReady: false,
         playerLoaded: false,
-        paused: true
+        paused: true,
+        playerSpeed: 1
     }
 
     constructor(props: Props) {
@@ -87,6 +94,7 @@ export class TaskPlayer extends React.Component<Props, State> {
         this.taskElements[index] = element
         const numRefs = this.taskElements.reduce((acc, cv) => (cv) ? acc + 1 : acc, 0)
         if (numRefs === this.props.tasks.length && !this.state.refsReady) this.setState({ refsReady: true})
+        if (index === this.props.currTask) this.props.createTaskRef(element)
     }
 
     createPlayerRef = (element: React.ReactElement) => {
@@ -137,6 +145,14 @@ export class TaskPlayer extends React.Component<Props, State> {
         this.setState({paused: paused})
     }
 
+    setSpeed = (val: number) => {
+        this.setState({ playerSpeed: val})
+    }
+
+    setActiveVideo = (vid: number) => {
+        this.playerElement.setActiveVideo(vid, true)
+    }
+
     getCurrentTime = () => {
         return this.currentTime
     }
@@ -156,7 +172,6 @@ export class TaskPlayer extends React.Component<Props, State> {
         if (this.state.refsReady) { // load the player
             const currTask = this.props.tasks[this.props.currTask]
             const taskClass = getTaskClass(currTask.spec.type)
-            // const media = this.props.tasks[this.props.currTask].spec.media
             const playerProps = taskClass.getPlayerProps(this.props.media)
             const playerClass = getPlayerClass(playerProps.type)
             player = React.createElement(playerClass, {
@@ -164,17 +179,34 @@ export class TaskPlayer extends React.Component<Props, State> {
                 media: this.props.media,
                 paused: this.state.paused,
                 setPaused: this.setPaused,
+                speed: this.state.playerSpeed,
+                setSpeed: this.setSpeed,
                 onLoad: this.handlePlayerLoad,
                 onFrame: this.handleFrame,
                 onEnd: this.handleEnd,
                 onEvent: this.handlePlayerEvent
             }, null)
         }
-        
+
         return <>
             {this.state.refsReady &&
                 <div className="annot-bar">
-                    <div className="annot-bar-section"><ClockCircleOutlined /> {this.currentTime.toFixed(0)} / {this.mediaDuration.toFixed(0)}</div>
+                    <div className="annot-bar-section">
+                        <ClockCircleOutlined /> {this.currentTime.toFixed(0)} / {this.mediaDuration.toFixed(0)}
+                    </div>
+                    <div className="annot-bar-section">
+                        <CaretRightOutlined/> {this.state.playerSpeed.toPrecision(2)}
+                        <Slider 
+                        style={{ display: 'inline-block', margin: '0 0 0 8px', width: '200px' }}
+                            min={0.1}
+                            max={4}
+                            step={0.1}
+                            disabled
+                            defaultValue={30}
+                            value={this.state.playerSpeed}
+                            onChange={this.setSpeed}/>
+                    </div>
+                    
                     {/* {this.state.reverseCount.visible ? <div className="annot-bar-section" style={{ 'color': 'red' }}>{this.state.reverseCount.count}</div> : <></>} */}
                 </div>
             }
@@ -189,7 +221,9 @@ export class TaskPlayer extends React.Component<Props, State> {
                     ref: elem => {this.createTaskRef(index, elem)},
                     spec: task.spec,
                     player: isCurrTask ? player: null,
+                    buttons: isCurrTask ? this.context.getContext() : this.context.getDummyContext(),
                     setPlayerListeners: this.setPlayerListeners,
+                    setActiveVideo: this.setActiveVideo,   // hack for conflab
 
                     // visualization
                     visualizationModeOn: !isCurrTask || this.props.replayMode,
@@ -198,7 +232,7 @@ export class TaskPlayer extends React.Component<Props, State> {
 
                     // task lifecycle
                     paused: this.state.paused,
-                    setPaused: this.setPaused,
+                    setPaused: isCurrTask ? this.setPaused : ()=>{},
                     onLoad: () => {},
                     // onFrame: this.props.onFrame,
                     currentTime: this.getCurrentTime,
@@ -210,3 +244,4 @@ export class TaskPlayer extends React.Component<Props, State> {
 
     }
 }
+TaskPlayer.contextType = buttonManagerContext

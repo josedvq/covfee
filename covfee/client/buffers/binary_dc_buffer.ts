@@ -51,6 +51,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
 
     // state
     tailptr = 0
+    logptr = 0   // points to a log within the chunk when reading
     receivedData = false
     // counts the total number of data and log samples
     // one-based bc zero is used for null.
@@ -83,6 +84,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
 
     reset = () => {
         this.tailptr = 0
+        this.logptr = 0
         this.receivedData = false
         this.chunkIndex = 0
     }
@@ -126,7 +128,6 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
             .then(async (res) => {
                 this.isDataReady = true
                 const arr = await res.arrayBuffer()
-                console.log(['loaded', url])
                 this.loadChunks(arr)
             }).catch(err => {
             }).finally(() => {
@@ -161,7 +162,6 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
      */
     data = (timestamp: number, data: DataSample) => {
         if(this.disabled) return
-        console.log('data')
         this.receivedData = true
 
         const record: DataRecord = [timestamp, ...data]
@@ -186,14 +186,25 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         const [chunkNum, sampleNum] = this.timestampToChunkSample(timestamp)
         if(this.dataBuffer[chunkNum] === undefined || 
             this.dataBuffer[chunkNum].idxs[sampleNum] === undefined)
-            return null
-        if (this.dataBuffer[chunkNum].idxs[sampleNum] === 0) return null
-        const res = []
-        const ini = sampleNum * this.recordLength
-        for (let i = 0; i < this.recordLength; i++) {
-            res.push(this.dataBuffer[chunkNum].data[ini+i])
+            return [null, null]
+
+        let res, logs = []
+        if (this.dataBuffer[chunkNum].idxs[sampleNum] === 0) res = null
+        else {
+            res = []
+            const ini = sampleNum * this.recordLength
+            for (let i = 0; i < this.recordLength; i++) {
+                res.push(this.dataBuffer[chunkNum].data[ini+i])
+            }
         }
-        return res
+
+        while (this.logptr < this.dataBuffer[chunkNum].logs.length
+              && this.dataBuffer[chunkNum].logs[this.logptr][1] < timestamp) {
+            logs.push(this.dataBuffer[chunkNum].logs[this.logptr])
+            this.logptr += 1
+        }
+
+        return [res, logs]
     }
 
 
@@ -214,7 +225,6 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
      * @returns void
      */
     advanceTail = () => {
-        console.log(['advanceTail', this.tailptr, this.outBuffer.length])
         this.outBuffer.push(this.dataBuffer[this.tailptr])
         this.tailptr++
 
@@ -229,7 +239,6 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
      * @returns promise from fetch
      */
     submitChunk = async () => {
-        console.log(this.outBuffer[0])
         const chunk = this.outBuffer[0]
         const packet = new Packer().pack(chunk.buff, chunk.logs, this.chunkLength, this.recordLength)
         const requestOptions = {

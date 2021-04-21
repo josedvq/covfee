@@ -69,4 +69,8 @@ export interface PlayerTaskProps extends ContinuousTaskProps, BasePlayerProps {
      * Called when there is a playback error
      */
     player: React.ReactElement
+    /**
+     * Interface to the buttons manager
+     */
+    buttons: any
 }

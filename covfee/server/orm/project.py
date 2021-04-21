@@ -21,19 +21,17 @@ class Project(db.Model):
     def __init__(self, id, name, email, hits, **kwargs):
         hashstr = Project.get_hashtr(id)
         self.id = sha256(hashstr.encode()).digest()
-        self.update(id, name, email, hits)
-
-    def update(self, id, name, email, hits, **kwargs):
         self.name = name
         self.email = email
 
         hashstr = Project.get_hashtr(id)
         for hit_dict in hits:
-            hit = db.session.query(HIT).get(HIT.get_id(hashstr, hit_dict['id']))
-            if hit is None:
-                self.hits.append(HIT(**hit_dict, hashstr=hashstr))
-            else:
-                hit.update(**hit_dict, hashstr=hashstr)
+            hit = HIT(**hit_dict, project_id=id)
+            self.hits.append(hit)
+
+            repeats = hit_dict.get('repeat', 1)
+            for r in range(repeats):
+                hit.instantiate()
 
     def get_dataframe(self):
         list_of_instances = list()
@@ -55,8 +53,7 @@ class Project(db.Model):
                         for c in self.__table__.columns}
         project_dict['id'] = project_dict['id'].hex()
         if with_hits:
-            project_dict['hits'] = [hit.as_dict(
-                with_instances=with_instances) for hit in self.hits]
+            project_dict['hits'] = [hit.as_dict(with_instances=with_instances) for hit in self.hits]
         return project_dict
 
     def info(self):
@@ -92,5 +89,4 @@ class Project(db.Model):
     def stream_download(self, z, base_path, csv=False):
         for hit in self.hits:
             for instance in hit.instances:
-                for chunk in instance.stream_download(z, os.path.join(base_path, instance.id.hex()), csv=csv):
-                    yield chunk
+                yield from instance.stream_download(z, os.path.join(base_path, instance.id.hex()), csv=csv)
