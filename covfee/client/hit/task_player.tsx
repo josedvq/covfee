@@ -3,13 +3,12 @@ import * as React from 'react'
 import { getPlayerClass, getTaskClass } from '../task_utils'
 import { TaskType } from '@covfee-types/task'
 import { AnnotationBuffer } from '../buffers/buffer';
-import { BasePlayerProps, PlayerListenerProps } from '@covfee-types/players/base';
+import { PlayerListenerProps } from '@covfee-types/players/base';
 import { BinaryDataCaptureBuffer } from '../buffers/binary_dc_buffer';
 import { CaretRightOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { Slider } from 'antd';
 
 import buttonManagerContext from '../input/button_manager_context'
-import { CovfeeComponent } from 'tasks/base';
 
 interface State {
     status: 'loading' | 'initready' | 'replayready' | 'replaystarted' | 'replayended'

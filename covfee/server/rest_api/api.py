@@ -322,7 +322,6 @@ def response_chunk(kid):
     # no responses or only submitted responses
     # -> create new response
     if response is None or response.submitted:
-        print('no responses or only submitted responses')
         response_index = 0
         # increment index of last response
         if response is not None and response.submitted:
@@ -335,13 +334,10 @@ def response_chunk(kid):
             chunks=[])
         task.has_unsubmitted_response = True
 
-    print(f'response id is {response.id}')
-
     # if there is a previous chunk with the same index, overwrite it
     if response.chunks.count() > 0:
         chunk = next((chunk for chunk in response.chunks if chunk.index == sent_index), None)
         if chunk is not None:
-            print('overwriting chunk')
             chunk.update(data=request.get_data(), length=length)
 
             db.session.commit()

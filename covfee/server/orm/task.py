@@ -190,7 +190,7 @@ class TaskResponse(db.Model):
         return task_json
 
     def get_download_filename(self):
-        return f'{self.task.spec.name}_{self.index:d}'
+        return f'{self.task.spec.spec["name"]}_{self.index:d}'
 
     def pack_chunks(self):
         chunks = self.chunks.order_by(Chunk.index.desc()).all()
