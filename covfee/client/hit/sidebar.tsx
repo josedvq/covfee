@@ -135,14 +135,14 @@ export class Sidebar extends React.Component<Props, State> {
                     <TaskSection
                         key={task.id} 
                         name={task.spec.name} 
-                        children={task.children.map((child, idx) =>{
+                        children={task.children ? task.children.map((child, idx) =>{
                             return {
                                 name: child.spec.name,
                                 active: (index === this.props.currTask[0] && 
                                         idx === this.props.currTask[1]),
                                 editable: true // TODO: fix
                             }
-                        })}
+                        }) : []}
                         editable={task.editable}
                         active={index == this.props.currTask[0] && this.props.currTask[1] == null}
                         onClickActivate={(child_index) => { this.props.onChangeActiveTask([index, child_index])}}

@@ -10,22 +10,6 @@ table.simple-table > tr > th {
   text-align: left;
 }
 
-/* Site header */
-a.header-covfee {
-  font-size: 1.5em;
-  color: #f5f5f5 !important;
-}
-.header-covfee-logo {
-  display: inline-block;
-  margin-right: 0.5em;
-}
-
-.site-layout-content {
-  background: #fff;
-  padding: 24px;
-  min-height: 280px;
-}
-
 /* antd fix */
 .ant-row {
   margin-right: 0 !important;
@@ -39,6 +23,8 @@ a.header-covfee {
 .ant-col:last-child {
   padding-right: 0 !important;
 }
+
+
 
 /* Annotation feedback */
 .gui-vertical {
@@ -56,61 +42,7 @@ a.header-covfee {
     background-color: green;
 }
 
-/* Task instructions tab button */
-.task-instructions-button {
-    width: 100px;
-    position: absolute;
-    left: 50%;
-    transform: translate(-50%, 0);
-    color: white;
-    text-align: center;
-    box-shadow: inset 0 4px 3px -3px rgba(0, 0, 0, 0.5);
-    border-radius: 0 0 10px 10px;
-    border-width: 0 1px 1px 1px;
-    border-style: solid;
-    border-color: white;
-    background-color: rgb(199, 138, 24);
-    padding: 0 8px;
-    font-size: 0.85em;
-}
-.task-instructions-button:hover {
-  cursor: pointer;
-}
 
-/* Task Overlay */
-.task-container {
-  width: 100%;
-}
-.task-overlay {
-  position: fixed;
-  padding: 1em 0;
-  width: 50%;
-  margin: 0 25%;
-  top: 35%;
-  transform: translate(0, -100%);
-  background-color: rgba(0, 0, 0, .7);
-  border-width: 3px;
-  border-style: solid;
-  border-color: #363636;
-  z-index: 2;
-
-  &-off {
-    display: none;
-  }
-
-  .main-option {
-    display: inline-block;
-    margin: 0 5px;
-  }
-
-  nav {
-    width: 100%;
-    text-align: center;
-  }
-}
-.video-overlay-nav>button {
-  margin: 0 5px;
-}
 
 /*Video container*/
 .mouse-tracker {
@@ -150,104 +82,7 @@ a.header-covfee {
   }
 }
 
-/* Sidebar buttons */
-.sidebar {
-  padding: 1.333%;
 
-  .task-group {
-    max-height: calc(100vh - 54px);
-    overflow-y: scroll;
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  &-group {
-    &-editbtn {
-      font-size: 0.8em;
-      line-height: 14px;
-      color: #5c5252;
-      text-align: right;
-      text-transform: uppercase;
-
-      &:hover {
-        cursor: pointer;
-      }
-    }
-
-    &-editbtn.background {
-      position: relative;
-      z-index: 1;
-
-      &:before {
-        border-top: 2px solid #dfdfdf;
-        content: "";
-        margin: 0 auto;
-        /* this centers the line to the full width specified */
-        position: absolute;
-        /* positioning must be absolute here, and relative positioning must be applied to the parent */
-        top: 50%;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        width: 95%;
-        z-index: -1;
-      }
-
-      span {
-        /* to hide the lines from behind the text, you have to set the background color the same as the container */
-        background: #f0f2f5;
-        padding: 0 5px;
-      }
-    }
-
-  }
-
-  &-children {
-    list-style-type: none;
-    margin: 0;
-    padding-left: 25px;
-  }
-
-  &-btn {
-    border: 1px solid gray;
-    border-radius: 3px;
-    margin: 2px;
-
-    &-name {
-      color: #d5d5d5;
-      width: calc(100% - 36px);
-      overflow-x: hidden;
-      display: block;
-      padding: 5px;
-
-      &:hover {
-        cursor: pointer;
-      }
-    }
-
-    &-icon {
-      display: block;
-      float: right;
-      width: 20px;
-      height: 20px;
-      margin: 8px;
-      color:#d5d5d5;
-    }
-
-    &-parent {
-      background-color: #262626;
-    }
-
-    &-child {
-      background-color: #232323;
-    }
-
-    &-active {
-      background-color: green;
-    }
-  }
-}
 
 /* Gallery img */
 .gallery-img {
@@ -256,29 +91,7 @@ a.header-covfee {
   margin: 5%;
 }
 
-/* annotation bar (above the player) */
-.annot-bar {
-  background-color: black;
-  color: #f5f5f5;
 
-  &-section, &-header {
-    display: inline-block;
-    padding: 5px 15px;
-    font-size:0.8em;
-    border-right: 1px solid #363636;
-  }
-
-  &-header {
-    font-size: 1em;
-  }
-
-  &-right {
-    float: right;
-    padding: 5px 15px;
-    font-size:0.8em;
-    border-right: 1px solid #363636;
-  }
-}
 
 .tool-container {
   overflow: auto;

@@ -5,7 +5,7 @@ module.exports = {
     ["module-resolver", {
       "alias": {
         // these don't work directly in the MDX but they work in imported TSX files
-        "@schemata": "../covfee/server/schemata.json",
+        "@schemata": "./schemata.json",
         "Constants": "./covfee_constants.json",
         "CustomTasks": "./dummy_tasks"
       }

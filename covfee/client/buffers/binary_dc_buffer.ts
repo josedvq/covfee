@@ -1,13 +1,10 @@
 import { getFetchWithTimeout, dummyFetch} from './utils'
 import { 
     AnnotationBuffer, 
-    // DataSample, 
-    // DataRecord, 
     LogSample, 
     LogRecord,
-    OutChunk
 } from './buffer'
-import { fetcher, throwBadResponse } from '../utils'
+import { fetcher } from '../utils'
 import { Packer} from './packer'
 
 type DataSample = number[]
@@ -32,10 +29,6 @@ type OnErrorCallback = (arg0: string) => void
 export class BinaryDataCaptureBuffer implements AnnotationBuffer {
     chunkByteLength: number
     dataBuffer = Array<Chunk>()
-    // rwndStack: Array<{
-    //     cntr: Uint32Array
-    //     data: Float64Array
-    // }>
     outBuffer = Array<Chunk>()
 
     // props
@@ -186,7 +179,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         const [chunkNum, sampleNum] = this.timestampToChunkSample(timestamp)
         if(this.dataBuffer[chunkNum] === undefined || 
             this.dataBuffer[chunkNum].idxs[sampleNum] === undefined)
-            return [null, null]
+            return [null, null] as [number[], LogRecord[]]
 
         let res, logs = []
         if (this.dataBuffer[chunkNum].idxs[sampleNum] === 0) res = null
@@ -204,7 +197,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
             this.logptr += 1
         }
 
-        return [res, logs]
+        return [res, logs] as [number[], LogRecord[]]
     }
 
 
@@ -300,7 +293,9 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
                     reject(new Error('The server is taking too long to respond.'))
                 }, timeout)
             })
-        ]).then(() => {
+        ])
+        
+        this.awaitClearPromise.finally(() => {
             this.awaitClearPending = false
         })
         

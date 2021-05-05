@@ -18,10 +18,13 @@ import {
     /**
      * Other
      */
-    List, 
+    List,
+    Form as AntdForm,
+    Button
 } from 'antd'
+import { FieldSpec, FormSpec, InputSpec } from '@covfee-types/tasks/questionnaire'
 
-const antd_components = {
+const antd_components: {[key: string]: any} = {
     // 'Cascader': Cascader,
     'Checkbox': Checkbox,
     'Checkbox.Group': Checkbox.Group,
@@ -39,168 +42,96 @@ const antd_components = {
     // 'TreeSelect': TreeSelect,
 }
 
-interface FormProps {
-    /**
-     * Specification of the form fiels
-     */
-    fields: Array<any>
+interface FieldData {
+    name: string | number | (string | number)[]
+    value?: any
+    touched?: boolean
+    validating?: boolean
+    errors?: string[]
+}
+
+export type FormState = FieldData[]
+
+
+interface FormProps extends FormSpec<InputSpec> {
     /**
      * Stores the form values / answers.
      */
-    values: Array<any>
+    values: FormState
     /**
      * Used by the form to update it's values / answers.
      */
-    setValues: Function
+    setValues: (arg0: FormState) => void
     /**
      * Disables the form.
      */
     disabled: boolean
+    /**
+     * If true, will display a submit button and call onSubmit when pressed
+     */
+    withSubmitButton: boolean
+    /**
+     * Called with the field values when the form is submitted and validated
+     */
+    onSubmit: (arg0: FormState) => void
 }
+
+
+
+
 export class Form extends React.Component<FormProps> {
 
     static defaultProps = {
-        disabled: false
+        layout: 'vertical',
+        disabled: false,
+        withSubmitButton: false
     }
 
     constructor(props: FormProps) {
         super(props)
-        this.props.setValues([[]])
     }
 
-    handleChange = (idx: number, fieldset_values: Array<any>) => {
-        let values = this.props.values.slice()
-        values[idx] = fieldset_values
-        this.props.setValues(values)
+    handleFinish = (values: any) => {
+        this.props.onSubmit(values)
     }
 
     render() {
-        return <>
-            <Fieldset 
-                idx={0} 
-                disabled={this.props.disabled}
-                fields={this.props.fields} 
-                values={this.props.values[0]} 
-                setValues={this.handleChange}></Fieldset>
-            </>
-    }
-}
+        return <AntdForm
+                fields={this.props.values}
+                layout={this.props.layout}
+                onFieldsChange={(_, allFields) => { this.props.setValues(allFields) }}
+                onFinish={this.handleFinish}>
+                
+            {this.props.fields && this.props.fields.map((field, index) => {
+                return <AntdForm.Item 
+                    key={index}
+                    name={field.name}
+                    label={field.label}
+                    required={field.required}
+                    rules={field.required && [{required: true, message: 'This field is required.'}]}>
+                    
+                    {(()=>{
+                        if(!(field.input.inputType in antd_components))
+                            return <p>Unimplemented input element!</p>
+            
+                        const elementClass = antd_components[field.input.inputType]
+                        const elementProps = {...field.input}
+                        delete elementProps['inputType']
+                        return React.createElement(elementClass, {
+                            ...elementProps,
+                            disabled: this.props.disabled
+                        }, null)
+                    })()}
+                    
+                </AntdForm.Item>
+            })}
 
-interface FieldsetProps {
-    /**
-     * Index of the fieldset (=key)
-     */
-    idx: number
-    /**
-     * Specification of the form fiels
-     */
-    fields: Array<any>
-    /**
-     * Stores the fieldset values / answers.
-     */
-    values: Array<any>
-    /**
-     * Used by the fieldset to update it's values / answers.
-     */
-    setValues: Function
-    /**
-     * Disables the fieldset.
-     */
-    disabled: boolean
-
-}
-class Fieldset extends React.Component<FieldsetProps> {
-    componentDidMount() {
-        const initial_state = new Array(this.props.fields.length).fill(null);
-        this.props.setValues(this.props.idx, initial_state)
-    }
-
-    handleChange = (idx: number, new_val: any) => {
-        let new_state = this.props.values.slice()
-        new_state[idx] = new_val
-        this.props.setValues(this.props.idx, new_state)
-    }
-
-    render() {
-        const elems = []
-        for (const [index, spec] of this.props.fields.entries()) {
-            elems.push(<Field 
-                key={index} 
-                idx={index}
-                disabled={this.props.disabled}
-                value={this.props.values[index]} 
-                setValues={this.handleChange}
-                {...spec}></Field>)
-        }
-        return <>
-            <List itemLayout='vertical'>
-                {elems}
-            </List>
-        </>
-    }
-}
-
-interface FieldProps {
-    /**
-     * Index of the fieldset (=key)
-     */
-    idx: number
-
-    /**
-     * Question or label of the input field
-     */
-    prompt: string
-
-    /**
-     * Specification of the field
-     */
-    input: any
-
-    /**
-     * Stores the field values / answer.
-     */
-    value: any
-
-    /**
-     * Used by the fieldset to update it's values / answers.
-     */
-    setValues: Function
-
-    /**
-     * Disables the fieldset.
-     */
-    disabled: boolean
-}
-class Field extends React.Component<FieldProps> {
-    handleChange = (e: any) => {
-        // components passing event objects to onChange
-        if (['Input', 'Radio.Group'].includes(this.props.input.inputType)) {
-            this.props.setValues(this.props.idx, e.target.value)
-        // the rest pass values directly
-        } else if (Object.keys(antd_components).includes(this.props.input.inputType)) {
-            this.props.setValues(this.props.idx, e)
-        } else {
-            console.log('Unrecognized argument type to callback')
-        }
-    }
-
-    render() {
-        let prompt = <p>{this.props.prompt}</p>
-        let input
-
-        if(!(this.props.input.inputType in antd_components)) {
-            input = <p>Unimplemented input element!</p>
-        } else {
-            const elementClass = antd_components[this.props.input.inputType]
-            input = React.createElement(elementClass, {
-                ...this.props.input,
-                value: this.props.value,
-                disabled: this.props.disabled,
-                onChange: this.handleChange,
-                optionType: 'button'
-            }, null)
-        }
-
-        return <List.Item>{prompt}{input}</List.Item>
+            {this.props.withSubmitButton &&
+            <AntdForm.Item >
+                <Button type="primary" htmlType="submit" disabled={this.props.disabled}>
+                    Submit
+                </Button>    
+            </AntdForm.Item>}
+        </AntdForm>
     }
 }

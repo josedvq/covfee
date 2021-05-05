@@ -21,6 +21,11 @@ export interface CommonTaskSpec {
      */
     name: string,
     /**
+     * Task is marked as a prerrequisite
+     * Prerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.
+     */
+    prerequisite?: boolean
+    /**
      * Timing config
      */
     timer?: {
@@ -69,7 +74,8 @@ export interface TaskResponse {
     hasChunkData: boolean,
     chunkData?: object
 }
-export interface TaskType extends CommonTaskSpec {
+export interface TaskType extends Omit<CommonTaskSpec, 'children'> {
+    children: Array<TaskType>
     /**
      * Unique ID of the task
      */
@@ -94,6 +100,10 @@ export interface TaskType extends CommonTaskSpec {
      * True if the task is a user task (can be edited)
      */
     editable: boolean
+    /**
+     * True if the task has been successfully validated
+     */
+    valid: boolean
 }
 
 export interface EditableTaskFields {
@@ -107,18 +117,4 @@ export interface EditableTaskFields {
     spec: BaseTaskSpec,
 }
 
-export interface TaskInfo {
-    /**
-     * A continuous task will have a working "buffer" available for submitting data samples
-     * If false, the task will only receive a dummy buffer for improved performance.
-     */ 
-    continuous?: boolean,
-    /**
-     * If true the task will be assumed to implement visualization.
-     * If true the option to visualize task results will be shown by default after a continuous task.
-     */
-    can_visualize?: boolean
-    supportsParent?: boolean
-    supportsChildren?: boolean
-}
 

@@ -17,7 +17,7 @@ module.exports = {
     // 'https://unpkg.com/antd@4.8.2/dist/antd.min.css'
     // 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'
   ],
-  plugins: [path.resolve(__dirname, 'webpack-config-plugin')],
+  plugins: [path.resolve(__dirname, 'webpack-config-plugin'), 'docusaurus-plugin-sass'],
   themeConfig: {
     colorMode: {
       // "light" | "dark"

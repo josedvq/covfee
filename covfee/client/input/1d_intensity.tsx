@@ -45,6 +45,27 @@ export class OneDIntensity extends React.Component<Props> {
         this.inputProps = this.applyInputPropDefaults()
     }
 
+    componentDidMount() {
+        // update the height of the container
+        this.observer = new ResizeObserver((entries: any) => {
+            this.containerHeight = entries[0].contentRect.height - 20
+        })
+        this.observer.observe(this.container.current)
+        
+        if(!this.props.visualizationModeOn)
+            this.startInput()
+        this.animationId = requestAnimationFrame(this.animate)
+    }
+
+    componentWillUnmount() {
+        // this.props.buttons.removeEvents()
+        document.removeEventListener('mousemove', this.mousemove, false)
+        this.observer.disconnect()
+        // if(this.animationId) {
+        cancelAnimationFrame(this.animationId)
+        // }
+    }
+
     componentDidUpdate(prevProps: Props) {
         
         cancelAnimationFrame(this.animationId)
@@ -83,27 +104,6 @@ export class OneDIntensity extends React.Component<Props> {
                 }
             }
         return this.props.input
-    }
-
-    componentDidMount() {
-        // update the height of the container
-        this.observer = new ResizeObserver((entries: any) => {
-            this.containerHeight = entries[0].contentRect.height - 20
-        })
-        this.observer.observe(this.container.current)
-        
-        if(!this.props.visualizationModeOn)
-            this.startInput()
-        this.animationId = requestAnimationFrame(this.animate)
-    }
-
-    componentWillUnmount() {
-        // this.props.buttons.removeEvents()
-        document.removeEventListener('mousemove', this.mousemove, false)
-        this.observer.disconnect()
-        if(this.animationId) {
-            cancelAnimationFrame(this.animationId)
-        }
     }
 
     mousemove = (e: MouseEvent) => {

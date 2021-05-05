@@ -38,13 +38,13 @@ export function myinfo(msg: string) {
     message.info(msg)
 }
 
-export function url_replacer(url: string) {
+export function urlReplacer(url: string) {
     return url.replace(/\$\$www\$\$/g, Constants.www_url)
 }
 
 // fetch wrapper that appends the csrf_access_token cookie for authentication
 export function fetcher(input: RequestInfo, options?: RequestInit) {
-    if (typeof input == 'string') input = url_replacer(input)
+    if (typeof input == 'string') input = urlReplacer(input)
     const cookie = getCookieValue('csrf_access_token')
     const newOptions = { ...options}
     if(cookie != null) {
@@ -68,7 +68,30 @@ export const throwBadResponse = async (response: any) => {
     return await response.json()
 }
 
-export function getFullscreen(element: HTMLElement) {
+// returns a cancellable promise for use in react components
+export type CancelablePromise<T> = {
+    promise: Promise<T>
+    cancel: ()=>void
+}
+export const makeCancelablePromise = (promise: Promise<any>) => {
+    let hasCanceled_ = false
+  
+    const wrappedPromise = new Promise((resolve, reject) => {
+      promise.then(
+        val => hasCanceled_ ? reject({isCanceled: true}) : resolve(val),
+        error => hasCanceled_ ? reject({isCanceled: true}) : reject(error)
+      )
+    })
+
+    return {
+      promise: wrappedPromise,
+      cancel() {
+        hasCanceled_ = true
+      }
+    } as CancelablePromise<any>
+  }
+
+export function getFullscreen(element: any) {
     if (element.requestFullscreen) {
         return element.requestFullscreen()
     } else if (element.mozRequestFullScreen) {
@@ -81,13 +104,14 @@ export function getFullscreen(element: HTMLElement) {
 }
 
 export function closeFullscreen() {
-    if (document.exitFullscreen) {
-        return document.exitFullscreen()
-    } else if (document.mozCancelFullScreen) { /* Firefox */
-        return document.mozCancelFullScreen()
-    } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
-        return document.webkitExitFullscreen()
-    } else if (document.msExitFullscreen) { /* IE/Edge */
-        return document.msExitFullscreen()
+    const doc = document as any
+    if (doc.exitFullscreen) {
+        return doc.exitFullscreen()
+    } else if (doc.mozCancelFullScreen) { /* Firefox */
+        return doc.mozCancelFullScreen()
+    } else if (doc.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+        return doc.webkitExitFullscreen()
+    } else if (doc.msExitFullscreen) { /* IE/Edge */
+        return doc.msExitFullscreen()
     }
 }

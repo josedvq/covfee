@@ -37,6 +37,29 @@ export const taskSpec = {
     "content": {
         "type": "raw",
         "content": "# Instructions\n\nThese are the instructions provided directly in Markdown.\n\n**We recommend that you use this mode for instructions that you can write using this interactive form. If you prefer to write the instructions in a separate markdown file, see below for how to link to your own Markdown file.**"
+    },
+    "form": {
+        "fields": [
+            {
+                "name": "name",
+                "label": "Full name:",
+                "required": true,
+                "input": {
+                    "inputType": "Input"
+                }
+            },
+            {
+                "name": "agreement",
+                "label": "To proceed, you must expressly agree to the provided instructions.",
+                "required": true,
+                "input": {
+                    "inputType": "Checkbox.Group",
+                    "options": [
+                        {"label": "I agree with the provided instructions.", "value": "yes"}
+                    ]
+                }
+            }
+        ]
     }
 }
 
@@ -55,6 +78,16 @@ export const taskSpecMd = {
     "content": {
         "type": "link",
         "url": "https://gist.githubusercontent.com/benbalter/3914310/raw/f757a33411082da23f0ad4a124b45fcdacc1b43f/Example--text.txt"
+    },
+    "form": {
+        "fields": [
+            {
+                "prompt": "I agree with the provided instructions.",
+                "input": {
+                    "type": "Checkbox"
+                }
+            }
+        ]
     }
 }
 

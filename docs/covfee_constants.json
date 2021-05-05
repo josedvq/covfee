@@ -4,5 +4,6 @@
   "admin_url": "http://127.0.0.1:5000/admin#",
   "api_url": "http://127.0.0.1:5000/api",
   "auth_url": "http://127.0.0.1:5000/auth",
-  "media_url": "http://127.0.0.1:5000/media"
+  "media_url": "http://127.0.0.1:5000/media",
+  "www_url": ""
 }

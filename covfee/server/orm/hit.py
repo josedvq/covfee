@@ -120,7 +120,7 @@ class HITInstance(db.Model):
     def get_completion_code(self):
         return sha256((self.id.hex() + app.config['COVFEE_SECRET_KEY']).encode()).digest().hex()[:12]
 
-    def as_dict(self, with_tasks=False, with_response_info=False):
+    def as_dict(self, with_tasks=False, only_prerequisites=False, with_response_info=False):
         instance_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
         hit_dict = self.hit.as_dict()
 
@@ -132,7 +132,13 @@ class HITInstance(db.Model):
         instance_dict = {**hit_dict, **instance_dict}
 
         if with_tasks:
-            instance_dict['tasks'] = [task.as_dict() for task in self.tasks]
+            prerequisite_tasks = [task for task in self.tasks if task.spec.prerequisite]
+            prerequisites_completed = all([task.has_valid_response() for task in prerequisite_tasks])
+            instance_dict['prerequisites_completed'] = prerequisites_completed
+            if prerequisites_completed:
+                instance_dict['tasks'] = [task.as_dict() for task in self.tasks]
+            else:
+                instance_dict['tasks'] = [task.as_dict() for task in prerequisite_tasks]
 
         if self.submitted:
             instance_dict['completion_code'] = self.get_completion_code()

@@ -1,12 +1,20 @@
-import { BasePlayerProps } from '@covfee-types/players/base';
-import { TaskInfo } from '@covfee-types/task';
-import { TaskPlayer } from '../hit/task_player';
 import React from 'react';
 import { AnnotationBuffer } from '../buffers/buffer'
-import { RenderPlayerProps } from 'players';
+import { Cookies } from 'react-cookie';
+import { VideoPlayerContext } from 'hit/continuous_task_player';
 
-export class CovfeeComponent<T extends BaseTaskProps, S> extends React.Component<T, S> {
-    static taskInfo?: TaskInfo
+export interface TaskInfo {
+    /**
+     * If true the task will be assumed to implement visualization.
+     * If true the option to visualize task results will be shown by default after a continuous task.
+     */
+    supportsVisualization?: boolean
+}
+
+
+export abstract class CovfeeTask<T extends BaseTaskProps, S> extends React.Component<T, S> {
+    static taskType = 'component'
+    static taskInfo: TaskInfo
     /**
      * Used to provide a function that renders the task instructions.
      */
@@ -18,9 +26,10 @@ export class CovfeeComponent<T extends BaseTaskProps, S> extends React.Component
     getData?: () => any
 }
 
-export class CovfeeContinuousComponent<T extends ContinuousTaskProps, S> extends CovfeeComponent<T, S> {
-    
+export abstract class CovfeeContinuousTask<T extends ContinuousTaskProps, S> extends CovfeeTask<T, S> {
+    static taskType = 'continuous'
 }
+
 
 /**
  * Props used by a normal non-continuous task
@@ -29,18 +38,29 @@ export interface BaseTaskProps {
     /**
      * To be called when the task has been submitted by the user (eg. via a submit button)
      */
-    onSubmit: () => Promise<void>,
+    onSubmit: (arg0: any) => Promise<void>,
     /**
-     * If true, visualization mode is enabled and the task is expected to visualize its data.
+     * Task response to be displayed, possibly for editing
+     * A null value indicates the task should initialize an empty state
+     * The response will normally be loaded into the task state for visualization / edition
      */
-    visualizationModeOn: boolean
+    response: any
+    /**
+     * Whether the task should be disabled (cannot be edited)
+     * Only relevant when response != null
+     */
+    disabled: boolean
+    /**
+     * Cookies object for tasks to store user settings
+     */
+    cookies: Cookies
 }
 
 export interface ContinuousTaskProps extends BaseTaskProps {
     /**
      * Called when a continuous task ends
      */
-    onEnd: () => void,
+    onEnd: (arg0: any) => void,
     /**
      * This buffer should be used to record data or log events during continuous tasks.
      * It takes care of communication with the server.
@@ -51,24 +71,15 @@ export interface ContinuousTaskProps extends BaseTaskProps {
      */
     visualizeActionsOn?: boolean
     /**
-     * May be called to get the current media time
+     * Element that renders the video player in the task.
+     * Should be rendered when provided
      */
-    currentTime: (arg0?: number) => number
-}
-
-/**
- * A player task is a task that implementing BasePlayerProps, which can 
- * therefore act as a media player.
- */
-export interface PlayerTaskProps extends ContinuousTaskProps, BasePlayerProps {
+    playerElement?: React.Component
     /**
-     * Called when there is a playback error
+     * Object representing the video player
+     * Includes utilities for listening to events and controlling the player
      */
-    onError: (err: any) => void
-    /**
-     * Called when there is a playback error
-     */
-    player: React.ReactElement
+    player: VideoPlayerContext
     /**
      * Interface to the buttons manager
      */

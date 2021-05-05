@@ -303,6 +303,11 @@
                       {
                         "description": "Identifies a single video file",
                         "properties": {
+                          "canMute": {
+                            "description": "User is able to mute the video",
+                            "title": "canMute",
+                            "type": "boolean"
+                          },
                           "fps": {
                             "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                             "title": "fps",
@@ -314,7 +319,7 @@
                             "type": "boolean"
                           },
                           "speed": {
-                            "description": "Speed of the video in multiples of real time (1x)",
+                            "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                             "title": "speed",
                             "type": "number"
                           },
@@ -342,6 +347,11 @@
                       },
                       {
                         "properties": {
+                          "canMute": {
+                            "description": "User is able to mute the video",
+                            "title": "canMute",
+                            "type": "boolean"
+                          },
                           "fps": {
                             "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                             "title": "fps",
@@ -353,7 +363,7 @@
                             "type": "boolean"
                           },
                           "speed": {
-                            "description": "Speed of the video in multiples of real time (1x)",
+                            "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                             "title": "speed",
                             "type": "number"
                           },
@@ -394,6 +404,11 @@
                     "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                     "title": "name",
                     "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
                   },
                   "timer": {
                     "description": "Timing config",
@@ -491,6 +506,9 @@
                         "type": "string"
                       }
                     },
+                    "required": [
+                      "speed-up"
+                    ],
                     "title": "controls",
                     "type": "object"
                   },
@@ -509,6 +527,11 @@
                     "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                     "title": "name",
                     "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
                   },
                   "timer": {
                     "description": "Timing config",
@@ -566,7 +589,7 @@
                     "type": "boolean"
                   },
                   "form": {
-                    "$ref": "#/definitions/FormSpec",
+                    "$ref": "#/definitions/FormSpec<InputSpec>",
                     "description": "Specification of the form to be created.",
                     "title": "form"
                   },
@@ -588,6 +611,11 @@
                       {
                         "description": "Identifies a single video file",
                         "properties": {
+                          "canMute": {
+                            "description": "User is able to mute the video",
+                            "title": "canMute",
+                            "type": "boolean"
+                          },
                           "fps": {
                             "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                             "title": "fps",
@@ -599,7 +627,7 @@
                             "type": "boolean"
                           },
                           "speed": {
-                            "description": "Speed of the video in multiples of real time (1x)",
+                            "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                             "title": "speed",
                             "type": "number"
                           },
@@ -662,6 +690,11 @@
                     "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                     "title": "name",
                     "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
                   },
                   "timer": {
                     "description": "Timing config",
@@ -778,7 +811,7 @@
                     ]
                   },
                   "form": {
-                    "$ref": "#/definitions/FormSpec",
+                    "$ref": "#/definitions/FormSpec<InputSpec>_1",
                     "description": "a form to display after the content.",
                     "title": "form"
                   },
@@ -792,6 +825,11 @@
                     "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                     "title": "name",
                     "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
                   },
                   "timer": {
                     "description": "Timing config",
@@ -884,6 +922,11 @@
     "BasicVideo": {
       "description": "Identifies a single video file",
       "properties": {
+        "canMute": {
+          "description": "User is able to mute the video",
+          "title": "canMute",
+          "type": "boolean"
+        },
         "fps": {
           "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
           "title": "fps",
@@ -895,7 +938,7 @@
           "type": "boolean"
         },
         "speed": {
-          "description": "Speed of the video in multiples of real time (1x)",
+          "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
           "title": "speed",
           "type": "number"
         },
@@ -952,6 +995,27 @@
       "type": "object",
       "additionalProperties": false
     },
+    "CheckboxGroupOption": {
+      "properties": {
+        "label": {
+          "title": "label",
+          "type": "string"
+        },
+        "value": {
+          "title": "value",
+          "type": [
+            "string",
+            "number"
+          ]
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "title": "CheckboxGroupOption",
+      "type": "object"
+    },
     "CheckboxGroupSpec": {
       "description": "Props for the antd checkbox group",
       "properties": {
@@ -972,7 +1036,7 @@
         },
         "options": {
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/CheckboxGroupOption"
           },
           "title": "options",
           "type": "array"
@@ -983,29 +1047,6 @@
         "options"
       ],
       "title": "CheckboxGroupSpec",
-      "type": "object",
-      "additionalProperties": false
-    },
-    "CheckboxSpec": {
-      "description": "Props for the antd checkbox",
-      "properties": {
-        "defaultChecked": {
-          "title": "defaultChecked",
-          "type": "boolean"
-        },
-        "inputType": {
-          "default": "Checkbox",
-          "enum": [
-            "Checkbox"
-          ],
-          "title": "inputType",
-          "type": "string"
-        }
-      },
-      "required": [
-        "inputType"
-      ],
-      "title": "CheckboxSpec",
       "type": "object",
       "additionalProperties": false
     },
@@ -1197,6 +1238,11 @@
               "title": "name",
               "type": "string"
             },
+            "prerequisite": {
+              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+              "title": "prerequisite",
+              "type": "boolean"
+            },
             "timer": {
               "description": "Timing config",
               "properties": {
@@ -1292,6 +1338,9 @@
                   "type": "string"
                 }
               },
+              "required": [
+                "speed-up"
+              ],
               "title": "controls",
               "type": "object"
             },
@@ -1305,6 +1354,11 @@
               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
               "title": "name",
               "type": "string"
+            },
+            "prerequisite": {
+              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+              "title": "prerequisite",
+              "type": "boolean"
             },
             "timer": {
               "description": "Timing config",
@@ -1361,7 +1415,7 @@
               "type": "boolean"
             },
             "form": {
-              "$ref": "#/definitions/FormSpec",
+              "$ref": "#/definitions/FormSpec<InputSpec>",
               "description": "Specification of the form to be created.",
               "title": "form"
             },
@@ -1380,6 +1434,11 @@
               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
               "title": "name",
               "type": "string"
+            },
+            "prerequisite": {
+              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+              "title": "prerequisite",
+              "type": "boolean"
             },
             "timer": {
               "description": "Timing config",
@@ -1495,7 +1554,7 @@
               ]
             },
             "form": {
-              "$ref": "#/definitions/FormSpec",
+              "$ref": "#/definitions/FormSpec<InputSpec>_1",
               "description": "a form to display after the content.",
               "title": "form"
             },
@@ -1509,6 +1568,11 @@
               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
               "title": "name",
               "type": "string"
+            },
+            "prerequisite": {
+              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+              "title": "prerequisite",
+              "type": "boolean"
             },
             "timer": {
               "description": "Timing config",
@@ -1740,6 +1804,11 @@
             {
               "description": "Identifies a single video file",
               "properties": {
+                "canMute": {
+                  "description": "User is able to mute the video",
+                  "title": "canMute",
+                  "type": "boolean"
+                },
                 "fps": {
                   "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                   "title": "fps",
@@ -1751,7 +1820,7 @@
                   "type": "boolean"
                 },
                 "speed": {
-                  "description": "Speed of the video in multiples of real time (1x)",
+                  "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                   "title": "speed",
                   "type": "number"
                 },
@@ -1779,6 +1848,11 @@
             },
             {
               "properties": {
+                "canMute": {
+                  "description": "User is able to mute the video",
+                  "title": "canMute",
+                  "type": "boolean"
+                },
                 "fps": {
                   "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                   "title": "fps",
@@ -1790,7 +1864,7 @@
                   "type": "boolean"
                 },
                 "speed": {
-                  "description": "Speed of the video in multiples of real time (1x)",
+                  "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                   "title": "speed",
                   "type": "number"
                 },
@@ -1831,6 +1905,11 @@
           "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
           "title": "name",
           "type": "string"
+        },
+        "prerequisite": {
+          "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+          "title": "prerequisite",
+          "type": "boolean"
         },
         "timer": {
           "description": "Timing config",
@@ -1964,6 +2043,9 @@
               "type": "string"
             }
           },
+          "required": [
+            "speed-up"
+          ],
           "title": "controls",
           "type": "object"
         },
@@ -1982,6 +2064,11 @@
           "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
           "title": "name",
           "type": "string"
+        },
+        "prerequisite": {
+          "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+          "title": "prerequisite",
+          "type": "boolean"
         },
         "timer": {
           "description": "Timing config",
@@ -2034,34 +2121,12 @@
       "type": "object",
       "additionalProperties": false
     },
-    "FieldSpec": {
+    "FieldSpec<InputSpec>": {
       "properties": {
         "input": {
+          "description": "input props for a single input element",
           "title": "input",
           "oneOf": [
-            {
-              "description": "Props for the antd checkbox",
-              "properties": {
-                "defaultChecked": {
-                  "title": "defaultChecked",
-                  "type": "boolean"
-                },
-                "inputType": {
-                  "default": "Checkbox",
-                  "enum": [
-                    "Checkbox"
-                  ],
-                  "title": "inputType",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "inputType"
-              ],
-              "title": "CheckboxSpec",
-              "type": "object",
-              "additionalProperties": false
-            },
             {
               "description": "Props for the antd checkbox group",
               "properties": {
@@ -2082,7 +2147,7 @@
                 },
                 "options": {
                   "items": {
-                    "type": "string"
+                    "$ref": "#/definitions/CheckboxGroupOption"
                   },
                   "title": "options",
                   "type": "array"
@@ -2310,32 +2375,290 @@
             "inputType"
           ]
         },
-        "prompt": {
-          "title": "prompt",
+        "label": {
+          "description": "Label for the field.\nUsually displayed next to or on top of the field.",
+          "title": "label",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the field.\nThe results will refer to the field by this name.",
+          "title": "name",
+          "type": "string"
+        },
+        "required": {
+          "description": "If true the field will be required to be filled before submission.",
+          "title": "required",
+          "type": "boolean"
+        },
+        "tooltip": {
+          "description": "Text for a tooltip with more information",
+          "title": "tooltip",
           "type": "string"
         }
       },
       "required": [
         "input",
-        "prompt"
+        "label",
+        "name"
       ],
-      "title": "FieldSpec",
+      "title": "FieldSpec<InputSpec>",
       "type": "object"
     },
-    "FormSpec": {
+    "FieldSpec<InputSpec>_1": {
+      "properties": {
+        "input": {
+          "description": "input props for a single input element",
+          "title": "input",
+          "oneOf": [
+            {
+              "description": "Props for the antd checkbox group",
+              "properties": {
+                "defaultValue": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "defaultValue",
+                  "type": "array"
+                },
+                "inputType": {
+                  "default": "Checkbox.Group",
+                  "enum": [
+                    "Checkbox.Group"
+                  ],
+                  "title": "inputType",
+                  "type": "string"
+                },
+                "options": {
+                  "items": {
+                    "$ref": "#/definitions/CheckboxGroupOption"
+                  },
+                  "title": "options",
+                  "type": "array"
+                }
+              },
+              "required": [
+                "inputType",
+                "options"
+              ],
+              "title": "CheckboxGroupSpec",
+              "type": "object",
+              "additionalProperties": false
+            },
+            {
+              "description": "Props for the antd input field",
+              "properties": {
+                "allowClear": {
+                  "title": "allowClear",
+                  "type": "boolean"
+                },
+                "bordered": {
+                  "title": "bordered",
+                  "type": "boolean"
+                },
+                "defaultValue": {
+                  "title": "defaultValue",
+                  "type": "string"
+                },
+                "inputType": {
+                  "default": "Input",
+                  "enum": [
+                    "Input"
+                  ],
+                  "title": "inputType",
+                  "type": "string"
+                },
+                "maxLength": {
+                  "title": "maxLength",
+                  "type": "number"
+                },
+                "minLength": {
+                  "title": "minLength",
+                  "type": "number"
+                },
+                "size": {
+                  "enum": [
+                    "large",
+                    "middle",
+                    "small"
+                  ],
+                  "title": "size",
+                  "type": "string"
+                },
+                "type": {
+                  "enum": [
+                    "checkbox",
+                    "color",
+                    "date",
+                    "datetime-local",
+                    "email",
+                    "month",
+                    "number",
+                    "password",
+                    "radio",
+                    "range",
+                    "string",
+                    "tel",
+                    "text",
+                    "time",
+                    "url",
+                    "week"
+                  ],
+                  "title": "type",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "inputType"
+              ],
+              "title": "InputFieldSpec",
+              "type": "object",
+              "additionalProperties": false
+            },
+            {
+              "description": "Props for the antd radio",
+              "properties": {
+                "buttonStyle": {
+                  "enum": [
+                    "outline",
+                    "solid"
+                  ],
+                  "title": "buttonStyle",
+                  "type": "string"
+                },
+                "defaultValue": {
+                  "title": "defaultValue",
+                  "type": "string"
+                },
+                "inputType": {
+                  "default": "Radio.Group",
+                  "enum": [
+                    "Radio.Group"
+                  ],
+                  "title": "inputType",
+                  "type": "string"
+                },
+                "optionType": {
+                  "enum": [
+                    "button",
+                    "default"
+                  ],
+                  "title": "optionType",
+                  "type": "string"
+                },
+                "options": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "options",
+                  "type": "array"
+                },
+                "size": {
+                  "enum": [
+                    "large",
+                    "middle",
+                    "small"
+                  ],
+                  "title": "size",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "inputType",
+                "options"
+              ],
+              "title": "RadioSpec",
+              "type": "object",
+              "additionalProperties": false
+            }
+          ],
+          "discriminator": {
+            "propertyName": "inputType"
+          },
+          "required": [
+            "inputType"
+          ]
+        },
+        "label": {
+          "description": "Label for the field.\nUsually displayed next to or on top of the field.",
+          "title": "label",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the field.\nThe results will refer to the field by this name.",
+          "title": "name",
+          "type": "string"
+        },
+        "required": {
+          "description": "If true the field will be required to be filled before submission.",
+          "title": "required",
+          "type": "boolean"
+        },
+        "tooltip": {
+          "description": "Text for a tooltip with more information",
+          "title": "tooltip",
+          "type": "string"
+        }
+      },
+      "required": [
+        "input",
+        "label",
+        "name"
+      ],
+      "title": "FieldSpec<InputSpec>_1",
+      "type": "object"
+    },
+    "FormSpec<InputSpec>": {
       "properties": {
         "fields": {
+          "description": "For field specification",
           "items": {
-            "$ref": "#/definitions/FieldSpec"
+            "$ref": "#/definitions/FieldSpec<InputSpec>"
           },
           "title": "fields",
           "type": "array"
+        },
+        "layout": {
+          "description": "Layout of the form",
+          "enum": [
+            "horizontal",
+            "inline",
+            "vertical"
+          ],
+          "title": "layout",
+          "type": "string"
         }
       },
       "required": [
         "fields"
       ],
-      "title": "FormSpec",
+      "title": "FormSpec<InputSpec>",
+      "type": "object"
+    },
+    "FormSpec<InputSpec>_1": {
+      "properties": {
+        "fields": {
+          "description": "For field specification",
+          "items": {
+            "$ref": "#/definitions/FieldSpec<InputSpec>_1"
+          },
+          "title": "fields",
+          "type": "array"
+        },
+        "layout": {
+          "description": "Layout of the form",
+          "enum": [
+            "horizontal",
+            "inline",
+            "vertical"
+          ],
+          "title": "layout",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fields"
+      ],
+      "title": "FormSpec<InputSpec>_1",
       "type": "object"
     },
     "GravityKeyboardInputSpec": {
@@ -2530,7 +2853,7 @@
           ]
         },
         "form": {
-          "$ref": "#/definitions/FormSpec",
+          "$ref": "#/definitions/FormSpec<InputSpec>_1",
           "description": "a form to display after the content.",
           "title": "form"
         },
@@ -2544,6 +2867,11 @@
           "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
           "title": "name",
           "type": "string"
+        },
+        "prerequisite": {
+          "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+          "title": "prerequisite",
+          "type": "boolean"
         },
         "timer": {
           "description": "Timing config",
@@ -2630,6 +2958,11 @@
     },
     "MultiviewVideo": {
       "properties": {
+        "canMute": {
+          "description": "User is able to mute the video",
+          "title": "canMute",
+          "type": "boolean"
+        },
         "fps": {
           "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
           "title": "fps",
@@ -2641,7 +2974,7 @@
           "type": "boolean"
         },
         "speed": {
-          "description": "Speed of the video in multiples of real time (1x)",
+          "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
           "title": "speed",
           "type": "number"
         },
@@ -2855,6 +3188,11 @@
           "title": "name",
           "type": "string"
         },
+        "prerequisite": {
+          "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+          "title": "prerequisite",
+          "type": "boolean"
+        },
         "timer": {
           "description": "Timing config",
           "properties": {
@@ -2950,6 +3288,9 @@
               "type": "string"
             }
           },
+          "required": [
+            "speed-up"
+          ],
           "title": "controls",
           "type": "object"
         },
@@ -2963,6 +3304,11 @@
           "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
           "title": "name",
           "type": "string"
+        },
+        "prerequisite": {
+          "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+          "title": "prerequisite",
+          "type": "boolean"
         },
         "timer": {
           "description": "Timing config",
@@ -3076,7 +3422,7 @@
           ]
         },
         "form": {
-          "$ref": "#/definitions/FormSpec",
+          "$ref": "#/definitions/FormSpec<InputSpec>_1",
           "description": "a form to display after the content.",
           "title": "form"
         },
@@ -3090,6 +3436,11 @@
           "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
           "title": "name",
           "type": "string"
+        },
+        "prerequisite": {
+          "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+          "title": "prerequisite",
+          "type": "boolean"
         },
         "timer": {
           "description": "Timing config",
@@ -3147,7 +3498,7 @@
           "type": "boolean"
         },
         "form": {
-          "$ref": "#/definitions/FormSpec",
+          "$ref": "#/definitions/FormSpec<InputSpec>",
           "description": "Specification of the form to be created.",
           "title": "form"
         },
@@ -3166,6 +3517,11 @@
           "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
           "title": "name",
           "type": "string"
+        },
+        "prerequisite": {
+          "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+          "title": "prerequisite",
+          "type": "boolean"
         },
         "timer": {
           "description": "Timing config",
@@ -3204,25 +3560,10 @@
     },
     "OpencvFlowPlayerMedia": {
       "properties": {
-        "flow_res": {
-          "description": "Resolution of the optical flow video. May be lower than the video resolution for performance reasons.",
-          "items": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "maxItems": 2,
-          "minItems": 2,
-          "title": "flow_res",
-          "type": "array"
-        },
-        "flow_url": {
-          "description": "URL of the optical flow extracted from the video. The number of frames in this file should match that of the video.",
-          "title": "flow_url",
-          "type": "string"
+        "canMute": {
+          "description": "User is able to mute the video",
+          "title": "canMute",
+          "type": "boolean"
         },
         "fps": {
           "description": "Video fps. Required to obtain frame number from time (since frame number is not directly accesible in browsers).",
@@ -3235,22 +3576,15 @@
           "type": "boolean"
         },
         "res": {
-          "description": "Video resolution.",
-          "items": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "number"
-            }
-          ],
-          "maxItems": 2,
-          "minItems": 2,
+          "description": "Video resolution. This is the resolution of the original video. The final stacked video has double the horizontal resolution.",
+          "items": {
+            "type": "number"
+          },
           "title": "res",
           "type": "array"
         },
         "speed": {
-          "description": "Speed of the video in multiples of real time (1x)",
+          "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
           "title": "speed",
           "type": "number"
         },
@@ -3269,8 +3603,6 @@
         }
       },
       "required": [
-        "flow_res",
-        "flow_url",
         "fps",
         "res",
         "type",
@@ -3593,6 +3925,11 @@
                                 {
                                   "description": "Identifies a single video file",
                                   "properties": {
+                                    "canMute": {
+                                      "description": "User is able to mute the video",
+                                      "title": "canMute",
+                                      "type": "boolean"
+                                    },
                                     "fps": {
                                       "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                                       "title": "fps",
@@ -3604,7 +3941,7 @@
                                       "type": "boolean"
                                     },
                                     "speed": {
-                                      "description": "Speed of the video in multiples of real time (1x)",
+                                      "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                                       "title": "speed",
                                       "type": "number"
                                     },
@@ -3632,6 +3969,11 @@
                                 },
                                 {
                                   "properties": {
+                                    "canMute": {
+                                      "description": "User is able to mute the video",
+                                      "title": "canMute",
+                                      "type": "boolean"
+                                    },
                                     "fps": {
                                       "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                                       "title": "fps",
@@ -3643,7 +3985,7 @@
                                       "type": "boolean"
                                     },
                                     "speed": {
-                                      "description": "Speed of the video in multiples of real time (1x)",
+                                      "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                                       "title": "speed",
                                       "type": "number"
                                     },
@@ -3684,6 +4026,11 @@
                               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                               "title": "name",
                               "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
                             },
                             "timer": {
                               "description": "Timing config",
@@ -3781,6 +4128,9 @@
                                   "type": "string"
                                 }
                               },
+                              "required": [
+                                "speed-up"
+                              ],
                               "title": "controls",
                               "type": "object"
                             },
@@ -3799,6 +4149,11 @@
                               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                               "title": "name",
                               "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
                             },
                             "timer": {
                               "description": "Timing config",
@@ -3856,7 +4211,7 @@
                               "type": "boolean"
                             },
                             "form": {
-                              "$ref": "#/definitions/FormSpec",
+                              "$ref": "#/definitions/FormSpec<InputSpec>",
                               "description": "Specification of the form to be created.",
                               "title": "form"
                             },
@@ -3878,6 +4233,11 @@
                                 {
                                   "description": "Identifies a single video file",
                                   "properties": {
+                                    "canMute": {
+                                      "description": "User is able to mute the video",
+                                      "title": "canMute",
+                                      "type": "boolean"
+                                    },
                                     "fps": {
                                       "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                                       "title": "fps",
@@ -3889,7 +4249,7 @@
                                       "type": "boolean"
                                     },
                                     "speed": {
-                                      "description": "Speed of the video in multiples of real time (1x)",
+                                      "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                                       "title": "speed",
                                       "type": "number"
                                     },
@@ -3952,6 +4312,11 @@
                               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                               "title": "name",
                               "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
                             },
                             "timer": {
                               "description": "Timing config",
@@ -4068,7 +4433,7 @@
                               ]
                             },
                             "form": {
-                              "$ref": "#/definitions/FormSpec",
+                              "$ref": "#/definitions/FormSpec<InputSpec>_1",
                               "description": "a form to display after the content.",
                               "title": "form"
                             },
@@ -4082,6 +4447,11 @@
                               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                               "title": "name",
                               "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
                             },
                             "timer": {
                               "description": "Timing config",
@@ -4431,6 +4801,11 @@
                                 {
                                   "description": "Identifies a single video file",
                                   "properties": {
+                                    "canMute": {
+                                      "description": "User is able to mute the video",
+                                      "title": "canMute",
+                                      "type": "boolean"
+                                    },
                                     "fps": {
                                       "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                                       "title": "fps",
@@ -4442,7 +4817,7 @@
                                       "type": "boolean"
                                     },
                                     "speed": {
-                                      "description": "Speed of the video in multiples of real time (1x)",
+                                      "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                                       "title": "speed",
                                       "type": "number"
                                     },
@@ -4470,6 +4845,11 @@
                                 },
                                 {
                                   "properties": {
+                                    "canMute": {
+                                      "description": "User is able to mute the video",
+                                      "title": "canMute",
+                                      "type": "boolean"
+                                    },
                                     "fps": {
                                       "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                                       "title": "fps",
@@ -4481,7 +4861,7 @@
                                       "type": "boolean"
                                     },
                                     "speed": {
-                                      "description": "Speed of the video in multiples of real time (1x)",
+                                      "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                                       "title": "speed",
                                       "type": "number"
                                     },
@@ -4522,6 +4902,11 @@
                               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                               "title": "name",
                               "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
                             },
                             "timer": {
                               "description": "Timing config",
@@ -4619,6 +5004,9 @@
                                   "type": "string"
                                 }
                               },
+                              "required": [
+                                "speed-up"
+                              ],
                               "title": "controls",
                               "type": "object"
                             },
@@ -4637,6 +5025,11 @@
                               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                               "title": "name",
                               "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
                             },
                             "timer": {
                               "description": "Timing config",
@@ -4694,7 +5087,7 @@
                               "type": "boolean"
                             },
                             "form": {
-                              "$ref": "#/definitions/FormSpec",
+                              "$ref": "#/definitions/FormSpec<InputSpec>",
                               "description": "Specification of the form to be created.",
                               "title": "form"
                             },
@@ -4716,6 +5109,11 @@
                                 {
                                   "description": "Identifies a single video file",
                                   "properties": {
+                                    "canMute": {
+                                      "description": "User is able to mute the video",
+                                      "title": "canMute",
+                                      "type": "boolean"
+                                    },
                                     "fps": {
                                       "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                                       "title": "fps",
@@ -4727,7 +5125,7 @@
                                       "type": "boolean"
                                     },
                                     "speed": {
-                                      "description": "Speed of the video in multiples of real time (1x)",
+                                      "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                                       "title": "speed",
                                       "type": "number"
                                     },
@@ -4790,6 +5188,11 @@
                               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                               "title": "name",
                               "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
                             },
                             "timer": {
                               "description": "Timing config",
@@ -4906,7 +5309,7 @@
                               ]
                             },
                             "form": {
-                              "$ref": "#/definitions/FormSpec",
+                              "$ref": "#/definitions/FormSpec<InputSpec>_1",
                               "description": "a form to display after the content.",
                               "title": "form"
                             },
@@ -4920,6 +5323,11 @@
                               "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                               "title": "name",
                               "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
                             },
                             "timer": {
                               "description": "Timing config",
@@ -5038,7 +5446,7 @@
           "type": "boolean"
         },
         "form": {
-          "$ref": "#/definitions/FormSpec",
+          "$ref": "#/definitions/FormSpec<InputSpec>",
           "description": "Specification of the form to be created.",
           "title": "form"
         },
@@ -5060,6 +5468,11 @@
             {
               "description": "Identifies a single video file",
               "properties": {
+                "canMute": {
+                  "description": "User is able to mute the video",
+                  "title": "canMute",
+                  "type": "boolean"
+                },
                 "fps": {
                   "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                   "title": "fps",
@@ -5071,7 +5484,7 @@
                   "type": "boolean"
                 },
                 "speed": {
-                  "description": "Speed of the video in multiples of real time (1x)",
+                  "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                   "title": "speed",
                   "type": "number"
                 },
@@ -5134,6 +5547,11 @@
           "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
           "title": "name",
           "type": "string"
+        },
+        "prerequisite": {
+          "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+          "title": "prerequisite",
+          "type": "boolean"
         },
         "timer": {
           "description": "Timing config",
@@ -5591,6 +6009,11 @@
                       {
                         "description": "Identifies a single video file",
                         "properties": {
+                          "canMute": {
+                            "description": "User is able to mute the video",
+                            "title": "canMute",
+                            "type": "boolean"
+                          },
                           "fps": {
                             "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                             "title": "fps",
@@ -5602,7 +6025,7 @@
                             "type": "boolean"
                           },
                           "speed": {
-                            "description": "Speed of the video in multiples of real time (1x)",
+                            "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                             "title": "speed",
                             "type": "number"
                           },
@@ -5630,6 +6053,11 @@
                       },
                       {
                         "properties": {
+                          "canMute": {
+                            "description": "User is able to mute the video",
+                            "title": "canMute",
+                            "type": "boolean"
+                          },
                           "fps": {
                             "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                             "title": "fps",
@@ -5641,7 +6069,7 @@
                             "type": "boolean"
                           },
                           "speed": {
-                            "description": "Speed of the video in multiples of real time (1x)",
+                            "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                             "title": "speed",
                             "type": "number"
                           },
@@ -5682,6 +6110,11 @@
                     "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                     "title": "name",
                     "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
                   },
                   "timer": {
                     "description": "Timing config",
@@ -5779,6 +6212,9 @@
                         "type": "string"
                       }
                     },
+                    "required": [
+                      "speed-up"
+                    ],
                     "title": "controls",
                     "type": "object"
                   },
@@ -5797,6 +6233,11 @@
                     "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                     "title": "name",
                     "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
                   },
                   "timer": {
                     "description": "Timing config",
@@ -5854,7 +6295,7 @@
                     "type": "boolean"
                   },
                   "form": {
-                    "$ref": "#/definitions/FormSpec",
+                    "$ref": "#/definitions/FormSpec<InputSpec>",
                     "description": "Specification of the form to be created.",
                     "title": "form"
                   },
@@ -5876,6 +6317,11 @@
                       {
                         "description": "Identifies a single video file",
                         "properties": {
+                          "canMute": {
+                            "description": "User is able to mute the video",
+                            "title": "canMute",
+                            "type": "boolean"
+                          },
                           "fps": {
                             "description": "Frames per second of the video file.\nSome tasks use it to collect data once per frame.",
                             "title": "fps",
@@ -5887,7 +6333,7 @@
                             "type": "boolean"
                           },
                           "speed": {
-                            "description": "Speed of the video in multiples of real time (1x)",
+                            "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
                             "title": "speed",
                             "type": "number"
                           },
@@ -5950,6 +6396,11 @@
                     "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                     "title": "name",
                     "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
                   },
                   "timer": {
                     "description": "Timing config",
@@ -6066,7 +6517,7 @@
                     ]
                   },
                   "form": {
-                    "$ref": "#/definitions/FormSpec",
+                    "$ref": "#/definitions/FormSpec<InputSpec>_1",
                     "description": "a form to display after the content.",
                     "title": "form"
                   },
@@ -6080,6 +6531,11 @@
                     "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
                     "title": "name",
                     "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
                   },
                   "timer": {
                     "description": "Timing config",

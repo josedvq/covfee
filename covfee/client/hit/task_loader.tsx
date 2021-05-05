@@ -1,4 +1,5 @@
 import * as React from 'react'
+import ReactDOM from 'react-dom'
 import {
     Button,
     Modal,
@@ -6,16 +7,17 @@ import {
 } from 'antd';
 import classNames from 'classnames'
 
-import Constants from 'Constants'
-import { myerror, fetcher, throwBadResponse } from '../utils'
+import { myerror, fetcher, throwBadResponse, makeCancelablePromise, CancelablePromise } from '../utils'
 import { getTaskClass } from '../task_utils'
 import { TaskResponse, TaskType } from '@covfee-types/task'
-import { AnnotationBuffer } from '../buffers/buffer';
-import { TaskOverlay } from './overlay';
-import ButtonEventManagerContext from '../input/button_manager';
-import { TaskPlayer } from './task_player';
-import buttonManagerContext from '../input/button_manager_context';
-import { QuestionCircleOutlined } from '@ant-design/icons';
+import { AnnotationBuffer } from '../buffers/buffer'
+import { TaskOverlay } from './overlay'
+import ButtonEventManagerContext from '../input/button_manager'
+import { ContinuousTaskPlayer } from './continuous_task_player'
+import buttonManagerContext from '../input/button_manager_context'
+import { QuestionCircleOutlined } from '@ant-design/icons'
+import { CovfeeTask } from 'tasks/base'
+import { BasicTaskPlayer } from './basic_task_player';
 
 interface State {
     /**
@@ -24,7 +26,10 @@ interface State {
      * 
      */
     status: 'loading' | 'initready' | 'annotready' | 'replayready' | 'annotended' | 'replayended' | 'annotsubmitted'
-    renderAs: string
+    renderAs: {
+        type: 'continuous-task' | 'default'
+        timed: boolean
+    }
     /**
      * Player state
      */
@@ -62,11 +67,11 @@ export class TaskLoader extends React.Component<Props, State> {
     response: TaskResponse
     parentResponse: TaskResponse
     taskClass: any
-    taskPlayer: TaskPlayer
-    taskElement: React.ReactElement
+    taskPlayer: React.Component
+    taskElement: CovfeeTask<any, any>
+    taskInstructionsElem: HTMLDivElement
 
-    playerLoadPromise: Promise<void>
-    playerLoadCallback: () => void
+    mountPromise: CancelablePromise<any>
 
     endTaskResult: any = null
     endTaskBuffer: AnnotationBuffer = null
@@ -86,31 +91,31 @@ export class TaskLoader extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props)
         this.taskClass = getTaskClass(this.props.task.spec.type)
-        this.playerLoadPromise = this.getPlayerLoadPromise()
         this.state.renderAs = this.getTaskRenderAs()
     }
 
     getTaskRenderAs = () => {
-        const taskInfo = this.taskClass.taskInfo
-        if (taskInfo) {
-            if (taskInfo.continuous) return 'continuous-video'
-        } else return 'default'
-    }
+        // if(this.props.task.timer && this.props.task.timer.maxTime)
+        //     return 'timed-task'
+        const taskType = this.taskClass.taskType
 
-    getPlayerLoadPromise = () => {
-        return new Promise<void>((resolve, _) => {
-            this.playerLoadCallback = () => {
-                resolve()
-            }
-        })
+        let type = 'default'
+        if (taskType == 'continuous') type = 'continuous-task'
+
+        return {
+            type: type,
+            timed: false
+        }
     }
 
     componentDidMount = () => {
         // read the taks and parent responses.
-        Promise.all([
+        this.mountPromise = makeCancelablePromise(Promise.all([
             this.props.task.num_submissions > 0 && this.fetchTaskResponse(),
             this.props.parent && this.props.parent.num_submissions > 0 && this.fetchParentResponse()
-        ]).then(_ => {
+        ]))
+        
+        this.mountPromise.promise.then(_ => {
             this.setState({
                 status: 'initready',
             })
@@ -118,6 +123,11 @@ export class TaskLoader extends React.Component<Props, State> {
             if (this.props.task.num_submissions == 0)
                 this.loadTask(true)
         })
+    }
+
+    componentWillUnmount() {
+        this.mountPromise.promise.catch(()=>{})
+        this.mountPromise.cancel()
     }
 
     fetchTaskResponse = () => {
@@ -156,7 +166,7 @@ export class TaskLoader extends React.Component<Props, State> {
                 replayMode: !annot
             }
         }, async () => {
-            if (this.state.renderAs == 'continuous-video') {
+            if (this.state.renderAs.type == 'continuous-video') {
                 await this.taskPlayer.loadBuffers()
             }
             this.setState({status: annot ? 'annotready' : 'replayready'})
@@ -188,22 +198,21 @@ export class TaskLoader extends React.Component<Props, State> {
             return fetch(url, requestOptions)
         }
 
-        buffer.flush()
+        (buffer ? buffer.flush() : Promise.resolve())
             .then(sendResult)
             .then(throwBadResponse)
             .then((data) => {
-                this.response = data
+                this.response = data.response
                 this.setState({
                     status: 'annotsubmitted'
                 })
-                this.props.onSubmit()
+                this.props.onSubmit(data)
             }).catch((error) => {
                 myerror('Error submitting the task.', error)
                 this.setState({
                     status: 'annotended'
                 })
             })
-
     }
 
     handleTaskEnd = (taskResult: any, buffer: AnnotationBuffer, timer=false) => {
@@ -219,7 +228,6 @@ export class TaskLoader extends React.Component<Props, State> {
     /**
      * HANDLING OF BUFFER ERRORS
      */
-
     handleBufferError = (msg: string) => {
         this.setState({
             errorModal: {
@@ -271,8 +279,7 @@ export class TaskLoader extends React.Component<Props, State> {
             onOk={this.handleErrorOk}
             onCancel={this.handleErrorCancel}
             cancelButtonProps={{ disabled: true }}
-            okButtonProps={{}}
-        >
+            okButtonProps={{}}>
             <p>{this.state.errorModal.message}</p>
         </Modal>
     }
@@ -371,33 +378,17 @@ export class TaskLoader extends React.Component<Props, State> {
         }
     }
 
-    renderOverlay = () => {
-        if(this.state.status === 'initready') {
-            if(this.props.task.num_submissions > 0)
-                return <TaskOverlay visible={true} {...this.getOverlaySubmittedTask()} />
-            if (this.props.task.timer)
-                return <TaskOverlay visible={true} {...this.getOverlayInitTimedTask()} />
-        } else if (this.state.status === 'annotended') {
-            return <TaskOverlay visible={true} {...this.getOverlayNonSubmittedTask()}/>
-        } else if (this.state.status === 'replayended') {
-            return <TaskOverlay visible={true} {...this.getOverlayAfterReplayOrStop()} />
-        } else if (this.state.status === 'annotsubmitted') {
-            return <TaskOverlay visible={true} {...this.getOverlaySubmittedTask()} />
-        }
-        return <></>
-    }
-
-    createTaskRef = (element:any) => {
+    createTaskRef = (element: CovfeeTask<any,any>) => {
         this.taskElement = element
-        // this.setState(this.state) // triger re-render
+        if(element && element.instructions) {
+            ReactDOM.render(this.renderTaskInfo(element.instructions()), this.taskInstructionsElem)
+        }
     }
 
-    renderTaskInfo = () => {
-        return this.taskElement && this.taskElement.instructions && <Popover
+    renderTaskInfo = (instructions: React.ReactNode) => {
+        return <Popover
                     placement="bottom"
-                    content={()=>{
-                        return this.taskElement.instructions()
-                    }}
+                    content={instructions}
                     trigger="click">
             <div className="task-instructions-button">
                 <QuestionCircleOutlined/> Instructions
@@ -405,7 +396,28 @@ export class TaskLoader extends React.Component<Props, State> {
         </Popover>
     }
 
-    renderVideoTaskWithParent = () => {
+    renderOverlay = () => {
+        switch(this.state.status) {
+            case 'initready':
+                if(this.props.task.num_submissions > 0 && this.state.renderAs.type == 'continuous-task')
+                    return <TaskOverlay visible={true} {...this.getOverlaySubmittedTask()}/>
+                if (this.props.task.timer)
+                    return <TaskOverlay visible={true} {...this.getOverlayInitTimedTask()}/>
+                break
+            case 'annotended':
+                return <TaskOverlay visible={true} {...this.getOverlayNonSubmittedTask()}/>
+            case 'replayended':
+                return <TaskOverlay visible={true} {...this.getOverlayAfterReplayOrStop()}/>
+            case 'annotsubmitted':
+                if(this.state.renderAs.type == 'continuous-task')
+                    return <TaskOverlay visible={true} {...this.getOverlaySubmittedTask()}/>
+                break
+            default:
+                return null
+        }
+    }
+
+    renderContinuousTask = () => {
         const tasks = [this.props.task]
         const responses = [this.response]
         let media = this.props.task.spec.media
@@ -415,7 +427,7 @@ export class TaskLoader extends React.Component<Props, State> {
             media = this.props.parent.spec.media
         }
         
-        return <TaskPlayer
+        return <ContinuousTaskPlayer
             ref={e => { this.taskPlayer = e }}
             createTaskRef={this.createTaskRef}
             media={media}
@@ -423,41 +435,37 @@ export class TaskLoader extends React.Component<Props, State> {
             responses={responses}
             currTask={this.state.player.currTask}
             replayMode={this.state.player.replayMode}
-            onVideoLoad={this.playerLoadCallback}
             onBufferError={this.handleBufferError}
+            // lifecycle
+            onLoad={this.handleTaskLoad}
             onEnd={this.handleTaskEnd} />
     }
 
     renderTaskDefault = () => {
-        const taskClass = getTaskClass(this.props.task.spec.type)
-        return React.createElement(taskClass, {
-            ref: this.createTaskRef,
-            // task props
-            spec: this.props.task.spec,
-
-            // visualization
-            visualizationModeOn: this.state.player.replayMode,
-            response: this.response,
-
-            onEnd: () => { },
-            onSubmit: this.handleTaskSubmit
-        }, null)
-    }
-
-    
+        return <BasicTaskPlayer
+            ref={e => { this.taskPlayer = e }}
+            createTaskRef={this.createTaskRef}
+            task={this.props.task}
+            response={this.response}
+            replayMode={this.state.player.replayMode}
+            onBufferError={this.handleBufferError}
+            // lifecycle
+            onLoad={this.handleTaskLoad}
+            onSubmit={this.handleTaskSubmit} />
+    }    
 
     render() {
         return <>
             {this.renderOverlay()}
             {this.renderErrorModal()}
-            {this.renderTaskInfo()}
+            <div ref={e=>{this.taskInstructionsElem = e}}></div>
             <div className={classNames('task')}>
                 <ButtonEventManagerContext>
                     {(()=>{
                         if(this.state.status == 'loading') return <></>
-                        switch (this.state.renderAs) {
-                            case 'continuous-video':
-                                return this.renderVideoTaskWithParent()
+                        switch (this.state.renderAs.type) {
+                            case 'continuous-task':
+                                return this.renderContinuousTask()
                             default:
                                 return this.renderTaskDefault()
                         }
@@ -467,4 +475,4 @@ export class TaskLoader extends React.Component<Props, State> {
         </>
     }
 }
-TaskPlayer.contextType = buttonManagerContext
+ContinuousTaskPlayer.contextType = buttonManagerContext

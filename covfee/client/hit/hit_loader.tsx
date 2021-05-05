@@ -50,7 +50,14 @@ class HitLoader extends React.Component<Props, State> {
     }
 
     componentDidMount() {
-        fetch(this.url)
+        this.loadHit()
+    }
+
+    loadHit = (only_prerequisites = true) => {
+        const url = this.url + '?' + new URLSearchParams({
+            only_prerequisites: only_prerequisites ? '1' : '0'
+        })
+        fetch(url)
             .then(throwBadResponse)
             .then((hit: HitType) => {
                 if (hit.submitted) {
@@ -104,6 +111,7 @@ class HitLoader extends React.Component<Props, State> {
                         {...this.state.hit}
                         routingEnabled={true}
                         previewMode={this.state.previewMode}
+                        reloadHit={this.loadHit}
                         onSubmit={this.handleSubmit} />
                 </Route>
             default:

@@ -25,8 +25,9 @@ import {CovfeeMenuItem} from '../gui'
 import {Sidebar} from './sidebar'
 
 import { HitType } from '@covfee-types/hit'
-import { EditableTaskFields, TaskSpec, TaskType } from '@covfee-types/task'
+import { EditableTaskFields, TaskType } from '@covfee-types/task'
 import { TaskLoader } from './task_loader';
+import './hit.scss'
 
 interface MatchParams {
     hitId: string,
@@ -93,7 +94,7 @@ export class Hit extends React.Component<HitProps, HitState> {
     }
 
     url: string
-    tasks: Array<any>
+    tasks: Array<TaskType>
     taskKeys: Array<string>
     instructionsFn: Function = null
 
@@ -114,7 +115,8 @@ export class Hit extends React.Component<HitProps, HitState> {
 
         // calculate the current task using the route and the HIT
         let parentTask = 0
-        if (props.match !== undefined && props.match.params.taskId !== undefined && this.tasks.length < parseInt(props.match.params.taskId)) {
+        if (props.match && props.match.params.taskId !== undefined) {
+            
             parentTask = parseInt(props.match.params.taskId)
         }
 
@@ -125,12 +127,14 @@ export class Hit extends React.Component<HitProps, HitState> {
             sidebar: {
                 'taskIds': this.makeSidebarTaskIds()
             }
-        }        
+        }
+        
+        this.updateUrl(parentTask)
     }
 
     makeSidebarTaskIds = () => {
         const taskIds = this.props.tasks.map((task, idx) => {
-            const childrenIndices = task.children.map((_, i) => i)
+            const childrenIndices = task.children ? task.children.map((_, i) => i) : []
             return [idx, childrenIndices] as [number, number[]]
         })
         return taskIds
@@ -140,7 +144,7 @@ export class Hit extends React.Component<HitProps, HitState> {
 
     componentDidMount() {
         // run fetches that update state
-        this.handleChangeActiveTask(this.state.currTask)
+        // this.handleChangeActiveTask(this.state.currTask)
     }
 
     getTask = (taskId: [number, number]) => {
@@ -222,8 +226,21 @@ export class Hit extends React.Component<HitProps, HitState> {
         }
     }
 
-    handleTaskSubmit = () => {
-        console.log('task submitted')
+    handleTaskSubmit = (data: any) => {
+        const curr = this.getTask(this.state.currTask)
+        curr.valid = data.valid
+        this.setState(this.state)
+
+        // return if the hit is already complete
+        if(!this.props.only_prerequisites) return
+
+        let prerequisitesCompleted = true
+        this.tasks.forEach(t=>{
+            if(t.prerequisite && !t.valid) prerequisitesCompleted = false 
+        })
+        if(prerequisitesCompleted)
+            this.props.reloadHit()
+        
     }
 
     updateUrl = (taskIndex: number) => {
@@ -304,9 +321,7 @@ export class Hit extends React.Component<HitProps, HitState> {
             .then(throwBadResponse)
             .then(data => {
                 let pid: number , cid: number
-                console.log(parentId)
                 if(parentId == null) {
-                    console.log(data)
                     this.tasks.push(data)
                     pid = this.tasks.length - 1
                     cid = null

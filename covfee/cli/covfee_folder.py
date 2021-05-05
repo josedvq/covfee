@@ -127,6 +127,7 @@ class CovfeeFolder:
     def link_bundles(self):
         bundle_path = os.path.join(app.config['PROJECT_WWW_PATH'], 'main.js')
         if os.path.exists(bundle_path):
+            print('removing')
             os.remove(bundle_path)
         os.symlink(
             os.path.join(app.config['MASTER_BUNDLE_PATH'], 'main.js'),

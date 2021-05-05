@@ -1,8 +1,8 @@
 import { CommonTaskSpec } from '../task'
-import {CheckboxSpec, FormSpec, InputFieldSpec, RadioSpec} from './questionnaire'
+import {CheckboxGroupSpec, FormSpec, InputFieldSpec, RadioSpec} from './questionnaire'
 import {MarkdownContentSpec} from './utils'
 
-type InputSpec = CheckboxSpec | InputFieldSpec | RadioSpec
+type InputSpec = CheckboxGroupSpec | InputFieldSpec | RadioSpec
 
 /**
 * @TJS-additionalProperties false
@@ -19,7 +19,7 @@ export interface InstructionsTaskBaseSpec {
     /**
     * a form to display after the content.
     */
-    form?: FormSpec
+    form?: FormSpec<InputSpec>
 }
 
 /**

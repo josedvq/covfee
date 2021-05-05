@@ -2,13 +2,12 @@ import * as React from 'react'
 import {
     Row,
     Col,
-    Button,
     Alert
 } from 'antd'
 import VideojsPlayer from '../players/videojs'
-import WaveSurferBasicPlayer from '../players/wavesurfer_basic'
-import {Form} from '../input/form'
-import { BaseTaskProps, CovfeeComponent } from './base'
+import WaveSurferPlayer from '../players/wavesurfer'
+import {Form, FormState} from '../input/form'
+import { BaseTaskProps, CovfeeTask } from './base'
 import { QuestionnaireTaskSpec } from '@covfee-types/tasks/questionnaire'
 import { TaskType } from '@covfee-types/task'
 
@@ -16,47 +15,44 @@ interface Props extends TaskType, BaseTaskProps {
     spec: QuestionnaireTaskSpec
 }
 
-type Values = Array<Array<string | number>>
 interface State {
     media: {
         paused: boolean
     },
     form: {
-        values: Values
-        completed: boolean
+        values: FormState
         disabled: boolean
     }
 }
 
-class QuestionnaireTask extends CovfeeComponent<Props, State> {
+export class QuestionnaireTask extends CovfeeTask<Props, State> {
 
     state: State = {
         media: {
             paused: true
         },
         form: {
-            values: [[]],
-            completed: false,
-            disabled: true
+            values: this.props.spec.form && this.props.spec.form.fields.map(field=>{return {name: field.name}}),
+            disabled: this.props.disabled
         }
     }
 
     constructor(props: Props) {
         super(props)
+        if(props.response && props.response.data)
+            this.state.form.values = props.response.data
+            
         if (props.spec.disabledUntilEnd != undefined)
             this.state.form.disabled = props.spec.disabledUntilEnd
+
+        
     }
 
-    handleChange = (values: Values) => {
-        const has_null = values[0].some((val) => {
-            return val === null
-        })
-
+    handleChange = (values: FormState) => {
         this.setState({
             form: {
                 ...this.state.form,
                 values: values,
-                completed: !has_null
             }
         })
     }
@@ -75,44 +71,42 @@ class QuestionnaireTask extends CovfeeComponent<Props, State> {
     }
 
     render() {
-        // instructions
-        let instructions = <></>
-        if(this.props.spec.instructions) {
-            instructions = <Row gutter={16} style={{ padding: '1em' }}>
-                <Col span={24}>
-                    <Alert type="info" message={'Instructions'} description={this.props.spec.instructions}  showIcon/>
-                </Col>
-            </Row>
-        }
 
-        // media
-        let media
-        switch(this.props.spec.media.type) {
-            case 'video':
-                media = <VideojsPlayer 
-                            {...this.props.spec.media} 
-                            onEnded={this.handleMediaEnded} />
-                break
-            case 'audio':
-                media = <WaveSurferBasicPlayer 
-                            {...this.props.spec.media} 
-                            onEnded={this.handleMediaEnded}/>
-                break
-            default:
-                media = <p>Unrecognized media type.</p>
-        }
         return <>
-            {instructions}
+            {this.props.spec.instructions &&
+            <Row gutter={16} style={{ padding: '1em' }}>
+                <Col span={24}>
+                    <Alert
+                        type="info"
+                        message={'Instructions'}
+                        description={this.props.spec.instructions} 
+                        showIcon/>
+                </Col>
+            </Row>}
             <Row gutter={16}>
                 <Col span={16}>
-                    {media}
+                    {(()=>{
+                        switch(this.props.spec.media.type) {
+                            case 'video':
+                               return <VideojsPlayer 
+                                            {...this.props.spec.media} 
+                                            onEnded={this.handleMediaEnded} />
+                            case 'audio':
+                                return <WaveSurferPlayer 
+                                            {...this.props.spec.media} 
+                                            onEnded={this.handleMediaEnded}/>
+                            default:
+                                return <p>Unrecognized media type.</p>
+                        }
+                    })()}
                 </Col>
                 <Col span={8}>
                     <Form {...this.props.spec.form}
+                        disabled={this.props.disabled} 
                         values={this.state.form.values} 
-                        disabled={this.state.form.disabled} 
-                        setValues={this.handleChange}></Form>
-                    <Button disabled={!this.state.form.completed} onClick={this.handleSubmit}>Next</Button>
+                        setValues={this.handleChange}
+                        withSubmitButton={true}
+                        onSubmit={this.handleSubmit}/>
                 </Col>
             </Row>
         </>

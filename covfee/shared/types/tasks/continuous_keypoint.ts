@@ -12,7 +12,7 @@ export interface ContinuousKeypointTaskBaseSpec {
     /**
      * Media file to be displayed.
      */
-    media: OpencvFlowPlayerMedia,
+    media: OpencvFlowPlayerMedia
     /**
      * sets the input button controls for the task
      */
@@ -20,7 +20,7 @@ export interface ContinuousKeypointTaskBaseSpec {
         /**
          * speed up video playback
          */
-        'speed-up'?: string
+        'speed-up': string
         /**
          * slow down video playback
          */

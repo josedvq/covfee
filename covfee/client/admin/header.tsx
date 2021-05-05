@@ -6,7 +6,6 @@ import {
 import {
     Link,
 } from "react-router-dom"
-import 'antd/dist/antd.css'
 import userContext from '../userContext'
 import Constants from 'Constants'
 import CovfeeLogo from '../art/logo.svg'

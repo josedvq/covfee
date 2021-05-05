@@ -3,6 +3,7 @@ import json
 import os
 import sys
 from io import BytesIO
+from typing import Any
 
 import numpy as np
 from flask import current_app as app
@@ -26,14 +27,16 @@ class TaskSpec(db.Model):
                                cascade="all, delete")
     tasks = db.relationship("Task", backref="spec", cascade="all, delete")
 
+    prerequisite = db.Column(db.Boolean)
     order = db.Column(db.Integer)
     editable = db.Column(db.Boolean)
     spec = db.Column(db.JSON)
     config = db.Column(db.JSON)
 
     def __init__(self, maxSubmissions=0, autoSubmit=False, timer=None,
-                 editable=False, **spec):
+                 editable=False, prerequisite=False, **spec):
         self.editable = editable
+        self.prerequisite = prerequisite
         self.config = {
             maxSubmissions: maxSubmissions,
             autoSubmit: autoSubmit,
@@ -99,6 +102,8 @@ class Task(db.Model):
         task_dict = {**spec_dict, **task_dict}
 
         task_dict['responses'] = [response.as_dict() for response in self.responses]
+        # task is valid if any response is valid
+        task_dict['valid'] = self.has_valid_response()
         if self.children:
             task_dict['children'] = [child.as_dict() for child in self.children]
         else:
@@ -107,6 +112,14 @@ class Task(db.Model):
         task_dict['url'] = f'{app.config["API_URL"]}/tasks/{task_dict["id"]}'
 
         return task_dict
+
+    def has_valid_response(self):
+        return any([response.valid for response in self.responses])
+
+    def add_response(self, index):
+        response = TaskResponse(index=index)
+        self.responses.append(response)
+        return response
 
     def stream_download(self, z, base_path, csv=False):
         responses = [resp for resp in self.responses if resp.submitted]
@@ -150,13 +163,13 @@ class TaskResponse(db.Model):
     # for numbering multiple response submissions
     index = db.Column(db.Integer)
     submitted = db.Column(db.Boolean)
+    valid = db.Column(db.Boolean)
     data = db.Column(db.JSON)
     has_chunk_data = db.Column(db.Boolean)
 
     task_object = None
 
-    def __init__(self, task_id, index, submitted=False, data=None, chunks=None):
-        self.task_id = task_id
+    def __init__(self, index, submitted=False, data=None, chunks=[]):
         self.index = index
         self.submitted = submitted
         self.data = data
@@ -198,7 +211,7 @@ class TaskResponse(db.Model):
         chunk_bytes += b''.join([chunk.data for chunk in chunks])
         return chunk_bytes
 
-    def get_ndarray(self) -> np.ndarray:
+    def get_ndarray(self) -> (np.ndarray, Any):
         """This method takes care of aggregating a list of binary data chunks into a single numpy array.
 
         Args:
@@ -207,13 +220,15 @@ class TaskResponse(db.Model):
         Returns:
             np.ndarray: single numpy array with the aggregated data
         """
-        if not self.chunks:
-            return None
+        if not self.chunks.count():
+            return None, None
 
         chunks = [chunk.unpack() for chunk in self.chunks.all()]
 
         idxs_chunks = list()
         data_chunks = list()
+        logs_chunks = list()
+
         for chunk in chunks:
             data = chunk['data']
             chunk_length = chunk['chunkLength']
@@ -236,14 +251,34 @@ class TaskResponse(db.Model):
                 dtype=np.float64,
                 count=chunk_length * datapoints_per_record,
                 offset=4 * chunk_length).reshape(-1, datapoints_per_record))
+            logs_chunks.append(chunk['logs'])
 
         idxs = np.vstack(idxs_chunks)
         data = np.vstack(data_chunks)
         assert len(idxs) == len(data)
 
-        return np.hstack([idxs, data])
+        return np.hstack([idxs, data]), [l for chunk in logs_chunks for l in chunk]
 
+    def submit(self, response):
+        task_object = self.get_task_object()
+        chunk_data, chunk_logs = self.get_ndarray()
+        validation_result = task_object.validate(response, chunk_data, chunk_logs)
+        
+        self.data = response
+        self.submitted = True
+        self.valid = (validation_result == True)
+        self.task.has_unsubmitted_response = False
 
+        res = {
+            'status': 'success',
+            'valid': self.valid,
+            'response': self.as_dict()
+        }
+
+        if not self.valid:
+            res['reason'] = validation_result
+
+        return res
 
 db.Index('taskresponse_index', TaskResponse.task_id, TaskResponse.index)
 

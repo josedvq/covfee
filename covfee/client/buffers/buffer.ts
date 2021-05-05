@@ -76,5 +76,5 @@ export interface AnnotationBuffer {
      * Reads the next data point
      * @param until 
      */
-    read(until: number): number[]
+    read(until: number): [number[], LogRecord[]]
 }

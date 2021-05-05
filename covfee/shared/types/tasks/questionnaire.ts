@@ -1,8 +1,6 @@
 import { CommonTaskSpec } from '../task'
-import {CheckboxProps, InputProps, RadioGroupProps, SliderSingleProps} from 'antd'
 import { WavesurferPlayerMedia } from '../players/wavesurfer'
 import { VideojsPlayerMedia } from 'types/players/videojs'
-
 
 export type CascaderSpec = {
     /**
@@ -12,21 +10,10 @@ export type CascaderSpec = {
     // TODO: complete spec
 }
 
-/**
- * Props for the antd checkbox
- * @title checkbox
- */
-export interface CheckboxSpec { 
-    /**
-     * @default "Checkbox"
-     */
-    inputType: 'Checkbox' 
-    /**
-     * 
-     */
-     defaultChecked?: boolean
+export interface CheckboxGroupOption {
+    label: string
+    value: string | number
 }
-
 /**
 * Props for the antd checkbox group
 * @title checkbox-group
@@ -36,7 +23,7 @@ export interface CheckboxGroupSpec {
      * @default "Checkbox.Group"
      */
     inputType: 'Checkbox.Group' 
-    options: Array<string>
+    options: Array<CheckboxGroupOption>
     defaultValue?: Array<string>
 }
 
@@ -125,15 +112,42 @@ export interface SliderSpec
 }
 
 
-export type InputSpec = CheckboxSpec | CheckboxGroupSpec | InputFieldSpec | RadioSpec | SliderSpec
+export type InputSpec = CheckboxGroupSpec | InputFieldSpec | RadioSpec | SliderSpec
 
-export interface FieldSpec {
-    prompt: string
-    input: InputSpec
+export interface FieldSpec<T> {
+    /**
+     * Name of the field.
+     * The results will refer to the field by this name.
+     */
+    name: string
+    /**
+     * Label for the field.
+     * Usually displayed next to or on top of the field.
+     */
+    label: string
+    /**
+     * Text for a tooltip with more information
+     */
+    tooltip?: string
+    /**
+     * input props for a single input element
+     */
+    input: T
+    /**
+     * If true the field will be required to be filled before submission.
+     */
+    required?: boolean
 }
 
-export interface FormSpec {
-    fields: Array<FieldSpec>
+export interface FormSpec<T> {
+    /**
+     * Layout of the form
+     */
+    layout?: 'horizontal' | 'vertical' | 'inline'
+    /**
+     * For field specification
+     */
+    fields: Array<FieldSpec<T>>
 }
 
 /**
@@ -155,7 +169,7 @@ export interface QuestionnaireTaskBaseSpec {
     /**
      * Specification of the form to be created.
      */
-    form: FormSpec
+    form: FormSpec<InputSpec>
     /**
      * If true, the form will only become active after the media playback ends
      */

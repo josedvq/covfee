@@ -40,7 +40,7 @@ class BaseCovfeeTask:
         else:
             return pd.DataFrame(data)
 
-    def validate(self, response: object, data: np.ndarray = None, log_data: List[List[Any]] = None):
+    def validate(self, response: Any, data: np.ndarray = None, log_data: List[List[Any]] = None):
         """This method decides whether a particular task submission will be accepted or not
 
         Args:

@@ -18,7 +18,7 @@
                     "name": "Sample",
                     "media": {
                         "type": "video",
-                        "url": "sample.mp4",
+                        "url": "$$www$$/sample.mp4",
                         "fps": 25
                     },
                     "intensityInput": {
@@ -29,11 +29,15 @@
             "interface": {
                 "userTasks": {
                     "continuous": {
+                        "name": "Sample",
                         "type": "Continuous1DTask",
                         "media": {
                             "type": "video",
-                            "url": "sample.mp4",
+                            "url": "$$www$$/sample.mp4",
                             "fps": 25
+                        },
+                        "intensityInput": {
+                            "mode": "continuous-mousemove"
                         }
                     }
                 }

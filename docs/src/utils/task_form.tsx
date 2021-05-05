@@ -5,7 +5,7 @@ import { Theme as AntDTheme } from '@rjsf/antd';
 import { Button, Tabs} from 'antd'
 const { TabPane } = Tabs
 import { ArrowUpOutlined } from '@ant-design/icons'
-import { CodeBlock, LivePreviewFrame} from './utils'
+import { CodeBlock, LivePreviewFrame, arrayUnique} from './utils'
 import { HITVisualizer} from './hit_visualizer'
 import schemata from '@schemata'
 
@@ -49,7 +49,10 @@ export class TaskForm extends React.Component<Props, State> {
             spec: props.spec,
         }
         this.originalSpec = props.spec
-        this.schema = schemata['definitions'][this.props.schemaName]
+        this.schema = {
+            ...schemata,
+            ...schemata['definitions'][this.props.schemaName]
+        } 
     }
 
 
@@ -63,9 +66,6 @@ export class TaskForm extends React.Component<Props, State> {
 
     handleFormChange = (data) => {
         this.formData = {...data['formData']}
-    }
-
-    handleFormError = (err) => {
     }
 
     render() {
@@ -82,8 +82,16 @@ export class TaskForm extends React.Component<Props, State> {
             ]
         }
 
+        const uiSchema = {
+            ...this.props.uiSchema,
+            'ui:order': arrayUnique(this.props.uiSchema['ui:order'].concat(['autoSubmit', 'children', 'maxSubmissions', 'timer'])),
+            'autoSubmit': {'ui:widget': 'hidden'},
+            'children': {'ui:widget': 'hidden'},
+            'maxSubmissions': {'ui:widget': 'hidden'},
+            'timer': {'ui:widget': 'hidden'}
+        }
+
         return <>
-            
             <LivePreviewFrame>
                 <HITVisualizer hit={hitProps} key={this.state.currKey}></HITVisualizer>
             </LivePreviewFrame>
@@ -95,7 +103,7 @@ export class TaskForm extends React.Component<Props, State> {
             <Tabs type="card">
                 <TabPane tab="Form" key="1">
                     <Form schema={this.schema}
-                        uiSchema={this.props.uiSchema}
+                        uiSchema={uiSchema}
                         children={true}
                         formData={this.state.spec}
                         onChange={this.handleFormChange}

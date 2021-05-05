@@ -9,7 +9,6 @@ import {
     Row,
     Col, Alert
 } from 'antd'
-import 'antd/dist/antd.css'
 import userContext from './userContext'
 import Constants from 'Constants'
 import CovfeeLogo from './art/logo.svg'

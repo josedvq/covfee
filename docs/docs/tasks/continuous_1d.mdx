@@ -11,7 +11,7 @@ export const taskSpec = {
     "type": "Continuous1DTask",
     "media": {
         "type": "video",
-        "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@type-check/samples/intensity_annotation/media/sample.mp4",
+        "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@type-check/samples/intensity_annotation/www/sample.mp4",
         "mute": true,
     },
     "intensityInput": {
@@ -25,7 +25,7 @@ export const taskSpec = {
 }
 
 export const uiSchema = {
-    'ui:order': ['name', 'type', 'intensityInput', 'media','controls',],
+    'ui:order': ['name', 'type', 'intensityInput', 'media','controls','useRequestAnimationFrame'],
     type: {'ui:widget':'hidden'},
     intensityInput: {
         mode: {'ui:widget':'hidden'}

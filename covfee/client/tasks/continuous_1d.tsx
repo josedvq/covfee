@@ -6,12 +6,12 @@ import {
 } from 'antd'
 const { Title } = Typography
 import { OneDIntensity } from '../input/1d_intensity'
-import { TaskInfo, TaskType} from '@covfee-types/task'
-import { CovfeeComponent, PlayerTaskProps } from './base'
+import { TaskType} from '@covfee-types/task'
+import {  ContinuousTaskProps, CovfeeContinuousTask, TaskInfo } from './base'
 import { Continuous1DTaskSpec} from '@covfee-types/tasks/continuous_1d'
 import { HTML5PlayerMedia } from '@covfee-types/players/html5';
 
-interface Props extends TaskType, PlayerTaskProps {
+interface Props extends TaskType, ContinuousTaskProps {
     spec: Continuous1DTaskSpec
 }
 
@@ -24,12 +24,9 @@ interface State {
         data: Array<number>
     }
 }
-class Continuous1DTask extends CovfeeComponent<Props, State> {
+class Continuous1DTask extends CovfeeContinuousTask<Props, State> {
     static taskInfo: TaskInfo = {
-        continuous: true,
-        can_visualize: true,
-        supportsParent: true,    // video task supports having a parent task
-        supportsChildren: true   // video task supports children by implementing on-frame visualization
+        supportsVisualization: true
     }
     
     state: State = {
@@ -62,22 +59,22 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
     componentDidMount() {
         this.props.buttons.addListener('play-pause', ' ', 'Play/pause the video and data capture.')
             .addEvent('keydown', (e: Event) => {
-                if (this.props.paused) this.props.buffer.log(this.props.currentTime(), ['play'])
-                else this.props.buffer.log(this.props.currentTime(), ['pause'])
-                this.togglePlayPause()
+                if (this.props.player.paused) this.props.buffer.log(this.props.player.currentTime(), ['play'])
+                else this.props.buffer.log(this.props.player.currentTime(), ['pause'])
+                this.props.player.togglePlayPause()
             })
             
-        this.props.buttons.addListener('back2s', 's', 'Go back 2 seconds')
-            .addEvent('keydown', () => {
-                this.back2s()
-                this.props.buffer.log(this.props.currentTime(), ['back2s'])
-            })
+        // this.props.buttons.addListener('back2s', 's', 'Go back 2 seconds')
+        //     .addEvent('keydown', () => {
+        //         this.back2s()
+        //         this.props.buffer.log(this.props.player.currentTime(), ['back2s'])
+        //     })
 
-        this.props.buttons.addListener('back10s', 'a', 'Go back 10 seconds')
-            .addEvent('keydown', () => {
-                this.back10s()
-                this.props.buffer.log(this.props.currentTime(), ['back10s'])
-            })
+        // this.props.buttons.addListener('back10s', 'a', 'Go back 10 seconds')
+        //     .addEvent('keydown', () => {
+        //         this.back10s()
+        //         this.props.buffer.log(this.props.player.currentTime(), ['back10s'])
+        //     })
             
         // update default keyboard keys with props
         if (this.props.spec.controls) {
@@ -85,12 +82,9 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
         }
 
         // start listening to the player
-        this.props.setPlayerListeners({
-            'load': ()=>{},
-            'frame': this.handleFrame,
-            'end': this.handleVideoEnded,
-            'vidswitch': this.handleVideoSwitch
-        })
+        this.props.player.addListener('frame', this.handleFrame)
+        this.props.player.addListener('end', this.handleVideoEnded)
+        this.props.player.addListener('vidswitch', this.handleVideoSwitch)
     }
 
     componentWillUnmount() {
@@ -104,7 +98,7 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
     // Takes care of replaying an annotation given a log
     // writes output to the buffer on every frame
     handleFrame = (time: number) => {
-        if (this.props.visualizationModeOn) {
+        if (this.props.response) {
             this.replayUntil(time)
         } else {
             this.props.buffer.data(
@@ -112,31 +106,27 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
                 [this.intensity]
             )
         }
-        if (this.props.onFrame)
-            this.props.onFrame(time)
     }
 
     handleVideoSwitch = (from: number, to: number) => {
-        if(this.props.visualizationModeOn) return
-        this.props.buffer.log(this.props.currentTime(), ['vidswitch', from, to])
+        if(this.props.response) return
+        this.props.buffer.log(this.props.player.currentTime(), ['vidswitch', from, to])
     }
 
     back2s = () => {
-        const t1 = Math.max(0, this.props.currentTime() - 2)
+        const t1 = Math.max(0, this.props.player.currentTime() - 2)
         this.goto(t1)
     }
 
     back10s = () => {
-        const t2 = Math.max(0, this.props.currentTime() - 10)
+        const t2 = Math.max(0, this.props.player.currentTime() - 10)
         this.goto(t2)
     }
 
     goto = (time: number) => {
-        this.props.currentTime(time)
+        this.props.player.currentTime(time)
         this.cancelReverseCount(this.startReverseCount)
     }
-
-    
 
     // recreate annotation (replay mode) until the given frame
     replayUntil = (time: number) => {
@@ -166,20 +156,11 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
     }
 
     handleVideoEnded = () => {
-        this.props.setPaused(true)
-        this.props.onEnd()
+        this.props.onEnd(null)
     }
 
     togglePlayPause = () => {
-        if (this.props.paused) {
-            if (this.state.reverseCount.visible) {
-                this.cancelReverseCount()
-            } else {
-                this.startReverseCount()
-            }
-        } else {
-            this.props.setPaused(true)
-        }
+        this.props.player.togglePlayPause()
     }
 
     startReverseCount = () => {
@@ -194,7 +175,7 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
             if (this.state.reverseCount.count == 1) {
                 // play the video
                 this.cancelReverseCount()
-                this.props.setPaused(false)
+                this.props.player.setPaused(false)
             } else {
                 this.setState({
                     reverseCount: {
@@ -229,11 +210,11 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
     }
 
     render() {
-        if (this.props.player) {   // if it is a child (active) task
+        if (this.props.playerElement) {   // if it is a child (active) task
             return <>
                 <Row>
                     <Col span={20}>
-                        {this.props.player}
+                        {this.props.playerElement}
                     </Col>
                     <Col span={4}>
                         <OneDIntensity
@@ -241,7 +222,7 @@ class Continuous1DTask extends CovfeeComponent<Props, State> {
                             setIntensity={this.setIntensity}
                             getIntensity={()=>{return this.intensity}}
                             input={this.props.spec.intensityInput}
-                            visualizationModeOn={this.props.visualizationModeOn}/>
+                            visualizationModeOn={!!this.props.response}/>
                     </Col>
                 </Row>
             </>

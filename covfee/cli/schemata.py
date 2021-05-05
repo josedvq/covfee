@@ -31,6 +31,10 @@ class Schemata:
         return self.schemata
 
     def make(self):
+        try:
+            os.remove(app.config["DOCS_SCHEMATA_PATH"])
+        except OSError:
+            pass
         # make the typescript into json schemata
         with working_directory(app.config['SHARED_PATH']):
             os.system('npx typescript-json-schema tsconfig.json "MyProjectSpec" --titles '
@@ -42,7 +46,7 @@ class Schemata:
             '$schema': schemata['$schema'],
             'definitions': schemata['definitions']
         }
-        json.dump(defs_only, open(app.config["DOCS_SCHEMATA_PATH"], 'w'))
+        json.dump(defs_only, open(app.config["DOCS_SCHEMATA_PATH"], 'w'), indent=4)
         self.schemata = defs_only
 
         if self.with_discriminators:

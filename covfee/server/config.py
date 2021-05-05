@@ -40,7 +40,8 @@ DATABASE_PATH = os.path.join(os.getcwd(), DATABASE_RELPATH)
 # project www and bundle location
 PROJECT_WWW_PATH = os.path.join(os.getcwd(), 'www')
 PROJECT_WWW_URL = os.path.join(BASE_URL, 'www')
-# for project media
+
+# enables the www server
 SERVE_WWW = True
 
 BUNDLE_URL = PROJECT_WWW_URL

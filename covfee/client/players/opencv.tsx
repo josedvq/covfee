@@ -1,61 +1,40 @@
 /* global cv */
+declare global {
+    var cv: any
+}
 import * as React from 'react'
-import { OpencvFlowPlayerMedia } from '@covfee-types/players/opencv';
-import { myinfo } from '../utils'
+import { OpencvFlowPlayerMedia } from '@covfee-types/players/opencv'
+import { urlReplacer, myinfo } from '../utils'
+import { CovfeeContinuousPlayer, ContinuousPlayerProps } from './base'
+import { CaretRightOutlined, CloseOutlined } from '@ant-design/icons'
+import { Button } from 'antd'
 
 // video player using opencv to control playback speed
-export interface Props extends OpencvFlowPlayerMedia {
-    /**
-     * If true, the player will pause. The parent element can play/pause playback through changing this prop.
-     */
-    paused: boolean,
+export interface Props extends ContinuousPlayerProps {
+    media: OpencvFlowPlayerMedia
     /**
      * If true, automatic optical-flow-based speed adjustment is enabled
      */
     opticalFlowEnabled?: boolean,
     /**
-     * Controls the `paused` state variable. setPaused(val) will set `paused` to val, either true or false, to pause or play the video.
-     */
-    setPaused: Function,
-    /**
-     * Playback rate.
-     */
-    rate: number,
-    /**
      * Returns the mouse position, used to adjust the video playback speed.
      */
     getMousePosition: Function,
-    /**
-     * This method is called when the video metadata has loaded (`loadedmetadata`).
-     */
-    onLoad?: Function,
-    /**
-     * Called when there is an error pre-loading the video
-     */
-    onError?: Function,
-    /**
-     * This method is called for every frame. It can be used to capture a signal from the user for every frame of the video. Some frames may be skipped if performance is suffering.
-     */
-    onFrame?: Function,
-    /**
-     * Called when the video has finished playing.
-     */
-    onEnded?: Function,
 }
-export class OpencvFlowPlayer extends React.PureComponent<Props> {
-    private video_tag = React.createRef<HTMLVideoElement>()
-    private flow_tag = React.createRef<HTMLVideoElement>()
-    private cap: cv.VideoCapture
-    private frame_flow: cv.Mat
-    private myMean: cv.Mat
-    private myStddev: cv.Mat
 
-    private req_id: any = false
-    private timeout_id: any = false
-    private rect: DOMRectReadOnly
-    private ratio: number = 0.5
-    private delay: number = 0
-    private frame: number = 0
+export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, {}> {
+    videoTag: HTMLVideoElement
+    canvasTag: HTMLCanvasElement
+    canvasCtx: CanvasRenderingContext2D
+
+    cap: any // cv.VideoCapture
+    frame_flow: any // cv.Mat
+    myMean: any // cv.Mat
+    myStddev: any // cv.Mat
+
+    req_id: any = false
+    rect: DOMRectReadOnly
+    ratio: number = 0.5
 
     state = {
         ready: false
@@ -68,10 +47,10 @@ export class OpencvFlowPlayer extends React.PureComponent<Props> {
     componentDidMount() {
 
         const cv_init = () => {
-            this.frame_flow = new cv.Mat(this.props.flow_res[1], this.props.flow_res[0], cv.CV_8UC4)
+            this.frame_flow = new cv.Mat(this.props.media.res[1], this.props.media.res[0]*2, cv.CV_8UC4)
             this.myMean = new cv.Mat(1, 4, cv.CV_64F)
             this.myStddev = new cv.Mat(1, 4, cv.CV_64F)
-            this.cap = new cv.VideoCapture(this.flow_tag.current)
+            this.cap = new cv.VideoCapture(this.videoTag)
             if(!this.props.paused) this.play()
         }
 
@@ -80,41 +59,36 @@ export class OpencvFlowPlayer extends React.PureComponent<Props> {
             cv['onRuntimeInitialized'] = cv_init
         } else {
             cv_init()
-        }        
+        }
+        
+        this.canvasCtx = this.canvasTag.getContext('2d')
 
         // update the ratio of flow_res / video_res
-        let observer = new ResizeObserver((entries) => {
+        let observer = new ResizeObserver((entries: ResizeObserverEntry[]) => {
             this.rect = entries[0].contentRect
-            this.ratio = this.props.flow_res[0] / this.rect.width
+            this.ratio = this.props.media.res[0] / this.rect.width
         })
-        observer.observe(this.video_tag.current)
-
-        this.video_tag.current.addEventListener('loadedmetadata', (e: Event) => {
-            this.props.onLoad(this.video_tag.current)
-        })
-
-        this.video_tag.current.addEventListener('ended', (e: Event) => {
-            this.props.onEnded(e)
-            this.pause()
-        })
+        observer.observe(this.canvasTag)
 
         // preload video and flow video
-        Promise.all([
-            fetch(this.props.url)
-                .then(response => response.blob())
-                .then(blob=>{
-                    this.video_tag.current.src = window.URL.createObjectURL(blob)
-                }),
-            fetch(this.props.flow_url)
-                .then(response => response.blob())
-                .then(blob=>{
-                    this.flow_tag.current.src = window.URL.createObjectURL(blob)
-                })])
-        .then(res=>{
+        fetch(urlReplacer(this.props.media.url))
+            .then(response => response.blob())
+            .then(blob=>{
+                this.videoTag.src = window.URL.createObjectURL(blob)
+            })
+            .catch(err => {
+                this.props.onError('There has been an error while loading the videos.', err)
+            })
+
+        this.videoTag.addEventListener('loadeddata', (e: Event) => {
             this.setState({ready: true})
+            this.copyVideoToCanvas()
+            this.props.onLoad(this.videoTag.duration, this.props.media.fps)
         })
-        .catch(err => {
-            this.props.onError('There has been an error while loading the videos.', err)
+
+        this.videoTag.addEventListener('ended', _=> {
+            this.props.onEnd()
+            this.pause()
         })
     }
 
@@ -126,96 +100,94 @@ export class OpencvFlowPlayer extends React.PureComponent<Props> {
         }
     }
 
-    processVideo = () => {
+    copyVideoToCanvas = () => {
+        // copy the video content to the main canvas
+        const width = this.canvasTag.width
+        const height = this.canvasTag.height
+        this.canvasCtx.drawImage(this.videoTag, 0, 0, this.props.media.res[0], this.props.media.res[1], 0, 0, width, height)
+    }
+
+    frameCallback = () => {
         const mouse_normalized = this.props.getMousePosition()
 
-        if (!this.props.opticalFlowEnabled || mouse_normalized === undefined) {
-            this.delay = 0//16
-            this.cap.read(this.frame_flow)
-            this.flow_tag.current.seekToNextFrame().then(()=>{
-                this.video_tag.current.seekToNextFrame().then(()=>{
-                    this.props.onFrame(this.frame, this.delay)
-                    this.frame += 1
-                })
-            })
-        } else {
-            const mouse = [mouse_normalized[0] * this.rect.width, mouse_normalized[0] * this.rect.height]
-            // start processing.
+        const mouse = [
+            mouse_normalized[0] * this.rect.width,
+            mouse_normalized[0] * this.rect.height
+        ]
 
-            this.cap.read(this.frame_flow)
-            const x1 = Math.max(0, mouse[0] * this.ratio - 10)
-            const x2 = Math.min(mouse[0] * this.ratio + 10, this.props.flow_res[0])
-            const y1 = Math.max(0, mouse[1] * this.ratio - 10)
-            const y2 = Math.min(mouse[1] * this.ratio + 10, this.props.flow_res[1])
+        // start processing.
+        this.cap.read(this.frame_flow)
+        const x1 = Math.max(0, mouse[0] * this.ratio - 10)
+        const x2 = Math.min(mouse[0] * this.ratio + 10, this.props.media.res[0])
+        const y1 = Math.max(0, mouse[1] * this.ratio - 10)
+        const y2 = Math.min(mouse[1] * this.ratio + 10, this.props.media.res[1])
 
-            const rect = new cv.Rect(x1, y1, x2-x1, y2-y1)
-            const roi = this.frame_flow.roi(rect)
-            cv.meanStdDev(roi, this.myMean, this.myStddev)
-            this.delay = 0//this.myMean.doubleAt(0, 0)
+        const rect = new cv.Rect(this.props.media.res[0] +x1, y1, x2-x1, y2-y1)
+        const roi = this.frame_flow.roi(rect)
+        cv.meanStdDev(roi, this.myMean, this.myStddev)
+        const delay = this.myMean.doubleAt(0, 0)
+        const rate = Math.min(1.0, Math.max(0.1, 1.0 / delay))
 
-            this.flow_tag.current.seekToNextFrame().then(()=>{
-                this.video_tag.current.seekToNextFrame().then(()=>{
-                    this.props.onFrame(this.frame, this.delay)
-                    this.frame += 1
-                })
-            })
+        if (!this.props.opticalFlowEnabled || mouse_normalized === undefined)
+            this.videoTag.playbackRate = 1
+        else {
+            this.videoTag.playbackRate = rate
         }
+
+        this.props.onFrame(this.videoTag.currentTime)
+        this.req_id = (this.videoTag as any).requestVideoFrameCallback(this.frameCallback)
+        this.copyVideoToCanvas()
     }
 
-    public play() {
-        if(!this.state.ready) return myinfo('Video is loading. Please wait a few seconds and try again.')
-
-        this.video_tag.current.onseeked = () => {
-            this.timeout_id = window.setTimeout(() => {
-                this.req_id = window.requestAnimationFrame(this.processVideo)
-            }, Math.round(this.delay / this.props.rate))
-        }
-        this.req_id = window.requestAnimationFrame(this.processVideo)
+    play() {
+        this.videoTag.play()
+        this.req_id = (this.videoTag as any).requestVideoFrameCallback(this.frameCallback)
     }
 
-    public pause() {
-        if(this.timeout_id) {
-            clearTimeout(this.timeout_id)
-            this.timeout_id = false
-        }
-        window.cancelAnimationFrame(this.req_id)
+    pause() {
+        cancelAnimationFrame(this.req_id)
         this.req_id = false
-        this.video_tag.current.onseeked = undefined
     }
 
-    public restart() {
+    restart() {
         this.currentTime(0)
     }
 
-    public currentTime(t?: number) {
-        if(t !== undefined) {
-            this.video_tag.current.currentTime = t
-            this.flow_tag.current.currentTime = t
-            this.frame = Math.round(t * this.props.fps)
+    currentTime = (time?: number, callback?: ()=>{}) => {
+        if(time !== undefined) {
+            this.videoTag.currentTime = time
             this.props.setPaused(true) // pause the video
+            if(callback) return callback()
         }
-        else return this.video_tag.current.currentTime
+        else return this.videoTag.currentTime
     }
 
-    public currentFrame(t?: number) {
-        if (t !== undefined) {
-            this.currentTime(t / this.props.fps)
-        }
-        else return this.frame
+    renderBar = () => {
+        return <div className="annot-bar-right">
+            <CaretRightOutlined /> 
+            <Button size={'small'} type={'danger'}>{pr_str}</Button> <CloseOutlined /> 
+            <Button size={'small'} type={this.state.opticalFlowEnabled ? 'danger' : 'dashed'}>
+            {this.state.playbackBaseSpeed.toPrecision(2)} <Checkbox checked={this.state.opticalFlowEnabled} onChange={this.handleToggleOpticalFlow}></Checkbox>
+            </Button>
+        </div>
     }
 
-    // wrap the player in a div with a `data-vjs-player` attribute
-    // so videojs won't create additional wrapper in the DOM
-    // see https://github.com/videojs/video.js/pull/3856
-
-    // use `ref` to give Video JS a reference to the video DOM element: https://reactjs.org/docs/refs-and-the-dom
-    //style={{ display: 'none' }}
     render() {
         return <>
-            <video ref={this.video_tag} width="100%" crossOrigin="Anonymous" disablePictureInPicture muted> 
-            </video>
-            <video ref={this.flow_tag} width={this.props.flow_res[0]} height={this.props.flow_res[1]} crossOrigin="Anonymous" style={{ display: 'none' }} preload="auto" muted>
-            </video>
+            <canvas 
+                ref={e=>{this.canvasTag = e}}
+                style={{width: '100%'}}
+                width={800}
+                height={450}/>
+            <video 
+                ref={e=>{this.videoTag = e}}
+                width={this.props.media.res[0]*2}
+                height={this.props.media.res[1]}
+                crossOrigin="Anonymous"
+                style={{ display: 'none' }}
+                preload="auto"
+                disablePictureInPicture
+                muted/>
         </>
     }
 }

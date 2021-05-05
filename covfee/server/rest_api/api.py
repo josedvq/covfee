@@ -154,14 +154,17 @@ def instance_add(hid):
 def instance(iid):
     with_tasks = request.args.get('with_tasks', True)
     with_response_info = request.args.get('with_response_info', True)
+    only_prerequisites = request.args.get('only_prerequisites', True)
     res = db.session.query(HITInstance).get(bytes.fromhex(iid))
-    return jsonify_or_404(res, with_tasks=with_tasks, with_response_info=with_response_info)
+    return jsonify_or_404(res, with_tasks=with_tasks, 
+                          only_prerequisites=only_prerequisites,
+                          with_response_info=with_response_info)
 
 
 @api.route('/instance-previews/<iid>')
 def instance_preview(iid):
     res = HITInstance.query.filter_by(preview_id=bytes.fromhex(iid)).first()
-    return jsonify_or_404(res, with_tasks=True, with_responses=False)
+    return jsonify_or_404(res, with_tasks=True, only_prerequisites=False, with_response_info=False)
 
 
 # submit a hit (when finished)
@@ -283,30 +286,20 @@ def response_submit(kid):
 
     if lastResponse is not None and not lastResponse.submitted:
         # there is an open (not submitted) response:
-        lastResponse.data = request.json
-        lastResponse.submitted = True
-        task.has_unsubmitted_response = False
+        response = lastResponse
 
-        db.session.commit()
-        return jsonify(lastResponse.as_dict())
+    else:
+        if lastResponse is None:
+            response_index = 0  # first response
+        elif lastResponse.submitted:
+            response_index = lastResponse.index+1  # following response
 
-    if lastResponse is None:
-        response_index = 0  # first response
-    elif lastResponse.submitted:
-        response_index = lastResponse.index+1  # following response
+        # no responses have been submitted or only completed responses
+        response = task.add_response(index=response_index)
 
-    # no responses have been submitted or only completed responses
-    response = TaskResponse(
-        task_id=int(kid),
-        index=response_index,
-        data=request.json,
-        chunks=[],
-        submitted=True)
-    task.has_unsubmitted_response = False
-
-    db.session.add(response)
+    res = response.submit(request.json)    
     db.session.commit()
-    return jsonify(response.as_dict())
+    return jsonify(res)
 
 
 # receive a chunk of a response, for continuous responses
@@ -317,7 +310,6 @@ def response_chunk(kid):
 
     task = db.session.query(Task).get(int(kid))
     response = task.responses[0] if task.responses else None
-    # response = task.responses.order_by(TaskResponse.index.desc()).first()
 
     # no responses or only submitted responses
     # -> create new response
@@ -328,14 +320,8 @@ def response_chunk(kid):
         if response is not None and response.submitted:
             response_index = response.index + 1
 
-        response = TaskResponse(
-            task_id=int(kid),
-            index=response_index,
-            submitted=False,
-            chunks=[])
+        response = task.add_response(index=response_index)
         task.has_unsubmitted_response = True
-
-    print(f'response id is {response.id}')
 
     # if there is a previous chunk with the same index, overwrite it
     if response.chunks.count() > 0:

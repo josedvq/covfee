@@ -6,34 +6,29 @@ import {TaskForm} from '../../src/utils/task_form'
 
 The continuous keypoint task was created for annotation of keypoints in a video. In the original application these keypoints corresponded to extremities of people in a social interaction. The task makes use of an optical flow video to play the video slower when the mouse cursor is close to moving parts, to aid annotators in the process. Skeletal keypoints were annotated one-by-one continuously, instead of traditional frame-based annotation in which some image frames are annotated to then be interpolated. In general, this task is especially useful when the target keypoint are visible for long periods of time.
 
-export const taskSpec = {
-    "name": "Continuous annotation example",
-    "type": "ContinuousKeypointTask",
-    "media": {
-        "type": "video",
-        "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/keypoint_annotation/media/sample_mp4_10s.mp4",
-        "res": [
-            320,
-            240
-        ],
-        "flow_url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/keypoint_annotation/media/sample_mp4_flow_10s.mp4",
-        "flow_res": [
-            320,
-            240
-        ],
-        "fps": 59.94,
-        "mute": true,
-        "autoplay": true,
-        "controls": false,
-        "gallery_url": "imgs/collage1.png"
-    }
-}
-
-export const uiSchema = {
-    'ui:order': ['name', 'type', 'media','controls'],
-    type: {'ui:widget':'hidden'},
-}
-
-<TaskForm spec={taskSpec} 
+<TaskForm spec={{
+        "name": "Continuous annotation example",
+        "type": "ContinuousKeypointTask",
+        "media": {
+            "type": "video",
+            "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/keypoint_annotation/media/sample_mp4_10s.mp4",
+            "res": [
+                320,
+                240
+            ],
+            "flow_url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/keypoint_annotation/media/sample_mp4_flow_10s.mp4",
+            "flow_res": [
+                320,
+                240
+            ],
+            "fps": 59.94,
+            "mute": true,
+            "autoplay": true,
+            "gallery_url": "imgs/collage1.png"
+        }
+    }} 
     schemaName='ContinuousKeypointTaskSpec'
-    uiSchema={uiSchema}/>
+    uiSchema={{
+        'ui:order': ['name', 'type', 'media', 'controls'],
+        type: {'ui:widget':'hidden'},
+    }}/>

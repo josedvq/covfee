@@ -1,5 +1,5 @@
 import { Intensity1DInputSpec } from 'types/input/1d_intensity';
-import { CommonContinuousTaskSpec, TestTaskSpec} from '../task'
+import { CommonContinuousTaskSpec} from '../task'
 import { HTML5PlayerMedia} from '../players/html5'
 
 /**
@@ -9,7 +9,7 @@ export interface Continuous1DTaskBaseSpec {
     /**
      * @default "Continuous1DTask"
      */
-    type: 'Continuous1DTask',
+    type: 'Continuous1DTask'
     /**
      * Media file to be displayed.
      */

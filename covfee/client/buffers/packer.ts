@@ -47,7 +47,6 @@ export class Packer {
         res.chunks.forEach((elem: any) => {
             elem.logs = JSON.parse(elem.logs)
         });
-        console.log(res)
         return res
     }
 

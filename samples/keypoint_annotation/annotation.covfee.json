@@ -8,40 +8,21 @@
             "name": "Keypoint1",
             "type": "annotation",
             "repeat": 2,
-            "media": {
-                "type": "video",
-                "url": "sign.mp4",
-                "res": [
-                    1280,
-                    720
-                ],
-                "flow_url": "sign_flow.mp4",
-                "flow_res": [
-                    320,
-                    180
-                ],
-                "fps": 25
-            },
             "tasks": [
                 {
                     "type": "ContinuousKeypointTask",
-                    "name": "p1_hands"
-                },
-                {
-                    "type": "ContinuousKeypointTask",
-                    "name": "p1_shoulder"
-                }
-            ],
-            "interface": {
-                "userTasks": {
-                    "keypoint": {
-                        "type": "ContinuousKeypointTask"
+                    "name": "p1_hands",
+                    "media": {
+                        "type": "video",
+                        "url": "$$www$$/sign_combined.mp4",
+                        "res": [
+                            1280,
+                            720
+                        ],
+                        "fps": 25
                     }
                 }
-            },
-            "extra": {
-                "html": "asdf"
-            }
+            ]
         }
     ]
 }

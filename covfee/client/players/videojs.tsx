@@ -2,6 +2,7 @@ import * as React from 'react'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
 import { VideojsPlayerMedia } from '@covfee-types/players/videojs'
+import { urlReplacer } from '../utils'
 
 interface Props extends VideojsPlayerMedia {
     /**
@@ -48,7 +49,7 @@ class VideojsPlayer extends React.PureComponent<Props> {
             fluid: this.props.fluid,
             aspectRatio: this.props.aspectRatio,
             sources: [{
-                src: this.props.url,
+                src: urlReplacer(this.props.url),
                 type: 'video/mp4'
             }]
         }

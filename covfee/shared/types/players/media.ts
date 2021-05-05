@@ -1,16 +1,7 @@
 /**
- * Identifies a single video file
- * @title video
+ * Media interface for the CovfeeVideoPlayer class
  */
-export interface BasicVideo {
-    /**
-     * @default "video"
-     */
-    type: 'video'
-    /**
-     * URL to hosted video file
-     */
-    url: string
+ export interface BaseVideo {
     /**
      * Frames per second of the video file.
      * Some tasks use it to collect data once per frame.
@@ -21,12 +12,32 @@ export interface BasicVideo {
      */
     muted?: boolean,
     /**
+     * User is able to mute the video
+     */
+    canMute?: boolean,
+    /**
      * Speed of the video in multiples of real time (1x)
+     * 0 will allow the user to change speed (starting at 1x)
      */
     speed?: number
 }
 
-export interface MultiviewVideo {
+/**
+ * Identifies a single video file
+ * @title video
+ */
+export interface BasicVideo extends BaseVideo{
+    /**
+     * @default "video"
+     */
+    type: 'video'
+    /**
+     * URL to hosted video file
+     */
+    url: string
+}
+
+export interface MultiviewVideo extends BaseVideo {
     /**
      * @default "video-multiview"
      */
@@ -34,25 +45,10 @@ export interface MultiviewVideo {
     /**
      * URL to video files
      */
-    url: Array<string>,
-    /**
-     * Frames per second of the video file.
-     * Some tasks use it to collect data once per frame.
-     */
-    fps?: number
-    /**
-     * Video should be played without audio
-     */
-    muted?: boolean,
-    /**
-     * Speed of the video in multiples of real time (1x)
-     */
-    speed?: number
+    url: Array<string>
 }
 
-export interface VideoSpec extends BasicVideo {
-    
-}
+export type VideoSpec = BasicVideo | MultiviewVideo
 
 /**
  * Identifies a single audio file

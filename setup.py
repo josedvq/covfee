@@ -17,7 +17,9 @@ setup(
     entry_points={
         'console_scripts': [
             # user CLI
-            'covfee = covfee.cli.commands.launch:covfee_cli'
+            'covfee = covfee.cli.commands.launch:covfee_cli',
+            # developer CLI
+            'covfee-dev = covfee.cli.commands.dev:covfee_dev_cli'
         ]
     },
     install_requires=[
