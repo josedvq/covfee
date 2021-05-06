@@ -15,10 +15,11 @@
                     "name": "Sample",
                     "media": {
                         "type": "video-multiview",
-                        "url": ["video1.mp4", "video2.mp4", "video3.mp4", "video4.mp4", "video5.mp4"]
+                        "url": ["$$www$$/video1.mp4", "$$www$$/video2.mp4", "$$www$$/video3.mp4", "$$www$$/video4.mp4"],
+                        "fps": 25
                     },
                     "intensityInput": {
-                        "mode": "continuous-mousemove"
+                        "mode": "binary"
                     }
                 }
             ],
@@ -26,10 +27,24 @@
                 "userTasks": {
                     "continuous": {
                         "type": "Continuous1DTask",
+                        "name": "Person",
                         "media": {
                             "type": "video-multiview",
-                            "url": ["video1.mp4", "video2.mp4", "video3.mp4", "video4.mp4", "video5.mp4"]
-                        }
+                            "url": ["$$www$$/video1.mp4", "$$www$$/video2.mp4", "$$www$$/video3.mp4", "$$www$$/video4.mp4", "$$www$$/video5.mp4"],
+                            "fps": 25
+                        },
+                        "intensityInput": {
+                            "mode": "binary"
+                        },
+                        "children": [
+                            {
+                                "type": "Continuous1DTask",
+                                "name": "Confidence",
+                                "intensityInput": {
+                                    "mode": "continuous-mousemove"
+                                }
+                            }
+                        ]
                     }
                 }
             }

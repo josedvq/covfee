@@ -13,19 +13,28 @@ import { TaskResponse, TaskType } from '@covfee-types/task'
 import { AnnotationBuffer } from '../buffers/buffer'
 import { TaskOverlay } from './overlay'
 import ButtonEventManagerContext from '../input/button_manager'
-import { ContinuousTaskPlayer } from './continuous_task_player'
+import { ContinuousTaskPlayer, PlayerStatusType } from './continuous_task_player'
 import buttonManagerContext from '../input/button_manager_context'
 import { QuestionCircleOutlined } from '@ant-design/icons'
 import { CovfeeTask } from 'tasks/base'
 import { BasicTaskPlayer } from './basic_task_player';
 
+export interface PlayerState {
+    status: PlayerStatusType
+    loading: boolean
+    currTask: number
+    replayMode: boolean
+}
+
 interface State {
     /**
      * Lifecycle states of the loader
-     * loading: nothing displayed yet. Querying responses to decide how to display the task
-     * 
+     * loaded: responses are loaded. overlay is shown if continuous or timed task is submitted
+     * ready: task is ready to be played
+     * ended: player called onEnd
+     * submitted: task has been submitted
      */
-    status: 'loading' | 'initready' | 'annotready' | 'replayready' | 'annotended' | 'replayended' | 'annotsubmitted'
+    status: 'loading' | 'loaded' | 'ready' | 'ended' | 'submitted'
     renderAs: {
         type: 'continuous-task' | 'default'
         timed: boolean
@@ -33,11 +42,7 @@ interface State {
     /**
      * Player state
      */
-    player : {
-        currTask: number
-        replayMode: boolean
-        paused: boolean
-    }
+    player : PlayerState
     /**
      * State of the error modal 
      */
@@ -80,9 +85,10 @@ export class TaskLoader extends React.Component<Props, State> {
         status: 'loading',
         renderAs: null,
         player: {
+            status: 'ready',
+            loading: true,
             currTask: 0,
-            replayMode: false,
-            paused: true
+            replayMode: false
         },
         errorModal: {visible: false},
         overlay: {visible: false}
@@ -117,7 +123,7 @@ export class TaskLoader extends React.Component<Props, State> {
         
         this.mountPromise.promise.then(_ => {
             this.setState({
-                status: 'initready',
+                status: 'loaded',
             })
             // load for annotation if there are no submissions
             if (this.props.task.num_submissions == 0)
@@ -162,14 +168,21 @@ export class TaskLoader extends React.Component<Props, State> {
         this.setState({
             player: {
                 ...this.state.player, 
+                status: 'ready',
                 currTask: 0,
                 replayMode: !annot
+            },
+            status: 'ready'
+        })
+    }
+
+    // Player props
+    setPlayerState = (state: PlayerState) => {
+        this.setState({
+            player: {
+                ...this.state.player,
+                ...state
             }
-        }, async () => {
-            if (this.state.renderAs.type == 'continuous-video') {
-                await this.taskPlayer.loadBuffers()
-            }
-            this.setState({status: annot ? 'annotready' : 'replayready'})
         })
     }
 
@@ -204,13 +217,13 @@ export class TaskLoader extends React.Component<Props, State> {
             .then((data) => {
                 this.response = data.response
                 this.setState({
-                    status: 'annotsubmitted'
+                    status: 'submitted'
                 })
                 this.props.onSubmit(data)
             }).catch((error) => {
                 myerror('Error submitting the task.', error)
                 this.setState({
-                    status: 'annotended'
+                    status: 'ended'
                 })
             })
     }
@@ -221,7 +234,7 @@ export class TaskLoader extends React.Component<Props, State> {
         this.endTaskResult = taskResult
         this.endTaskBuffer = buffer
         this.setState({
-            status: this.state.status === 'annotready' ? 'annotended' : 'replayended'
+            status: 'ended'
         })
     }
 
@@ -398,17 +411,16 @@ export class TaskLoader extends React.Component<Props, State> {
 
     renderOverlay = () => {
         switch(this.state.status) {
-            case 'initready':
+            case 'loaded':
                 if(this.props.task.num_submissions > 0 && this.state.renderAs.type == 'continuous-task')
                     return <TaskOverlay visible={true} {...this.getOverlaySubmittedTask()}/>
                 if (this.props.task.timer)
                     return <TaskOverlay visible={true} {...this.getOverlayInitTimedTask()}/>
                 break
-            case 'annotended':
+            case 'ended':
                 return <TaskOverlay visible={true} {...this.getOverlayNonSubmittedTask()}/>
-            case 'replayended':
                 return <TaskOverlay visible={true} {...this.getOverlayAfterReplayOrStop()}/>
-            case 'annotsubmitted':
+            case 'submitted':
                 if(this.state.renderAs.type == 'continuous-task')
                     return <TaskOverlay visible={true} {...this.getOverlaySubmittedTask()}/>
                 break
@@ -429,6 +441,8 @@ export class TaskLoader extends React.Component<Props, State> {
         
         return <ContinuousTaskPlayer
             ref={e => { this.taskPlayer = e }}
+            status={this.state.player.status}
+            setState={this.setPlayerState}
             createTaskRef={this.createTaskRef}
             media={media}
             tasks={tasks}
@@ -462,7 +476,7 @@ export class TaskLoader extends React.Component<Props, State> {
             <div className={classNames('task')}>
                 <ButtonEventManagerContext>
                     {(()=>{
-                        if(this.state.status == 'loading') return <></>
+                        if(this.state.status == 'loading') return null
                         switch (this.state.renderAs.type) {
                             case 'continuous-task':
                                 return this.renderContinuousTask()

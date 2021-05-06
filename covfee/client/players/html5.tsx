@@ -7,7 +7,12 @@ import {PlayerBar} from './videoplayer_bar'
 
 import { urlReplacer} from '../utils'
 
-export interface Props extends ContinuousPlayerProps, HTML5PlayerSpec {}
+export interface Props extends ContinuousPlayerProps, HTML5PlayerSpec {
+    /**
+     * The numerical ID of the currently-active media element (for multiple video support)
+     */
+    activeMedia: number
+}
 
 interface State {
     duration: number,
@@ -70,6 +75,9 @@ export class HTML5Player extends CovfeeContinuousPlayer<Props, State> {
         if (this.props.speed !== prevProps.speed) {
             const activeVideoTag = this.videoTags[this.active_idx].current
             activeVideoTag.playbackRate = this.props.speed
+        }
+        if (this.props.activeMedia !== prevProps.activeMedia) {
+            this.setActiveVideo(this.props.activeMedia)
         }
     }
 
@@ -163,6 +171,13 @@ export class HTML5Player extends CovfeeContinuousPlayer<Props, State> {
         if(time !== undefined) {
             this.videoTags[this.active_idx].current.currentTime = time
             this.props.setPaused(true) // pause the video
+
+            const handleTimeUpdate = () => {
+                this.copyVideoToCanvas()
+                this.videoTags[this.active_idx].current.removeEventListener('timeupdate', handleTimeUpdate)
+            }
+            this.videoTags[this.active_idx].current.addEventListener('timeupdate', handleTimeUpdate)
+            
             if(callback) callback()
         } else {
             return this.videoTags[this.active_idx].current.currentTime

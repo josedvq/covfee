@@ -9,6 +9,7 @@ import { BinaryDataCaptureBuffer } from '../buffers/binary_dc_buffer';
 import buttonManagerContext from '../input/button_manager_context'
 import { VideoSpec } from '@covfee-types/players/media';
 import { CovfeeContinuousTask, CovfeeTask } from 'tasks/base';
+import { PlayerState } from './task_loader';
 
 export interface VideoPlayerContext {
     togglePlayPause: () => void
@@ -19,6 +20,8 @@ export interface VideoPlayerContext {
     currentTime: (arg0?: number, callback?: ()=>{}) => number | void
     setSpeed: (arg0: number) => void
     addListener: (arg0: string, arg1: (...args: any[]) => void) => void
+    //optional
+    setActiveMedia?: (arg0: number) => void
 }
 
 
@@ -31,16 +34,20 @@ interface State {
         speed: number
         speedEnabled: boolean
         muted: boolean
+        activeMedia: number
     }
 }
 
+export type PlayerStatusType = 'ready' | 'started' | 'ended'
 interface Props {
+    status: PlayerStatusType
+    loading: boolean
+    setState: (arg0: Partial<PlayerState>) => null
     tasks: TaskType[]
     media: VideoSpec
     responses: any[]
     currTask: number
     replayMode: boolean
-    // response: TaskResponse
     
     onBufferError: (arg0: string) => void
 
@@ -52,6 +59,10 @@ interface Props {
 
 
 export class ContinuousTaskPlayer extends React.Component<Props, State> {
+
+    static defaultProps = {
+        status: 'loading'
+    }
 
     buffers: AnnotationBuffer[]
     taskElements: any[] = []
@@ -70,7 +81,8 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
             paused: true,
             speed: null,
             speedEnabled: true,
-            muted: false
+            muted: false,
+            activeMedia: 0
         }
     }
 
@@ -81,6 +93,25 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
             this.state.player.speedEnabled = true
         }
         this.createBuffers()
+    }
+
+    componentDidMount() {
+        const response = this.props.responses[this.props.currTask]
+        if(response && response.submitted) {
+            this.props.setState({status: 'ended'})
+        }
+    }
+
+    componentDidUpdate(prevProps: Props) {
+        if(this.props.status != prevProps.status) {
+            if(this.props.status == 'ready') {
+                this.props.setState({loading: true})
+                this.player.currentTime(0)
+                this.loadBuffers().finally(()=>{
+                    this.props.setState({loading: false})
+                })
+            }
+        }
     }
 
     createBuffers = () => {        
@@ -125,6 +156,7 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
     }
 
     handleTaskEnd = (response: any) => {
+        this.props.setState({status: 'ended'})
         this.props.onEnd(response, this.buffers[this.props.currTask], false)
     }
     
@@ -154,6 +186,15 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
             player: {
                 ...this.state.player,
                 muted: val
+            }
+        })
+    }
+
+    setActiveMedia = (num: number) => {
+        this.setState({
+            player: {
+                ...this.state.player,
+                activeMedia: num
             }
         })
     }
@@ -194,7 +235,9 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
             unmute: ()=>{},
             currentTime: ()=>{return null},
             setSpeed: ()=>{},
-            addListener: this.addListener
+            addListener: this.addListener,
+            // optional
+            setActiveMedia: ()=>{}
         }
         return ctx
     }
@@ -208,7 +251,9 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
             unmute: ()=>{this.setMuted(false)},
             currentTime: (val?: number)=>{return this.player.currentTime(val)},
             setSpeed: this.setSpeed,
-            addListener: this.addListener
+            addListener: this.addListener,
+            // optional
+            setActiveMedia: this.setActiveMedia
         }
         return ctx
     }
@@ -233,6 +278,7 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
             const props: ContinuousPlayerProps = {
                 ref: this.createPlayerRef,
                 media: this.props.media,
+                activeMedia: this.state.player.activeMedia,
                 paused: this.state.player.paused,
                 setPaused: this.setPaused,
                 speed: this.state.player.speed,

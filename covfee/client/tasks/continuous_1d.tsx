@@ -148,7 +148,7 @@ class Continuous1DTask extends CovfeeContinuousTask<Props, State> {
     replayAction = (action: Array<any>) => {
         switch (action[0]) {
             case 'vidswitch':
-                this.props.setActiveVideo(action[2])
+                this.props.player.setActiveMedia(action[2])
                 break
             default:
                 break
