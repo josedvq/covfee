@@ -116,8 +116,16 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         // return the stored promise if there is no response yet.
         if (this.loadDataPromise && this.isDataPromisePending) return this.loadDataPromise
 
+        const myHeaders = new Headers()
+        myHeaders.append('pragma', 'no-cache')
+        myHeaders.append('cache-control', 'no-cache')
+        const options = {
+            method: 'GET',
+            headers: myHeaders,
+        }
+
         this.isDataPromisePending = true
-        this.loadDataPromise = fetcher(url)
+        this.loadDataPromise = fetcher(url, options)
             .then(async (res) => {
                 this.isDataReady = true
                 const arr = await res.arrayBuffer()

@@ -122,12 +122,21 @@ export class TaskLoader extends React.Component<Props, State> {
         ]))
         
         this.mountPromise.promise.then(_ => {
-            this.setState({
-                status: 'loaded',
-            })
+            const playerStatus = (this.response && this.response.submitted) ?
+                                 'ended' : 'ready' 
+            
             // load for annotation if there are no submissions
             if (this.props.task.num_submissions == 0)
                 this.loadTask(true)
+            else {
+                this.setState({
+                    status: 'loaded',
+                    player: {
+                        ...this.state.player,
+                        status: playerStatus
+                    }
+                })
+            }
         })
     }
 
@@ -418,8 +427,11 @@ export class TaskLoader extends React.Component<Props, State> {
                     return <TaskOverlay visible={true} {...this.getOverlayInitTimedTask()}/>
                 break
             case 'ended':
-                return <TaskOverlay visible={true} {...this.getOverlayNonSubmittedTask()}/>
-                return <TaskOverlay visible={true} {...this.getOverlayAfterReplayOrStop()}/>
+                if(this.state.player.replayMode)
+                    return <TaskOverlay visible={true} {...this.getOverlayAfterReplayOrStop()}/>
+                else
+                    return <TaskOverlay visible={true} {...this.getOverlayNonSubmittedTask()}/>
+                
             case 'submitted':
                 if(this.state.renderAs.type == 'continuous-task')
                     return <TaskOverlay visible={true} {...this.getOverlaySubmittedTask()}/>

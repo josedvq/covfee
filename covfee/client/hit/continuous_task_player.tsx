@@ -38,7 +38,7 @@ interface State {
     }
 }
 
-export type PlayerStatusType = 'ready' | 'started' | 'ended'
+export type PlayerStatusType = 'ready' | 'ended'
 interface Props {
     status: PlayerStatusType
     loading: boolean
@@ -61,7 +61,7 @@ interface Props {
 export class ContinuousTaskPlayer extends React.Component<Props, State> {
 
     static defaultProps = {
-        status: 'loading'
+        status: 'ready'
     }
 
     buffers: AnnotationBuffer[]
@@ -72,7 +72,6 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
      * Stores listeners to the player component, added by tasks
      */
     listeners: {[key: string]: ((...args: any[]) => void)[] } = {}
-    mediaFps: number = 0
 
     state: State = {
         refsReady: false,
@@ -96,21 +95,33 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
     }
 
     componentDidMount() {
-        const response = this.props.responses[this.props.currTask]
-        if(response && response.submitted) {
-            this.props.setState({status: 'ended'})
-        }
+        if(this.props.status == 'ready') this.loadReadyState()
+        if(this.props.status == 'ended') this.loadEndedState()
     }
 
     componentDidUpdate(prevProps: Props) {
         if(this.props.status != prevProps.status) {
             if(this.props.status == 'ready') {
-                this.props.setState({loading: true})
-                this.player.currentTime(0)
-                this.loadBuffers().finally(()=>{
-                    this.props.setState({loading: false})
-                })
+                this.loadReadyState()
             }
+        }
+    }
+
+    loadEndedState = () => {
+        this.props.setState({status: 'ready', loading: false})
+    }
+
+    loadReadyState = () => {
+        this.props.setState({status: 'ready', loading: true})
+        if(this.player)
+            this.player.currentTime(0)
+        this.createBuffers()
+        if(this.props.replayMode) {
+            this.loadBuffers().finally(()=>{
+                this.props.setState({loading: false})
+            })
+        } else {
+            this.props.setState({loading: false})
         }
     }
 
@@ -120,7 +131,7 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
                 (index !== this.props.currTask),
                 1,   // sample length
                 200, //chunk length
-                this.mediaFps || 60,
+                this.props.media.fps || 60,
                 task.url,
                 this.props.onBufferError)
         })
@@ -200,7 +211,6 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
     }
 
     handlePlayerLoad = (duration: number, fps?: number) => {
-        this.mediaFps = fps
         this.dispatch('load', duration, fps)
     }
 

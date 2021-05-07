@@ -38,7 +38,10 @@ class BaseCovfeeTask:
         if data is None:
             return None
         else:
-            return pd.DataFrame(data)
+            assert data.ndim == 2
+            assert data.shape[1] >= 3
+            num_columns = data.shape[1] - 2
+            return pd.DataFrame(data, columns=['index', 'media_time', *[f'data{i}' for i in range(num_columns)]])
 
     def validate(self, response: Any, data: np.ndarray = None, log_data: List[List[Any]] = None):
         """This method decides whether a particular task submission will be accepted or not

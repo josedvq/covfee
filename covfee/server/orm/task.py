@@ -189,14 +189,14 @@ class TaskResponse(db.Model):
 
     def get_dataframe(self):
         task_object = self.get_task_object()
-        chunk_data = self.get_ndarray()
+        chunk_data, chunk_logs = self.get_ndarray()
         df = task_object.to_dataframe(chunk_data)
         return df
 
     def get_json(self, with_chunk_data=True):
         task_object = self.get_task_object()
         if with_chunk_data:
-            chunk_data = self.get_ndarray()
+            chunk_data, chunk_logs = self.get_ndarray()
             task_json = task_object.to_dict(self.data, chunk_data)
         else:
             task_json = task_object.to_dict(self.data, None)

@@ -220,9 +220,9 @@ export class HTML5Player extends CovfeeContinuousPlayer<Props, State> {
 
     renderSingleview = () => {
         if (this.props.media.type !== 'video') return
-        return <div className='html5player'>
+        return <div className='html5player' style={{backgroundColor: 'black'}}>
             {this.renderBar()}
-            <video style={{width: '100%'}} 
+            <video style={{width: '100%', maxHeight: 'calc(80vh)'}} 
                 ref={this.videoTags[0]} 
                 src={urlReplacer(this.props.media.url)} 
                 crossOrigin="Anonymous" 
