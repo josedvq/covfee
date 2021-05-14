@@ -108,7 +108,7 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
     }
 
     loadEndedState = () => {
-        this.props.setState({status: 'ready', loading: false})
+        this.props.setState({status: 'ended', loading: false})
     }
 
     loadReadyState = () => {
