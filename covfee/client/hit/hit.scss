@@ -71,16 +71,38 @@ nav {
 margin: 0 5px;
 }
 
+.hit-content {
+  width: 85%;
+  height: calc(100vh - 54px);
+  overflow-y: scroll;
+}
+.sidebar-container {
+  position:fixed;
+  width: 15%;
+  height: calc(100vh - 54px);
+  top: 54px;
+  right: 0;
+}
+
 /* Sidebar buttons */
 .sidebar {
+  display: flex;
+  flex-flow: column;
+  width: 100%;
+  height: inherit;
   padding: 1.333%;
+  background-color: #a6a6a6;
 
   .task-group {
-    max-height: calc(100vh - 54px);
+    height: inherit;
     overflow-y: scroll;
     list-style-type: none;
     margin: 0;
     padding: 0;
+  }
+
+  &-new {
+    margin: 2px;
   }
 
   &-group {
@@ -124,6 +146,10 @@ margin: 0 5px;
 
   }
 
+  &-bottom {
+    margin-top: auto;
+  }
+
   &-children {
     list-style-type: none;
     margin: 0;
@@ -131,12 +157,12 @@ margin: 0 5px;
   }
 
   &-btn {
-    border: 1px solid gray;
-    border-radius: 3px;
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
     margin: 2px;
+    color: #363636;
 
     &-name {
-      color: #d5d5d5;
       width: calc(100% - 36px);
       overflow-x: hidden;
       display: block;
@@ -157,14 +183,15 @@ margin: 0 5px;
     }
 
     &-parent {
-      background-color: #262626;
+      background-color: #fafafa;
     }
 
     &-child {
-      background-color: #232323;
+      background-color: #fafafa;
     }
 
     &-active {
+      color: #fafafa;
       background-color: green;
     }
   }

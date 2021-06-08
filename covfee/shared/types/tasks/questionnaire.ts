@@ -163,10 +163,6 @@ export interface QuestionnaireTaskBaseSpec {
      */
     media: VideojsPlayerMedia | WavesurferPlayerMedia
     /**
-     * Instructions to be displayed before the form
-     */
-    instructions: string
-    /**
      * Specification of the form to be created.
      */
     form: FormSpec<InputSpec>

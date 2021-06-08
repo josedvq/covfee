@@ -37,8 +37,11 @@ export abstract class CovfeeContinuousTask<T extends ContinuousTaskProps, S> ext
 export interface BaseTaskProps {
     /**
      * To be called when the task has been submitted by the user (eg. via a submit button)
+     * arg0 is the task response
+     * arg1 is a task buffer
+     * arg2 indicates whether covfee should move to the next task
      */
-    onSubmit: (arg0: any) => Promise<void>,
+    onSubmit: (arg0: any, arg1: any, arg2: boolean) => Promise<void>,
     /**
      * Task response to be displayed, possibly for editing
      * A null value indicates the task should initialize an empty state

@@ -49,6 +49,10 @@ export interface CommonTaskSpec {
      * children tasks
      */
     children?: Array<ChildTaskSpec>
+    /**
+     * Instructions to be displayed before the form
+     */
+    instructions?: string
 }
 
 /**

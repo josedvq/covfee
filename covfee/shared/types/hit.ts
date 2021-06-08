@@ -83,8 +83,4 @@ export type HitType = (AnnotationHitSpec | TimelineHitSpec) & {
      * Interface configuration object
      */
     num_submissions: number,
-    /**
-     * If true, the hit contains only prerequisite tasks
-     */
-    only_prerequisites?: boolean
 }

@@ -12,6 +12,9 @@ import {
     Route, RouteComponentProps,
 } from "react-router-dom"
 import {HitType} from '@covfee-types/hit'
+import { Modal } from 'antd'
+import Title from 'antd/lib/typography/Title'
+import { EditableTaskFields } from '@covfee-types/task'
 
 interface MatchParams {
     hitId: string
@@ -20,9 +23,10 @@ interface MatchParams {
 interface Props extends RouteComponentProps<MatchParams> {}
 
 interface State {
-    status: string,
-    previewMode: boolean,
-    error: string,
+    loading: boolean
+    status: string
+    previewMode: boolean
+    error: string
     hit: HitType
 }
 
@@ -34,6 +38,7 @@ class HitLoader extends React.Component<Props, State> {
     url: string
 
     state: State = {
+        loading: true,
         status: 'loading',
         previewMode: false,
         error: null,
@@ -53,30 +58,48 @@ class HitLoader extends React.Component<Props, State> {
         this.loadHit()
     }
 
-    loadHit = (only_prerequisites = true) => {
+    loadHit = (cb: any) => {
         const url = this.url + '?' + new URLSearchParams({
-            only_prerequisites: only_prerequisites ? '1' : '0'
         })
-        fetch(url)
+        this.setState({loading: true})
+
+        return Promise.all([
+            fetch(url)
             .then(throwBadResponse)
             .then((hit: HitType) => {
-                if (hit.submitted) {
-                    this.setState({
-                        status: 'finished',
-                        hit: hit
+                const status = hit.submitted ? 'finished' : 'ready'
+                const tasksDict = {}
+                hit.tasks.forEach(task => {
+                    tasksDict[task.id] = task
+                    task.children.forEach(child => {
+                        tasksDict[child.id] = child
                     })
-                } else {
-                    this.setState({
-                        status: 'ready',
-                        hit: hit
-                    })
-                }
+                    delete task['children']
+                })
+                hit.tasks = tasksDict
+                this.setState({
+                    status: status,
+                    hit: hit
+                })
             }).catch(error => {
                 this.setState({
                     status: 'error',
                     error
                 });
-            })
+            }),
+            // minimum duration of the "loading" state will be 1s
+            // avoid a flickering modal
+            new Promise((resolve, _) => {
+                let id = setTimeout(() => {
+                  clearTimeout(id)
+                  resolve(null)
+                }, 1000)
+              })
+        ]).then(()=>{
+            // return new Promise((resolve, _) => {
+            this.setState({loading: false}, ()=>{if(cb) cb()})
+            // })
+        })
     }
 
     handleSubmit = () => {
@@ -99,24 +122,93 @@ class HitLoader extends React.Component<Props, State> {
         return p
     }
 
-    render() {
-        switch (this.state.status) {
-            case 'loading':
-                return <div className={'site-layout-content'}>
-                    <LoadingOutlined />
-                </div>
-            case 'ready':
-                return <Route path={`${this.props.match.path}/:taskId?`}>
-                    <Hit
-                        {...this.state.hit}
-                        routingEnabled={true}
-                        previewMode={this.state.previewMode}
-                        reloadHit={this.loadHit}
-                        onSubmit={this.handleSubmit} />
-                </Route>
-            default:
-                return <></>
+    handleTaskDelete = (taskId: number) => {
+        // deleting existing task
+        const url = Constants.api_url + '/tasks/' + taskId + '/delete'
+
+        return fetch(url)
+            .then(throwBadResponse)
+            .then(_ => {
+                const tasks = {...this.state.hit.tasks}
+                tasks[taskId] = undefined 
+                this.setState({
+                    hit: {
+                        ...this.state.hit,
+                        tasks: tasks
+                    }
+                })
+            })
+    }
+
+    handleTaskEdit = (taskId: number, task: EditableTaskFields) => {
+        // editing existing task
+        const url = Constants.api_url + '/tasks/' + taskId + '/edit'
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(task)
         }
+
+        return fetch(url, requestOptions)
+            .then(throwBadResponse)
+            .then(data => {
+                const tasks = {...this.state.hit.tasks}
+                tasks[taskId] = data 
+                this.setState({
+                    hit: {
+                        ...this.state.hit,
+                        tasks: tasks
+                    }
+                })
+            })
+    }
+
+    handleTaskCreate = (parentId: number, task: EditableTaskFields) => {
+        // adding new task
+        const url = this.url + '/tasks/add'
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(task)
+        }
+
+        return fetch(url, requestOptions)
+            .then(throwBadResponse)
+            .then(data => {
+                const tasks = {...this.state.hit.tasks}
+                tasks[data.id] = data 
+                this.setState({
+                    hit: {
+                        ...this.state.hit,
+                        tasks: tasks
+                    }
+                })
+            })
+    }
+
+    render() {
+        return <>
+            {this.state.loading === true && 
+                <Modal title={<Title level={4}><LoadingOutlined /> Loading tasks</Title>} visible={true} footer={null} closable={false}>
+                    Please give a second..
+                </Modal>
+            }
+            {(() => {
+                switch (this.state.status) {
+                    case 'ready':
+                        return <Route path={`${this.props.match.path}/:taskId?`}>
+                            <Hit
+                                {...this.state.hit}
+                                routingEnabled={true}
+                                previewMode={this.state.previewMode}
+                                reloadHit={this.loadHit}
+                                onSubmit={this.handleSubmit} />
+                        </Route>
+                    default:
+                        return <></>
+            }})()}
+        </>
+        
     }
 }
 

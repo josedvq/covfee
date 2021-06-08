@@ -67,7 +67,7 @@ export class QuestionnaireTask extends CovfeeTask<Props, State> {
     }
 
     handleSubmit = () => {
-        this.props.onSubmit(this.state.form.values)
+        this.props.onSubmit(this.state.form.values, null, true)
     }
 
     render() {
