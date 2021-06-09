@@ -154,17 +154,15 @@ def instance_add(hid):
 def instance(iid):
     with_tasks = request.args.get('with_tasks', True)
     with_response_info = request.args.get('with_response_info', True)
-    only_prerequisites = request.args.get('only_prerequisites', True)
     res = db.session.query(HITInstance).get(bytes.fromhex(iid))
     return jsonify_or_404(res, with_tasks=with_tasks, 
-                          only_prerequisites=only_prerequisites,
                           with_response_info=with_response_info)
 
 
 @api.route('/instance-previews/<iid>')
 def instance_preview(iid):
     res = HITInstance.query.filter_by(preview_id=bytes.fromhex(iid)).first()
-    return jsonify_or_404(res, with_tasks=True, only_prerequisites=False, with_response_info=False)
+    return jsonify_or_404(res, with_tasks=True, with_response_info=False)
 
 
 # submit a hit (when finished)

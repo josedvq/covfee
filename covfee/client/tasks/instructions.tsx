@@ -33,11 +33,10 @@ export class InstructionsTask extends CovfeeTask<Props, State> {
     }
 
     handleSubmit = (values: any) => {
-        const vals = this.state.form.values
-        if(!vals || !vals.length)
-            this.props.onSubmit(null)
-
-        this.props.onSubmit(vals)
+        let vals = this.state.form.values
+        if(!vals || !vals.length) vals = null
+        
+        this.props.onSubmit(vals, null, true)
     }
 
     handleFormChange = (values: any) => {

@@ -46,11 +46,11 @@ class Root extends React.Component {
                                 </Route>
                             </Switch>
                         </Layout>
-                        <Footer>
+                        {/* <Footer>
                             <Text style={{float: 'right'}}>
                                 Interface created with <a href="https://github.com/josedvq/covfee">covfee</a>
                             </Text>
-                        </Footer>
+                        </Footer> */}
                     </Layout>
                 </UserContext>
             </CookiesProvider>

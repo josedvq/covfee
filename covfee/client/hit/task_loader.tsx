@@ -64,7 +64,7 @@ interface Props {
     task: TaskType
     parent: TaskType
     previewMode: boolean
-    onSubmit: ()=>void
+    onSubmit: (arg0: boolean, arg1: boolean)=>void
 }
 
 export class TaskLoader extends React.Component<Props, State> {
@@ -199,12 +199,9 @@ export class TaskLoader extends React.Component<Props, State> {
     loadTaskForReplay = () => { this.loadTask(false) }
 
 
-    handleTaskSubmit = (taskResult: any, buffer: AnnotationBuffer) => {
+    handleTaskSubmit = (taskResult: any, buffer: AnnotationBuffer, gotoNext=false) => {
         if (!['annotready'].includes(this.state.status))
             console.error(`submit() called in invalid state ${this.state.status}.`)
-        if (this.props.previewMode) {
-            return this.props.onSubmit()
-        }
 
         let sendResult = () => {
             const url = this.props.task.url + '/submit?' + new URLSearchParams({
@@ -228,7 +225,7 @@ export class TaskLoader extends React.Component<Props, State> {
                 this.setState({
                     status: 'submitted'
                 })
-                this.props.onSubmit(data)
+                this.props.onSubmit(data.valid, gotoNext)
             }).catch((error) => {
                 myerror('Error submitting the task.', error)
                 this.setState({

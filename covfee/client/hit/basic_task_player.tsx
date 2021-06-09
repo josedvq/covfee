@@ -56,8 +56,8 @@ export class BasicTaskPlayer extends React.Component<Props, State> {
         this.props.onLoad()
     }
 
-    handleTaskSubmit = (response: any) => {
-        this.props.onSubmit(response, null, false)
+    handleTaskSubmit = (response: any, buffer: any, gotoNext=false) => {
+        this.props.onSubmit(response, buffer, gotoNext)
     }
 
     render() {
