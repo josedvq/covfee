@@ -128,11 +128,12 @@ class Task(db.Model):
             if csv:
                 # write the CSV data
                 df = response.get_dataframe()
-                stream = BytesIO()
-                df.to_csv(stream, mode='wb')
-                stream.seek(0)
-                z.write_iter(os.path.join(base_path, response.get_download_filename() + '.csv'),
-                             stream)
+                if df is not None:
+                    stream = BytesIO()
+                    df.to_csv(stream, mode='wb')
+                    stream.seek(0)
+                    z.write_iter(os.path.join(base_path, response.get_download_filename() + '.csv'),
+                                stream)
 
             # write the json response
             response_dict = response.get_json(
