@@ -198,6 +198,7 @@ def instance_download(iid):
         z = zipstream.ZipFile(mode='w', compression=zipstream.ZIP_DEFLATED)
         for chunk in instance.stream_download(z, './', csv=is_csv):
             yield chunk
+        yield from z
 
     response = Response(stream_with_context(generator()), mimetype='application/zip')
     response.headers['Content-Disposition'] = 'attachment; filename={}'.format('results.zip')
