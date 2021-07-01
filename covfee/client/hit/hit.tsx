@@ -1,4 +1,5 @@
 import * as React from 'react'
+import styled from 'styled-components'
 import {unstable_batchedUpdates} from 'react-dom'
 import { withRouter, generatePath, RouteComponentProps } from 'react-router'
 import {
@@ -13,7 +14,8 @@ import {
     Modal,
     Collapse,
     Progress
-} from 'antd';
+} from 'antd'
+import 'antd/dist/antd.css'
 const { Panel } = Collapse
 import Collapsible from 'react-collapsible'
 const { Text } = Typography
@@ -35,6 +37,10 @@ interface MatchParams {
 }
 
 type Props = HitType & RouteComponentProps<MatchParams> & {
+    /**
+     * height of the container (used for adjusting sidebar height)
+     */
+    height: number
     /**
      * Enables preview mode where data submission is disabled.
      */
@@ -95,6 +101,7 @@ export class Hit extends React.Component<Props, HitState> {
 
     static defaultProps = {
         interface: {
+            type: 'annotation',
             userTasks: {},
             showProgress: false,
         }
@@ -138,8 +145,6 @@ export class Hit extends React.Component<Props, HitState> {
 
         return taskIds as [number, number[]][]
     }
-
-    isTimeline = () => {return (this.props.type == 'timeline')}
 
     componentDidMount() {
         // run fetches that update state
@@ -369,7 +374,6 @@ export class Hit extends React.Component<Props, HitState> {
     }
 
     renderMenu = () => {
-        if(this.props.type !== 'annotation') return
         const tasks = this.state.taskIds.map(row => {
             const children = row[1].map(childId => this.props.tasks[childId])
             const parent = this.props.tasks[row[0]]
@@ -412,31 +416,30 @@ export class Hit extends React.Component<Props, HitState> {
 
         const hitExtra = this.getHitExtra()
 
-        return <div className="tool-container">
-            <Row>
-                <Col span={24}>
-                    <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark">
-                        <Menu.Item disabled>
-                            <CovfeeMenuItem/>
-                        </Menu.Item>
-                        <Menu.Item key="task" disabled>
-                            <Text strong style={{ color: 'white' }}>{taskProps.spec.name}</Text>
-                        </Menu.Item>
-                        {hitExtra && 
-                        <Menu.Item key="extra" icon={<PlusOutlined />}>Extra</Menu.Item>}
-                    </Menu>
-                    
-                </Col>
-            </Row>
-            {hitExtra &&
-                <Collapsible open={this.state.extraOpen}>
-                    <Row>
-                        <Col span={24}>{hitExtra}</Col>                    
-                    </Row>
-                </Collapsible>}
-            <Row>
+        return <>
+            <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark" style={{position: 'sticky', top: 0, width: '100%', zIndex: 100000}}>
+                <Menu.Item key="logo" disabled>
+                    <CovfeeMenuItem/>
+                </Menu.Item>
+                <Menu.Item key="task" disabled>
+                    <Text strong style={{ color: 'white' }}>{taskProps.spec.name}</Text>
+                </Menu.Item>
+                {hitExtra && 
+                <Menu.Item key="extra" icon={<PlusOutlined />}>Extra</Menu.Item>}
+            </Menu>
+            <SidebarContainer height={this.props.height}>
                 {this.renderMenu()}
-                <div className="hit-content">
+            </SidebarContainer>
+            <ContentContainer>
+                
+                {hitExtra &&
+                    <Collapsible open={this.state.extraOpen}>
+                        <Row>
+                            <Col span={24}>{hitExtra}</Col>                    
+                        </Row>
+                    </Collapsible>}
+                <Row>
+                    
                     {this.props.interface.showProgress &&
                     <div style={{margin: '5px 15px'}}>
                         {(()=>{
@@ -444,23 +447,44 @@ export class Hit extends React.Component<Props, HitState> {
                             const num_steps = Object.values(this.props.tasks).length
                             return <Progress
                                 percent={100 * num_valid / num_steps}
-                                // steps={Object.values(this.props.tasks).length}
+                                // steps={Object.alues(this.props.tasks).length}
                                 format={p => {return num_valid + '/' + num_steps}}
                                 trailColor={'#c0c0c0'}/>
                         })()}
-                        
                     </div>}
                     <TaskLoader
                         key={this.state.currKey}
                         task={taskProps}
                         parent={parentProps}
-                        previewMode={this.props.previewMode}
-                        onSubmit={this.handleTaskSubmit} />
-                </div>
-            </Row>
-        </div>
+                        interfaceMode={this.props.interface.type}
+                        onSubmit={this.handleTaskSubmit}
+                        previewMode={this.props.previewMode} />
+                </Row>
+            </ContentContainer>            
+        </>
     }
 }
+
+
+
+const SidebarContainer = styled.div`
+    position: sticky;
+    display: inline-block;
+    vertical-align: top;
+    top:46px;
+    height: ${props => (Math.floor(props.height) - 46 + 'px;')}
+    // height: 500px;
+	// height:calc(100% - 54px);
+	width: 25%;
+	overflow: auto;
+`
+
+const ContentContainer = styled.div`
+    display: inline-block;
+    vertical-align: top;
+    width: calc(100% - 25%);
+    overflow: auto;
+`
 
 const HitWithRouter = withRouter(Hit)
 export default HitWithRouter

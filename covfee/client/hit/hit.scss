@@ -1,3 +1,11 @@
+/* Layout */
+html {
+  height: 100%;
+}
+body {
+  height: 100%;
+}
+
 /* Site header */
 a.header-covfee {
   font-size: 1.5em;
@@ -41,48 +49,36 @@ cursor: pointer;
 width: 100%;
 }
 .task-overlay {
-position: fixed;
-padding: 1em 0;
-width: 50%;
-margin: 0 25%;
-top: 35%;
-transform: translate(0, -100%);
-background-color: rgba(0, 0, 0, .7);
-border-width: 3px;
-border-style: solid;
-border-color: #363636;
-z-index: 2;
+  position: fixed;
+  padding: 1em 0;
+  width: 50%;
+  margin: 0 25%;
+  top: 35%;
+  transform: translate(0, -100%);
+  background-color: rgba(0, 0, 0, .7);
+  border-width: 3px;
+  border-style: solid;
+  border-color: #363636;
+  z-index: 2;
 
-&-off {
-  display: none;
-}
+  &-off {
+    display: none;
+  }
 
-.main-option {
-  display: inline-block;
-  margin: 0 5px;
-}
+  .main-option {
+    display: inline-block;
+    margin: 0 5px;
+  }
 
-nav {
-  width: 100%;
-  text-align: center;
-}
+  nav {
+    width: 100%;
+    text-align: center;
+  }
 }
 .video-overlay-nav>button {
 margin: 0 5px;
 }
 
-.hit-content {
-  width: 85%;
-  height: calc(100vh - 54px);
-  overflow-y: scroll;
-}
-.sidebar-container {
-  position:fixed;
-  width: 15%;
-  height: calc(100vh - 54px);
-  top: 54px;
-  right: 0;
-}
 
 /* Sidebar buttons */
 .sidebar {

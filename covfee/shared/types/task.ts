@@ -65,7 +65,7 @@ export interface CommonContinuousTaskSpec extends CommonTaskSpec { }
  */
 
 export type TaskSpec =  Continuous1DTaskSpec | ContinuousKeypointTaskSpec | InstructionsTaskSpec | QuestionnaireTaskSpec
-export type ChildTaskSpec = DistributiveOmit<TaskSpec, 'media'>
+export type ChildTaskSpec = DistributiveOmit<TaskSpec, 'media' | 'children'>
 export type BaseTaskSpec = Continuous1DTaskBaseSpec | ContinuousKeypointTaskBaseSpec | InstructionsTaskBaseSpec | QuestionnaireTaskBaseSpec
 
 export interface TaskResponse {

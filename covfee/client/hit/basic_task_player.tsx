@@ -7,6 +7,7 @@ import { BinaryDataCaptureBuffer } from '../buffers/binary_dc_buffer';
 
 import buttonManagerContext from '../input/button_manager_context'
 import { CovfeeTask } from '../tasks/base';
+import { Button } from 'antd';
 
 
 interface State {
@@ -17,6 +18,7 @@ interface Props {
     task: TaskType
     response: any
     replayMode: boolean
+    submitButtonText: string
     
     onBufferError: (arg0: string) => void
 
@@ -60,6 +62,12 @@ export class BasicTaskPlayer extends React.Component<Props, State> {
         this.props.onSubmit(response, buffer, gotoNext)
     }
 
+    renderSubmitButton = (extraProps: any) => {
+        return <Button type="primary" htmlType="submit" {...extraProps}>
+            {this.props.submitButtonText}
+        </Button>
+    }
+
     render() {
         const taskClass = getTaskClass(this.props.task.spec.type)
         return React.createElement(taskClass, {
@@ -73,7 +81,9 @@ export class BasicTaskPlayer extends React.Component<Props, State> {
 
             // task lifecycle
             onLoad: this.handleTaskLoad,
-            onSubmit: this.handleTaskSubmit
+            onSubmit: this.handleTaskSubmit,
+            
+            renderSubmitButton: this.renderSubmitButton
         }, null)
     }
 }

@@ -22,8 +22,7 @@ COVFEE_CLI_PATH = os.path.join(COVFEE_BASE_PATH, 'cli')
 COVFEE_CLIENT_PATH = os.path.join(COVFEE_BASE_PATH, 'client')
 SHARED_PATH = os.path.join(COVFEE_BASE_PATH, 'shared')
 # for storing the json schemata for validation
-DOCS_SCHEMATA_PATH = os.path.join(COVFEE_BASE_PATH, '..', 'docs', 'schemata.json')
-FILTER_SCHEMATA_PATH = os.path.join(COVFEE_BASE_PATH, 'cli', 'schemata.json')
+SCHEMATA_PATH = os.path.join(COVFEE_BASE_PATH, 'shared', 'schemata.json')
 
 # Configure application to store JWTs in cookies. Whenever you make
 # a request to a protected endpoint, you will need to send in the

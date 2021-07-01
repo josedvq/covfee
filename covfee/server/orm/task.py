@@ -205,6 +205,7 @@ class TaskResponse(db.Model):
 
     def get_download_filename(self):
         if self.task.parent:
+            # start with the parent name for children tasks
             return f'{self.task.parent.spec.spec["name"]}-{self.task.spec.spec["name"]}_{self.index:d}'
         else:
             return f'{self.task.spec.spec["name"]}_{self.index:d}'

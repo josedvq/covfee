@@ -11,5 +11,5 @@
       "npmClientArgs": ["--no-package-lock"]
     }
   },
-  "packages": ["covfee/client", "docs"]
+  "packages": ["covfee/client", "covfee/shared", "docs"]
 }

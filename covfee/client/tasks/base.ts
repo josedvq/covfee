@@ -36,6 +36,10 @@ export abstract class CovfeeContinuousTask<T extends ContinuousTaskProps, S> ext
  */
 export interface BaseTaskProps {
     /**
+     * Returns a submit button to be rendered in the task. Alternative to directly calling onSubmit.
+     */
+    renderSubmitButton: (arg0?: any) => React.ReactNode
+    /**
      * To be called when the task has been submitted by the user (eg. via a submit button)
      * arg0 is the task response
      * arg1 is a task buffer

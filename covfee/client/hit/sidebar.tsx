@@ -104,66 +104,64 @@ export class Sidebar extends React.Component<Props, State> {
     }
 
     render() {
-        return <div className="sidebar-container">
-            <nav className="sidebar">
-                {this.props.editMode.enabled &&
-                    ((()=>{
-                        let task
-                        if (!this.state.editTaskModal.new) {
-                            const taskId = this.state.editTaskModal.taskId
-                            task = taskId[1] ?
-                                this.props.tasks[taskId[0]].children[taskId[1]].spec :
-                                this.props.tasks[taskId[0]].spec
-                        } else task=null
+        return <nav className="sidebar">
+            {this.props.editMode.enabled &&
+                ((()=>{
+                    let task
+                    if (!this.state.editTaskModal.new) {
+                        const taskId = this.state.editTaskModal.taskId
+                        task = taskId[1] ?
+                            this.props.tasks[taskId[0]].children[taskId[1]].spec :
+                            this.props.tasks[taskId[0]].spec
+                    } else task=null
 
-                        return <TaskEditorModal
-                            visible={this.state.editTaskModal.visible}
-                            new={this.state.editTaskModal.new}
-                            presets={this.props.editMode.presets}
-                            task={task}
-                            onSubmit={(task) => {
-                                return this.state.editTaskModal.new ?
-                                    this.props.editMode.onTaskCreate(this.state.editTaskModal.taskId[0], task) :
-                                    this.props.editMode.onTaskEdit(this.state.editTaskModal.taskId, task)
-                            }}
-                            onClose={this.handleEditTaskCancel}
-                            onDelete={() => { return this.props.editMode.onTaskDelete(this.state.editTaskModal.taskIndex) }} />
-                    })())
-                    
-                }
-                <Button
-                    type="primary"
-                    className="sidebar-new"
-                    disabled={!this.props.editMode.enabled || !this.props.editMode.allowNew}
-                    block={true}
-                    onClick={() => { this.handleClickAdd(null) }}
-                    icon={<PlusCircleOutlined />}>
-                    New Task
-                    </Button>
-                <ol className={'task-group'}>
-                    {this.props.tasks.map((task, index) => 
-                        <TaskSection
-                            key={task.id} 
-                            name={task.spec.name} 
-                            children={task.children ? task.children.map((child, idx) =>{
-                                return {
-                                    name: child.spec.name,
-                                    active: (index === this.props.currTask[0] && 
-                                            idx === this.props.currTask[1]),
-                                    editable: true // TODO: fix
-                                }
-                            }) : []}
-                            editable={task.editable}
-                            active={index == this.props.currTask[0] && this.props.currTask[1] == null}
-                            onClickActivate={(child_index) => { this.props.onChangeActiveTask([index, child_index])}}
-                            onClickEdit={(child_index) => { this.handleClickEdit([index, child_index])}}/>)}
-                    
-                </ol>
-                <nav className='sidebar-bottom'>
-                    {this.props.children}
-                </nav>
+                    return <TaskEditorModal
+                        visible={this.state.editTaskModal.visible}
+                        new={this.state.editTaskModal.new}
+                        presets={this.props.editMode.presets}
+                        task={task}
+                        onSubmit={(task) => {
+                            return this.state.editTaskModal.new ?
+                                this.props.editMode.onTaskCreate(this.state.editTaskModal.taskId[0], task) :
+                                this.props.editMode.onTaskEdit(this.state.editTaskModal.taskId, task)
+                        }}
+                        onClose={this.handleEditTaskCancel}
+                        onDelete={() => { return this.props.editMode.onTaskDelete(this.state.editTaskModal.taskIndex) }} />
+                })())
+                
+            }
+            <Button
+                type="primary"
+                className="sidebar-new"
+                disabled={!this.props.editMode.enabled || !this.props.editMode.allowNew}
+                block={true}
+                onClick={() => { this.handleClickAdd(null) }}
+                icon={<PlusCircleOutlined />}>
+                New Task
+                </Button>
+            <ol className={'task-group'}>
+                {this.props.tasks.map((task, index) => 
+                    <TaskSection
+                        key={task.id} 
+                        name={task.spec.name} 
+                        children={task.children ? task.children.map((child, idx) =>{
+                            return {
+                                name: child.spec.name,
+                                active: (index === this.props.currTask[0] && 
+                                        idx === this.props.currTask[1]),
+                                editable: true // TODO: fix
+                            }
+                        }) : []}
+                        editable={task.editable}
+                        active={index == this.props.currTask[0] && this.props.currTask[1] == null}
+                        onClickActivate={(child_index) => { this.props.onChangeActiveTask([index, child_index])}}
+                        onClickEdit={(child_index) => { this.handleClickEdit([index, child_index])}}/>)}
+                
+            </ol>
+            <nav className='sidebar-bottom'>
+                {this.props.children}
             </nav>
-        </div>
+        </nav>
     }
 }
 

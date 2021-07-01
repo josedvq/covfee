@@ -35,6 +35,6 @@ def build_master():
 @covfee_dev_cli.command(name='schemata')
 def make_schemata():
     with Halo(text='Making schemata', spinner='dots') as spinner:
-        schema = Schemata(with_discriminators=False)
+        schema = Schemata()
         schema.make()
         spinner.succeed('Schemata made.')

@@ -11,11 +11,10 @@ module.exports = {
   organizationName: 'josedvq', // Usually your GitHub org/user name.
   projectName: 'covfee', // Usually your repo name.
   scripts: [
-    'https://cdn.jsdelivr.net/gh/josedvq/covfee@master/covfee/static/js/opencv.js'
+    'https://cdn.jsdelivr.net/gh/josedvq/covfee@master/covfee/static/js/opencv.js',
   ],
   stylesheets: [
-    // 'https://unpkg.com/antd@4.8.2/dist/antd.min.css'
-    // 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'
+    'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'
   ],
   plugins: [path.resolve(__dirname, 'webpack-config-plugin'), 'docusaurus-plugin-sass'],
   themeConfig: {

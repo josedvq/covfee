@@ -1,0 +1,8 @@
+{
+    "name": "covfee-shared",
+    "version": "0.0.0",
+    "main": "index.ts",
+    "dependencies": {
+        "ajv": "^8.0.5"
+    }
+}

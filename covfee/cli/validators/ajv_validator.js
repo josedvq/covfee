@@ -1,7 +1,7 @@
 // Node.js require:
 const fs = require("fs")
 const Ajv = require("ajv")
-const schemata = require("../schemata.json")
+const schemata = require("../../shared/schemata.json")
 const zmq = require("zeromq")
 
 class Validator {

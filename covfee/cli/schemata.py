@@ -7,14 +7,10 @@ from covfee.cli.utils import working_directory
 
 
 class Schemata:
-    def __init__(self, with_discriminators=True):
+    def __init__(self):
         self.schemata = None
-        self.with_discriminators = with_discriminators
 
-        if self.with_discriminators:
-            self.schemata_path = app.config['FILTER_SCHEMATA_PATH']
-        else:
-            self.schemata_path = app.config["DOCS_SCHEMATA_PATH"]
+        self.schemata_path = app.config['SCHEMATA_PATH']
 
     def exists(self):
         return os.path.exists(self.schemata_path)
@@ -30,31 +26,69 @@ class Schemata:
         self.make()
         return self.schemata
 
+    def recursive_resolve_refs(self, definition):
+        def resolve(node):
+            # Returns a list of the resolved children nodes of a node up to nodes with properties
+            if 'allOf' in node:
+                raise Exception('found allOf in schema.')
+
+            if 'oneOf' in node:
+                raise Exception('found oneOf in node')
+
+            if '$ref' in node:
+                print(node['$ref'])
+                return resolve(self.get_ref(node['$ref']))
+
+            if 'anyOf' in node:
+                node['anyOf'] = [resolve(n) for n in node['anyOf']]
+                return node
+                # return [resolve(n) for n in node['anyOf']]
+
+            # print(node)
+
+            if node['type'] == 'object' and 'properties' in node and node['properties']:
+                node['properties'] = {k: resolve(n) for k, n in node['properties'].items()}
+
+            if node['type'] == 'array' and node['items']:
+                if type(node['items']) == dict:
+                    node['items'] = resolve(node['items'])
+                else:
+                    node['items'] = [resolve(n) for n in node['items']]
+
+            return node
+
+        try:
+            return resolve(definition)
+        except:
+            pass
+
+        
+
+        
+
     def make(self):
         try:
-            os.remove(app.config["DOCS_SCHEMATA_PATH"])
+            os.remove(app.config["SCHEMATA_PATH"])
         except OSError:
             pass
         # make the typescript into json schemata
         with working_directory(app.config['SHARED_PATH']):
             os.system('npx typescript-json-schema tsconfig.json "MyProjectSpec" --titles '
-                      f'--ignoreErrors --required -o {app.config["DOCS_SCHEMATA_PATH"]}')
+                      f'--ignoreErrors --required -o {app.config["SCHEMATA_PATH"]}')
 
         # process the schemata for validation
-        schemata = json.load(open(app.config["DOCS_SCHEMATA_PATH"]))
+        schemata = json.load(open(app.config["SCHEMATA_PATH"]))
         defs_only = {
             '$schema': schemata['$schema'],
             'definitions': schemata['definitions']
         }
-        json.dump(defs_only, open(app.config["DOCS_SCHEMATA_PATH"], 'w'), indent=4)
         self.schemata = defs_only
 
-        if self.with_discriminators:
-            self.schemata['definitions'] = {
-                k: self.add_discriminators(d)
-                for k, d in self.schemata['definitions'].items()}
-            json.dump(self.schemata, open(
-                app.config['FILTER_SCHEMATA_PATH'], 'w'), indent=2)
+        self.schemata['definitions'] = {
+            k: self.add_discriminators(d)
+            for k, d in self.schemata['definitions'].items()}
+        json.dump(self.schemata, open(
+            app.config['SCHEMATA_PATH'], 'w'), indent=2)
 
     def get_ref(self, ref):
         return self.schemata['definitions'][ref[14:]]

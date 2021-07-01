@@ -2,6 +2,167 @@ import { CommonTaskSpec } from '../task'
 import { WavesurferPlayerMedia } from '../players/wavesurfer'
 import { VideojsPlayerMedia } from 'types/players/videojs'
 
+
+export type SwitchSpec = {
+    /**
+     * @default "Switch"
+     */
+    inputType: 'Switch'
+    /**
+     * Initial state
+     * @default false
+     */
+    defaultChecked?: boolean
+    /**
+     * 	The size of the Switch
+     * @default "default"
+     */
+    size?: 'default' | 'small'
+    /**
+     * The text to be shown when the state is checked
+     */
+    checkedChildren?: string
+    /**
+     * 	The text to be shown when the state is unchecked
+     */
+    unCheckedChildren?: string
+}
+
+export type RateSpec = {
+    /**
+     * @default "Rate"
+     */
+     inputType: 'Rate'
+    /**
+     * Whether to allow clear when click again
+     * @default true
+     */
+    allowClear?: boolean
+    /**
+     * Allow selection of a half-start
+     * @default false
+     */
+    allowHalf?: boolean
+    /**
+     * Custom character to use in place of star
+     * @default "StarFilled"
+     */
+    character?: string
+    /**
+     * Number of characters (default: 5)
+     * @default 5
+     */
+    count?: number
+    /**
+     * Default value selected
+     * @default 0
+     */
+    defaultValue?: number
+    /**
+     * Customize tooltip for each character
+     */
+    tooltips?: string[]
+}
+
+export type SelectSpec = {
+    /**
+     * @default "Select"
+     */
+     inputType: 'Select'
+    /**
+     * Show clear button
+     * @default false
+     */
+    allowClear?: boolean
+    /**
+     * Whether the current search will be cleared on selecting an item. Only applies when mode is set to multiple or tags
+     * @default true
+     */
+    autoClearSearchValue?: boolean
+    /**
+     * Adds border style
+     * @default true
+     */
+    bordered?: boolean
+    /**
+     * Whether active first option by default
+     * @default true
+     */
+    defaultActiveFirstOption?: boolean
+    /**
+     * Initial open state of dropdown
+     */
+    defaultOpen?: boolean
+    /**
+     * 	Initial selected option
+     */
+    defaultValue?: string | string[] | number | number[]
+    /**
+     * If true, filter options by input
+     * @default true
+     */
+    filterOption?: boolean
+    /**
+     * Whether to embed label in value, turn the format of value from string to { value: string, label: ReactNode }
+     * @default false
+     */
+    labelInValue?: boolean
+    /**
+     * Config popup height
+     * @default 256
+     */
+    listHeight?: number
+    /**
+     * 	Max tag count to show. responsive will cost render performance
+     */
+    maxTagCount?: number | 'responsive'
+    /**
+     * Max tag text length to show
+     */
+    maxTagTextLength?: number
+    /**
+     * 	Set mode of Select
+     */
+    mode?: 'multiple' | 'tags'
+    /**
+     * Which prop value of option will be used for filter if filterOption is true. If options is set, it should be set to label
+     * @default "value"
+     */
+    optionFilterProp?: string
+    /**
+     * Which prop value of option will render as content of select
+     * @default "children"
+     */
+    optionLabelProp?: string
+    /**
+     * Select options.
+     */
+    options: any
+    /**
+     * Whether to show the drop-down arrow
+     */
+    showArrow?: boolean
+    /**
+     * Whether show search input in single mode
+     * @default false
+     */
+    showSearch?: boolean
+    /**
+     * Size of Select input
+     * @default "middle"
+     */
+    size?: 'large' | 'middle' | 'small'
+    /**
+     * Separator used to tokenize on tag and multiple mode
+     */
+    tokenSeparators?: string[]
+    /**
+     * Disable virtual scroll when set to false
+     * @default true
+     */
+    virtual?: boolean
+}
+
 export type CascaderSpec = {
     /**
      * @default "Cascader"
@@ -43,6 +204,41 @@ export interface InputFieldSpec { // TODO: extend with more properties from inpu
     defaultValue?: string,
     maxLength?: number,
     minLength?: number,
+}
+
+/**
+* Props for the antd textarea field
+* @title textarea
+*/
+export interface TextareaSpec { // TODO: extend with more properties from inputHTML
+    /**
+     * @default "Input.TextArea"
+     */
+    inputType: 'Input.TextArea',
+    /**
+     * Allows the content to be cleared via clear icon
+     */
+    allowClear?: boolean,
+    /**
+     * Adjusts height based on content
+     */
+    autoSize?: boolean
+    /**
+     * If true, adds a border style
+     */
+    bordered?: boolean
+    /**
+     * Initial content
+     */
+    defaultValue?: string
+    /**
+     * Max length of content (in chars)
+     */
+    maxLength?: number
+    /**
+     * If true, shows the char count
+     */
+    showCount?: boolean
 }
 
 /**
@@ -94,9 +290,19 @@ export interface SliderSpec
     /**
      * @default {0: "0", 1: "1", 2: "2"}
      */
-    marks?: {[key: number]: {
-        label: string | number
-    }}
+    marks?: object
+    /**
+     * Make effect when marks not null, true means containment and false means coordinative
+     */
+    included?: boolean
+    /**
+     * If true, Tooltip will show always, or it will not show anyway, even if dragging or hovering
+     */
+    tooltipVisible?: boolean
+    /**
+     * Position of the tooltip
+     */
+    tooltipPlacement?: 'top' | 'left' | 'right' | 'bottom' | 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'leftTop' | 'leftBottom' | 'rightTop' | 'rightBottom'
     /**
      * Whether the thumb can drag over tick only
      */
@@ -112,7 +318,7 @@ export interface SliderSpec
 }
 
 
-export type InputSpec = CheckboxGroupSpec | InputFieldSpec | RadioSpec | SliderSpec
+export type InputSpec = SwitchSpec | SelectSpec | RateSpec | CheckboxGroupSpec | InputFieldSpec | TextareaSpec | RadioSpec | SliderSpec
 
 export interface FieldSpec<T> {
     /**
@@ -137,6 +343,10 @@ export interface FieldSpec<T> {
      * If true the field will be required to be filled before submission.
      */
     required?: boolean
+    /**
+     * If given the field will only be available when the condition is true
+     */
+    condition?: string
 }
 
 export interface FormSpec<T> {
@@ -161,7 +371,7 @@ export interface QuestionnaireTaskBaseSpec {
     /**
      * Media file to be displayed.
      */
-    media: VideojsPlayerMedia | WavesurferPlayerMedia
+    media?: VideojsPlayerMedia | WavesurferPlayerMedia
     /**
      * Specification of the form to be created.
      */

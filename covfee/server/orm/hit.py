@@ -59,8 +59,7 @@ class HIT(db.Model):
 
     def instantiate(self):
         # insert multiple hits/URLs according to the repeat param
-        # for annotation hits, tasks belong to instances
-        # for timeline hits, tasks belong to HITs
+        # tasks can belong to hits (fixed) or to instances (user-created)
         # instances are always created
         instance = HITInstance(
             id=sha256(self.get_hashstr(f'instance{len(self.instances)}').encode()).digest(),

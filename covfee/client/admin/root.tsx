@@ -4,6 +4,7 @@ import {
     Menu,
     Typography
 } from 'antd'
+import 'antd/dist/antd.css'
 
 const { Title, Paragraph, Text } = Typography;
 

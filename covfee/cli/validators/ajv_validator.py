@@ -61,9 +61,3 @@ class AjvValidator:
 
     def validate_project(self, project_spec):
         self.schema_validate('ProjectSpec', project_spec)
-
-    def validate_hit(self, hit_spec):
-        self.schema_validate('HitSpec', hit_spec)
-
-    def validate_task(self, task_spec):
-        self.schema_validate('TaskSpec', task_spec)

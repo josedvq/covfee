@@ -61,9 +61,26 @@ interface State {
 }
 
 interface Props {
+    /**
+     * Task props and specification
+     */
     task: TaskType
+    /**
+     * Props and specification of parent task
+     */
     parent: TaskType
+    /**
+     * If true, the task is only previewed: submission and server communication are disabled.
+     * Used for previews and playground where no server is available.
+     */
     previewMode: boolean
+    /**
+     * Interface mode: used to adjust the way the task is displayed in annotation or timeline modes.
+     */
+    interfaceMode: 'annotation' | 'timeline'
+    /**
+     * To be called when the task is submitted.
+     */
     onSubmit: (arg0: boolean, arg1: boolean)=>void
 }
 
@@ -200,6 +217,9 @@ export class TaskLoader extends React.Component<Props, State> {
 
 
     handleTaskSubmit = (taskResult: any, buffer: AnnotationBuffer, gotoNext=false) => {
+        if(this.props.previewMode)
+            return console.info('submit() called in preview mode.')
+
         if (!['annotready'].includes(this.state.status))
             console.error(`submit() called in invalid state ${this.state.status}.`)
 
@@ -474,7 +494,9 @@ export class TaskLoader extends React.Component<Props, State> {
             onBufferError={this.handleBufferError}
             // lifecycle
             onLoad={this.handleTaskLoad}
-            onSubmit={this.handleTaskSubmit} />
+            onSubmit={this.handleTaskSubmit}
+            // interface
+            submitButtonText={this.props.interfaceMode == 'annotation' ? 'Submit' : 'Next'}/>
     }    
 
     render() {
@@ -482,7 +504,7 @@ export class TaskLoader extends React.Component<Props, State> {
             {this.renderOverlay()}
             {this.renderErrorModal()}
             <div ref={e=>{this.taskInstructionsElem = e}}></div>
-            <div className={classNames('task')}>
+            <div style={{width: '100%'}}>
                 <ButtonEventManagerContext>
                     {(()=>{
                         if(this.state.status == 'loading') return null

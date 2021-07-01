@@ -20,7 +20,7 @@ interface State {
         paused: boolean
     },
     form: {
-        values: FormState
+        values: any
         disabled: boolean
     }
 }
@@ -32,7 +32,8 @@ export class QuestionnaireTask extends CovfeeTask<Props, State> {
             paused: true
         },
         form: {
-            values: this.props.spec.form && this.props.spec.form.fields.map(field=>{return {name: field.name}}),
+            // values: this.props.spec.form && this.props.spec.form.fields.map(field=>{return {name: field.name}}),
+            values: null,
             disabled: this.props.disabled
         }
     }
@@ -84,6 +85,7 @@ export class QuestionnaireTask extends CovfeeTask<Props, State> {
                 </Col>
             </Row>}
             <Row gutter={16}>
+                {this.props.spec.media &&
                 <Col span={16}>
                     {(()=>{
                         switch(this.props.spec.media.type) {
@@ -99,13 +101,14 @@ export class QuestionnaireTask extends CovfeeTask<Props, State> {
                                 return <p>Unrecognized media type.</p>
                         }
                     })()}
-                </Col>
-                <Col span={8}>
+                </Col>}
+                <Col span={this.props.spec.media ? 8 : 24}>
                     <Form {...this.props.spec.form}
                         disabled={this.props.disabled} 
                         values={this.state.form.values} 
                         setValues={this.handleChange}
                         withSubmitButton={true}
+                        renderSubmitButton={this.props.renderSubmitButton}
                         onSubmit={this.handleSubmit}/>
                 </Col>
             </Row>

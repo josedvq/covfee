@@ -1,12 +1,13 @@
 
 import * as React from 'react'
+import styled from 'styled-components'
 import { withRouter } from 'react-router'
 import Hit from './hit'
 import Constants from 'Constants'
 import { fetcher, getUrlQueryParam, throwBadResponse} from '../utils'
 
 import {
-    LoadingOutlined,
+    LoadingOutlined, WindowsFilled,
 } from '@ant-design/icons';
 import {
     Route, RouteComponentProps,
@@ -28,6 +29,7 @@ interface State {
     previewMode: boolean
     error: string
     hit: HitType
+    containerHeight: number
 }
 
 /**
@@ -36,6 +38,7 @@ interface State {
 class HitLoader extends React.Component<Props, State> {
     id: string
     url: string
+    onresize:Function
 
     state: State = {
         loading: true,
@@ -43,6 +46,7 @@ class HitLoader extends React.Component<Props, State> {
         previewMode: false,
         error: null,
         hit: null,
+        containerHeight: 0
     }
 
     constructor(props: Props) {
@@ -56,9 +60,18 @@ class HitLoader extends React.Component<Props, State> {
 
     componentDidMount() {
         this.loadHit()
+        this.onresize = (e: Event) => {
+            //note i need to pass the event as an argument to the function
+            this.setState({containerHeight: e.target.outerHeight})
+        }
+        addEventListener("resize", this.onresize);
     }
 
-    loadHit = (cb: any) => {
+    componentWillUnmount() {
+        removeEventListener('resize', this.onresize)
+    }
+
+    loadHit = (cb?: any) => {
         const url = this.url + '?' + new URLSearchParams({
         })
         this.setState({loading: true})
@@ -193,24 +206,34 @@ class HitLoader extends React.Component<Props, State> {
                     Please give a second..
                 </Modal>
             }
+            <HitContainer>
             {(() => {
                 switch (this.state.status) {
                     case 'ready':
                         return <Route path={`${this.props.match.path}/:taskId?`}>
                             <Hit
                                 {...this.state.hit}
+                                height={window.innerHeight}
                                 routingEnabled={true}
                                 previewMode={this.state.previewMode}
                                 reloadHit={this.loadHit}
                                 onSubmit={this.handleSubmit} />
+                            
                         </Route>
                     default:
                         return <></>
             }})()}
+            </HitContainer>
         </>
         
     }
 }
+
+const HitContainer = styled.div`
+    position: relative;
+    height: 100%;
+    width: 100%;
+`
 
 const HitLoaderWithRouter = withRouter(HitLoader)
 

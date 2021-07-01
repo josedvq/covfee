@@ -15,6 +15,7 @@
         "paths": {
             "Constants": ["../../docs/covfee_constants.json"],
             "@covfee-types/*": ["../shared/types/*"],
+            "@covfee-shared/*": ["../shared/*"],
             "@docs/*": ["../../docs/*"]
         }
     },

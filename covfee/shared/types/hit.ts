@@ -27,50 +27,46 @@ export interface HitBaseSpec {
     extra?: MarkdownContentSpec
 }
 
-/**
-* @TJS-additionalProperties false
-*/
-export interface AnnotationHitSpec extends HitBaseSpec {
+export interface BaseInterface {
     /**
-     * type of HIT.
+     * Display a bar indicating progress as fraction of completed tasks
+     */
+    showProgress?: boolean,
+}
+
+export interface AnnotationInterface extends BaseInterface{
+    /**
+     * type of interface.
      * @default "annotation"
      */
     type: 'annotation'
     /**
-     * Interface configuration options
+     * Allow the user to create tasks from the given map of id => task_spec
      */
-    interface?: {
-        /**
-         * Allow the user to create tasks from the given map of id => task_spec
-         */
-        userTasks?: {[key: string]: TaskSpec}
-    }
+    userTasks?: {[key: string]: TaskSpec}
+}
+
+export interface TimelineInterface extends BaseInterface {
+    /**
+     * type of interface.
+     * @default "annotation"
+     */
+    type: 'annotation'
 }
 
 /**
 * @TJS-additionalProperties false
 */
-export interface TimelineHitSpec extends HitBaseSpec {
-    /**
-     * type of HIT. 
-     * @default "timeline"
-     */
-    type: 'timeline',
+export interface HitSpec extends HitBaseSpec {
+    
     /**
      * Interface configuration options
      */
-    interface?: {
-        /**
-         * Display a bar indicating progress in the timeline
-         */
-        showProgress?: boolean,
-    }
+    interface?: AnnotationInterface | TimelineInterface
 }
 
-export type HitSpec = AnnotationHitSpec | TimelineHitSpec
-
 // extends the specs with all the covfee-added fields
-export type HitType = (AnnotationHitSpec | TimelineHitSpec) & {
+export type HitType = HitSpec & {
     /**
      * list of tasks in the HIT
      */

@@ -2,55 +2,169 @@
 title: Questionnaires
 ---
 
-import {TaskForm} from '../../src/utils/task_form'
+import {TaskPlayground} from '../../src/utils/task_playground'
 
 # Surveys and thin-slice annotations
 
 The questionnaire task was created to support basic the creation of static questionnaires. These can be used to collect subject information as in a typical survey. The task can include media, which supports the use case of thin-slice annotations of video or audio.
 
-export const taskSpec = {
-    "name": "Example Questionnaire",
-    "type": "QuestionnaireTask",
-    "media": {
-        "type": "video",
-        "url": "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4",
-        "mute": true,
-        "autoplay": true,
-        "controls": false
+export const playgroundTasks = [
+    {
+        "schema": "QuestionnaireTaskSpec",
+        "label": "Video annotation",
+        "spec": {
+            "name": "Video annotation example",
+            "type": "QuestionnaireTask",
+            "media": {
+                "type": "video",
+                "url": "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4",
+                "mute": true,
+                "autoplay": true,
+                "controls": false
+            },
+            "instructions": "These are the form instructions",
+            "form": {
+                "fields": [{
+                    "name": "laughter",
+                    "label": "Does the person in the video laugh?",
+                    "input": {
+                        "inputType": "Radio.Group",
+                        "options": ["yes", "no"]
+                    }
+                }]
+            },
+            "disabledUntilEnd": true
+        }
     },
-    "instructions": "These are the form instructions",
-    "form": {
-        "fields": [{
-            "prompt": "Does the person in the video laugh?",
-            "input": {
-                "inputType": "Radio.Group",
-                "options": ["yes", "no"]
-            }
-        }]
+    {
+        "schema": "QuestionnaireTaskSpec",
+        "label": "Audio annotation",
+        "spec": {
+            "name": "Audio annotation example",
+            "type": "QuestionnaireTask",
+            "media": {
+                "type": "video",
+                "url": "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4",
+                "mute": true,
+                "autoplay": true,
+                "controls": false
+            },
+            "instructions": "These are the form instructions",
+            "form": {
+                "fields": [{
+                    "name": "laughter",
+                    "label": "Does the voice in the audio laugh?",
+                    "input": {
+                        "inputType": "Radio.Group",
+                        "options": ["yes", "no"]
+                    }
+                }]
+            },
+            "disabledUntilEnd": true
+        }
     },
-    "disabledUntilEnd": true
-}
-
-export const uiSchema = {
-    'ui:order': ['name', 'disabledUntilEnd', 'type','instructions', 'media','form'],
-    type: {'ui:widget':'hidden'},
-    instructions: {'ui:widget':'textarea'},
-    media: {
-        type: {'ui:widget':'hidden'}
+    {
+        "schema": "QuestionnaireTaskSpec",
+        "label": "Slider rating",
+        "spec": {
+            "name": "Slider example",
+            "type": "QuestionnaireTask",
+            "media": {
+                "type": "video",
+                "url": "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4",
+            },
+            "instructions": "These are the form instructions",
+            "form": {
+                "fields": [{
+                    "name": "confidence",
+                    "label": "Annotation confidence: ",
+                    "required": true,
+                    "input": {
+                        "inputType": "Slider",
+                        "min": 1,
+                        "max": 7,
+                        "defaultValue": 4,
+                        "tooltipVisible": true,
+                        "tooltipPlacement": 'right',
+                        "marks": {
+                            "0": "0: Highly uncertain",
+                            "7": "7: Highly confident"
+                        },
+                        "dots": true,
+                        "vertical": true,
+                        "included": true
+                    }
+                }]
+            },
+            "disabledUntilEnd": true
+        }
     },
-    form: {
-        fields: {
-            items: {
-                'ui:order': ['prompt', 'input'],
-                input: {
-                    inputType: {'ui:widget':'hidden'}
-                }
-            }
+    {
+        "schema": "QuestionnaireTaskSpec",
+        "label": "Form-only",
+        "spec": {
+            "name": "Experience",
+            "type": "QuestionnaireTask",
+            "instructions": "These are the form instructions",
+            "form": {
+                "fields": [
+                    {
+                        "name": "rating",
+                        "label": "How would you rate your experience in completing this experiment?",
+                        "required": true,
+                        "input": {
+                            "inputType": "Rate",
+                            "half": true
+                        }
+                    },{
+                        "name": "feedback",
+                        "label": "Do you have any comments that can help us improve the experience?",
+                        "input": {
+                            "inputType": "Input.TextArea",
+                        }
+                    }
+                ]
+            },
+        }
+    },
+    {
+        "schema": "QuestionnaireTaskSpec",
+        "label": "Conditional fields",
+        "spec": {
+            "name": "Experience",
+            "type": "QuestionnaireTask",
+            "instructions": "These are the form instructions",
+            "form": {
+                "fields": [
+                    {
+                        "name": "laughter",
+                        "label": "Is there laughter in the audio?",
+                        "required": true,
+                        "input": {
+                            "inputType": "Switch",
+                            "defaultChecked": true
+                        }
+                    },{
+                        "name": "intensity",
+                        "condition": "laughter",
+                        "label": "Rate the intensity of the laughter:",
+                        "input": {
+                            "inputType": "Slider",
+                            "min": 1,
+                            "max": 7,
+                            "defaultValue": 4,
+                            "tooltipVisible": true,
+                            "tooltipPlacement": 'right',
+                            "dots": true,
+                            "included": true
+                        }
+                    }
+                ]
+            },
         }
     }
-}
+]
 
-<TaskForm spec={taskSpec} 
-    schemaName='QuestionnaireTaskSpec'
-    uiSchema={uiSchema}/>
+<TaskPlayground tasks={playgroundTasks} />
+
 
