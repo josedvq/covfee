@@ -1,10 +1,6 @@
 const path = require('path');
 
 module.exports = env => {
-
-    const customTasksPaths = [path.resolve(__dirname, 'tasks/dummy_custom_tasks')]
-    if(env.COVFEE_WD) customTasksPaths.unshift(path.resolve(env.COVFEE_WD, 'covfee_tasks'))
-
     return {
         context: __dirname,
         entry: {
@@ -16,9 +12,7 @@ module.exports = env => {
         },
         resolve: {
             extensions: [".ts", ".tsx", ".jsx", ".js"],
-            'alias': {
-                'CustomTasks': customTasksPaths,
-            },
+            modules: [path.resolve(__dirname, 'node_modules')],
             fallback: {
                 util: require.resolve("util")
             }
@@ -56,8 +50,8 @@ module.exports = env => {
             ]
         },
         externals: {
-            "react": "React",
-            "react-dom": "ReactDOM",
+            // "react": "React",
+            // "react-dom": "ReactDOM",
             "cv": "cv",
             "video.js": "videojs",
             "Constants": "Constants"

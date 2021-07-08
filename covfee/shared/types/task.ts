@@ -1,8 +1,9 @@
 
-import { Continuous1DTaskSpec, Continuous1DTaskBaseSpec } from "./tasks/continuous_1d";
-import { ContinuousKeypointTaskSpec, ContinuousKeypointTaskBaseSpec } from "./tasks/continuous_keypoint";
-import { InstructionsTaskSpec, InstructionsTaskBaseSpec } from "./tasks/instructions";
-import { QuestionnaireTaskSpec, QuestionnaireTaskBaseSpec } from "./tasks/questionnaire";
+import { Continuous1DTaskSpec, Continuous1DTaskBaseSpec } from "./tasks/continuous_1d"
+import { ContinuousKeypointTaskSpec, ContinuousKeypointTaskBaseSpec } from "./tasks/continuous_keypoint"
+import { InstructionsTaskSpec, InstructionsTaskBaseSpec } from "./tasks/instructions"
+import { QuestionnaireTaskSpec, QuestionnaireTaskBaseSpec } from "./tasks/questionnaire"
+import { VideocallTaskSpec, VideocallTaskBaseSpec } from "./tasks/videocall"
 
 type DistributiveOmit<T, K extends keyof T> = T extends unknown
     ? Omit<T, K>
@@ -64,12 +65,13 @@ export interface CommonContinuousTaskSpec extends CommonTaskSpec { }
  * One of the supported task specs
  */
 
-export type TaskSpec =  Continuous1DTaskSpec | ContinuousKeypointTaskSpec | InstructionsTaskSpec | QuestionnaireTaskSpec
+export type TaskSpec =  Continuous1DTaskSpec | ContinuousKeypointTaskSpec | InstructionsTaskSpec | QuestionnaireTaskSpec | VideocallTaskSpec
 export type ChildTaskSpec = DistributiveOmit<TaskSpec, 'media' | 'children'>
-export type BaseTaskSpec = Continuous1DTaskBaseSpec | ContinuousKeypointTaskBaseSpec | InstructionsTaskBaseSpec | QuestionnaireTaskBaseSpec
+export type BaseTaskSpec = Continuous1DTaskBaseSpec | ContinuousKeypointTaskBaseSpec | InstructionsTaskBaseSpec | QuestionnaireTaskBaseSpec | VideocallTaskBaseSpec
 
 export interface TaskResponse {
     id: number,
+    url: string,
     task_id: number,
     hitinstance_id: string,
     index: number,

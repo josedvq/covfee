@@ -31,6 +31,9 @@
               },
               {
                 "$ref": "#/definitions/InstructionsTaskSpec"
+              },
+              {
+                "$ref": "#/definitions/VideocallTaskSpec"
               }
             ],
             "description": "One of the supported task specs"
@@ -750,6 +753,131 @@
                   "type"
                 ],
                 "title": "Omit<InstructionsTaskSpec,\"media\"|\"children\">",
+                "type": "object",
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
+                  "content": {
+                    "description": "Main static content of the page (eg. consent terms, instructions)",
+                    "title": "content",
+                    "oneOf": [
+                      {
+                        "additionalProperties": false,
+                        "description": "Props for raw Markdown/HTML data",
+                        "properties": {
+                          "content": {
+                            "description": "A valid Markdown/HTML string",
+                            "title": "content",
+                            "type": "string"
+                          },
+                          "type": {
+                            "default": "raw",
+                            "enum": [
+                              "raw"
+                            ],
+                            "title": "type",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "content",
+                          "type"
+                        ],
+                        "title": "MarkdownContentRawSpec",
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "description": "Supplied is a link to a Markdown/HTML file.",
+                        "properties": {
+                          "type": {
+                            "default": "link",
+                            "enum": [
+                              "link"
+                            ],
+                            "title": "type",
+                            "type": "string"
+                          },
+                          "url": {
+                            "description": "A url pointing to a valid Markdown/HTML file.",
+                            "title": "url",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "url"
+                        ],
+                        "title": "MarkdownContentLinkSpec",
+                        "type": "object"
+                      }
+                    ],
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  "instructions": {
+                    "description": "Instructions to be displayed before the form",
+                    "title": "instructions",
+                    "type": "string"
+                  },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "name": {
+                    "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                    "title": "name",
+                    "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
+                  },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
+                  },
+                  "type": {
+                    "default": "VideocallTask",
+                    "enum": [
+                      "VideocallTask"
+                    ],
+                    "title": "type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content",
+                  "name",
+                  "type"
+                ],
+                "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
                 "type": "object",
                 "additionalProperties": false
               }
@@ -1670,6 +1798,131 @@
                   "type"
                 ],
                 "title": "Omit<InstructionsTaskSpec,\"media\"|\"children\">",
+                "type": "object",
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
+                  "content": {
+                    "description": "Main static content of the page (eg. consent terms, instructions)",
+                    "title": "content",
+                    "oneOf": [
+                      {
+                        "additionalProperties": false,
+                        "description": "Props for raw Markdown/HTML data",
+                        "properties": {
+                          "content": {
+                            "description": "A valid Markdown/HTML string",
+                            "title": "content",
+                            "type": "string"
+                          },
+                          "type": {
+                            "default": "raw",
+                            "enum": [
+                              "raw"
+                            ],
+                            "title": "type",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "content",
+                          "type"
+                        ],
+                        "title": "MarkdownContentRawSpec",
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "description": "Supplied is a link to a Markdown/HTML file.",
+                        "properties": {
+                          "type": {
+                            "default": "link",
+                            "enum": [
+                              "link"
+                            ],
+                            "title": "type",
+                            "type": "string"
+                          },
+                          "url": {
+                            "description": "A url pointing to a valid Markdown/HTML file.",
+                            "title": "url",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "url"
+                        ],
+                        "title": "MarkdownContentLinkSpec",
+                        "type": "object"
+                      }
+                    ],
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  "instructions": {
+                    "description": "Instructions to be displayed before the form",
+                    "title": "instructions",
+                    "type": "string"
+                  },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "name": {
+                    "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                    "title": "name",
+                    "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
+                  },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
+                  },
+                  "type": {
+                    "default": "VideocallTask",
+                    "enum": [
+                      "VideocallTask"
+                    ],
+                    "title": "type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content",
+                  "name",
+                  "type"
+                ],
+                "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
                 "type": "object",
                 "additionalProperties": false
               }
@@ -2832,6 +3085,9 @@
                       },
                       {
                         "$ref": "#/definitions/InstructionsTaskSpec"
+                      },
+                      {
+                        "$ref": "#/definitions/VideocallTaskSpec"
                       }
                     ],
                     "description": "One of the supported task specs"
@@ -2856,10 +3112,10 @@
                   "type": "boolean"
                 },
                 "type": {
-                  "default": "annotation",
+                  "default": "timeline",
                   "description": "type of interface.",
                   "enum": [
-                    "annotation"
+                    "timeline"
                   ],
                   "title": "type",
                   "type": "string"
@@ -3442,6 +3698,131 @@
                             "type"
                           ],
                           "title": "Omit<InstructionsTaskSpec,\"media\"|\"children\">",
+                          "type": "object",
+                          "additionalProperties": false
+                        },
+                        {
+                          "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
+                            "content": {
+                              "description": "Main static content of the page (eg. consent terms, instructions)",
+                              "title": "content",
+                              "oneOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "description": "Props for raw Markdown/HTML data",
+                                  "properties": {
+                                    "content": {
+                                      "description": "A valid Markdown/HTML string",
+                                      "title": "content",
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "default": "raw",
+                                      "enum": [
+                                        "raw"
+                                      ],
+                                      "title": "type",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "content",
+                                    "type"
+                                  ],
+                                  "title": "MarkdownContentRawSpec",
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "description": "Supplied is a link to a Markdown/HTML file.",
+                                  "properties": {
+                                    "type": {
+                                      "default": "link",
+                                      "enum": [
+                                        "link"
+                                      ],
+                                      "title": "type",
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "description": "A url pointing to a valid Markdown/HTML file.",
+                                      "title": "url",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "url"
+                                  ],
+                                  "title": "MarkdownContentLinkSpec",
+                                  "type": "object"
+                                }
+                              ],
+                              "discriminator": {
+                                "propertyName": "type"
+                              },
+                              "required": [
+                                "type"
+                              ]
+                            },
+                            "instructions": {
+                              "description": "Instructions to be displayed before the form",
+                              "title": "instructions",
+                              "type": "string"
+                            },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
+                            "name": {
+                              "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                              "title": "name",
+                              "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
+                            },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
+                            },
+                            "type": {
+                              "default": "VideocallTask",
+                              "enum": [
+                                "VideocallTask"
+                              ],
+                              "title": "type",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "content",
+                            "name",
+                            "type"
+                          ],
+                          "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
                           "type": "object",
                           "additionalProperties": false
                         }
@@ -4328,6 +4709,131 @@
                           "title": "Omit<InstructionsTaskSpec,\"media\"|\"children\">",
                           "type": "object",
                           "additionalProperties": false
+                        },
+                        {
+                          "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
+                            "content": {
+                              "description": "Main static content of the page (eg. consent terms, instructions)",
+                              "title": "content",
+                              "oneOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "description": "Props for raw Markdown/HTML data",
+                                  "properties": {
+                                    "content": {
+                                      "description": "A valid Markdown/HTML string",
+                                      "title": "content",
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "default": "raw",
+                                      "enum": [
+                                        "raw"
+                                      ],
+                                      "title": "type",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "content",
+                                    "type"
+                                  ],
+                                  "title": "MarkdownContentRawSpec",
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "description": "Supplied is a link to a Markdown/HTML file.",
+                                  "properties": {
+                                    "type": {
+                                      "default": "link",
+                                      "enum": [
+                                        "link"
+                                      ],
+                                      "title": "type",
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "description": "A url pointing to a valid Markdown/HTML file.",
+                                      "title": "url",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "url"
+                                  ],
+                                  "title": "MarkdownContentLinkSpec",
+                                  "type": "object"
+                                }
+                              ],
+                              "discriminator": {
+                                "propertyName": "type"
+                              },
+                              "required": [
+                                "type"
+                              ]
+                            },
+                            "instructions": {
+                              "description": "Instructions to be displayed before the form",
+                              "title": "instructions",
+                              "type": "string"
+                            },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
+                            "name": {
+                              "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                              "title": "name",
+                              "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
+                            },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
+                            },
+                            "type": {
+                              "default": "VideocallTask",
+                              "enum": [
+                                "VideocallTask"
+                              ],
+                              "title": "type",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "content",
+                            "name",
+                            "type"
+                          ],
+                          "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
+                          "type": "object",
+                          "additionalProperties": false
                         }
                       ],
                       "discriminator": {
@@ -4991,6 +5497,131 @@
                             "type"
                           ],
                           "title": "Omit<InstructionsTaskSpec,\"media\"|\"children\">",
+                          "type": "object",
+                          "additionalProperties": false
+                        },
+                        {
+                          "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
+                            "content": {
+                              "description": "Main static content of the page (eg. consent terms, instructions)",
+                              "title": "content",
+                              "oneOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "description": "Props for raw Markdown/HTML data",
+                                  "properties": {
+                                    "content": {
+                                      "description": "A valid Markdown/HTML string",
+                                      "title": "content",
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "default": "raw",
+                                      "enum": [
+                                        "raw"
+                                      ],
+                                      "title": "type",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "content",
+                                    "type"
+                                  ],
+                                  "title": "MarkdownContentRawSpec",
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "description": "Supplied is a link to a Markdown/HTML file.",
+                                  "properties": {
+                                    "type": {
+                                      "default": "link",
+                                      "enum": [
+                                        "link"
+                                      ],
+                                      "title": "type",
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "description": "A url pointing to a valid Markdown/HTML file.",
+                                      "title": "url",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "url"
+                                  ],
+                                  "title": "MarkdownContentLinkSpec",
+                                  "type": "object"
+                                }
+                              ],
+                              "discriminator": {
+                                "propertyName": "type"
+                              },
+                              "required": [
+                                "type"
+                              ]
+                            },
+                            "instructions": {
+                              "description": "Instructions to be displayed before the form",
+                              "title": "instructions",
+                              "type": "string"
+                            },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
+                            "name": {
+                              "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                              "title": "name",
+                              "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
+                            },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
+                            },
+                            "type": {
+                              "default": "VideocallTask",
+                              "enum": [
+                                "VideocallTask"
+                              ],
+                              "title": "type",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "content",
+                            "name",
+                            "type"
+                          ],
+                          "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
                           "type": "object",
                           "additionalProperties": false
                         }
@@ -5700,6 +6331,131 @@
                           "title": "Omit<InstructionsTaskSpec,\"media\"|\"children\">",
                           "type": "object",
                           "additionalProperties": false
+                        },
+                        {
+                          "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
+                            "content": {
+                              "description": "Main static content of the page (eg. consent terms, instructions)",
+                              "title": "content",
+                              "oneOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "description": "Props for raw Markdown/HTML data",
+                                  "properties": {
+                                    "content": {
+                                      "description": "A valid Markdown/HTML string",
+                                      "title": "content",
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "default": "raw",
+                                      "enum": [
+                                        "raw"
+                                      ],
+                                      "title": "type",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "content",
+                                    "type"
+                                  ],
+                                  "title": "MarkdownContentRawSpec",
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "description": "Supplied is a link to a Markdown/HTML file.",
+                                  "properties": {
+                                    "type": {
+                                      "default": "link",
+                                      "enum": [
+                                        "link"
+                                      ],
+                                      "title": "type",
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "description": "A url pointing to a valid Markdown/HTML file.",
+                                      "title": "url",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "url"
+                                  ],
+                                  "title": "MarkdownContentLinkSpec",
+                                  "type": "object"
+                                }
+                              ],
+                              "discriminator": {
+                                "propertyName": "type"
+                              },
+                              "required": [
+                                "type"
+                              ]
+                            },
+                            "instructions": {
+                              "description": "Instructions to be displayed before the form",
+                              "title": "instructions",
+                              "type": "string"
+                            },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
+                            "name": {
+                              "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                              "title": "name",
+                              "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
+                            },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
+                            },
+                            "type": {
+                              "default": "VideocallTask",
+                              "enum": [
+                                "VideocallTask"
+                              ],
+                              "title": "type",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "content",
+                            "name",
+                            "type"
+                          ],
+                          "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
+                          "type": "object",
+                          "additionalProperties": false
                         }
                       ],
                       "discriminator": {
@@ -5831,6 +6587,808 @@
                   "type"
                 ],
                 "title": "InstructionsTaskSpec",
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
+                  "children": {
+                    "description": "children tasks",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
+                            "controls": {
+                              "description": "sets the input button controls for the task",
+                              "properties": {
+                                "back10s": {
+                                  "title": "back10s",
+                                  "type": "string"
+                                },
+                                "back2s": {
+                                  "title": "back2s",
+                                  "type": "string"
+                                },
+                                "play-pause": {
+                                  "title": "play-pause",
+                                  "type": "string"
+                                }
+                              },
+                              "title": "controls",
+                              "type": "object"
+                            },
+                            "instructions": {
+                              "description": "Instructions to be displayed before the form",
+                              "title": "instructions",
+                              "type": "string"
+                            },
+                            "intensityInput": {
+                              "description": "sets the type of intensity input",
+                              "title": "intensityInput",
+                              "oneOf": [
+                                {
+                                  "properties": {
+                                    "controls": {
+                                      "description": "Button controls",
+                                      "properties": {
+                                        "up": {
+                                          "default": "a",
+                                          "description": "Activate",
+                                          "title": "up",
+                                          "type": "string"
+                                        }
+                                      },
+                                      "title": "controls",
+                                      "type": "object"
+                                    },
+                                    "mode": {
+                                      "default": "binary",
+                                      "enum": [
+                                        "binary"
+                                      ],
+                                      "title": "mode",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "mode"
+                                  ],
+                                  "title": "BinaryInputSpec",
+                                  "type": "object",
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "properties": {
+                                    "mode": {
+                                      "default": "continuous-mousemove",
+                                      "enum": [
+                                        "continuous-mousemove"
+                                      ],
+                                      "title": "mode",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "mode"
+                                  ],
+                                  "title": "ContinuousMousemoveInputSpec",
+                                  "type": "object",
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "properties": {
+                                    "controls": {
+                                      "properties": {
+                                        "down": {
+                                          "default": "a",
+                                          "description": "Decrease intensity",
+                                          "title": "down",
+                                          "type": "string"
+                                        },
+                                        "up": {
+                                          "default": "s",
+                                          "description": "Increase intensity",
+                                          "title": "up",
+                                          "type": "string"
+                                        }
+                                      },
+                                      "title": "controls",
+                                      "type": "object"
+                                    },
+                                    "mode": {
+                                      "default": "continuous-keyboard",
+                                      "enum": [
+                                        "continuous-keyboard"
+                                      ],
+                                      "title": "mode",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "mode"
+                                  ],
+                                  "title": "ContinuousKeyboardInputSpec",
+                                  "type": "object",
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "properties": {
+                                    "acceleration_constant": {
+                                      "default": 0.0025,
+                                      "description": "Acceleration constant.",
+                                      "title": "acceleration_constant",
+                                      "type": "number"
+                                    },
+                                    "controls": {
+                                      "properties": {
+                                        "up": {
+                                          "default": "a",
+                                          "description": "Increase intensity",
+                                          "title": "up",
+                                          "type": "string"
+                                        }
+                                      },
+                                      "title": "controls",
+                                      "type": "object"
+                                    },
+                                    "jump_speed": {
+                                      "default": 0.1,
+                                      "description": "Initial speed when a key is pressed",
+                                      "title": "jump_speed",
+                                      "type": "number"
+                                    },
+                                    "mode": {
+                                      "default": "gravity-keyboard",
+                                      "enum": [
+                                        "gravity-keyboard"
+                                      ],
+                                      "title": "mode",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "mode"
+                                  ],
+                                  "title": "GravityKeyboardInputSpec",
+                                  "type": "object",
+                                  "additionalProperties": false
+                                }
+                              ],
+                              "discriminator": {
+                                "propertyName": "mode"
+                              },
+                              "required": [
+                                "mode"
+                              ]
+                            },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
+                            "name": {
+                              "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                              "title": "name",
+                              "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
+                            },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
+                            },
+                            "type": {
+                              "default": "Continuous1DTask",
+                              "enum": [
+                                "Continuous1DTask"
+                              ],
+                              "title": "type",
+                              "type": "string"
+                            },
+                            "useRequestAnimationFrame": {
+                              "default": false,
+                              "description": "Uses requestAnimationFrame as trigger for data reads.\nrequestAnimationFrame normally fires at close to 60Hz\nSetting to true can improve the quality for lower framerate media by capturing data points between frames.\nIf enabled, data annotations may not align with media frame times.",
+                              "title": "useRequestAnimationFrame",
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "intensityInput",
+                            "name",
+                            "type"
+                          ],
+                          "title": "Omit<Continuous1DTaskSpec,\"media\"|\"children\">",
+                          "type": "object",
+                          "additionalProperties": false
+                        },
+                        {
+                          "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
+                            "controls": {
+                              "description": "sets the input button controls for the task",
+                              "properties": {
+                                "back10s": {
+                                  "description": "go back 10s in video time",
+                                  "title": "back10s",
+                                  "type": "string"
+                                },
+                                "back2s": {
+                                  "description": "go back 2s in video time",
+                                  "title": "back2s",
+                                  "type": "string"
+                                },
+                                "play-pause": {
+                                  "description": "toggle play/pause",
+                                  "title": "play-pause",
+                                  "type": "string"
+                                },
+                                "speed-down": {
+                                  "description": "slow down video playback",
+                                  "title": "speed-down",
+                                  "type": "string"
+                                },
+                                "speed-up": {
+                                  "description": "speed up video playback",
+                                  "title": "speed-up",
+                                  "type": "string"
+                                },
+                                "toggle-occluded": {
+                                  "description": "toggle the occlusion flag (for occluded objects/parts)",
+                                  "title": "toggle-occluded",
+                                  "type": "string"
+                                },
+                                "toggle-of": {
+                                  "description": "toggle the optical-flow-based speed adjustment",
+                                  "title": "toggle-of",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "speed-up"
+                              ],
+                              "title": "controls",
+                              "type": "object"
+                            },
+                            "instructions": {
+                              "description": "Instructions to be displayed before the form",
+                              "title": "instructions",
+                              "type": "string"
+                            },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
+                            "name": {
+                              "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                              "title": "name",
+                              "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
+                            },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
+                            },
+                            "type": {
+                              "default": "ContinuousKeypointTask",
+                              "enum": [
+                                "ContinuousKeypointTask"
+                              ],
+                              "title": "type",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "type"
+                          ],
+                          "title": "Omit<ContinuousKeypointTaskSpec,\"media\"|\"children\">",
+                          "type": "object",
+                          "additionalProperties": false
+                        },
+                        {
+                          "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
+                            "disabledUntilEnd": {
+                              "description": "If true, the form will only become active after the media playback ends",
+                              "title": "disabledUntilEnd",
+                              "type": "boolean"
+                            },
+                            "form": {
+                              "$ref": "#/definitions/FormSpec<InputSpec>",
+                              "description": "Specification of the form to be created.",
+                              "title": "form"
+                            },
+                            "instructions": {
+                              "description": "Instructions to be displayed before the form",
+                              "title": "instructions",
+                              "type": "string"
+                            },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
+                            "name": {
+                              "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                              "title": "name",
+                              "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
+                            },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
+                            },
+                            "type": {
+                              "default": "QuestionnaireTask",
+                              "enum": [
+                                "QuestionnaireTask"
+                              ],
+                              "title": "type",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "form",
+                            "name",
+                            "type"
+                          ],
+                          "title": "Omit<QuestionnaireTaskSpec,\"media\"|\"children\">",
+                          "type": "object",
+                          "additionalProperties": false
+                        },
+                        {
+                          "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
+                            "content": {
+                              "description": "Main static content of the page (eg. consent terms, instructions)",
+                              "title": "content",
+                              "oneOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "description": "Props for raw Markdown/HTML data",
+                                  "properties": {
+                                    "content": {
+                                      "description": "A valid Markdown/HTML string",
+                                      "title": "content",
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "default": "raw",
+                                      "enum": [
+                                        "raw"
+                                      ],
+                                      "title": "type",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "content",
+                                    "type"
+                                  ],
+                                  "title": "MarkdownContentRawSpec",
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "description": "Supplied is a link to a Markdown/HTML file.",
+                                  "properties": {
+                                    "type": {
+                                      "default": "link",
+                                      "enum": [
+                                        "link"
+                                      ],
+                                      "title": "type",
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "description": "A url pointing to a valid Markdown/HTML file.",
+                                      "title": "url",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "url"
+                                  ],
+                                  "title": "MarkdownContentLinkSpec",
+                                  "type": "object"
+                                }
+                              ],
+                              "discriminator": {
+                                "propertyName": "type"
+                              },
+                              "required": [
+                                "type"
+                              ]
+                            },
+                            "form": {
+                              "$ref": "#/definitions/FormSpec<InputSpec>_1",
+                              "description": "a form to display after the content.",
+                              "title": "form"
+                            },
+                            "instructions": {
+                              "description": "Instructions to be displayed before the form",
+                              "title": "instructions",
+                              "type": "string"
+                            },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
+                            "name": {
+                              "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                              "title": "name",
+                              "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
+                            },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
+                            },
+                            "type": {
+                              "default": "InstructionsTask",
+                              "enum": [
+                                "InstructionsTask"
+                              ],
+                              "title": "type",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "content",
+                            "name",
+                            "type"
+                          ],
+                          "title": "Omit<InstructionsTaskSpec,\"media\"|\"children\">",
+                          "type": "object",
+                          "additionalProperties": false
+                        },
+                        {
+                          "properties": {
+                            "autoSubmit": {
+                              "default": false,
+                              "description": "Tasks will be submitted automatically when the media or timer ends.",
+                              "title": "autoSubmit",
+                              "type": "boolean"
+                            },
+                            "content": {
+                              "description": "Main static content of the page (eg. consent terms, instructions)",
+                              "title": "content",
+                              "oneOf": [
+                                {
+                                  "additionalProperties": false,
+                                  "description": "Props for raw Markdown/HTML data",
+                                  "properties": {
+                                    "content": {
+                                      "description": "A valid Markdown/HTML string",
+                                      "title": "content",
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "default": "raw",
+                                      "enum": [
+                                        "raw"
+                                      ],
+                                      "title": "type",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "content",
+                                    "type"
+                                  ],
+                                  "title": "MarkdownContentRawSpec",
+                                  "type": "object"
+                                },
+                                {
+                                  "additionalProperties": false,
+                                  "description": "Supplied is a link to a Markdown/HTML file.",
+                                  "properties": {
+                                    "type": {
+                                      "default": "link",
+                                      "enum": [
+                                        "link"
+                                      ],
+                                      "title": "type",
+                                      "type": "string"
+                                    },
+                                    "url": {
+                                      "description": "A url pointing to a valid Markdown/HTML file.",
+                                      "title": "url",
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "url"
+                                  ],
+                                  "title": "MarkdownContentLinkSpec",
+                                  "type": "object"
+                                }
+                              ],
+                              "discriminator": {
+                                "propertyName": "type"
+                              },
+                              "required": [
+                                "type"
+                              ]
+                            },
+                            "instructions": {
+                              "description": "Instructions to be displayed before the form",
+                              "title": "instructions",
+                              "type": "string"
+                            },
+                            "maxSubmissions": {
+                              "default": 0,
+                              "description": "Maximum number of submissions a user can make for the task.",
+                              "title": "maxSubmissions",
+                              "type": "number"
+                            },
+                            "name": {
+                              "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                              "title": "name",
+                              "type": "string"
+                            },
+                            "prerequisite": {
+                              "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                              "title": "prerequisite",
+                              "type": "boolean"
+                            },
+                            "timer": {
+                              "description": "Timing config",
+                              "properties": {
+                                "maxTime": {
+                                  "default": 0,
+                                  "description": "Max time (in seconds) the user may take to complete the task",
+                                  "title": "maxTime",
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "maxTime"
+                              ],
+                              "title": "timer",
+                              "type": "object"
+                            },
+                            "type": {
+                              "default": "VideocallTask",
+                              "enum": [
+                                "VideocallTask"
+                              ],
+                              "title": "type",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "content",
+                            "name",
+                            "type"
+                          ],
+                          "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
+                          "type": "object",
+                          "additionalProperties": false
+                        }
+                      ],
+                      "discriminator": {
+                        "propertyName": "type"
+                      },
+                      "required": [
+                        "type"
+                      ]
+                    },
+                    "title": "children",
+                    "type": "array"
+                  },
+                  "content": {
+                    "description": "Main static content of the page (eg. consent terms, instructions)",
+                    "title": "content",
+                    "oneOf": [
+                      {
+                        "additionalProperties": false,
+                        "description": "Props for raw Markdown/HTML data",
+                        "properties": {
+                          "content": {
+                            "description": "A valid Markdown/HTML string",
+                            "title": "content",
+                            "type": "string"
+                          },
+                          "type": {
+                            "default": "raw",
+                            "enum": [
+                              "raw"
+                            ],
+                            "title": "type",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "content",
+                          "type"
+                        ],
+                        "title": "MarkdownContentRawSpec",
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "description": "Supplied is a link to a Markdown/HTML file.",
+                        "properties": {
+                          "type": {
+                            "default": "link",
+                            "enum": [
+                              "link"
+                            ],
+                            "title": "type",
+                            "type": "string"
+                          },
+                          "url": {
+                            "description": "A url pointing to a valid Markdown/HTML file.",
+                            "title": "url",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "url"
+                        ],
+                        "title": "MarkdownContentLinkSpec",
+                        "type": "object"
+                      }
+                    ],
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  "instructions": {
+                    "description": "Instructions to be displayed before the form",
+                    "title": "instructions",
+                    "type": "string"
+                  },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "name": {
+                    "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                    "title": "name",
+                    "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
+                  },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
+                  },
+                  "type": {
+                    "default": "VideocallTask",
+                    "enum": [
+                      "VideocallTask"
+                    ],
+                    "title": "type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content",
+                  "name",
+                  "type"
+                ],
+                "title": "VideocallTaskSpec",
                 "type": "object"
               }
             ],
@@ -6470,6 +8028,131 @@
                   "type"
                 ],
                 "title": "Omit<InstructionsTaskSpec,\"media\"|\"children\">",
+                "type": "object",
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
+                  "content": {
+                    "description": "Main static content of the page (eg. consent terms, instructions)",
+                    "title": "content",
+                    "oneOf": [
+                      {
+                        "additionalProperties": false,
+                        "description": "Props for raw Markdown/HTML data",
+                        "properties": {
+                          "content": {
+                            "description": "A valid Markdown/HTML string",
+                            "title": "content",
+                            "type": "string"
+                          },
+                          "type": {
+                            "default": "raw",
+                            "enum": [
+                              "raw"
+                            ],
+                            "title": "type",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "content",
+                          "type"
+                        ],
+                        "title": "MarkdownContentRawSpec",
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "description": "Supplied is a link to a Markdown/HTML file.",
+                        "properties": {
+                          "type": {
+                            "default": "link",
+                            "enum": [
+                              "link"
+                            ],
+                            "title": "type",
+                            "type": "string"
+                          },
+                          "url": {
+                            "description": "A url pointing to a valid Markdown/HTML file.",
+                            "title": "url",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "url"
+                        ],
+                        "title": "MarkdownContentLinkSpec",
+                        "type": "object"
+                      }
+                    ],
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  "instructions": {
+                    "description": "Instructions to be displayed before the form",
+                    "title": "instructions",
+                    "type": "string"
+                  },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "name": {
+                    "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                    "title": "name",
+                    "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
+                  },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
+                  },
+                  "type": {
+                    "default": "VideocallTask",
+                    "enum": [
+                      "VideocallTask"
+                    ],
+                    "title": "type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content",
+                  "name",
+                  "type"
+                ],
+                "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
                 "type": "object",
                 "additionalProperties": false
               }
@@ -7239,6 +8922,131 @@
       "type": "object",
       "additionalProperties": false
     },
+    "Omit<VideocallTaskSpec,\"media\"|\"children\">": {
+      "properties": {
+        "autoSubmit": {
+          "default": false,
+          "description": "Tasks will be submitted automatically when the media or timer ends.",
+          "title": "autoSubmit",
+          "type": "boolean"
+        },
+        "content": {
+          "description": "Main static content of the page (eg. consent terms, instructions)",
+          "title": "content",
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "description": "Props for raw Markdown/HTML data",
+              "properties": {
+                "content": {
+                  "description": "A valid Markdown/HTML string",
+                  "title": "content",
+                  "type": "string"
+                },
+                "type": {
+                  "default": "raw",
+                  "enum": [
+                    "raw"
+                  ],
+                  "title": "type",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content",
+                "type"
+              ],
+              "title": "MarkdownContentRawSpec",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "description": "Supplied is a link to a Markdown/HTML file.",
+              "properties": {
+                "type": {
+                  "default": "link",
+                  "enum": [
+                    "link"
+                  ],
+                  "title": "type",
+                  "type": "string"
+                },
+                "url": {
+                  "description": "A url pointing to a valid Markdown/HTML file.",
+                  "title": "url",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "url"
+              ],
+              "title": "MarkdownContentLinkSpec",
+              "type": "object"
+            }
+          ],
+          "discriminator": {
+            "propertyName": "type"
+          },
+          "required": [
+            "type"
+          ]
+        },
+        "instructions": {
+          "description": "Instructions to be displayed before the form",
+          "title": "instructions",
+          "type": "string"
+        },
+        "maxSubmissions": {
+          "default": 0,
+          "description": "Maximum number of submissions a user can make for the task.",
+          "title": "maxSubmissions",
+          "type": "number"
+        },
+        "name": {
+          "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+          "title": "name",
+          "type": "string"
+        },
+        "prerequisite": {
+          "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+          "title": "prerequisite",
+          "type": "boolean"
+        },
+        "timer": {
+          "description": "Timing config",
+          "properties": {
+            "maxTime": {
+              "default": 0,
+              "description": "Max time (in seconds) the user may take to complete the task",
+              "title": "maxTime",
+              "type": "number"
+            }
+          },
+          "required": [
+            "maxTime"
+          ],
+          "title": "timer",
+          "type": "object"
+        },
+        "type": {
+          "default": "VideocallTask",
+          "enum": [
+            "VideocallTask"
+          ],
+          "title": "type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "content",
+        "name",
+        "type"
+      ],
+      "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
+      "type": "object",
+      "additionalProperties": false
+    },
     "OpencvFlowPlayerMedia": {
       "properties": {
         "canMute": {
@@ -7877,6 +9685,131 @@
                 "title": "Omit<InstructionsTaskSpec,\"media\"|\"children\">",
                 "type": "object",
                 "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
+                  "content": {
+                    "description": "Main static content of the page (eg. consent terms, instructions)",
+                    "title": "content",
+                    "oneOf": [
+                      {
+                        "additionalProperties": false,
+                        "description": "Props for raw Markdown/HTML data",
+                        "properties": {
+                          "content": {
+                            "description": "A valid Markdown/HTML string",
+                            "title": "content",
+                            "type": "string"
+                          },
+                          "type": {
+                            "default": "raw",
+                            "enum": [
+                              "raw"
+                            ],
+                            "title": "type",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "content",
+                          "type"
+                        ],
+                        "title": "MarkdownContentRawSpec",
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "description": "Supplied is a link to a Markdown/HTML file.",
+                        "properties": {
+                          "type": {
+                            "default": "link",
+                            "enum": [
+                              "link"
+                            ],
+                            "title": "type",
+                            "type": "string"
+                          },
+                          "url": {
+                            "description": "A url pointing to a valid Markdown/HTML file.",
+                            "title": "url",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "url"
+                        ],
+                        "title": "MarkdownContentLinkSpec",
+                        "type": "object"
+                      }
+                    ],
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  "instructions": {
+                    "description": "Instructions to be displayed before the form",
+                    "title": "instructions",
+                    "type": "string"
+                  },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "name": {
+                    "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                    "title": "name",
+                    "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
+                  },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
+                  },
+                  "type": {
+                    "default": "VideocallTask",
+                    "enum": [
+                      "VideocallTask"
+                    ],
+                    "title": "type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content",
+                  "name",
+                  "type"
+                ],
+                "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
+                "type": "object",
+                "additionalProperties": false
               }
             ],
             "discriminator": {
@@ -8241,10 +10174,10 @@
           "type": "boolean"
         },
         "type": {
-          "default": "annotation",
+          "default": "timeline",
           "description": "type of interface.",
           "enum": [
-            "annotation"
+            "timeline"
           ],
           "title": "type",
           "type": "string"
@@ -8256,6 +10189,808 @@
       "title": "TimelineInterface",
       "type": "object",
       "additionalProperties": false
+    },
+    "VideocallTaskSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "autoSubmit": {
+          "default": false,
+          "description": "Tasks will be submitted automatically when the media or timer ends.",
+          "title": "autoSubmit",
+          "type": "boolean"
+        },
+        "children": {
+          "description": "children tasks",
+          "items": {
+            "oneOf": [
+              {
+                "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
+                  "controls": {
+                    "description": "sets the input button controls for the task",
+                    "properties": {
+                      "back10s": {
+                        "title": "back10s",
+                        "type": "string"
+                      },
+                      "back2s": {
+                        "title": "back2s",
+                        "type": "string"
+                      },
+                      "play-pause": {
+                        "title": "play-pause",
+                        "type": "string"
+                      }
+                    },
+                    "title": "controls",
+                    "type": "object"
+                  },
+                  "instructions": {
+                    "description": "Instructions to be displayed before the form",
+                    "title": "instructions",
+                    "type": "string"
+                  },
+                  "intensityInput": {
+                    "description": "sets the type of intensity input",
+                    "title": "intensityInput",
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "controls": {
+                            "description": "Button controls",
+                            "properties": {
+                              "up": {
+                                "default": "a",
+                                "description": "Activate",
+                                "title": "up",
+                                "type": "string"
+                              }
+                            },
+                            "title": "controls",
+                            "type": "object"
+                          },
+                          "mode": {
+                            "default": "binary",
+                            "enum": [
+                              "binary"
+                            ],
+                            "title": "mode",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "mode"
+                        ],
+                        "title": "BinaryInputSpec",
+                        "type": "object",
+                        "additionalProperties": false
+                      },
+                      {
+                        "properties": {
+                          "mode": {
+                            "default": "continuous-mousemove",
+                            "enum": [
+                              "continuous-mousemove"
+                            ],
+                            "title": "mode",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "mode"
+                        ],
+                        "title": "ContinuousMousemoveInputSpec",
+                        "type": "object",
+                        "additionalProperties": false
+                      },
+                      {
+                        "properties": {
+                          "controls": {
+                            "properties": {
+                              "down": {
+                                "default": "a",
+                                "description": "Decrease intensity",
+                                "title": "down",
+                                "type": "string"
+                              },
+                              "up": {
+                                "default": "s",
+                                "description": "Increase intensity",
+                                "title": "up",
+                                "type": "string"
+                              }
+                            },
+                            "title": "controls",
+                            "type": "object"
+                          },
+                          "mode": {
+                            "default": "continuous-keyboard",
+                            "enum": [
+                              "continuous-keyboard"
+                            ],
+                            "title": "mode",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "mode"
+                        ],
+                        "title": "ContinuousKeyboardInputSpec",
+                        "type": "object",
+                        "additionalProperties": false
+                      },
+                      {
+                        "properties": {
+                          "acceleration_constant": {
+                            "default": 0.0025,
+                            "description": "Acceleration constant.",
+                            "title": "acceleration_constant",
+                            "type": "number"
+                          },
+                          "controls": {
+                            "properties": {
+                              "up": {
+                                "default": "a",
+                                "description": "Increase intensity",
+                                "title": "up",
+                                "type": "string"
+                              }
+                            },
+                            "title": "controls",
+                            "type": "object"
+                          },
+                          "jump_speed": {
+                            "default": 0.1,
+                            "description": "Initial speed when a key is pressed",
+                            "title": "jump_speed",
+                            "type": "number"
+                          },
+                          "mode": {
+                            "default": "gravity-keyboard",
+                            "enum": [
+                              "gravity-keyboard"
+                            ],
+                            "title": "mode",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "mode"
+                        ],
+                        "title": "GravityKeyboardInputSpec",
+                        "type": "object",
+                        "additionalProperties": false
+                      }
+                    ],
+                    "discriminator": {
+                      "propertyName": "mode"
+                    },
+                    "required": [
+                      "mode"
+                    ]
+                  },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "name": {
+                    "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                    "title": "name",
+                    "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
+                  },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
+                  },
+                  "type": {
+                    "default": "Continuous1DTask",
+                    "enum": [
+                      "Continuous1DTask"
+                    ],
+                    "title": "type",
+                    "type": "string"
+                  },
+                  "useRequestAnimationFrame": {
+                    "default": false,
+                    "description": "Uses requestAnimationFrame as trigger for data reads.\nrequestAnimationFrame normally fires at close to 60Hz\nSetting to true can improve the quality for lower framerate media by capturing data points between frames.\nIf enabled, data annotations may not align with media frame times.",
+                    "title": "useRequestAnimationFrame",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "intensityInput",
+                  "name",
+                  "type"
+                ],
+                "title": "Omit<Continuous1DTaskSpec,\"media\"|\"children\">",
+                "type": "object",
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
+                  "controls": {
+                    "description": "sets the input button controls for the task",
+                    "properties": {
+                      "back10s": {
+                        "description": "go back 10s in video time",
+                        "title": "back10s",
+                        "type": "string"
+                      },
+                      "back2s": {
+                        "description": "go back 2s in video time",
+                        "title": "back2s",
+                        "type": "string"
+                      },
+                      "play-pause": {
+                        "description": "toggle play/pause",
+                        "title": "play-pause",
+                        "type": "string"
+                      },
+                      "speed-down": {
+                        "description": "slow down video playback",
+                        "title": "speed-down",
+                        "type": "string"
+                      },
+                      "speed-up": {
+                        "description": "speed up video playback",
+                        "title": "speed-up",
+                        "type": "string"
+                      },
+                      "toggle-occluded": {
+                        "description": "toggle the occlusion flag (for occluded objects/parts)",
+                        "title": "toggle-occluded",
+                        "type": "string"
+                      },
+                      "toggle-of": {
+                        "description": "toggle the optical-flow-based speed adjustment",
+                        "title": "toggle-of",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "speed-up"
+                    ],
+                    "title": "controls",
+                    "type": "object"
+                  },
+                  "instructions": {
+                    "description": "Instructions to be displayed before the form",
+                    "title": "instructions",
+                    "type": "string"
+                  },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "name": {
+                    "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                    "title": "name",
+                    "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
+                  },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
+                  },
+                  "type": {
+                    "default": "ContinuousKeypointTask",
+                    "enum": [
+                      "ContinuousKeypointTask"
+                    ],
+                    "title": "type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "type"
+                ],
+                "title": "Omit<ContinuousKeypointTaskSpec,\"media\"|\"children\">",
+                "type": "object",
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
+                  "disabledUntilEnd": {
+                    "description": "If true, the form will only become active after the media playback ends",
+                    "title": "disabledUntilEnd",
+                    "type": "boolean"
+                  },
+                  "form": {
+                    "$ref": "#/definitions/FormSpec<InputSpec>",
+                    "description": "Specification of the form to be created.",
+                    "title": "form"
+                  },
+                  "instructions": {
+                    "description": "Instructions to be displayed before the form",
+                    "title": "instructions",
+                    "type": "string"
+                  },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "name": {
+                    "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                    "title": "name",
+                    "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
+                  },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
+                  },
+                  "type": {
+                    "default": "QuestionnaireTask",
+                    "enum": [
+                      "QuestionnaireTask"
+                    ],
+                    "title": "type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "form",
+                  "name",
+                  "type"
+                ],
+                "title": "Omit<QuestionnaireTaskSpec,\"media\"|\"children\">",
+                "type": "object",
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
+                  "content": {
+                    "description": "Main static content of the page (eg. consent terms, instructions)",
+                    "title": "content",
+                    "oneOf": [
+                      {
+                        "additionalProperties": false,
+                        "description": "Props for raw Markdown/HTML data",
+                        "properties": {
+                          "content": {
+                            "description": "A valid Markdown/HTML string",
+                            "title": "content",
+                            "type": "string"
+                          },
+                          "type": {
+                            "default": "raw",
+                            "enum": [
+                              "raw"
+                            ],
+                            "title": "type",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "content",
+                          "type"
+                        ],
+                        "title": "MarkdownContentRawSpec",
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "description": "Supplied is a link to a Markdown/HTML file.",
+                        "properties": {
+                          "type": {
+                            "default": "link",
+                            "enum": [
+                              "link"
+                            ],
+                            "title": "type",
+                            "type": "string"
+                          },
+                          "url": {
+                            "description": "A url pointing to a valid Markdown/HTML file.",
+                            "title": "url",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "url"
+                        ],
+                        "title": "MarkdownContentLinkSpec",
+                        "type": "object"
+                      }
+                    ],
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  "form": {
+                    "$ref": "#/definitions/FormSpec<InputSpec>_1",
+                    "description": "a form to display after the content.",
+                    "title": "form"
+                  },
+                  "instructions": {
+                    "description": "Instructions to be displayed before the form",
+                    "title": "instructions",
+                    "type": "string"
+                  },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "name": {
+                    "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                    "title": "name",
+                    "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
+                  },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
+                  },
+                  "type": {
+                    "default": "InstructionsTask",
+                    "enum": [
+                      "InstructionsTask"
+                    ],
+                    "title": "type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content",
+                  "name",
+                  "type"
+                ],
+                "title": "Omit<InstructionsTaskSpec,\"media\"|\"children\">",
+                "type": "object",
+                "additionalProperties": false
+              },
+              {
+                "properties": {
+                  "autoSubmit": {
+                    "default": false,
+                    "description": "Tasks will be submitted automatically when the media or timer ends.",
+                    "title": "autoSubmit",
+                    "type": "boolean"
+                  },
+                  "content": {
+                    "description": "Main static content of the page (eg. consent terms, instructions)",
+                    "title": "content",
+                    "oneOf": [
+                      {
+                        "additionalProperties": false,
+                        "description": "Props for raw Markdown/HTML data",
+                        "properties": {
+                          "content": {
+                            "description": "A valid Markdown/HTML string",
+                            "title": "content",
+                            "type": "string"
+                          },
+                          "type": {
+                            "default": "raw",
+                            "enum": [
+                              "raw"
+                            ],
+                            "title": "type",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "content",
+                          "type"
+                        ],
+                        "title": "MarkdownContentRawSpec",
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": false,
+                        "description": "Supplied is a link to a Markdown/HTML file.",
+                        "properties": {
+                          "type": {
+                            "default": "link",
+                            "enum": [
+                              "link"
+                            ],
+                            "title": "type",
+                            "type": "string"
+                          },
+                          "url": {
+                            "description": "A url pointing to a valid Markdown/HTML file.",
+                            "title": "url",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "url"
+                        ],
+                        "title": "MarkdownContentLinkSpec",
+                        "type": "object"
+                      }
+                    ],
+                    "discriminator": {
+                      "propertyName": "type"
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  "instructions": {
+                    "description": "Instructions to be displayed before the form",
+                    "title": "instructions",
+                    "type": "string"
+                  },
+                  "maxSubmissions": {
+                    "default": 0,
+                    "description": "Maximum number of submissions a user can make for the task.",
+                    "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "name": {
+                    "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+                    "title": "name",
+                    "type": "string"
+                  },
+                  "prerequisite": {
+                    "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+                    "title": "prerequisite",
+                    "type": "boolean"
+                  },
+                  "timer": {
+                    "description": "Timing config",
+                    "properties": {
+                      "maxTime": {
+                        "default": 0,
+                        "description": "Max time (in seconds) the user may take to complete the task",
+                        "title": "maxTime",
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "maxTime"
+                    ],
+                    "title": "timer",
+                    "type": "object"
+                  },
+                  "type": {
+                    "default": "VideocallTask",
+                    "enum": [
+                      "VideocallTask"
+                    ],
+                    "title": "type",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content",
+                  "name",
+                  "type"
+                ],
+                "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
+                "type": "object",
+                "additionalProperties": false
+              }
+            ],
+            "discriminator": {
+              "propertyName": "type"
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "title": "children",
+          "type": "array"
+        },
+        "content": {
+          "description": "Main static content of the page (eg. consent terms, instructions)",
+          "title": "content",
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "description": "Props for raw Markdown/HTML data",
+              "properties": {
+                "content": {
+                  "description": "A valid Markdown/HTML string",
+                  "title": "content",
+                  "type": "string"
+                },
+                "type": {
+                  "default": "raw",
+                  "enum": [
+                    "raw"
+                  ],
+                  "title": "type",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "content",
+                "type"
+              ],
+              "title": "MarkdownContentRawSpec",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "description": "Supplied is a link to a Markdown/HTML file.",
+              "properties": {
+                "type": {
+                  "default": "link",
+                  "enum": [
+                    "link"
+                  ],
+                  "title": "type",
+                  "type": "string"
+                },
+                "url": {
+                  "description": "A url pointing to a valid Markdown/HTML file.",
+                  "title": "url",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "url"
+              ],
+              "title": "MarkdownContentLinkSpec",
+              "type": "object"
+            }
+          ],
+          "discriminator": {
+            "propertyName": "type"
+          },
+          "required": [
+            "type"
+          ]
+        },
+        "instructions": {
+          "description": "Instructions to be displayed before the form",
+          "title": "instructions",
+          "type": "string"
+        },
+        "maxSubmissions": {
+          "default": 0,
+          "description": "Maximum number of submissions a user can make for the task.",
+          "title": "maxSubmissions",
+          "type": "number"
+        },
+        "name": {
+          "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
+          "title": "name",
+          "type": "string"
+        },
+        "prerequisite": {
+          "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
+          "title": "prerequisite",
+          "type": "boolean"
+        },
+        "timer": {
+          "description": "Timing config",
+          "properties": {
+            "maxTime": {
+              "default": 0,
+              "description": "Max time (in seconds) the user may take to complete the task",
+              "title": "maxTime",
+              "type": "number"
+            }
+          },
+          "required": [
+            "maxTime"
+          ],
+          "title": "timer",
+          "type": "object"
+        },
+        "type": {
+          "default": "VideocallTask",
+          "enum": [
+            "VideocallTask"
+          ],
+          "title": "type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "content",
+        "name",
+        "type"
+      ],
+      "title": "VideocallTaskSpec",
+      "type": "object"
     }
   }
 }

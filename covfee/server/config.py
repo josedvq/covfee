@@ -13,6 +13,8 @@ BASE_URL = 'http://127.0.0.1:5000'
 #  Security: Used as salt used for generating hash links and for json web tokens (JWT_SECRET_KEY)
 COVFEE_SECRET_KEY = 'CHANGE_ME'
 
+SOCKETIO_ENABLED = True
+
 # sqlalchemy settings
 SQLALCHEMY_ENGINE_OPTIONS = {'isolation_level': "READ UNCOMMITTED"}
 SQLALCHEMY_TRACK_MODIFICATIONS = False

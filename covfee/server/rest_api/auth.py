@@ -1,7 +1,7 @@
 import os
 from functools import wraps
 
-from flask import request, jsonify, Blueprint
+from flask import request, jsonify, Blueprint, current_app as app
 from flask_jwt_extended import (
     JWTManager, jwt_required, create_access_token, create_refresh_token, get_current_user,
     set_access_cookies, set_refresh_cookies, jwt_refresh_token_required, unset_jwt_cookies,
@@ -17,19 +17,18 @@ from ..orm import User
 # Here is a custom decorator that verifies the JWT is present in
 # the request, as well as insuring that this user has a role of
 # `admin` in the access token
-if os.getenv('UNSAFE_MODE_ON', False):
-    def admin_required(fn): return fn
-else:
-    def admin_required(fn):
-        @wraps(fn)
-        def wrapper(*args, **kwargs):
-            verify_jwt_in_request()
-            claims = get_jwt_claims()
-            if 'admin' not in claims['roles']:
-                return jsonify(msg='Admins only!'), 403
-            else:
-                return fn(*args, **kwargs)
-        return wrapper
+def admin_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if app.config.get('UNSAFE_MODE_ON', False):
+            return fn(*args, **kwargs)
+        verify_jwt_in_request()
+        claims = get_jwt_claims()
+        if 'admin' not in claims['roles']:
+            return jsonify(msg='Admins only!'), 403
+        else:
+            return fn(*args, **kwargs)
+    return wrapper
 
 # This function is called whenever a protected endpoint is accessed,
 # and must return an object based on the tokens identity.

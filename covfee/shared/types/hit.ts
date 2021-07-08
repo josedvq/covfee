@@ -49,9 +49,9 @@ export interface AnnotationInterface extends BaseInterface{
 export interface TimelineInterface extends BaseInterface {
     /**
      * type of interface.
-     * @default "annotation"
+     * @default "timeline"
      */
-    type: 'annotation'
+    type: 'timeline'
 }
 
 /**

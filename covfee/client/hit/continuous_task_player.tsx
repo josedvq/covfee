@@ -43,10 +43,25 @@ interface Props {
     status: PlayerStatusType
     loading: boolean
     setState: (arg0: Partial<PlayerState>) => null
+    /**
+     * List of tasks to be displayed. Only one of these (currTask) is active.
+     */ 
     tasks: TaskType[]
+    /**
+     * The media to use.
+     */
     media: VideoSpec
+    /**
+     * Current task responses to be used by the player
+     */
     responses: any[]
+    /**
+     * Main task: the task to be completed (ie. active task) by the user. The rest of the tasks can only be visualized
+     */
     currTask: number
+    /**
+     * Annotation or replay mode?
+     */
     replayMode: boolean
     
     onBufferError: (arg0: string) => void
@@ -126,13 +141,13 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
     }
 
     createBuffers = () => {        
-        this.buffers = this.props.tasks.map((task, index) => {
+        this.buffers = this.props.responses.map((response, index) => {
             return new BinaryDataCaptureBuffer(
                 (index !== this.props.currTask),
                 1,   // sample length
                 200, //chunk length
                 this.props.media.fps || 60,
-                task.url,
+                response.url,
                 this.props.onBufferError)
         })
     }

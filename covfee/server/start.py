@@ -6,15 +6,16 @@ from flask import Flask, Blueprint, render_template, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
+from .socketio import socketio
 from .orm import db, load_config
 from .rest_api import api, auth, admin_required, add_claims_to_access_token, user_identity_lookup, \
     user_loader_callback
-
 
 def create_app(mode):
     app = Flask(__name__, static_folder=None)
     load_config(app, mode=mode)
     db.init_app(app)
+    socketio.init_app(app)
     app.register_blueprint(frontend, url_prefix='/')
     app.register_blueprint(api, url_prefix='/api')
     app.register_blueprint(auth, url_prefix='/auth')
@@ -31,7 +32,7 @@ def create_app(mode):
             db.session.rollback()
         db.session.remove()
     
-    return app
+    return socketio, app
 
 
 # APP ROUTES

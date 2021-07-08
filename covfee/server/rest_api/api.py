@@ -213,8 +213,6 @@ def task_add_to_instance(iid):
     instance = db.session.query(HITInstance).get(bytes.fromhex(iid))
     if instance is None:
         return jsonify({'msg': 'invalid instance'}), 400
-    if instance.hit.type != 'annotation':
-        return jsonify(msg='Only annotation-type instances can be user-edited.'), 403
 
     task_spec = TaskSpec(**request.json, editable=True)
     task = task_spec.instantiate()
@@ -251,75 +249,77 @@ def task_delete(kid):
     return jsonify({'success': True}), 200
 
 
-@api.route('/tasks/<kid>/responses')
+@api.route('/tasks/<kid>/response')
 def response(kid):
-    lastResponse = TaskResponse.query.filter_by(
-        task_id=int(kid),
-        submitted=True).order_by(TaskResponse.index.desc()).first()
+    ''' Will return the last response for a task
+    '''
+    task = db.session.query(Task).get(int(kid))
+    if task is None:
+        return jsonify({'msg': 'invalid task'}), 400
 
-    if lastResponse is None:
+    responses = task.responses
+    submitted = request.args.get('submitted', None)
+    if submitted is not None:
+        responses = [r for r in responses if r.submitted == bool(submitted)]
+
+    if len(responses) == 0:
         return jsonify(msg='No submitted responses found.'), 403
 
-    response_dict = lastResponse.as_dict()
+    response_dict = responses[-1].as_dict()
     return jsonify(response_dict)
 
 
-@api.route('/tasks/<kid>/chunks', methods=['GET'])
-def query_chunks(kid):
-    response = TaskResponse.query.filter_by(
-        task_id=int(kid),
-        submitted=True).order_by(TaskResponse.index.desc()).first()
 
-    if response is None:
-        return jsonify(msg='No submitted responses found.'), 403
 
-    chunk_bytes = response.pack_chunks()
-    return send_file(BytesIO(chunk_bytes), mimetype='application/octet-stream'), 200
+
+@api.route('/tasks/<kid>/make_response', methods=['POST'])
+def make_response(kid):
+    submit = bool(request.args.get('submit', False))
+
+    task = db.session.query(Task).get(int(kid))
+    if task is None:
+        return jsonify({'msg': 'invalid task'}), 400
+
+    response = task.add_response()
+    if request.json:
+        response.update(request.json)
+    if submit:
+        response.submit()
+    db.session.commit()
+    return jsonify(response.as_dict())
 
 
 # record a response to a task
-@api.route('/tasks/<kid>/submit', methods=['POST'])
-def response_submit(kid):
-    task = db.session.query(Task).get(int(kid))
-    lastResponse = task.responses[0] if task.responses else None
-
-    if lastResponse is not None and not lastResponse.submitted:
-        # there is an open (not submitted) response:
-        response = lastResponse
-
-    else:
-        if lastResponse is None:
-            response_index = 0  # first response
-        elif lastResponse.submitted:
-            response_index = lastResponse.index+1  # following response
-
-        # no responses have been submitted or only completed responses
-        response = task.add_response(index=response_index)
+@api.route('/responses/<rid>/submit', methods=['POST'])
+def response_submit(rid):
+    response = db.session.query(TaskResponse).get(int(rid))
+    if response is None:
+        return jsonify({'msg': 'invalid response'}), 400
 
     res = response.submit(request.json)    
     db.session.commit()
     return jsonify(res)
 
+@api.route('/responses/<rid>/chunks', methods=['GET'])
+def query_chunks(rid):
+    response = db.session.query(TaskResponse).get(int(rid))
+    if response is None:
+        return jsonify({'msg': 'invalid response'}), 400
+
+    chunk_bytes = response.pack_chunks()
+    return send_file(BytesIO(chunk_bytes), mimetype='application/octet-stream'), 200
 
 # receive a chunk of a response, for continuous responses
-@api.route('/tasks/<kid>/chunk', methods=['POST'])
-def response_chunk(kid):
+@api.route('/responses/<rid>/chunk', methods=['POST'])
+def response_chunk(rid):
     sent_index = int(request.args.get('index'))
     length = int(request.args.get('length'))
 
-    task = db.session.query(Task).get(int(kid))
-    response = task.responses[0] if task.responses else None
-
-    # no responses or only submitted responses
-    # -> create new response
-    if response is None or response.submitted:
-        response_index = 0
-        # increment index of last response
-        if response is not None and response.submitted:
-            response_index = response.index + 1
-
-        response = task.add_response(index=response_index)
-        task.has_unsubmitted_response = True
+    response = db.session.query(TaskResponse).get(int(rid))
+    if response is None:
+        return jsonify({'msg': 'invalid response'}), 400
+    if response.submitted:
+        return jsonify({'msg': 'response is already submitted'}), 400
 
     # if there is a previous chunk with the same index, overwrite it
     if response.chunks.count() > 0:
@@ -336,3 +336,4 @@ def response_chunk(kid):
     db.session.add(response)
     db.session.commit()
     return jsonify({'success': True}), 201
+

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import io from 'socket.io-client'
 import styled from 'styled-components'
 import {unstable_batchedUpdates} from 'react-dom'
 import { withRouter, generatePath, RouteComponentProps } from 'react-router'
@@ -57,13 +58,13 @@ type Props = HitType & RouteComponentProps<MatchParams> & {
 
 interface HitState {
     /**
-     * taskIds that are being displayed.
-     * The first number is the parent number and points to this.tasks
+     * taskIds that are being displayed in the menu
+     * The first number is the parent number and points to this.props.tasks
      * The second number is the child number and points to the children list within each parent.
      */
     taskIds: [number, number[]][]
     /**
-     * Index of the currently selected task.
+     * Index of the currently selected task in this.props.tasks
      * The first number points to a parent task
      * The second number, if not null, points to a child task within the parent
      */
@@ -96,6 +97,7 @@ export class Hit extends React.Component<Props, HitState> {
     tasks: Array<TaskType>
     taskKeys: Array<string>
     instructionsFn: Function = null
+    socket: any
 
     replayIndex = 0
 
@@ -116,7 +118,7 @@ export class Hit extends React.Component<Props, HitState> {
         const taskIds = this.makeTaskIds()
         let parentTask = 0
         if (props.match && props.match.params.taskId !== undefined) {
-            parentTask = parseInt(props.match.params.taskId)
+            parentTask = Math.min(taskIds.length-1, parseInt(props.match.params.taskId))
         }
 
         // Initialize the hit state
@@ -127,6 +129,18 @@ export class Hit extends React.Component<Props, HitState> {
         }
         
         this.updateUrl(parentTask)
+
+        // Connect to socket io
+        if(Constants.socketio_enabled) {
+            this.socket = io(Constants.base_url, {
+                auth: {
+                    hitId: this.props.id,
+                    token: this.props.token
+                },
+                transports: ['websocket'],
+                upgrade: true
+            })
+        }
     }
 
     makeTaskIds = () => {

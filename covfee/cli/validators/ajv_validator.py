@@ -19,7 +19,7 @@ class AjvValidator:
         port = self.socket.bind_to_random_port("tcp://127.0.0.1")
 
         # start the nodejs validation server in the same interface
-        self.process = subprocess.Popen(["node", os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ajv_validator.js'), "serve", str(port)])
+        self.process = subprocess.Popen(["node", '--trace-warnings', os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ajv_validator.js'), "serve", str(port)])
 
     def __del__(self):
         # pass

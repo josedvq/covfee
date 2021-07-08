@@ -1,0 +1,68 @@
+---
+title: Overview
+---
+
+import useBaseUrl from '@docusaurus/useBaseUrl'
+
+## What is covfee?
+
+Covfee is an extensible web framework for (continuous) annotation, built for **crowd-sourcing** and other online uses. Covfee has **two main use cases**:
+
+- **A tool for online (continuous) annotation**: Continuous annotation is when video files are annotated *while you watch them*. Audio files can also be annotated while you listen to them, and time series in general may be continuously annotated. Some audiovisual continuous annotation tasks making use of mouse and keyboard for user feedback (see *Playground*) are already coded, working, and tested in covfee. Preparing a continuous annotation process using these tasks amounts to preparing a JSON file specifying your HITs. Covfee also includes some non-continuous tasks for questionnaires and surveys that are provided for convenience. Using existing covfee tasks requires no coding.
+
+- **A platform for custom online human interaction data collection and annotation**: Covfee provides a framework for researchers with basic knowledge of web development in Javascript to prepare online (crowd-sourced) annotation processes and data collections. Implementing custom covfee tasks (continuous or not) has been boiled down to the writing of a single class (React component) which can make use of multiple helper classes for continuous data recording, input management and multiparty communication for tasks with multiple subjects. Client-server communication and access to the recorded data is abstracted away completely.
+
+#### What covfee is not:
+
+- **A complete media annotation platform**. Covfee specializes on continuous media and does not offer many "basic" features of image annotation like bounding box or polygon annotation which are hard to do continuously. 
+- **Enterprise-level software**. Covfee is meant to facilitate research and experimentation. It is not thoroughly tested and contains bugs.
+- **Cross-browser compatible**. For the time being, covfee is meant to be used in desktop or laptop computers, not on mobile phones or tablets. Also, continuous video annotation specifically currently works only in Google Chrome due to its reliance on [requestVideoFrameCallback()](https://wicg.github.io/video-rvfc/). This will probably improve with more browser support. That being said, with this exception covfee should work correctly on all modern desktop browsers.
+
+
+
+## The covfee workflow
+
+<img alt="Docusaurus with Keytar" src={useBaseUrl('/img/covfee_main.png')} />
+
+Once covfee is installed, working with covfee as a requestor generally means following the three steps shown in the picture:
+
+1. The requestor creates a project specification in a *.covfee.json* file, which completely specifies the annotation interface. This documentation, paticularly the *Playground* is meant to help write the specification.
+
+2. The requestor runs `covfee make`, the script in charge of validating the specification and generating the covfee interface from it. The requestor can now enter the covfee admin panel and obtain anonymized links to each HIT in the specification. A CSV file with all the links can be downloaded to be uploaded to Amazon MTurk or otherwise shared with the annotators or study participants.
+
+3. The requestor may keep track of the annotation process using the admin panel. At any time it is possible to download the raw data in JSON and CSV files, which can then be processed locally.
+
+For a step-by-step guide on how to work with covfee see [Getting Started](getting_started)
+
+Some of the main features of covfee are:
+
+- **Projects are fully specified in the *.covfee.json* file**. This makes it easy to reproduce annotation processes on other datasets if a covfee specification is available.
+- **Secure link hashes** Covfee automatically generates random hash links for each HIT. These hashes generated from a secret key are meant to offer protection against bots or scalping of the HIT links. Note that this form of protection is [weaker under HTTP](https://security.stackexchange.com/questions/67615/how-safe-is-to-secure-sensitive-content-by-url-with-md5-hash-and-no-other-author).
+- **Support for consent forms and rich instructions** *Instructions* tasks can be used to provide detailed instructions in Markdown/HTML (including videos) and set up subject consent forms (see [Instructions Task](tasks/instructions)).
+- **Forms support** *Questionnaire* tasks can be used to request non-continuous feedback from participants via text boxes, buttons, sliders, and more (see [Questionnaire Task](tasks/questionnaire)).
+- **Support for automatic qualification tasks**. For continuous tasks, a HIT may be opened only if the annotator demonstrates certain level of ability in a qualification. 
+- **Admin panel** The admin panel helps keep track of progress and download results.
+- **High-frequency annotations** Modern web browsers implement animation and video frame callbacks (via [requestAnimationFrame()](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) and [requestVideoFrameCallback()](https://wicg.github.io/video-rvfc/)) which are designed to run on each display refresh. On most modern displays and browsers this is a rate of 60fps. In practice this can be lower depending on the capacity and load of the user's machine.
+
+## Continuous annotation
+
+
+## Extending covfee
+
+Particular emphasis has ben put on allowing covfee to be easily extensible. Implementing new covfee tasks like the ones in the `Playground` is possible with only a basic knowledge of web development. Specifically, development of custom tasks requires at least a basic understanding of Javascript and [React](https://reactjs.org/). Some useful resources to quickly get started:
+
+- [Official React tutorial](https://reactjs.org/tutorial/tutorial.html)
+
+The main advantages of implementing a custom task as part of covfee are:
+
+- **Covfee takes care of the data recording**. For continuous tasks, the available `buffer` class takes care of sending chunks of continuous data and logs to the server, and of reading them back for data visualization. All you need to do is call `buffer.data()` for every collected data point and `buffer.log()` to log any events of interest to you. For non-continuous tasks it's even more simple: calling the `onSubmit()` method with the result of your custom task will send the results to the server.
+- **Covfee's socket.io module** allows you to efficiently implement multiparty tasks, where multiple subjects are expected to take part in the task. The main use case for multiparty features is the recording of live online interactions (written, audio or audiovisual) with the ability to query subjects at any point or request their live feedback.
+- **Covfee's key manager** makes it easy to attach event handlers to keyboard and gamepad key presses. This is specially important for continuous annotation.
+- **Access to covfee's admin panel** will allow you to keep track of progress and download results easily.
+- **Share your work** Covfee tasks are modular and configurable and could be incorporated as part of covfee to be reused by others. Feel free to create a pull request or [contact me](mailto:josedvq@gmail.com) if you have created a reusable covfee tasks.
+
+See [Custom Tasks](custom_task) for a step-by-step guide on how to write your custom tasks in covfee.
+
+## Contribute to covfee
+
+Since there is an unlimited number of tasks we can teach algorithms to perform, annotation and data collection tasks often require specific implementations. **Covfee has the long-term goal of dramatically improving the time and effort necessary to collect and annotate interaction data online**. It was born out of the need for an annotation platform that better satisfies the characteristics of in-the-wild interaction data, where the behavior of single subjects is annotated for long periods of time, but always with the goal of supporting a broad array of experiments. To achieve its goal, **covfee seeks to become a sufficient library of annotation task templates (covfee tasks)**, which researchers will be able to use as-is or to modify to satisfy their particular needs. You can contribute to our goal by contributing covfee tasks or [contact me](mailto:josedvq@gmail.com) if you are interested in other forms of collaboration. 

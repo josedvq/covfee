@@ -5,7 +5,6 @@
     "hits": [
         {
             "id": "1d_annot",
-            "type": "annotation",
             "name": "1D annotation sample",
             "extra": {
                 "type": "raw",
@@ -27,6 +26,7 @@
                 }
             ],
             "interface": {
+                "type": "annotation",
                 "userTasks": {
                     "continuous": {
                         "name": "Sample",

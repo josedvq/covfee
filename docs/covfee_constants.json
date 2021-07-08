@@ -1,7 +1,9 @@
 {
   "env": "development",
+  "socketio_enabled": true,
   "app_url": "http://127.0.0.1:5000/#",
   "admin_url": "http://127.0.0.1:5000/admin#",
+  "base_url": "http://127.0.0.1:5000",
   "api_url": "http://127.0.0.1:5000/api",
   "auth_url": "http://127.0.0.1:5000/auth",
   "media_url": "http://127.0.0.1:5000/media",

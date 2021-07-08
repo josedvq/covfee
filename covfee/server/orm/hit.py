@@ -1,4 +1,6 @@
 import os
+import hmac
+import hashlib
 
 from flask import current_app as app
 
@@ -29,21 +31,20 @@ class HIT(db.Model):
         "TaskSpec", secondary=hits_taskspecs, backref='hits', cascade="all, delete")
 
     name = db.Column(db.String)
-    type = db.Column(db.String)
     extra = db.Column(db.JSON)
     interface = db.Column(db.JSON)
 
-    def __init__(self, id, project_id, name, type, interface={}, extra=None, tasks=[], **kwargs):
+    def __init__(self, id, project_id, name, interface={}, extra=None, tasks=[], **kwargs):
         # hashstr = HIT.get_hashstr(hashstr, id)
         self.id = sha256(f'{id}_{project_id}_{app.config["COVFEE_SECRET_KEY"]}'.encode()).digest()
         self.name = name
-        self.type = type
 
         self.interface = interface
 
         task_specs = []
         for i, spec in enumerate(tasks):
             if 'name' not in spec:
+                print(spec)
                 spec['name'] = str(i)
             spec['order'] = i
             task_specs.append(TaskSpec(**spec))
@@ -119,11 +120,16 @@ class HITInstance(db.Model):
     def get_completion_code(self):
         return sha256((self.id.hex() + app.config['COVFEE_SECRET_KEY']).encode()).digest().hex()[:12]
 
+    def get_hmac(self):
+        h = hmac.new(app.config['COVFEE_SECRET_KEY'].encode('utf-8'), self.id, hashlib.sha256 )
+        return h.hexdigest()
+
     def as_dict(self, with_tasks=False, with_response_info=False):
         instance_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
         hit_dict = self.hit.as_dict()
 
         instance_dict['id'] = instance_dict['id'].hex()
+        instance_dict['token'] = self.get_hmac()
         instance_dict['hit_id'] = instance_dict['hit_id'].hex()
         instance_dict['preview_id'] = instance_dict['preview_id'].hex()
 

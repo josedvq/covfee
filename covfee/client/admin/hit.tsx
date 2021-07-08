@@ -14,7 +14,6 @@ class InstanceList extends React.Component {
             return {
                 key: instance.id,
                 id: instance.id,
-                type: instance.type,
                 instances: instance.instances.length,
                 submitted: instance.submitted
             }
@@ -25,12 +24,6 @@ class InstanceList extends React.Component {
                 title: 'ID',
                 dataIndex: 'id',
                 render: id => <Link to={'/hits/' + id}>{id}</Link>
-            },
-            {
-                title: 'Type',
-                dataIndex: 'type',
-                defaultSortOrder: 'descend',
-                sorter: (a, b) => a.firstname.localeCompare(b.firstname),
             },
             {
                 title: 'Instances',

@@ -58,6 +58,7 @@ export class InstructionsTask extends CovfeeTask<Props, State> {
                         values={this.state.form.values} 
                         setValues={this.handleFormChange}
                         withSubmitButton={true}
+                        renderSubmitButton={this.props.renderSubmitButton}
                         onSubmit={this.handleSubmit}/>
             </Col>
         </Row>

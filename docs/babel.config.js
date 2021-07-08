@@ -6,8 +6,7 @@ module.exports = {
       "alias": {
         // these don't work directly in the MDX but they work in imported TSX files
         "@schemata": "../covfee/shared/schemata.json",
-        "Constants": "./covfee_constants.json",
-        "CustomTasks": "./dummy_tasks"
+        "Constants": "./covfee_constants.json"
       }
     }],
     "transform-class-properties",

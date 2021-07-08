@@ -1,11 +1,13 @@
 import os
 import shutil
 import sys
+import subprocess
 
 from flask import current_app as app
 from halo import Halo
 from colorama import init as colorama_init, Fore
 
+from ..server.start import create_app
 from ..server.orm import db
 from ..server.orm.user import User
 from covfee.cli.utils import working_directory
@@ -150,22 +152,15 @@ class CovfeeFolder:
                       ' --env COVFEE_WD=' + cwd +
                       ' --config ./webpack.dev.js')
 
-    def build(self):
-        cwd = os.getcwd()
+    # def build(self):
+    #     cwd = os.getcwd()
 
-        bundle_path = app.config['PROJECT_WWW_PATH']
+    #     bundle_path = app.config['PROJECT_WWW_PATH']
 
-        with working_directory(app.config['COVFEE_CLIENT_PATH']):
-            os.system('npx webpack' +
-                      ' --env COVFEE_WD=' + cwd +
-                      ' --config ./webpack.prod.js' + ' --output-path '+bundle_path)
-
-    def launch_dev(self):
-        # no need to build or link as bundle urls will point to webpack
-        os.environ['UNSAFE_MODE_ON'] = 'enable'
-        os.environ['FLASK_ENV'] = 'development'
-        os.environ['FLASK_APP'] = 'covfee.server.start:create_app("dev")'
-        os.system(sys.executable + ' -m flask run')
+    #     with working_directory(app.config['COVFEE_CLIENT_PATH']):
+    #         os.system('npx webpack' +
+    #                   ' --env COVFEE_WD=' + cwd +
+    #                   ' --config ./webpack.prod.js' + ' --output-path '+bundle_path)
 
     def launch_in_browser(self, unsafe=False):
         target_url = app.config["ADMIN_URL"] if unsafe else app.config["LOGIN_URL"]
@@ -176,22 +171,6 @@ class CovfeeFolder:
         else:
             print(Fore.GREEN +
                   f' * covfee is available at {target_url}')
-
-    def launch_prod(self, unsafe=False, build=False, launch_browser=False):
-        # build the bundle
-        if build:
-            self.build()
-        else:
-            self.link_bundles()
-
-        if launch_browser:
-            self.launch_in_browser(unsafe)
-
-        if unsafe:
-            os.environ['UNSAFE_MODE_ON'] = 'enable'
-        os.environ['FLASK_ENV'] = 'production'
-        os.environ['FLASK_APP'] = 'covfee.server.start:create_app'
-        os.system(f'gunicorn --workers 4 -b {app.config["SERVER_SOCKET"]} \'covfee.server.start:create_app("{app.config["COVFEE_ENV"]}")\'')
 
     def mkuser(self, username, password):
         user = User(username, password, ['admin'])

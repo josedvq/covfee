@@ -61,9 +61,11 @@ def load_config(app, mode):
     app.config['FRONTEND_CONFIG'] = {
         # frontend only has two environments: production and development
         'env': 'production' if mode in ['local', 'deploy'] else 'development',
+        'socketio_enabled': app.config['SOCKETIO_ENABLED'],
         'www_url': app.config['PROJECT_WWW_URL'],
         'app_url': app.config['APP_URL'],
         'admin_url': app.config['ADMIN_URL'],
+        'base_url': app.config['BASE_URL'],
         'api_url': app.config['API_URL'],
         'auth_url': app.config['AUTH_URL'],
     }

@@ -79,8 +79,7 @@ class Task(db.Model):
     taskspec_id = db.Column(db.Integer, db.ForeignKey('taskspecs.id'))
     # backref spec
 
-    responses = db.relationship("TaskResponse", backref='task', cascade="all, delete-orphan",
-                                order_by="desc(TaskResponse.index)")
+    responses = db.relationship("TaskResponse", backref='task', cascade="all, delete-orphan")
     children = db.relationship("Task", backref=backref('parent', remote_side=[id]),
                                cascade="all, delete-orphan")
 
@@ -91,6 +90,7 @@ class Task(db.Model):
 
     def __init__(self):
         self.has_unsubmitted_response = False
+        self.add_response() # add initial empty response
 
     def as_dict(self):
         # merge task and spec dicts
@@ -116,8 +116,8 @@ class Task(db.Model):
     def has_valid_response(self):
         return any([response.valid for response in self.responses])
 
-    def add_response(self, index):
-        response = TaskResponse(index=index)
+    def add_response(self):
+        response = TaskResponse()
         self.responses.append(response)
         return response
 
@@ -161,23 +161,21 @@ class TaskResponse(db.Model):
     chunks = db.relationship("Chunk", backref='taskresponse',
                              order_by="Chunk.index", cascade="all, delete-orphan", lazy="dynamic")
 
-    # for numbering multiple response submissions
-    index = db.Column(db.Integer)
+    state = db.Column(db.JSON) # holds the shared state of the task
+
     submitted = db.Column(db.Boolean)
     valid = db.Column(db.Boolean)
     data = db.Column(db.JSON)
-    has_chunk_data = db.Column(db.Boolean)
 
     task_object = None
 
-    def __init__(self, index, submitted=False, data=None, chunks=[]):
-        self.index = index
-        self.submitted = submitted
-        self.data = data
-        self.chunks = chunks
+    def __init__(self):
+        self.submitted = False
+        self.valid = False
 
     def as_dict(self):
         response_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        response_dict['url'] = f'{app.config["API_URL"]}/responses/{response_dict["id"]}'
         return response_dict
 
     def get_task_object(self):
@@ -264,12 +262,18 @@ class TaskResponse(db.Model):
 
         return np.hstack([idxs, data]), [l for chunk in logs_chunks for l in chunk]
 
-    def submit(self, response):
+    def validate(self):
         task_object = self.get_task_object()
         chunk_data, chunk_logs = self.get_ndarray()
-        validation_result = task_object.validate(response, chunk_data, chunk_logs)
+        self.valid = task_object.validate(self.data, chunk_data, chunk_logs)
+        return self.valid
+
+    def submit(self, response=None):
         
-        self.data = response
+        validation_result = self.validate()
+        
+        if response is not None:
+            self.data = response
         self.submitted = True
         self.valid = (validation_result == True)
         self.task.has_unsubmitted_response = False
@@ -284,9 +288,6 @@ class TaskResponse(db.Model):
             res['reason'] = validation_result
 
         return res
-
-db.Index('taskresponse_index', TaskResponse.task_id, TaskResponse.index)
-
 
 # represents a chunk of task response (for continuous responses)
 class Chunk(db.Model):

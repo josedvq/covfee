@@ -96,13 +96,15 @@ export class Form extends React.Component<Props> {
         super(props)
 
         const initialValues: {[key: string]: any} = {}
-        props.fields.forEach((field, idx) => {
-            const initialValue = field.input.defaultValue !== undefined ? field.input.defaultValue : 
-                                 field.input.defaultChecked !== undefined ? field.input.defaultChecked : 
-                                 null
-            initialValues[field.name] = initialValue
-        })
-        props.setValues(initialValues)
+        if(props.fields) {
+            props.fields.forEach((field, idx) => {
+                const initialValue = field.input.defaultValue !== undefined ? field.input.defaultValue : 
+                                    field.input.defaultChecked !== undefined ? field.input.defaultChecked : 
+                                    null
+                initialValues[field.name] = initialValue
+            })
+            props.setValues(initialValues)
+        }
     }
 
     componentDidMount() {

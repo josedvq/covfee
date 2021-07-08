@@ -142,7 +142,6 @@ class HITList extends React.Component<HITListProps> {
             return {
                 key: hit.id,
                 id: hit.id,
-                type: hit.type,
                 name: hit.name,
                 instances: hit.instances.length,
                 submitted: hit.submitted

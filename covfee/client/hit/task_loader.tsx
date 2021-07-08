@@ -134,8 +134,8 @@ export class TaskLoader extends React.Component<Props, State> {
     componentDidMount = () => {
         // read the taks and parent responses.
         this.mountPromise = makeCancelablePromise(Promise.all([
-            this.props.task.num_submissions > 0 && this.fetchTaskResponse(),
-            this.props.parent && this.props.parent.num_submissions > 0 && this.fetchParentResponse()
+            this.fetchTaskResponse(),
+            this.props.parent && this.fetchParentResponse()
         ]))
         
         this.mountPromise.promise.then(_ => {
@@ -163,7 +163,7 @@ export class TaskLoader extends React.Component<Props, State> {
     }
 
     fetchTaskResponse = () => {
-        const url = this.props.task.url +'/responses?' + new URLSearchParams({
+        const url = this.props.task.url +'/response?' + new URLSearchParams({
         })
         return fetcher(url)
             .then(throwBadResponse)
@@ -175,7 +175,7 @@ export class TaskLoader extends React.Component<Props, State> {
     }
 
     fetchParentResponse = () => {
-        const url = this.props.parent.url + '/responses?' + new URLSearchParams({
+        const url = this.props.parent.url + '/response?' + new URLSearchParams({
         })
         const p = fetcher(url)
             .then(throwBadResponse)
@@ -212,8 +212,25 @@ export class TaskLoader extends React.Component<Props, State> {
         })
     }
 
-    loadTaskForAnnotation = () => { this.loadTask(true)}
     loadTaskForReplay = () => { this.loadTask(false) }
+
+    clearAndReloadTask = () => {
+        const url = this.props.task.url +'/make_response?' + new URLSearchParams({
+        })
+
+        const requestOptions = {
+            method: 'POST'
+        }
+
+        return fetcher(url, requestOptions)
+            .then(throwBadResponse)
+            .then(response => {
+                this.response = response
+                this.loadTask(true)
+            }).catch(error => {
+                myerror('Error making task response.', error)
+            })
+    }
 
 
     handleTaskSubmit = (taskResult: any, buffer: AnnotationBuffer, gotoNext=false) => {
@@ -224,7 +241,7 @@ export class TaskLoader extends React.Component<Props, State> {
             console.error(`submit() called in invalid state ${this.state.status}.`)
 
         let sendResult = () => {
-            const url = this.props.task.url + '/submit?' + new URLSearchParams({
+            const url = this.response.url + '/submit?' + new URLSearchParams({
             })
 
             const requestOptions = {
@@ -347,7 +364,7 @@ export class TaskLoader extends React.Component<Props, State> {
             mainOptions:[
                 <Button danger
                     type="primary"
-                    onClick={this.loadTaskForAnnotation}
+                    onClick={this.clearAndReloadTask}
                     disabled={this.props.task.num_submissions >= this.props.task.maxSubmissions}
                     >Restart Task</Button>,
 
@@ -372,7 +389,7 @@ export class TaskLoader extends React.Component<Props, State> {
             mainOptions: [
                 <Button danger
                     type="primary"
-                    onClick={this.loadTaskForAnnotation}
+                    onClick={this.clearAndReloadTask}
                     disabled={this.props.task.num_submissions >= this.props.task.maxSubmissions}
                     >Discard &amp; Restart</Button>,
 
@@ -404,7 +421,7 @@ export class TaskLoader extends React.Component<Props, State> {
             mainOptions: [
                 <Button danger
                     type="primary"
-                    onClick={this.loadTaskForAnnotation}
+                    onClick={this.clearAndReloadTask}
                     disabled={this.props.task.num_submissions >= this.props.task.maxSubmissions}
                     >Submit again</Button>,
 

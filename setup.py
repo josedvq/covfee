@@ -26,6 +26,7 @@ setup(
         'Flask == 1.*',
         'flask_cors == 3.*',
         'Flask-SQLAlchemy == 2.*',
+        'flask-socketio == 5.*',
         'gunicorn == 20.*',
         'flask-jwt-extended == 3.*',
         'click ==  7.*',
@@ -36,7 +37,8 @@ setup(
         'pyzmq == 22.*',
         'numpy == 1.*',
         'zipstream-new == 1.*',
-        'construct == 2.*'
+        'construct == 2.*',
+        'eventlet == 0.*'
     ],
     python_requires='>=3.6'
 )
