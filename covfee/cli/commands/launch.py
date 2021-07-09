@@ -171,6 +171,7 @@ def make(force, unsafe, rms, no_browser, no_launch, file_or_folder):
         # open covfee
         with Halo(text='Linking covfee bundles', spinner='dots') as spinner:
             project_folder.link_bundles()
+            spinner.succeed('covfee bundles linked.')
 
         if not no_browser:
             project_folder.launch_in_browser(unsafe)
