@@ -38,9 +38,9 @@ class TaskSpec(db.Model):
         self.editable = editable
         self.prerequisite = prerequisite
         self.config = {
-            maxSubmissions: maxSubmissions,
-            autoSubmit: autoSubmit,
-            timer: timer
+            'maxSubmissions': maxSubmissions,
+            'autoSubmit': autoSubmit,
+            'timer': timer
         }
 
         if 'children' in spec:
@@ -64,6 +64,8 @@ class TaskSpec(db.Model):
         spec_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns
                      if c not in ['responses']}
 
+        spec_dict = {**spec_dict, **spec_dict['config']}
+        del spec_dict['config']
         return spec_dict
 
 

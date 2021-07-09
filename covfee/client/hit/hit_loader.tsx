@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { withRouter } from 'react-router'
 import Hit from './hit'
 import Constants from 'Constants'
-import { fetcher, getUrlQueryParam, throwBadResponse} from '../utils'
+import { fetcher, getUrlQueryParam, myerror, throwBadResponse} from '../utils'
 
 import {
     LoadingOutlined, WindowsFilled,
@@ -15,7 +15,7 @@ import {
 import {HitType} from '@covfee-types/hit'
 import { Modal } from 'antd'
 import Title from 'antd/lib/typography/Title'
-import { EditableTaskFields } from '@covfee-types/task'
+import { EditableTaskFields, TaskResponse, TaskType } from '@covfee-types/task'
 
 interface MatchParams {
     hitId: string
@@ -124,13 +124,6 @@ class HitLoader extends React.Component<Props, State> {
         }
         let p = fetcher(this.url + '/submit', requestOptions)
             .then(throwBadResponse)
-            
-        p.then(hit=>{
-            // success
-            this.setState({
-                hit: hit
-            })
-        })
 
         return p
     }
@@ -199,6 +192,50 @@ class HitLoader extends React.Component<Props, State> {
             })
     }
 
+    handleResponseSubmit = (response: TaskResponse, data: any) => {
+        const url = response.url + '/submit?' + new URLSearchParams({
+        })
+
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }
+
+        // now send the task results
+        const p = fetcher(url, requestOptions)
+            .then(throwBadResponse)
+            
+        p.then(res => {
+            const tasks = { ...this.state.hit.tasks }
+            tasks[response.task_id] = {...this.state.hit.tasks[response.task_id]}
+            tasks[response.task_id].valid = res.valid
+            tasks[response.task_id].num_submissions += 1
+            
+            this.setState({    
+                hit: {
+                    ...this.state.hit,
+                    tasks: tasks
+                }
+            })
+        })
+
+        return p
+    }
+
+    fetchTaskResponse = (task: TaskType) => {
+        const url = task.url +'/response?' + new URLSearchParams({
+        })
+        const p = fetcher(url)
+            .then(throwBadResponse)
+
+        p.catch(error => {
+            myerror('Error fetching task response.', error)
+        })
+
+        return p
+    }
+
     render() {
         return <>
             {this.state.loading === true && 
@@ -217,6 +254,15 @@ class HitLoader extends React.Component<Props, State> {
                                 routingEnabled={true}
                                 previewMode={this.state.previewMode}
                                 reloadHit={this.loadHit}
+
+                                // async operations
+                                deleteTask={this.handleTaskDelete}
+                                editTask={this.handleTaskEdit}
+                                createTask={this.handleTaskCreate}
+
+                                submitTaskResponse={this.handleResponseSubmit}
+                                fetchTaskResponse={this.fetchTaskResponse}
+
                                 onSubmit={this.handleSubmit} />
                             
                         </Route>

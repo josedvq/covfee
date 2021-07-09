@@ -54,6 +54,11 @@ export interface CommonTaskSpec {
      * Instructions to be displayed before the form
      */
     instructions?: string
+    /**
+     * How the instructions will be displayed
+     * @default 'default'
+     */
+    instructionsType?: 'default' | 'popped'
 }
 
 /**
@@ -93,7 +98,7 @@ export interface TaskType extends Omit<CommonTaskSpec, 'children'> {
     /**
      * Task specification as provided by the user
      */
-    spec: BaseTaskSpec
+    spec: TaskSpec
     /**
      * number of times the task has been submitted
      */

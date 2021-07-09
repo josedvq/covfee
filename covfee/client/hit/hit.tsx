@@ -1,7 +1,6 @@
 import * as React from 'react'
 import io from 'socket.io-client'
 import styled from 'styled-components'
-import {unstable_batchedUpdates} from 'react-dom'
 import { withRouter, generatePath, RouteComponentProps } from 'react-router'
 import {
     PlusOutlined
@@ -28,7 +27,7 @@ import {CovfeeMenuItem} from '../gui'
 import {Sidebar} from './sidebar'
 
 import { HitType } from '@covfee-types/hit'
-import { EditableTaskFields, TaskType } from '@covfee-types/task'
+import { TaskType } from '@covfee-types/task'
 import { TaskLoader } from './task_loader';
 import './hit.scss'
 
@@ -50,17 +49,30 @@ type Props = HitType & RouteComponentProps<MatchParams> & {
      * Tells the annotation component to keep urls up to date
      */
     routingEnabled: boolean
+
+    // ASYNC OPERATIONS
+    deleteTask: Function
+    editTask: Function
+    createTask: Function
+    fetchTaskResponse: Function
+    reloadHit: Function
     /**
      * Called when the Hit submit button is clicked
      */
     onSubmit: () => Promise<any>
 }
 
+interface TaskState {
+    id: number
+    accessible: boolean
+}
+
 interface HitState {
+    taskMenuState: {id: number, accessible: boolean, children: {id: number, accessible: boolean}}[]
     /**
      * taskIds that are being displayed in the menu
      * The first number is the parent number and points to this.props.tasks
-     * The second number is the child number and points to the children list within each parent.
+     * The second number is the child number and points to this.props.tasks
      */
     taskIds: [number, number[]][]
     /**
@@ -81,16 +93,19 @@ interface HitState {
      * State of "extra" collapsible with hit-level information
      */
     extraOpen: boolean
+    /**
+     * If true, prerequisites are completed
+     */
+    prerequisitesCompleted: boolean
 }
 
 
 export class Hit extends React.Component<Props, HitState> {
-    state:HitState = {
-        currTask: null,
+    state: any = {
+        currKey: 0,
         loadingTask: true,
-        taskIds: [],
         extraOpen: false,
-        currKey: 0
+        prerequisitesCompleted: false
     }
 
     url: string
@@ -125,7 +140,8 @@ export class Hit extends React.Component<Props, HitState> {
         this.state = {
             ...this.state,
             currTask: [parentTask, null],
-            taskIds: taskIds
+            taskIds: taskIds,
+            prerequisitesCompleted: this.prerequisitesCompleted()
         }
         
         this.updateUrl(parentTask)
@@ -142,6 +158,21 @@ export class Hit extends React.Component<Props, HitState> {
             })
         }
     }
+
+    // makeTaskMenuState = () => {
+    //     const hierarchy: {[key: string]: {children: number[]}} = {}
+    //     for (const task of Object.values(this.props.tasks)) {
+    //         if(task.parent_id == null) hierarchy[task.id] = {children: []}
+    //         else {
+    //             if(!(task.parent_id in hierarchy)) hierarchy[task.parent_id] = {children: []}
+    //             hierarchy[task.parent_id].children.push(task.id)
+    //         }
+    //     }
+
+    //     const taskIds = Object.keys(hierarchy).map((key, _) => {
+    //         return [parseInt(key), hierarchy[key]['children']]
+    //     })
+    // }
 
     makeTaskIds = () => {
         const hierarchy: {[key: string]: {children: number[]}} = {}
@@ -174,10 +205,8 @@ export class Hit extends React.Component<Props, HitState> {
     getTask = (taskId: [number, number]) => {
         if(taskId[1] == null) {
             return this.props.tasks[this.state.taskIds[taskId[0]][0]]
-            //this.props.tasks[taskId[0]]
         } else {
             return this.props.tasks[this.state.taskIds[taskId[0]][1][taskId[1]]]
-            // return this.props.tasks[taskId[0]].children[taskId[1]]
         }
     }
 
@@ -241,10 +270,9 @@ export class Hit extends React.Component<Props, HitState> {
     }
 
     gotoNextTask = () => {
-        const curr = this.getTask(this.state.currTask)
         // if done with tasks
-        if (this.state.currTask[0] === this.props.tasks.length - 1 &&
-            this.state.currTask[1] === curr.children.length) {
+        if (this.state.currTask[0] === this.state.taskIds.length - 1 &&
+            (this.state.currTask[1] !== null ? this.state.currTask[1] === this.state.taskIds[this.state.currTask[0]][1].length - 1 : true)) {
             this.handleHitSubmit()
         } else {
             // go to next task
@@ -252,18 +280,19 @@ export class Hit extends React.Component<Props, HitState> {
         }
     }
 
-    handleTaskSubmit = (valid: any, gotoNext=false) => {
-        const curr = this.getTask(this.state.currTask)
-        curr.valid = valid
-        this.setState(this.state)
-
-        // if the HIT only loaded prerequisites
+    prerequisitesCompleted = () => {
         let prerequisitesCompleted = true
         Object.values(this.props.tasks).forEach(t => {
             if(t.prerequisite && !t.valid) prerequisitesCompleted = false 
         })
-        if(prerequisitesCompleted) {
-            // reload the hit and move to next task
+        console.log(prerequisitesCompleted)
+        return prerequisitesCompleted
+    }
+
+    handleTaskSubmitted = (valid: any, gotoNext=false) => {
+        const prerequisitesCompleted = this.prerequisitesCompleted()
+        if(!this.state.prerequisitesCompleted && prerequisitesCompleted) {
+            // prerequisites were just completed
             return this.props.reloadHit(()=>{
                 if(gotoNext) this.gotoNextTask()
             })
@@ -281,90 +310,7 @@ export class Hit extends React.Component<Props, HitState> {
         }
     }
 
-    handleTaskDelete = (taskId: [number, number]) => {
-        // deleting existing task
-        const curr = this.getTask(taskId)
-        const url = Constants.api_url + '/tasks/' + curr.id + '/delete'
-
-        return fetch(url)
-            .then(throwBadResponse)
-            .then(_ => {
-                if(taskId[1] == null)
-                    this.tasks.splice(taskId[0], 1)
-                else
-                    curr.children.splice(taskId[1], 1)
-
-                unstable_batchedUpdates(() => {
-                    this.setState({taskIds: this.makeTaskIds() })
-                    if(this.tasks.length === 0) return
-                    let nextTask = this.getPrevTask(this.state.currTask)
-                    if (nextTask[0] == null) nextTask = this.getNextTask(this.state.currTask)
-                    this.handleChangeActiveTask(nextTask)
-                })
-            })
-            .catch(error => {
-                myerror('Error deleting the task.', error)
-            })
-    }
-
-    handleTaskEdit = (taskId: [number, number], task: EditableTaskFields) => {
-        if(taskId[0] == null) return
-        // editing existing task
-        const curr = this.getTask(taskId)
-        const url = Constants.api_url + '/tasks/' + curr.id + '/edit'
-        const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(task)
-        }
-
-        return fetch(url, requestOptions)
-            .then(throwBadResponse)
-            .then(data => {
-                if(taskId[1] != null)
-                    this.tasks[taskId[0]].children[taskId[1]] = data
-                else
-                    this.tasks[taskId[0]] = {
-                        ...data,
-                        children: this.tasks[taskId[0]].children
-                    }
-                this.setState(this.state)
-            })
-            .catch(error => {
-                myerror('Error creating the new task.', error)
-            })
-    }
-
-    handleTaskCreate = (parentId: number, task: EditableTaskFields) => {
-        // adding new task
-        const url = this.url + '/tasks/add'
-        const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(task)
-        }
-
-        return fetch(url, requestOptions)
-            .then(throwBadResponse)
-            .then(data => {
-                let pid: number , cid: number
-                if(parentId == null) {
-                    this.tasks.push(data)
-                    pid = this.tasks.length - 1
-                    cid = null
-                } else {
-                    pid = parentId
-                    cid = 0
-                    this.tasks[parentId].children.push(data)
-                }
-                this.setState({taskIds: this.makeTaskIds()}, () => {
-                    this.handleChangeActiveTask([pid, cid])
-                })
-            })
-            .catch(error => {
-                myerror('Error creating the new task.', error)
-            })
-    }
+    
 
     handleMenuClick = (e: any) => {
         if (e.key == 'extra') this.setState({extraOpen: !this.state.extraOpen})
@@ -394,6 +340,8 @@ export class Hit extends React.Component<Props, HitState> {
             parent.children = children
             return parent
         })
+
+        console.log(this.getTask(this.state.currTask))
         return <>
             
             <Sidebar
@@ -408,11 +356,12 @@ export class Hit extends React.Component<Props, HitState> {
                     onTaskCreate: this.handleTaskCreate,
                     onTaskDelete: this.handleTaskDelete,
                 }}>
-                <Collapse defaultActiveKey={1}>
-                    <Panel header={this.props.name} key="1">
-                        <Button type="link" onClick={this.handleHitSubmit}>Submit HIT</Button>
-                    </Panel>
-                </Collapse>
+                {this.props.interface.showSubmitButton &&
+                    <Collapse defaultActiveKey={1}>
+                        <Panel header={this.props.name} key="1">
+                            <Button type="link" onClick={this.handleHitSubmit}>Submit HIT</Button>
+                        </Panel>
+                    </Collapse>}
             </Sidebar>
         </>
     }
@@ -422,7 +371,20 @@ export class Hit extends React.Component<Props, HitState> {
         else return false
     }
 
+    renderTaskSubmitButton = (extraProps: any) => {
+        return <Button type="primary" htmlType="submit" {...extraProps}>
+            {this.props.interface.type == 'annotation' ? 'Submit' : 'Next'}
+        </Button>
+    }
+
+    renderTaskNextButton = (extraProps: any) => {
+        return <Button type="primary" onClick={this.gotoNextTask} {...extraProps}>
+            Next
+        </Button>
+    }
+
     render() {
+        console.log(this.state.currTask)
         const taskProps = this.getTask(this.state.currTask)
         const parentProps = this.state.currTask[1] != null ? 
                             this.getTask([this.state.currTask[0], null]) : 
@@ -471,8 +433,17 @@ export class Hit extends React.Component<Props, HitState> {
                         task={taskProps}
                         parent={parentProps}
                         interfaceMode={this.props.interface.type}
-                        onSubmit={this.handleTaskSubmit}
-                        previewMode={this.props.previewMode} />
+                        disabled={(taskProps.maxSubmissions ? (taskProps.num_submissions >= taskProps.maxSubmissions) : false) || (taskProps.prerequisite && taskProps.valid)}
+                        previewMode={this.props.previewMode}
+                        // render props
+                        renderTaskSubmitButton={this.renderTaskSubmitButton}
+                        renderTaskNextButton={this.renderTaskNextButton}
+                        // async operations
+                        fetchTaskResponse={this.props.fetchTaskResponse}
+                        submitTaskResponse={this.props.submitTaskResponse}
+                        // callbacks
+                        onClickNext={this.gotoNextTask}
+                        onSubmit={this.handleTaskSubmitted}/>
                 </Row>
             </ContentContainer>            
         </>
@@ -487,8 +458,6 @@ const SidebarContainer = styled.div`
     vertical-align: top;
     top:46px;
     height: ${props => (Math.floor(props.height) - 46 + 'px;')}
-    // height: 500px;
-	// height:calc(100% - 54px);
 	width: 25%;
 	overflow: auto;
 `

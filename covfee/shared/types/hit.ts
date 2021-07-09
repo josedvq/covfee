@@ -1,4 +1,4 @@
-import {PresetsSpec, TaskSpec, TaskType, UserTaskSpec} from './task'
+import {TaskSpec, TaskType} from './task'
 import { MarkdownContentSpec } from './tasks/utils'
 
 /**
@@ -32,6 +32,10 @@ export interface BaseInterface {
      * Display a bar indicating progress as fraction of completed tasks
      */
     showProgress?: boolean,
+    /**
+     * Show the button to submit the HIT
+     */
+    showSubmitButton?: boolean
 }
 
 export interface AnnotationInterface extends BaseInterface{

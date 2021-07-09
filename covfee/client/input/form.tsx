@@ -24,7 +24,7 @@ import {
 } from 'antd'
 import { FieldSpec, FormSpec, InputSpec } from '@covfee-types/tasks/questionnaire'
 import { FormInstance } from 'antd/lib/form'
-import { ThunderboltFilled } from '@ant-design/icons'
+import { StarOutlined, ThunderboltFilled } from '@ant-design/icons'
 
 const antd_components: {[key: string]: any} = {
     // 'Cascader': Cascader,
@@ -117,16 +117,18 @@ export class Form extends React.Component<Props> {
 
     renderInputElement = (inputType: string, elementProps: any, disabled: boolean) => {
         const elementClass = antd_components[inputType]
+        const style: any = {}
+
+        if(inputType == 'Slider') {
+            style['marginLeft'] = '25'
+            style['marginRight'] = '25'
+        }
+
         const elem = React.createElement(elementClass, {
             ...elementProps,
-            disabled: disabled
+            disabled: disabled,
+            style: style
         }, null)
-
-        if(elementProps['inputType'] == 'Slider' && elementProps['vertical']) {
-            return <div style={{display: 'inline-block', height: 200, margin: '0 50'}}>
-                {elem}
-            </div>
-        }
 
         return elem
     }
@@ -142,18 +144,29 @@ export class Form extends React.Component<Props> {
         return this.props.values[condition]
     }
 
-    render() {
-        if(!this.props.fields) {return <>Empty form</>}
+    patchProps = (props: any) => {
+        const marks = {}
+        if(props['inputType'] == 'Slider' && props['marks']) {
+            for (const [key, value] of Object.entries(props['marks'])) {
+                marks[key] = <div style={{display: 'table-caption', wordSpacing: 'unset', fontSize: '0.8em'}}>{value}</div>
+            }
+        }
+        return {...props, marks: marks}
+    }
 
+    render() {
         return <AntdForm
                 ref={this.formRef}
                 layout={this.props.layout}
-                style={{margin: '0 1em'}}
+                style={{margin: '1em'}}
                 initialValues={this.props.values}
                 onValuesChange={(changedValues, allValues) => { this.props.setValues(changedValues) }}
                 onFinish={this.handleFinish}>
                 
-            {this.props.fields.map((field, index) => {
+            {this.props.fields && this.props.fields.map((field, index) => {
+                // do not render if the condition is not met
+                if(!this.evalCondition(field.condition)) return null
+
                 return <AntdForm.Item 
                     key={index}
                     name={field.name}
@@ -161,13 +174,14 @@ export class Form extends React.Component<Props> {
                     required={field.required}
                     rules={field.required && [{required: true, message: 'This field is required.'}]}
                     valuePropName={['Switch', 'Checkbox'].includes(field.input.inputType) ? 'checked' : 'value'}>
+
                     {(()=>{
                         if(!(field.input.inputType in antd_components))
                             return <p>Unimplemented input element!</p>
             
-                        const elementProps = {...field.input}
+                        const elementProps = this.patchProps({...field.input})
                         delete elementProps['inputType']
-                        return this.renderInputElement(field.input.inputType, elementProps, this.props.disabled || !this.evalCondition(field.condition))
+                        return this.renderInputElement(field.input.inputType, elementProps, this.props.disabled)
                     })()}
                     
                 </AntdForm.Item>
@@ -175,7 +189,7 @@ export class Form extends React.Component<Props> {
 
             {this.props.renderSubmitButton &&
             <AntdForm.Item >
-                {this.props.renderSubmitButton()}
+                {this.props.renderSubmitButton({disabled: this.props.disabled})}
                 {/* <Button type="primary" htmlType="submit" disabled={this.props.disabled}>
                     {this.props.submitButtonText}
                 </Button>     */}

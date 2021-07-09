@@ -6,7 +6,6 @@ import os
 import click
 
 from flask import current_app as app
-from flask.cli import FlaskGroup
 from halo.halo import Halo
 
 from covfee.server.start import create_app

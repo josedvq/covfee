@@ -7,7 +7,7 @@ import { InstructionsTaskSpec } from '@covfee-types/tasks/instructions'
 import { MarkdownLoader } from './utils/markdown_loader'
 import { BaseTaskProps, CovfeeTask } from './base'
 import { TaskType } from '@covfee-types/task'
-import { Form, FormState } from '../input/form'
+import { Form } from '../input/form'
 
 interface Props extends TaskType, BaseTaskProps {
     spec: InstructionsTaskSpec
@@ -15,14 +15,15 @@ interface Props extends TaskType, BaseTaskProps {
 
 interface State {
     form: {
-        values: FormState
+        values: any
     }
 }
+
 export class InstructionsTask extends CovfeeTask<Props, State> {
 
     state: State = {
         form: {
-            values: this.props.spec.form && this.props.spec.form.fields.map(field=>{return {name: field.name}}) 
+            values: null
         }
     }
 
@@ -33,20 +34,22 @@ export class InstructionsTask extends CovfeeTask<Props, State> {
     }
 
     handleSubmit = (values: any) => {
-        let vals = this.state.form.values
-        if(!vals || !vals.length) vals = null
+        // let vals = this.state.form.values
+        // if(!vals || !vals.length) vals = null
         
-        this.props.onSubmit(vals, null, true)
+        this.props.onSubmit(this.state.form.values, null, true)
     }
 
     handleFormChange = (values: any) => {
         this.setState({
             form: {
                 ...this.state.form,
-                values: values,
+                values: {
+                    ...this.state.form.values,
+                    ...values
+                }
             }
         })
-        
     }
 
     render() {
@@ -54,7 +57,7 @@ export class InstructionsTask extends CovfeeTask<Props, State> {
             <Col sm={{span:22, offset:1}} md={{span: 20, offset: 2}} lg={{span:16, offset: 4}} xl={{span: 14, offset: 5}}>
                 <MarkdownLoader content={this.props.spec.content}/>
                 <Form {...this.props.spec.form}
-                        disabled={this.props.disabled}
+                        disabled={this.props.disabled}  
                         values={this.state.form.values} 
                         setValues={this.handleFormChange}
                         withSubmitButton={true}

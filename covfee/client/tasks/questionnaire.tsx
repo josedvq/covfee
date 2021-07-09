@@ -6,7 +6,7 @@ import {
 } from 'antd'
 import VideojsPlayer from '../players/videojs'
 import WaveSurferPlayer from '../players/wavesurfer'
-import {Form, FormState} from '../input/form'
+import {Form} from '../input/form'
 import { BaseTaskProps, CovfeeTask } from './base'
 import { QuestionnaireTaskSpec } from '@covfee-types/tasks/questionnaire'
 import { TaskType } from '@covfee-types/task'
@@ -33,7 +33,7 @@ export class QuestionnaireTask extends CovfeeTask<Props, State> {
         },
         form: {
             // values: this.props.spec.form && this.props.spec.form.fields.map(field=>{return {name: field.name}}),
-            values: null,
+            values: {},
             disabled: this.props.disabled
         }
     }
@@ -49,13 +49,17 @@ export class QuestionnaireTask extends CovfeeTask<Props, State> {
         
     }
 
-    handleChange = (values: FormState) => {
+    handleChange = (values: any) => {
         this.setState({
             form: {
                 ...this.state.form,
-                values: values,
+                values: {
+                    ...this.state.form.values,
+                    ...values
+                }
             }
-        })
+        }, ()=>{console.log(this.state.form.values)})
+        
     }
 
     handleMediaEnded = () => {
@@ -74,16 +78,6 @@ export class QuestionnaireTask extends CovfeeTask<Props, State> {
     render() {
 
         return <>
-            {this.props.spec.instructions &&
-            <Row gutter={16} style={{ padding: '1em' }}>
-                <Col span={24}>
-                    <Alert
-                        type="info"
-                        message={'Instructions'}
-                        description={this.props.spec.instructions} 
-                        showIcon/>
-                </Col>
-            </Row>}
             <Row gutter={16}>
                 {this.props.spec.media &&
                 <Col span={16}>

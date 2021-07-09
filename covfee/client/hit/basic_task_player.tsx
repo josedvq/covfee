@@ -16,6 +16,7 @@ interface State {
 
 interface Props {
     task: TaskType
+    disabled: boolean
     response: any
     replayMode: boolean
     submitButtonText: string
@@ -26,6 +27,9 @@ interface Props {
     onLoad: ()=>void
     onSubmit: (taskResult: any, buffer: AnnotationBuffer, timer:boolean) => void
     createTaskRef: (e: CovfeeTask<any,any>) => void
+
+    // interface
+    renderTaskSubmitButton: (arg0?: any) => React.ReactNode
 }
 
 
@@ -62,11 +66,7 @@ export class BasicTaskPlayer extends React.Component<Props, State> {
         this.props.onSubmit(response, buffer, gotoNext)
     }
 
-    renderSubmitButton = (extraProps: any) => {
-        return <Button type="primary" htmlType="submit" {...extraProps}>
-            {this.props.submitButtonText}
-        </Button>
-    }
+    
 
     render() {
         const taskClass = getTaskClass(this.props.task.spec.type)
@@ -74,7 +74,7 @@ export class BasicTaskPlayer extends React.Component<Props, State> {
             // task props
             ref: (elem)=>{this.props.createTaskRef(elem)},
             spec: this.props.task.spec,
-            disabled: (this.props.task.prerequisite && this.props.task.valid),
+            disabled: this.props.disabled,
             // only provide a response in replay mode, or for secondary tasks
             response: this.props.response,
             buttons: this.context.getContext(),
@@ -83,7 +83,7 @@ export class BasicTaskPlayer extends React.Component<Props, State> {
             onLoad: this.handleTaskLoad,
             onSubmit: this.handleTaskSubmit,
             
-            renderSubmitButton: this.renderSubmitButton
+            renderSubmitButton: this.props.renderTaskSubmitButton
         }, null)
     }
 }

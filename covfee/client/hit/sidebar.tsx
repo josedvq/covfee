@@ -1,4 +1,5 @@
 import * as React from 'react'
+import styled from 'styled-components'
 import {
     Button, Input, 
 } from 'antd'
@@ -104,7 +105,7 @@ export class Sidebar extends React.Component<Props, State> {
     }
 
     render() {
-        return <nav className="sidebar">
+        return <SidebarContainer>
             {this.props.editMode.enabled &&
                 ((()=>{
                     let task
@@ -147,13 +148,16 @@ export class Sidebar extends React.Component<Props, State> {
                         children={task.children ? task.children.map((child, idx) =>{
                             return {
                                 name: child.spec.name,
-                                active: (index === this.props.currTask[0] && 
-                                        idx === this.props.currTask[1]),
+                                status: (index === this.props.currTask[0] && idx === this.props.currTask[1]) ? 'active' :
+                                    child.num_submissions == 0 ? 'default' :
+                                    child.valid ? 'valid' : 'invalid',
                                 editable: true // TODO: fix
                             }
                         }) : []}
+                        status={(index == this.props.currTask[0] && this.props.currTask[1] == null) ? 'active' : 
+                            task.num_submissions == 0 ? 'default' : 
+                            task.valid ? 'valid' : 'invalid'}
                         editable={task.editable}
-                        active={index == this.props.currTask[0] && this.props.currTask[1] == null}
                         onClickActivate={(child_index) => { this.props.onChangeActiveTask([index, child_index])}}
                         onClickEdit={(child_index) => { this.handleClickEdit([index, child_index])}}/>)}
                 
@@ -161,7 +165,7 @@ export class Sidebar extends React.Component<Props, State> {
             <nav className='sidebar-bottom'>
                 {this.props.children}
             </nav>
-        </nav>
+        </SidebarContainer>
     }
 }
 
@@ -170,6 +174,7 @@ interface TaskButtonSpec {
     name: string,
     active: boolean,
     editable: boolean,
+    status: 'default' | 'active' | 'valid' | 'invalid' 
 }
 interface TaskSectionProps extends TaskButtonSpec {
     children: Array<TaskButtonSpec>
@@ -183,7 +188,8 @@ export class TaskSection extends React.Component<TaskSectionProps> {
     render() {
         return <li className={classNames('task-li')}>
             <TaskButton name={this.props.name}
-                className={{"sidebar-btn-parent": true}}
+                className={{"btn-parent": true}}
+                status={this.props.status}
                 active={this.props.active}
                 editable={false}
                 expandable={!!this.props.children}
@@ -199,7 +205,8 @@ export class TaskSection extends React.Component<TaskSectionProps> {
                     return <li key={index}>
                         <TaskButton
                             name={child.name}
-                            className={{ "sidebar-btn-child": true }}
+                            className={{ "btn-child": true }}
+                            status={this.props.status}
                             active={child.active}
                             editable={false}
                             expandable={false}
@@ -225,21 +232,139 @@ export class TaskButton extends React.Component<TaskButtonProps> {
         expandable: false
     }
     render() {
-        return <div className={classNames({
-                    'sidebar-btn': true, 
-                    'sidebar-btn-active': this.props.active,
+        return <div className={classNames('btn', `btn-${this.props.status}`, {
                     ...this.props.className})} onClick={this.props.onClickActivate}>
 
-            <div className="sidebar-btn-icon">
+            <div className="btn-icon">
                 {this.props.editable &&
                     <EditOutlined />}
                 {this.props.expandable &&
                     <CaretDownOutlined />}
             </div>
-            <div className="sidebar-btn-name">
+            <div className="btn-name">
                 {this.props.name}
             </div>
             
         </div>
     }
 }
+
+/* Sidebar buttons */
+const SidebarContainer = styled.nav`
+    display: flex;
+    flex-flow: column;
+    width: 100%;
+    height: inherit;
+    padding: 1.333%;
+    background-color: #a6a6a6;
+  
+    > .task-group {
+      height: inherit;
+      overflow-y: scroll;
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+
+      > li > .btn {
+        border: 1px solid #d9d9d9;
+        border-radius: 2px;
+        margin: 2px;
+        color: #363636;
+        clear: both;
+    
+        > .btn-name {
+          width: calc(100% - 36px);
+          overflow-x: hidden;
+          display: block;
+          padding: 5px;
+    
+          &:hover {
+            cursor: pointer;
+          }
+        }
+    
+        > .btn-icon {
+          display: block;
+          float: right;
+          width: 20px;
+          height: 20px;
+          margin: 8px;
+          color:#d5d5d5;
+        }
+    
+        &.btn-default {
+          background-color: #fafafa;
+        }
+    
+        &.btn-active {
+          color: #fafafa;
+          background-color: #2c70de;
+        }
+
+        &.btn-valid {
+          background-color: #b2cf23;
+        }
+
+        &.btn-invalid {
+          background-color: #cf6565;
+        }
+      }
+    }
+  
+    &-new {
+      margin: 2px;
+    }
+  
+    &-group {
+      &-editbtn {
+        font-size: 0.8em;
+        line-height: 14px;
+        color: #5c5252;
+        text-align: right;
+        text-transform: uppercase;
+  
+        &:hover {
+          cursor: pointer;
+        }
+      }
+  
+      &-editbtn.background {
+        position: relative;
+        z-index: 1;
+  
+        &:before {
+          border-top: 2px solid #dfdfdf;
+          content: "";
+          margin: 0 auto;
+          /* this centers the line to the full width specified */
+          position: absolute;
+          /* positioning must be absolute here, and relative positioning must be applied to the parent */
+          top: 50%;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          width: 95%;
+          z-index: -1;
+        }
+  
+        span {
+          /* to hide the lines from behind the text, you have to set the background color the same as the container */
+          background: #f0f2f5;
+          padding: 0 5px;
+        }
+      }
+  
+    }
+  
+    &.bottom {
+      margin-top: auto;
+    }
+  
+    &.children {
+      list-style-type: none;
+      margin: 0;
+      padding-left: 25px;
+    }
+  
+    
+  }`

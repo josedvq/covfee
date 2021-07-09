@@ -230,14 +230,7 @@ class Continuous1DTask extends CovfeeContinuousTask<Props, State> {
     }
 
     instructions = () => {
-        return <>
-            <Row>
-                <Col span={24}>
-                    <Title level={4}>Keyboard controls</Title>
-                    {this.props.buttons.renderInfo()}
-                </Col>
-            </Row>
-        </>
+        return this.props.buttons.renderInfo()
     }
 }
 export default Continuous1DTask

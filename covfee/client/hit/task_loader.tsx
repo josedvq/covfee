@@ -1,4 +1,5 @@
 import * as React from 'react'
+import styled from 'styled-components'
 import ReactDOM from 'react-dom'
 import {
     Button,
@@ -9,7 +10,7 @@ import classNames from 'classnames'
 
 import { myerror, fetcher, throwBadResponse, makeCancelablePromise, CancelablePromise } from '../utils'
 import { getTaskClass } from '../task_utils'
-import { TaskResponse, TaskType } from '@covfee-types/task'
+import { TaskResponse, TaskSpec, TaskType } from '@covfee-types/task'
 import { AnnotationBuffer } from '../buffers/buffer'
 import { TaskOverlay } from './overlay'
 import ButtonEventManagerContext from '../input/button_manager'
@@ -58,6 +59,12 @@ interface State {
         visible: boolean
         submitting?: boolean
     }
+    /**
+     * State of the instructions popover
+     */
+    instructions: {
+        visible: boolean
+    }
 }
 
 interface Props {
@@ -70,18 +77,44 @@ interface Props {
      */
     parent: TaskType
     /**
+     * If true, the task cannot be interacted with
+     */
+    disabled: boolean
+    /**
      * If true, the task is only previewed: submission and server communication are disabled.
      * Used for previews and playground where no server is available.
      */
     previewMode: boolean
+
+    // INTERFACE
+
     /**
      * Interface mode: used to adjust the way the task is displayed in annotation or timeline modes.
      */
     interfaceMode: 'annotation' | 'timeline'
+    renderTaskSubmitButton: (arg0?: any) => React.ReactNode
+    renderTaskNextButton: (arg0?: any) => React.ReactNode
+
+    // ASYNC OPERATIONS
+
+    /**
+     * Retrieves a response for a given task
+     */
+    fetchTaskResponse: (arg0: TaskType) => Promise<TaskResponse>
+    /**
+     * Submits a response to a task
+     */
+    submitTaskResponse: (arg0: TaskResponse, arg1: any) => Promise<TaskResponse>
+
+    // CALLBACKS
     /**
      * To be called when the task is submitted.
      */
     onSubmit: (arg0: boolean, arg1: boolean)=>void
+    /**
+     * To be called when the user clicks to go to the next task
+     */
+    onClickNext: () => void
 }
 
 export class TaskLoader extends React.Component<Props, State> {
@@ -108,13 +141,15 @@ export class TaskLoader extends React.Component<Props, State> {
             replayMode: false
         },
         errorModal: {visible: false},
-        overlay: {visible: false}
+        overlay: {visible: false},
+        instructions: {visible: false}
     }
 
     constructor(props: Props) {
         super(props)
         this.taskClass = getTaskClass(this.props.task.spec.type)
         this.state.renderAs = this.getTaskRenderAs()
+        this.state.instructions.visible = (this.props.task.spec.instructionsType == 'popped')
     }
 
     getTaskRenderAs = () => {
@@ -134,25 +169,25 @@ export class TaskLoader extends React.Component<Props, State> {
     componentDidMount = () => {
         // read the taks and parent responses.
         this.mountPromise = makeCancelablePromise(Promise.all([
-            this.fetchTaskResponse(),
-            this.props.parent && this.fetchParentResponse()
+            this.props.fetchTaskResponse(this.props.task).then((response: TaskResponse) => {
+                this.response = response
+            }),
+            this.props.parent && this.props.fetchTaskResponse(this.props.parent).then((response: TaskResponse) => {
+                this.parentResponse = response
+            })
         ]))
         
         this.mountPromise.promise.then(_ => {
-            const playerStatus = (this.response && this.response.submitted) ?
-                                 'ended' : 'ready' 
-            
-            // load for annotation if there are no submissions
-            if (this.props.task.num_submissions == 0)
-                this.loadTask(true)
-            else {
+            if(this.response && this.response.submitted) {
                 this.setState({
                     status: 'loaded',
                     player: {
                         ...this.state.player,
-                        status: playerStatus
+                        status: 'ended'
                     }
                 })
+            } else {
+                this.loadTask(true)
             }
         })
     }
@@ -162,33 +197,6 @@ export class TaskLoader extends React.Component<Props, State> {
         this.mountPromise.cancel()
     }
 
-    fetchTaskResponse = () => {
-        const url = this.props.task.url +'/response?' + new URLSearchParams({
-        })
-        return fetcher(url)
-            .then(throwBadResponse)
-            .then((data: TaskResponse) => {
-                this.response = data
-            }).catch(error => {
-                myerror('Error fetching task response.', error)
-            })
-    }
-
-    fetchParentResponse = () => {
-        const url = this.props.parent.url + '/response?' + new URLSearchParams({
-        })
-        const p = fetcher(url)
-            .then(throwBadResponse)
-            .then((response: TaskResponse) => {
-                this.parentResponse = response
-                
-            })
-            
-        p.catch(error => {
-            myerror('Error fetching task response.', error)
-        })
-        return p
-    }
 
     loadTask = (annot = true) => {
         this.setState({
@@ -234,29 +242,12 @@ export class TaskLoader extends React.Component<Props, State> {
 
 
     handleTaskSubmit = (taskResult: any, buffer: AnnotationBuffer, gotoNext=false) => {
-        if(this.props.previewMode)
-            return console.info('submit() called in preview mode.')
-
-        if (!['annotready'].includes(this.state.status))
-            console.error(`submit() called in invalid state ${this.state.status}.`)
-
-        let sendResult = () => {
-            const url = this.response.url + '/submit?' + new URLSearchParams({
-            })
-
-            const requestOptions = {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(taskResult)
-            }
-
-            // now send the task results
-            return fetch(url, requestOptions)
-        }
+        // if(!['annotready'].includes(this.state.status)) {
+        //     console.log(`submit() called in invalid state ${this.state.status}.`)
+        // }
 
         (buffer ? buffer.flush() : Promise.resolve())
-            .then(sendResult)
-            .then(throwBadResponse)
+            .then(()=>{return this.props.submitTaskResponse(this.response, taskResult)})
             .then((data) => {
                 this.response = data.response
                 this.setState({
@@ -272,8 +263,11 @@ export class TaskLoader extends React.Component<Props, State> {
     }
 
     handleTaskEnd = (taskResult: any, buffer: AnnotationBuffer, timer=false) => {
-        if (!['annotready', 'replayready'].includes(this.state.status))
-            console.error(`onEnd called in invalid state ${this.state.status}.`)
+        // if (!['annotready', 'replayready'].includes(this.state.status))
+        //     console.error(`onEnd called in invalid state ${this.state.status}.`)
+        if(this.props.task.autoSubmit && !this.state.player.replayMode)
+            return this.handleTaskSubmit(taskResult, buffer, false)
+        
         this.endTaskResult = taskResult
         this.endTaskBuffer = buffer
         this.setState({
@@ -354,9 +348,10 @@ export class TaskLoader extends React.Component<Props, State> {
     }
 
     /**
-     * Uset must be able to:
+     * User must be able to:
      * - Redo the task if num_submissions < maxSubmissions
      * - Keep replaying the task indefinitely
+     * - Go to next task
      */
     getOverlayAfterReplayOrStop = () => {
         return {
@@ -372,7 +367,9 @@ export class TaskLoader extends React.Component<Props, State> {
                     type="primary"
                     onClick={this.loadTaskForReplay}
                     loading={this.state.overlay.submitting}
-                    >Watch again</Button>
+                    >Watch again</Button>,
+
+                this.props.renderTaskNextButton()
             ]
         }
     }
@@ -429,22 +426,47 @@ export class TaskLoader extends React.Component<Props, State> {
                     type="default"
                     onClick={this.loadTaskForReplay}
                     loading={this.state.overlay.submitting}
-                    >Replay submission</Button>
+                    >Replay submission</Button>,
+
+                this.props.renderTaskNextButton()
             ]
         }
     }
 
     createTaskRef = (element: CovfeeTask<any,any>) => {
+        if(!this.taskInstructionsElem) return
         this.taskElement = element
         if(element && element.instructions) {
             ReactDOM.render(this.renderTaskInfo(element.instructions()), this.taskInstructionsElem)
+        } else {
+            if(this.props.task.spec.instructions)
+                ReactDOM.render(this.renderTaskInfo(null), this.taskInstructionsElem)
         }
     }
 
-    renderTaskInfo = (instructions: React.ReactNode) => {
+    hideInstructions = () => {
+        this.setState({
+            instructions: {...this.state.instructions, visible: false}
+        })
+    }
+    
+    handleInstructionsVisibleChange = (visible: boolean) => {
+        this.setState({ instructions: {...this.state.instructions, visible: visible} })
+    }
+
+    renderTaskInfo = (instructions: React.ReactNode = null) => {
         return <Popover
+                    title="Instructions"
                     placement="bottom"
-                    content={instructions}
+                    visible={this.state.instructions.visible}
+                    onVisibleChange={this.handleInstructionsVisibleChange}
+                    content={<InstructionsPopoverContent>
+                        {this.props.task.spec.instructions}
+                        {instructions}
+                        <div style={{textAlign: 'right'}}>
+                            <Button type="primary" onClick={this.hideInstructions}>OK</Button>
+                        </div>
+                    </InstructionsPopoverContent>}
                     trigger="click">
             <div className="task-instructions-button">
                 <QuestionCircleOutlined/> Instructions
@@ -488,6 +510,7 @@ export class TaskLoader extends React.Component<Props, State> {
         return <ContinuousTaskPlayer
             ref={e => { this.taskPlayer = e }}
             status={this.state.player.status}
+            disabled={this.props.disabled}
             setState={this.setPlayerState}
             createTaskRef={this.createTaskRef}
             media={media}
@@ -504,6 +527,7 @@ export class TaskLoader extends React.Component<Props, State> {
     renderTaskDefault = () => {
         return <BasicTaskPlayer
             ref={e => { this.taskPlayer = e }}
+            disabled={this.props.disabled}
             createTaskRef={this.createTaskRef}
             task={this.props.task}
             response={this.response}
@@ -513,7 +537,7 @@ export class TaskLoader extends React.Component<Props, State> {
             onLoad={this.handleTaskLoad}
             onSubmit={this.handleTaskSubmit}
             // interface
-            submitButtonText={this.props.interfaceMode == 'annotation' ? 'Submit' : 'Next'}/>
+            renderTaskSubmitButton={this.props.renderTaskSubmitButton}/>
     }    
 
     render() {
@@ -538,3 +562,8 @@ export class TaskLoader extends React.Component<Props, State> {
     }
 }
 ContinuousTaskPlayer.contextType = buttonManagerContext
+
+const InstructionsPopoverContent = styled.div`
+    width: calc(30vw);
+    max-height: calc(50vh);
+`

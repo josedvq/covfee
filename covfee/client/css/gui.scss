@@ -23,7 +23,10 @@ table.simple-table > tr > th {
 .ant-col:last-child {
   padding-right: 0 !important;
 }
-
+/* Color of an unselected star in Rate */
+.ant-rate-star-zero .ant-rate-star-first, .ant-rate-star-zero .ant-rate-star-second {
+  color:#b6b6b6 !important;
+}
 
 
 /* Annotation feedback */
