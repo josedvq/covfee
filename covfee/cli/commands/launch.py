@@ -165,13 +165,13 @@ def make(force, unsafe, rms, no_browser, no_launch, file_or_folder):
         except ProjectExistsException: 
             return print(' Add --force option to overwrite.')
             
-        if no_launch: 
-            return
-
         # open covfee
         with Halo(text='Linking covfee bundles', spinner='dots') as spinner:
             project_folder.link_bundles()
             spinner.succeed('covfee bundles linked.')
+
+        if no_launch: 
+            return
 
         if not no_browser:
             project_folder.launch_in_browser(unsafe)
