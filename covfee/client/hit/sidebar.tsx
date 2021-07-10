@@ -71,6 +71,22 @@ export class Sidebar extends React.Component<Props, State> {
         }
     }
 
+    taskElementProps: React.RefObject<TaskSection>[]
+
+    constructor(props: Props) {
+        super(props)
+
+        this.taskElementProps = this.props.tasks.map(t => React.createRef<TaskSection>())
+    }
+
+    componentDidUpdate(prevProps: Props) {
+        const curr = this.props.currTask
+        if(prevProps.currTask != curr) {
+            if(this.taskElementProps[curr[0]].current)
+                this.taskElementProps[curr[0]].current.scrollIntoView()
+        }
+    }
+
     handleClickEdit = (taskId: [number, number]) => {
         if (!this.props.editMode.enabled) return
         this.setState({
@@ -140,28 +156,32 @@ export class Sidebar extends React.Component<Props, State> {
                 icon={<PlusCircleOutlined />}>
                 New Task
                 </Button>
-            <ol className={'task-group'}>
-                {this.props.tasks.map((task, index) => 
-                    <TaskSection
-                        key={task.id} 
-                        name={task.spec.name} 
-                        children={task.children ? task.children.map((child, idx) =>{
-                            return {
-                                name: child.spec.name,
-                                status: (index === this.props.currTask[0] && idx === this.props.currTask[1]) ? 'active' :
-                                    child.num_submissions == 0 ? 'default' :
-                                    child.valid ? 'valid' : 'invalid',
-                                editable: true // TODO: fix
-                            }
-                        }) : []}
-                        status={(index == this.props.currTask[0] && this.props.currTask[1] == null) ? 'active' : 
-                            task.num_submissions == 0 ? 'default' : 
-                            task.valid ? 'valid' : 'invalid'}
-                        editable={task.editable}
-                        onClickActivate={(child_index) => { this.props.onChangeActiveTask([index, child_index])}}
-                        onClickEdit={(child_index) => { this.handleClickEdit([index, child_index])}}/>)}
-                
-            </ol>
+            
+            <SidebarScrollable>
+                <ol className={'task-group'}>
+                    {this.props.tasks.map((task, index) => 
+                        <TaskSection
+                            key={task.id}
+                            ref={this.taskElementProps[index]}
+                            name={task.spec.name} 
+                            children={task.children ? task.children.map((child, idx) =>{
+                                return {
+                                    name: child.spec.name,
+                                    status: (index === this.props.currTask[0] && idx === this.props.currTask[1]) ? 'active' :
+                                        child.num_submissions == 0 ? 'default' :
+                                        child.valid ? 'valid' : 'invalid',
+                                    editable: true // TODO: fix
+                                }
+                            }) : []}
+                            status={(index == this.props.currTask[0] && this.props.currTask[1] == null) ? 'active' : 
+                                task.num_submissions == 0 ? 'default' : 
+                                task.valid ? 'valid' : 'invalid'}
+                            editable={task.editable}
+                            onClickActivate={(child_index) => { this.props.onChangeActiveTask([index, child_index])}}
+                            onClickEdit={(child_index) => { this.handleClickEdit([index, child_index])}}/>)}
+                    
+                </ol>
+            </SidebarScrollable>
             <nav className='sidebar-bottom'>
                 {this.props.children}
             </nav>
@@ -183,10 +203,17 @@ interface TaskSectionProps extends TaskButtonSpec {
 }
 export class TaskSection extends React.Component<TaskSectionProps> {
 
+    liRef = React.createRef<HTMLLIElement>()
+
     toggleExpand = () => {}
 
+    scrollIntoView = () => {
+        if(this.liRef.current)
+            this.liRef.current.scrollIntoView({behavior: 'smooth', block: 'center'})
+    }
+
     render() {
-        return <li className={classNames('task-li')}>
+        return <li className={classNames('task-li')} ref={this.liRef}>
             <TaskButton name={this.props.name}
                 className={{"btn-parent": true}}
                 status={this.props.status}
@@ -255,61 +282,8 @@ const SidebarContainer = styled.nav`
     flex-flow: column;
     width: 100%;
     height: inherit;
-    padding: 1.333%;
     background-color: #a6a6a6;
-  
-    > .task-group {
-      height: inherit;
-      overflow-y: scroll;
-      list-style-type: none;
-      margin: 0;
-      padding: 0;
 
-      > li > .btn {
-        border: 1px solid #d9d9d9;
-        border-radius: 2px;
-        margin: 2px;
-        color: #363636;
-        clear: both;
-    
-        > .btn-name {
-          width: calc(100% - 36px);
-          overflow-x: hidden;
-          display: block;
-          padding: 5px;
-    
-          &:hover {
-            cursor: pointer;
-          }
-        }
-    
-        > .btn-icon {
-          display: block;
-          float: right;
-          width: 20px;
-          height: 20px;
-          margin: 8px;
-          color:#d5d5d5;
-        }
-    
-        &.btn-default {
-          background-color: #fafafa;
-        }
-    
-        &.btn-active {
-          color: #fafafa;
-          background-color: #2c70de;
-        }
-
-        &.btn-valid {
-          background-color: #b2cf23;
-        }
-
-        &.btn-invalid {
-          background-color: #cf6565;
-        }
-      }
-    }
   
     &-new {
       margin: 2px;
@@ -364,7 +338,78 @@ const SidebarContainer = styled.nav`
       list-style-type: none;
       margin: 0;
       padding-left: 25px;
-    }
-  
-    
+    }    
   }`
+
+  const SidebarScrollable = styled.div`
+    flex: 2;
+    padding: 2 0 2 2;
+    overflow-y: scroll;
+    scrollbar-width: 12px;
+    scrollbar-color: rgb(244, 63, 94) rgb(99, 102, 241);
+    
+    &::-webkit-scrollbar {
+        width: 12px;
+    }
+    &::-webkit-scrollbar-track {
+        background: #a6a6a6;
+        border-radius: 6px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background-color: #d5d5d5;
+        border-radius: 6px;
+        border: 2px solid #a6a6a6;
+    }
+
+    > .task-group {
+        height: inherit;
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+  
+        > li > .btn {
+          border: 1px solid #d9d9d9;
+          border-radius: 2px;
+          margin: 2px;
+          color: #363636;
+          clear: both;
+      
+          > .btn-name {
+            width: calc(100% - 36px);
+            overflow-x: hidden;
+            display: block;
+            padding: 5px;
+      
+            &:hover {
+              cursor: pointer;
+            }
+          }
+      
+          > .btn-icon {
+            display: block;
+            float: right;
+            width: 20px;
+            height: 20px;
+            margin: 8px;
+            color:#d5d5d5;
+          }
+      
+          &.btn-default {
+            background-color: #fafafa;
+          }
+      
+          &.btn-active {
+            color: #fafafa;
+            background-color: #2c70de;
+          }
+  
+          &.btn-valid {
+            background-color: #b2cf23;
+          }
+  
+          &.btn-invalid {
+            background-color: #cf6565;
+          }
+        }
+      }
+  `
