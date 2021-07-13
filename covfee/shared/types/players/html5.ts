@@ -16,4 +16,8 @@ export interface HTML5PlayerSpec {
      * @default false
      */
     useRequestAnimationFrame?: boolean
+    /**
+     * If true, a countdown (3-2-1) is shown before the video plays
+     */
+    countdown?: boolean
 }

@@ -11,7 +11,6 @@ def connect(auth):
 
     try:
         id = bytes.fromhex(auth['hitId'])
-        receivedToken = bytes.fromhex(auth['token'])
     except ValueError:
         return False
 
@@ -23,6 +22,26 @@ def connect(auth):
 def disconnect():
     print('Client disconnected')
 
+@socketio.on('join')
+def on_join(data):
+    username = data['username']
+    room = data['room']
+    join_room(room)
+    print(username + ' has entered the room.')
+    send(username + ' has entered the room.', to=room)
+
+@socketio.on('leave')
+def on_leave(data):
+    username = data['username']
+    room = data['room']
+    leave_room(room)
+    send(username + ' has left the room.', to=room)
+
 @socketio.on('message')
 def handle_message(data):
     print('received message: ' + data)
+
+@socketio.on('action')
+def on_action(data):
+    emit('action', data, broadcast=True)
+    print(data)

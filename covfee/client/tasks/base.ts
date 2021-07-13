@@ -81,7 +81,7 @@ export interface ContinuousTaskProps extends BaseTaskProps {
      * Element that renders the video player in the task.
      * Should be rendered when provided
      */
-    playerElement?: React.Component
+    renderPlayer?: (arg0: any) => React.ReactNode
     /**
      * Object representing the video player
      * Includes utilities for listening to events and controlling the player

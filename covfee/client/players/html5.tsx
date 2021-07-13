@@ -2,8 +2,9 @@ import * as React from 'react'
 import './html5.css'
 
 import { HTML5PlayerSpec } from '@covfee-types/players/html5'
-import { BasePlayerProps, CovfeeContinuousPlayer, ContinuousPlayerProps } from './base'
+import { CovfeeContinuousPlayer, ContinuousPlayerProps } from './base'
 import {PlayerBar} from './videoplayer_bar'
+import {CountdownTimer} from './utils/countdown'
 
 import { urlReplacer} from '../utils'
 
@@ -15,12 +16,24 @@ export interface Props extends ContinuousPlayerProps, HTML5PlayerSpec {
 }
 
 interface State {
+    /**
+     * The video duration
+     */
     duration: number,
+    /**
+     * True while the countdown is active
+     */
+    countdownActive: boolean
 }
 
 export class HTML5Player extends CovfeeContinuousPlayer<Props, State> {
     state: State = {
-        duration: null
+        duration: null,
+        countdownActive: false
+    }
+
+    static defaultProps = {
+        countdown: false
     }
 
     canvasTag = React.createRef<HTMLCanvasElement>()
@@ -36,6 +49,7 @@ export class HTML5Player extends CovfeeContinuousPlayer<Props, State> {
 
     // Ids
     videoFrameCallbackId: number = null
+    countdownTimeoutId: any = null
 
     constructor(props: Props) {
         super(props)
@@ -70,7 +84,12 @@ export class HTML5Player extends CovfeeContinuousPlayer<Props, State> {
         // Typical usage (don't forget to compare props):
         if (this.props.paused !== prevProps.paused) {
             if(this.props.paused) this.pause()
-            else this.play()
+            else {
+                if(this.props.countdown)
+                    this.startPlayCountdown()
+                else
+                    this.play()
+            }
         }
         if (this.props.speed !== prevProps.speed) {
             const activeVideoTag = this.videoTags[this.active_idx].current
@@ -143,6 +162,13 @@ export class HTML5Player extends CovfeeContinuousPlayer<Props, State> {
         this.videoFrameCallbackId = requestAnimationFrame(this.onRequestAnimationFrame)
     }
 
+    startPlayCountdown = () => {
+        this.setState({countdownActive: true})
+        this.countdownTimeoutId = setTimeout(()=>{
+            this.setState({countdownActive: false}, ()=>{this.play()})
+        }, 1500)
+    }
+
     play() {
         if(this.props.useRequestAnimationFrame)
             this.videoFrameCallbackId = requestAnimationFrame(this.onRequestAnimationFrame)
@@ -155,6 +181,11 @@ export class HTML5Player extends CovfeeContinuousPlayer<Props, State> {
     }
 
     pause() {
+        // countdown is underway
+        if(this.state.countdownActive) {
+            this.setState({countdownActive: false})
+            clearTimeout(this.countdownTimeoutId)
+        }
         if (this.props.useRequestAnimationFrame)
             cancelAnimationFrame(this.videoFrameCallbackId)
         else
@@ -220,7 +251,7 @@ export class HTML5Player extends CovfeeContinuousPlayer<Props, State> {
 
     renderSingleview = () => {
         if (this.props.media.type !== 'video') return
-        return <div className='html5player' style={{backgroundColor: 'black'}}>
+        return <div className='html5player' style={{position: 'relative', backgroundColor: 'black'}}>
             {this.renderBar()}
             <video style={{width: '100%', maxHeight: 'calc(80vh)'}} 
                 ref={this.videoTags[0]} 
@@ -228,6 +259,7 @@ export class HTML5Player extends CovfeeContinuousPlayer<Props, State> {
                 crossOrigin="Anonymous" 
                 preload="auto"
                 muted={this.props.media.muted}/>
+            {this.state.countdownActive && <CountdownTimer/>}
         </div>
     }
 

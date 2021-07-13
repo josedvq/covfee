@@ -8,6 +8,11 @@
           "title": "showProgress",
           "type": "boolean"
         },
+        "showSubmitButton": {
+          "description": "Show the button to submit the HIT",
+          "title": "showSubmitButton",
+          "type": "boolean"
+        },
         "type": {
           "default": "annotation",
           "description": "type of interface.",
@@ -249,6 +254,16 @@
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "intensityInput": {
@@ -504,6 +519,16 @@
                     "title": "instructions",
                     "type": "string"
                   },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
+                    "type": "string"
+                  },
                   "maxSubmissions": {
                     "default": 0,
                     "description": "Maximum number of submissions a user can make for the task.",
@@ -574,6 +599,16 @@
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
@@ -697,13 +732,23 @@
                     ]
                   },
                   "form": {
-                    "$ref": "#/definitions/FormSpec<InputSpec>_1",
+                    "$ref": "#/definitions/FormSpec<InputSpec>",
                     "description": "a form to display after the content.",
                     "title": "form"
                   },
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
@@ -764,77 +809,30 @@
                     "title": "autoSubmit",
                     "type": "boolean"
                   },
-                  "content": {
-                    "description": "Main static content of the page (eg. consent terms, instructions)",
-                    "title": "content",
-                    "oneOf": [
-                      {
-                        "additionalProperties": false,
-                        "description": "Props for raw Markdown/HTML data",
-                        "properties": {
-                          "content": {
-                            "description": "A valid Markdown/HTML string",
-                            "title": "content",
-                            "type": "string"
-                          },
-                          "type": {
-                            "default": "raw",
-                            "enum": [
-                              "raw"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "content",
-                          "type"
-                        ],
-                        "title": "MarkdownContentRawSpec",
-                        "type": "object"
-                      },
-                      {
-                        "additionalProperties": false,
-                        "description": "Supplied is a link to a Markdown/HTML file.",
-                        "properties": {
-                          "type": {
-                            "default": "link",
-                            "enum": [
-                              "link"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          },
-                          "url": {
-                            "description": "A url pointing to a valid Markdown/HTML file.",
-                            "title": "url",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "url"
-                        ],
-                        "title": "MarkdownContentLinkSpec",
-                        "type": "object"
-                      }
-                    ],
-                    "discriminator": {
-                      "propertyName": "type"
-                    },
-                    "required": [
-                      "type"
-                    ]
-                  },
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
                     "default": 0,
                     "description": "Maximum number of submissions a user can make for the task.",
                     "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "minDevices": {
+                    "description": "Minimum number of devices in the call necessary to start the queries",
+                    "title": "minDevices",
                     "type": "number"
                   },
                   "name": {
@@ -846,6 +844,29 @@
                     "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
                     "title": "prerequisite",
                     "type": "boolean"
+                  },
+                  "queries": {
+                    "description": "Spec of the forms to be answered",
+                    "items": {
+                      "properties": {
+                        "form": {
+                          "$ref": "#/definitions/FormSpec<InputSpec>",
+                          "title": "form"
+                        },
+                        "offset": {
+                          "description": "Time in seconds since the start of the call",
+                          "title": "offset",
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "form",
+                        "offset"
+                      ],
+                      "type": "object"
+                    },
+                    "title": "queries",
+                    "type": "array"
                   },
                   "timer": {
                     "description": "Timing config",
@@ -873,8 +894,9 @@
                   }
                 },
                 "required": [
-                  "content",
+                  "minDevices",
                   "name",
+                  "queries",
                   "type"
                 ],
                 "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
@@ -914,6 +936,16 @@
         "instructions": {
           "description": "Instructions to be displayed before the form",
           "title": "instructions",
+          "type": "string"
+        },
+        "instructionsType": {
+          "default": "'default'",
+          "description": "How the instructions will be displayed",
+          "enum": [
+            "default",
+            "popped"
+          ],
+          "title": "instructionsType",
           "type": "string"
         },
         "intensityInput": {
@@ -1296,6 +1328,16 @@
                     "title": "instructions",
                     "type": "string"
                   },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
+                    "type": "string"
+                  },
                   "intensityInput": {
                     "description": "sets the type of intensity input",
                     "title": "intensityInput",
@@ -1549,6 +1591,16 @@
                     "title": "instructions",
                     "type": "string"
                   },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
+                    "type": "string"
+                  },
                   "maxSubmissions": {
                     "default": 0,
                     "description": "Maximum number of submissions a user can make for the task.",
@@ -1619,6 +1671,16 @@
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
@@ -1742,13 +1804,23 @@
                     ]
                   },
                   "form": {
-                    "$ref": "#/definitions/FormSpec<InputSpec>_1",
+                    "$ref": "#/definitions/FormSpec<InputSpec>",
                     "description": "a form to display after the content.",
                     "title": "form"
                   },
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
@@ -1809,77 +1881,30 @@
                     "title": "autoSubmit",
                     "type": "boolean"
                   },
-                  "content": {
-                    "description": "Main static content of the page (eg. consent terms, instructions)",
-                    "title": "content",
-                    "oneOf": [
-                      {
-                        "additionalProperties": false,
-                        "description": "Props for raw Markdown/HTML data",
-                        "properties": {
-                          "content": {
-                            "description": "A valid Markdown/HTML string",
-                            "title": "content",
-                            "type": "string"
-                          },
-                          "type": {
-                            "default": "raw",
-                            "enum": [
-                              "raw"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "content",
-                          "type"
-                        ],
-                        "title": "MarkdownContentRawSpec",
-                        "type": "object"
-                      },
-                      {
-                        "additionalProperties": false,
-                        "description": "Supplied is a link to a Markdown/HTML file.",
-                        "properties": {
-                          "type": {
-                            "default": "link",
-                            "enum": [
-                              "link"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          },
-                          "url": {
-                            "description": "A url pointing to a valid Markdown/HTML file.",
-                            "title": "url",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "url"
-                        ],
-                        "title": "MarkdownContentLinkSpec",
-                        "type": "object"
-                      }
-                    ],
-                    "discriminator": {
-                      "propertyName": "type"
-                    },
-                    "required": [
-                      "type"
-                    ]
-                  },
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
                     "default": 0,
                     "description": "Maximum number of submissions a user can make for the task.",
                     "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "minDevices": {
+                    "description": "Minimum number of devices in the call necessary to start the queries",
+                    "title": "minDevices",
                     "type": "number"
                   },
                   "name": {
@@ -1891,6 +1916,29 @@
                     "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
                     "title": "prerequisite",
                     "type": "boolean"
+                  },
+                  "queries": {
+                    "description": "Spec of the forms to be answered",
+                    "items": {
+                      "properties": {
+                        "form": {
+                          "$ref": "#/definitions/FormSpec<InputSpec>",
+                          "title": "form"
+                        },
+                        "offset": {
+                          "description": "Time in seconds since the start of the call",
+                          "title": "offset",
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "form",
+                        "offset"
+                      ],
+                      "type": "object"
+                    },
+                    "title": "queries",
+                    "type": "array"
                   },
                   "timer": {
                     "description": "Timing config",
@@ -1918,8 +1966,9 @@
                   }
                 },
                 "required": [
-                  "content",
+                  "minDevices",
                   "name",
+                  "queries",
                   "type"
                 ],
                 "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
@@ -1985,6 +2034,16 @@
         "instructions": {
           "description": "Instructions to be displayed before the form",
           "title": "instructions",
+          "type": "string"
+        },
+        "instructionsType": {
+          "default": "'default'",
+          "description": "How the instructions will be displayed",
+          "enum": [
+            "default",
+            "popped"
+          ],
+          "title": "instructionsType",
           "type": "string"
         },
         "maxSubmissions": {
@@ -2677,214 +2736,6 @@
       "title": "FieldSpec<InputSpec>",
       "type": "object"
     },
-    "FieldSpec<InputSpec>_1": {
-      "properties": {
-        "condition": {
-          "description": "If given the field will only be available when the condition is true",
-          "title": "condition",
-          "type": "string"
-        },
-        "input": {
-          "description": "input props for a single input element",
-          "title": "input",
-          "oneOf": [
-            {
-              "description": "Props for the antd checkbox group",
-              "properties": {
-                "defaultValue": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "defaultValue",
-                  "type": "array"
-                },
-                "inputType": {
-                  "default": "Checkbox.Group",
-                  "enum": [
-                    "Checkbox.Group"
-                  ],
-                  "title": "inputType",
-                  "type": "string"
-                },
-                "options": {
-                  "items": {
-                    "$ref": "#/definitions/CheckboxGroupOption"
-                  },
-                  "title": "options",
-                  "type": "array"
-                }
-              },
-              "required": [
-                "inputType",
-                "options"
-              ],
-              "title": "CheckboxGroupSpec",
-              "type": "object",
-              "additionalProperties": false
-            },
-            {
-              "description": "Props for the antd input field",
-              "properties": {
-                "allowClear": {
-                  "title": "allowClear",
-                  "type": "boolean"
-                },
-                "bordered": {
-                  "title": "bordered",
-                  "type": "boolean"
-                },
-                "defaultValue": {
-                  "title": "defaultValue",
-                  "type": "string"
-                },
-                "inputType": {
-                  "default": "Input",
-                  "enum": [
-                    "Input"
-                  ],
-                  "title": "inputType",
-                  "type": "string"
-                },
-                "maxLength": {
-                  "title": "maxLength",
-                  "type": "number"
-                },
-                "minLength": {
-                  "title": "minLength",
-                  "type": "number"
-                },
-                "size": {
-                  "enum": [
-                    "large",
-                    "middle",
-                    "small"
-                  ],
-                  "title": "size",
-                  "type": "string"
-                },
-                "type": {
-                  "enum": [
-                    "checkbox",
-                    "color",
-                    "date",
-                    "datetime-local",
-                    "email",
-                    "month",
-                    "number",
-                    "password",
-                    "radio",
-                    "range",
-                    "string",
-                    "tel",
-                    "text",
-                    "time",
-                    "url",
-                    "week"
-                  ],
-                  "title": "type",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "inputType"
-              ],
-              "title": "InputFieldSpec",
-              "type": "object",
-              "additionalProperties": false
-            },
-            {
-              "description": "Props for the antd radio",
-              "properties": {
-                "buttonStyle": {
-                  "enum": [
-                    "outline",
-                    "solid"
-                  ],
-                  "title": "buttonStyle",
-                  "type": "string"
-                },
-                "defaultValue": {
-                  "title": "defaultValue",
-                  "type": "string"
-                },
-                "inputType": {
-                  "default": "Radio.Group",
-                  "enum": [
-                    "Radio.Group"
-                  ],
-                  "title": "inputType",
-                  "type": "string"
-                },
-                "optionType": {
-                  "enum": [
-                    "button",
-                    "default"
-                  ],
-                  "title": "optionType",
-                  "type": "string"
-                },
-                "options": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "options",
-                  "type": "array"
-                },
-                "size": {
-                  "enum": [
-                    "large",
-                    "middle",
-                    "small"
-                  ],
-                  "title": "size",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "inputType",
-                "options"
-              ],
-              "title": "RadioSpec",
-              "type": "object",
-              "additionalProperties": false
-            }
-          ],
-          "discriminator": {
-            "propertyName": "inputType"
-          },
-          "required": [
-            "inputType"
-          ]
-        },
-        "label": {
-          "description": "Label for the field.\nUsually displayed next to or on top of the field.",
-          "title": "label",
-          "type": "string"
-        },
-        "name": {
-          "description": "Name of the field.\nThe results will refer to the field by this name.",
-          "title": "name",
-          "type": "string"
-        },
-        "required": {
-          "description": "If true the field will be required to be filled before submission.",
-          "title": "required",
-          "type": "boolean"
-        },
-        "tooltip": {
-          "description": "Text for a tooltip with more information",
-          "title": "tooltip",
-          "type": "string"
-        }
-      },
-      "required": [
-        "input",
-        "label",
-        "name"
-      ],
-      "title": "FieldSpec<InputSpec>_1",
-      "type": "object"
-    },
     "FormSpec<InputSpec>": {
       "properties": {
         "fields": {
@@ -2910,33 +2761,6 @@
         "fields"
       ],
       "title": "FormSpec<InputSpec>",
-      "type": "object"
-    },
-    "FormSpec<InputSpec>_1": {
-      "properties": {
-        "fields": {
-          "description": "For field specification",
-          "items": {
-            "$ref": "#/definitions/FieldSpec<InputSpec>_1"
-          },
-          "title": "fields",
-          "type": "array"
-        },
-        "layout": {
-          "description": "Layout of the form",
-          "enum": [
-            "horizontal",
-            "inline",
-            "vertical"
-          ],
-          "title": "layout",
-          "type": "string"
-        }
-      },
-      "required": [
-        "fields"
-      ],
-      "title": "FormSpec<InputSpec>_1",
       "type": "object"
     },
     "GravityKeyboardInputSpec": {
@@ -3062,6 +2886,11 @@
                   "title": "showProgress",
                   "type": "boolean"
                 },
+                "showSubmitButton": {
+                  "description": "Show the button to submit the HIT",
+                  "title": "showSubmitButton",
+                  "type": "boolean"
+                },
                 "type": {
                   "default": "annotation",
                   "description": "type of interface.",
@@ -3109,6 +2938,11 @@
                 "showProgress": {
                   "description": "Display a bar indicating progress as fraction of completed tasks",
                   "title": "showProgress",
+                  "type": "boolean"
+                },
+                "showSubmitButton": {
+                  "description": "Show the button to submit the HIT",
+                  "title": "showSubmitButton",
                   "type": "boolean"
                 },
                 "type": {
@@ -3194,6 +3028,16 @@
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "intensityInput": {
@@ -3449,6 +3293,16 @@
                               "title": "instructions",
                               "type": "string"
                             },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
+                              "type": "string"
+                            },
                             "maxSubmissions": {
                               "default": 0,
                               "description": "Maximum number of submissions a user can make for the task.",
@@ -3519,6 +3373,16 @@
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
@@ -3642,13 +3506,23 @@
                               ]
                             },
                             "form": {
-                              "$ref": "#/definitions/FormSpec<InputSpec>_1",
+                              "$ref": "#/definitions/FormSpec<InputSpec>",
                               "description": "a form to display after the content.",
                               "title": "form"
                             },
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
@@ -3709,77 +3583,30 @@
                               "title": "autoSubmit",
                               "type": "boolean"
                             },
-                            "content": {
-                              "description": "Main static content of the page (eg. consent terms, instructions)",
-                              "title": "content",
-                              "oneOf": [
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Props for raw Markdown/HTML data",
-                                  "properties": {
-                                    "content": {
-                                      "description": "A valid Markdown/HTML string",
-                                      "title": "content",
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "default": "raw",
-                                      "enum": [
-                                        "raw"
-                                      ],
-                                      "title": "type",
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "content",
-                                    "type"
-                                  ],
-                                  "title": "MarkdownContentRawSpec",
-                                  "type": "object"
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Supplied is a link to a Markdown/HTML file.",
-                                  "properties": {
-                                    "type": {
-                                      "default": "link",
-                                      "enum": [
-                                        "link"
-                                      ],
-                                      "title": "type",
-                                      "type": "string"
-                                    },
-                                    "url": {
-                                      "description": "A url pointing to a valid Markdown/HTML file.",
-                                      "title": "url",
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "url"
-                                  ],
-                                  "title": "MarkdownContentLinkSpec",
-                                  "type": "object"
-                                }
-                              ],
-                              "discriminator": {
-                                "propertyName": "type"
-                              },
-                              "required": [
-                                "type"
-                              ]
-                            },
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
                               "default": 0,
                               "description": "Maximum number of submissions a user can make for the task.",
                               "title": "maxSubmissions",
+                              "type": "number"
+                            },
+                            "minDevices": {
+                              "description": "Minimum number of devices in the call necessary to start the queries",
+                              "title": "minDevices",
                               "type": "number"
                             },
                             "name": {
@@ -3791,6 +3618,29 @@
                               "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
                               "title": "prerequisite",
                               "type": "boolean"
+                            },
+                            "queries": {
+                              "description": "Spec of the forms to be answered",
+                              "items": {
+                                "properties": {
+                                  "form": {
+                                    "$ref": "#/definitions/FormSpec<InputSpec>",
+                                    "title": "form"
+                                  },
+                                  "offset": {
+                                    "description": "Time in seconds since the start of the call",
+                                    "title": "offset",
+                                    "type": "number"
+                                  }
+                                },
+                                "required": [
+                                  "form",
+                                  "offset"
+                                ],
+                                "type": "object"
+                              },
+                              "title": "queries",
+                              "type": "array"
                             },
                             "timer": {
                               "description": "Timing config",
@@ -3818,8 +3668,9 @@
                             }
                           },
                           "required": [
-                            "content",
+                            "minDevices",
                             "name",
+                            "queries",
                             "type"
                           ],
                           "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
@@ -3859,6 +3710,16 @@
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "intensityInput": {
@@ -4205,6 +4066,16 @@
                               "title": "instructions",
                               "type": "string"
                             },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
+                              "type": "string"
+                            },
                             "intensityInput": {
                               "description": "sets the type of intensity input",
                               "title": "intensityInput",
@@ -4458,6 +4329,16 @@
                               "title": "instructions",
                               "type": "string"
                             },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
+                              "type": "string"
+                            },
                             "maxSubmissions": {
                               "default": 0,
                               "description": "Maximum number of submissions a user can make for the task.",
@@ -4528,6 +4409,16 @@
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
@@ -4651,13 +4542,23 @@
                               ]
                             },
                             "form": {
-                              "$ref": "#/definitions/FormSpec<InputSpec>_1",
+                              "$ref": "#/definitions/FormSpec<InputSpec>",
                               "description": "a form to display after the content.",
                               "title": "form"
                             },
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
@@ -4718,77 +4619,30 @@
                               "title": "autoSubmit",
                               "type": "boolean"
                             },
-                            "content": {
-                              "description": "Main static content of the page (eg. consent terms, instructions)",
-                              "title": "content",
-                              "oneOf": [
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Props for raw Markdown/HTML data",
-                                  "properties": {
-                                    "content": {
-                                      "description": "A valid Markdown/HTML string",
-                                      "title": "content",
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "default": "raw",
-                                      "enum": [
-                                        "raw"
-                                      ],
-                                      "title": "type",
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "content",
-                                    "type"
-                                  ],
-                                  "title": "MarkdownContentRawSpec",
-                                  "type": "object"
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Supplied is a link to a Markdown/HTML file.",
-                                  "properties": {
-                                    "type": {
-                                      "default": "link",
-                                      "enum": [
-                                        "link"
-                                      ],
-                                      "title": "type",
-                                      "type": "string"
-                                    },
-                                    "url": {
-                                      "description": "A url pointing to a valid Markdown/HTML file.",
-                                      "title": "url",
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "url"
-                                  ],
-                                  "title": "MarkdownContentLinkSpec",
-                                  "type": "object"
-                                }
-                              ],
-                              "discriminator": {
-                                "propertyName": "type"
-                              },
-                              "required": [
-                                "type"
-                              ]
-                            },
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
                               "default": 0,
                               "description": "Maximum number of submissions a user can make for the task.",
                               "title": "maxSubmissions",
+                              "type": "number"
+                            },
+                            "minDevices": {
+                              "description": "Minimum number of devices in the call necessary to start the queries",
+                              "title": "minDevices",
                               "type": "number"
                             },
                             "name": {
@@ -4800,6 +4654,29 @@
                               "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
                               "title": "prerequisite",
                               "type": "boolean"
+                            },
+                            "queries": {
+                              "description": "Spec of the forms to be answered",
+                              "items": {
+                                "properties": {
+                                  "form": {
+                                    "$ref": "#/definitions/FormSpec<InputSpec>",
+                                    "title": "form"
+                                  },
+                                  "offset": {
+                                    "description": "Time in seconds since the start of the call",
+                                    "title": "offset",
+                                    "type": "number"
+                                  }
+                                },
+                                "required": [
+                                  "form",
+                                  "offset"
+                                ],
+                                "type": "object"
+                              },
+                              "title": "queries",
+                              "type": "array"
                             },
                             "timer": {
                               "description": "Timing config",
@@ -4827,8 +4704,9 @@
                             }
                           },
                           "required": [
-                            "content",
+                            "minDevices",
                             "name",
+                            "queries",
                             "type"
                           ],
                           "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
@@ -4894,6 +4772,16 @@
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
@@ -4995,6 +4883,16 @@
                               "title": "instructions",
                               "type": "string"
                             },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
+                              "type": "string"
+                            },
                             "intensityInput": {
                               "description": "sets the type of intensity input",
                               "title": "intensityInput",
@@ -5248,6 +5146,16 @@
                               "title": "instructions",
                               "type": "string"
                             },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
+                              "type": "string"
+                            },
                             "maxSubmissions": {
                               "default": 0,
                               "description": "Maximum number of submissions a user can make for the task.",
@@ -5318,6 +5226,16 @@
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
@@ -5441,13 +5359,23 @@
                               ]
                             },
                             "form": {
-                              "$ref": "#/definitions/FormSpec<InputSpec>_1",
+                              "$ref": "#/definitions/FormSpec<InputSpec>",
                               "description": "a form to display after the content.",
                               "title": "form"
                             },
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
@@ -5508,77 +5436,30 @@
                               "title": "autoSubmit",
                               "type": "boolean"
                             },
-                            "content": {
-                              "description": "Main static content of the page (eg. consent terms, instructions)",
-                              "title": "content",
-                              "oneOf": [
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Props for raw Markdown/HTML data",
-                                  "properties": {
-                                    "content": {
-                                      "description": "A valid Markdown/HTML string",
-                                      "title": "content",
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "default": "raw",
-                                      "enum": [
-                                        "raw"
-                                      ],
-                                      "title": "type",
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "content",
-                                    "type"
-                                  ],
-                                  "title": "MarkdownContentRawSpec",
-                                  "type": "object"
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Supplied is a link to a Markdown/HTML file.",
-                                  "properties": {
-                                    "type": {
-                                      "default": "link",
-                                      "enum": [
-                                        "link"
-                                      ],
-                                      "title": "type",
-                                      "type": "string"
-                                    },
-                                    "url": {
-                                      "description": "A url pointing to a valid Markdown/HTML file.",
-                                      "title": "url",
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "url"
-                                  ],
-                                  "title": "MarkdownContentLinkSpec",
-                                  "type": "object"
-                                }
-                              ],
-                              "discriminator": {
-                                "propertyName": "type"
-                              },
-                              "required": [
-                                "type"
-                              ]
-                            },
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
                               "default": 0,
                               "description": "Maximum number of submissions a user can make for the task.",
                               "title": "maxSubmissions",
+                              "type": "number"
+                            },
+                            "minDevices": {
+                              "description": "Minimum number of devices in the call necessary to start the queries",
+                              "title": "minDevices",
                               "type": "number"
                             },
                             "name": {
@@ -5590,6 +5471,29 @@
                               "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
                               "title": "prerequisite",
                               "type": "boolean"
+                            },
+                            "queries": {
+                              "description": "Spec of the forms to be answered",
+                              "items": {
+                                "properties": {
+                                  "form": {
+                                    "$ref": "#/definitions/FormSpec<InputSpec>",
+                                    "title": "form"
+                                  },
+                                  "offset": {
+                                    "description": "Time in seconds since the start of the call",
+                                    "title": "offset",
+                                    "type": "number"
+                                  }
+                                },
+                                "required": [
+                                  "form",
+                                  "offset"
+                                ],
+                                "type": "object"
+                              },
+                              "title": "queries",
+                              "type": "array"
                             },
                             "timer": {
                               "description": "Timing config",
@@ -5617,8 +5521,9 @@
                             }
                           },
                           "required": [
-                            "content",
+                            "minDevices",
                             "name",
+                            "queries",
                             "type"
                           ],
                           "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
@@ -5649,6 +5554,16 @@
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
@@ -5827,6 +5742,16 @@
                               "title": "instructions",
                               "type": "string"
                             },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
+                              "type": "string"
+                            },
                             "intensityInput": {
                               "description": "sets the type of intensity input",
                               "title": "intensityInput",
@@ -6080,6 +6005,16 @@
                               "title": "instructions",
                               "type": "string"
                             },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
+                              "type": "string"
+                            },
                             "maxSubmissions": {
                               "default": 0,
                               "description": "Maximum number of submissions a user can make for the task.",
@@ -6150,6 +6085,16 @@
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
@@ -6273,13 +6218,23 @@
                               ]
                             },
                             "form": {
-                              "$ref": "#/definitions/FormSpec<InputSpec>_1",
+                              "$ref": "#/definitions/FormSpec<InputSpec>",
                               "description": "a form to display after the content.",
                               "title": "form"
                             },
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
@@ -6340,77 +6295,30 @@
                               "title": "autoSubmit",
                               "type": "boolean"
                             },
-                            "content": {
-                              "description": "Main static content of the page (eg. consent terms, instructions)",
-                              "title": "content",
-                              "oneOf": [
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Props for raw Markdown/HTML data",
-                                  "properties": {
-                                    "content": {
-                                      "description": "A valid Markdown/HTML string",
-                                      "title": "content",
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "default": "raw",
-                                      "enum": [
-                                        "raw"
-                                      ],
-                                      "title": "type",
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "content",
-                                    "type"
-                                  ],
-                                  "title": "MarkdownContentRawSpec",
-                                  "type": "object"
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Supplied is a link to a Markdown/HTML file.",
-                                  "properties": {
-                                    "type": {
-                                      "default": "link",
-                                      "enum": [
-                                        "link"
-                                      ],
-                                      "title": "type",
-                                      "type": "string"
-                                    },
-                                    "url": {
-                                      "description": "A url pointing to a valid Markdown/HTML file.",
-                                      "title": "url",
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "url"
-                                  ],
-                                  "title": "MarkdownContentLinkSpec",
-                                  "type": "object"
-                                }
-                              ],
-                              "discriminator": {
-                                "propertyName": "type"
-                              },
-                              "required": [
-                                "type"
-                              ]
-                            },
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
                               "default": 0,
                               "description": "Maximum number of submissions a user can make for the task.",
                               "title": "maxSubmissions",
+                              "type": "number"
+                            },
+                            "minDevices": {
+                              "description": "Minimum number of devices in the call necessary to start the queries",
+                              "title": "minDevices",
                               "type": "number"
                             },
                             "name": {
@@ -6422,6 +6330,29 @@
                               "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
                               "title": "prerequisite",
                               "type": "boolean"
+                            },
+                            "queries": {
+                              "description": "Spec of the forms to be answered",
+                              "items": {
+                                "properties": {
+                                  "form": {
+                                    "$ref": "#/definitions/FormSpec<InputSpec>",
+                                    "title": "form"
+                                  },
+                                  "offset": {
+                                    "description": "Time in seconds since the start of the call",
+                                    "title": "offset",
+                                    "type": "number"
+                                  }
+                                },
+                                "required": [
+                                  "form",
+                                  "offset"
+                                ],
+                                "type": "object"
+                              },
+                              "title": "queries",
+                              "type": "array"
                             },
                             "timer": {
                               "description": "Timing config",
@@ -6449,8 +6380,9 @@
                             }
                           },
                           "required": [
-                            "content",
+                            "minDevices",
                             "name",
+                            "queries",
                             "type"
                           ],
                           "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
@@ -6531,13 +6463,23 @@
                     ]
                   },
                   "form": {
-                    "$ref": "#/definitions/FormSpec<InputSpec>_1",
+                    "$ref": "#/definitions/FormSpec<InputSpec>",
                     "description": "a form to display after the content.",
                     "title": "form"
                   },
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
@@ -6634,6 +6576,16 @@
                               "title": "instructions",
                               "type": "string"
                             },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
+                              "type": "string"
+                            },
                             "intensityInput": {
                               "description": "sets the type of intensity input",
                               "title": "intensityInput",
@@ -6887,6 +6839,16 @@
                               "title": "instructions",
                               "type": "string"
                             },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
+                              "type": "string"
+                            },
                             "maxSubmissions": {
                               "default": 0,
                               "description": "Maximum number of submissions a user can make for the task.",
@@ -6957,6 +6919,16 @@
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
@@ -7080,13 +7052,23 @@
                               ]
                             },
                             "form": {
-                              "$ref": "#/definitions/FormSpec<InputSpec>_1",
+                              "$ref": "#/definitions/FormSpec<InputSpec>",
                               "description": "a form to display after the content.",
                               "title": "form"
                             },
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
@@ -7147,77 +7129,30 @@
                               "title": "autoSubmit",
                               "type": "boolean"
                             },
-                            "content": {
-                              "description": "Main static content of the page (eg. consent terms, instructions)",
-                              "title": "content",
-                              "oneOf": [
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Props for raw Markdown/HTML data",
-                                  "properties": {
-                                    "content": {
-                                      "description": "A valid Markdown/HTML string",
-                                      "title": "content",
-                                      "type": "string"
-                                    },
-                                    "type": {
-                                      "default": "raw",
-                                      "enum": [
-                                        "raw"
-                                      ],
-                                      "title": "type",
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "content",
-                                    "type"
-                                  ],
-                                  "title": "MarkdownContentRawSpec",
-                                  "type": "object"
-                                },
-                                {
-                                  "additionalProperties": false,
-                                  "description": "Supplied is a link to a Markdown/HTML file.",
-                                  "properties": {
-                                    "type": {
-                                      "default": "link",
-                                      "enum": [
-                                        "link"
-                                      ],
-                                      "title": "type",
-                                      "type": "string"
-                                    },
-                                    "url": {
-                                      "description": "A url pointing to a valid Markdown/HTML file.",
-                                      "title": "url",
-                                      "type": "string"
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "url"
-                                  ],
-                                  "title": "MarkdownContentLinkSpec",
-                                  "type": "object"
-                                }
-                              ],
-                              "discriminator": {
-                                "propertyName": "type"
-                              },
-                              "required": [
-                                "type"
-                              ]
-                            },
                             "instructions": {
                               "description": "Instructions to be displayed before the form",
                               "title": "instructions",
+                              "type": "string"
+                            },
+                            "instructionsType": {
+                              "default": "'default'",
+                              "description": "How the instructions will be displayed",
+                              "enum": [
+                                "default",
+                                "popped"
+                              ],
+                              "title": "instructionsType",
                               "type": "string"
                             },
                             "maxSubmissions": {
                               "default": 0,
                               "description": "Maximum number of submissions a user can make for the task.",
                               "title": "maxSubmissions",
+                              "type": "number"
+                            },
+                            "minDevices": {
+                              "description": "Minimum number of devices in the call necessary to start the queries",
+                              "title": "minDevices",
                               "type": "number"
                             },
                             "name": {
@@ -7229,6 +7164,29 @@
                               "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
                               "title": "prerequisite",
                               "type": "boolean"
+                            },
+                            "queries": {
+                              "description": "Spec of the forms to be answered",
+                              "items": {
+                                "properties": {
+                                  "form": {
+                                    "$ref": "#/definitions/FormSpec<InputSpec>",
+                                    "title": "form"
+                                  },
+                                  "offset": {
+                                    "description": "Time in seconds since the start of the call",
+                                    "title": "offset",
+                                    "type": "number"
+                                  }
+                                },
+                                "required": [
+                                  "form",
+                                  "offset"
+                                ],
+                                "type": "object"
+                              },
+                              "title": "queries",
+                              "type": "array"
                             },
                             "timer": {
                               "description": "Timing config",
@@ -7256,8 +7214,9 @@
                             }
                           },
                           "required": [
-                            "content",
+                            "minDevices",
                             "name",
+                            "queries",
                             "type"
                           ],
                           "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
@@ -7275,77 +7234,30 @@
                     "title": "children",
                     "type": "array"
                   },
-                  "content": {
-                    "description": "Main static content of the page (eg. consent terms, instructions)",
-                    "title": "content",
-                    "oneOf": [
-                      {
-                        "additionalProperties": false,
-                        "description": "Props for raw Markdown/HTML data",
-                        "properties": {
-                          "content": {
-                            "description": "A valid Markdown/HTML string",
-                            "title": "content",
-                            "type": "string"
-                          },
-                          "type": {
-                            "default": "raw",
-                            "enum": [
-                              "raw"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "content",
-                          "type"
-                        ],
-                        "title": "MarkdownContentRawSpec",
-                        "type": "object"
-                      },
-                      {
-                        "additionalProperties": false,
-                        "description": "Supplied is a link to a Markdown/HTML file.",
-                        "properties": {
-                          "type": {
-                            "default": "link",
-                            "enum": [
-                              "link"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          },
-                          "url": {
-                            "description": "A url pointing to a valid Markdown/HTML file.",
-                            "title": "url",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "url"
-                        ],
-                        "title": "MarkdownContentLinkSpec",
-                        "type": "object"
-                      }
-                    ],
-                    "discriminator": {
-                      "propertyName": "type"
-                    },
-                    "required": [
-                      "type"
-                    ]
-                  },
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
                     "default": 0,
                     "description": "Maximum number of submissions a user can make for the task.",
                     "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "minDevices": {
+                    "description": "Minimum number of devices in the call necessary to start the queries",
+                    "title": "minDevices",
                     "type": "number"
                   },
                   "name": {
@@ -7357,6 +7269,29 @@
                     "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
                     "title": "prerequisite",
                     "type": "boolean"
+                  },
+                  "queries": {
+                    "description": "Spec of the forms to be answered",
+                    "items": {
+                      "properties": {
+                        "form": {
+                          "$ref": "#/definitions/FormSpec<InputSpec>",
+                          "title": "form"
+                        },
+                        "offset": {
+                          "description": "Time in seconds since the start of the call",
+                          "title": "offset",
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "form",
+                        "offset"
+                      ],
+                      "type": "object"
+                    },
+                    "title": "queries",
+                    "type": "array"
                   },
                   "timer": {
                     "description": "Timing config",
@@ -7384,8 +7319,9 @@
                   }
                 },
                 "required": [
-                  "content",
+                  "minDevices",
                   "name",
+                  "queries",
                   "type"
                 ],
                 "title": "VideocallTaskSpec",
@@ -7524,6 +7460,16 @@
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "intensityInput": {
@@ -7779,6 +7725,16 @@
                     "title": "instructions",
                     "type": "string"
                   },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
+                    "type": "string"
+                  },
                   "maxSubmissions": {
                     "default": 0,
                     "description": "Maximum number of submissions a user can make for the task.",
@@ -7849,6 +7805,16 @@
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
@@ -7972,13 +7938,23 @@
                     ]
                   },
                   "form": {
-                    "$ref": "#/definitions/FormSpec<InputSpec>_1",
+                    "$ref": "#/definitions/FormSpec<InputSpec>",
                     "description": "a form to display after the content.",
                     "title": "form"
                   },
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
@@ -8039,77 +8015,30 @@
                     "title": "autoSubmit",
                     "type": "boolean"
                   },
-                  "content": {
-                    "description": "Main static content of the page (eg. consent terms, instructions)",
-                    "title": "content",
-                    "oneOf": [
-                      {
-                        "additionalProperties": false,
-                        "description": "Props for raw Markdown/HTML data",
-                        "properties": {
-                          "content": {
-                            "description": "A valid Markdown/HTML string",
-                            "title": "content",
-                            "type": "string"
-                          },
-                          "type": {
-                            "default": "raw",
-                            "enum": [
-                              "raw"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "content",
-                          "type"
-                        ],
-                        "title": "MarkdownContentRawSpec",
-                        "type": "object"
-                      },
-                      {
-                        "additionalProperties": false,
-                        "description": "Supplied is a link to a Markdown/HTML file.",
-                        "properties": {
-                          "type": {
-                            "default": "link",
-                            "enum": [
-                              "link"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          },
-                          "url": {
-                            "description": "A url pointing to a valid Markdown/HTML file.",
-                            "title": "url",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "url"
-                        ],
-                        "title": "MarkdownContentLinkSpec",
-                        "type": "object"
-                      }
-                    ],
-                    "discriminator": {
-                      "propertyName": "type"
-                    },
-                    "required": [
-                      "type"
-                    ]
-                  },
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
                     "default": 0,
                     "description": "Maximum number of submissions a user can make for the task.",
                     "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "minDevices": {
+                    "description": "Minimum number of devices in the call necessary to start the queries",
+                    "title": "minDevices",
                     "type": "number"
                   },
                   "name": {
@@ -8121,6 +8050,29 @@
                     "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
                     "title": "prerequisite",
                     "type": "boolean"
+                  },
+                  "queries": {
+                    "description": "Spec of the forms to be answered",
+                    "items": {
+                      "properties": {
+                        "form": {
+                          "$ref": "#/definitions/FormSpec<InputSpec>",
+                          "title": "form"
+                        },
+                        "offset": {
+                          "description": "Time in seconds since the start of the call",
+                          "title": "offset",
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "form",
+                        "offset"
+                      ],
+                      "type": "object"
+                    },
+                    "title": "queries",
+                    "type": "array"
                   },
                   "timer": {
                     "description": "Timing config",
@@ -8148,8 +8100,9 @@
                   }
                 },
                 "required": [
-                  "content",
+                  "minDevices",
                   "name",
+                  "queries",
                   "type"
                 ],
                 "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
@@ -8230,13 +8183,23 @@
           ]
         },
         "form": {
-          "$ref": "#/definitions/FormSpec<InputSpec>_1",
+          "$ref": "#/definitions/FormSpec<InputSpec>",
           "description": "a form to display after the content.",
           "title": "form"
         },
         "instructions": {
           "description": "Instructions to be displayed before the form",
           "title": "instructions",
+          "type": "string"
+        },
+        "instructionsType": {
+          "default": "'default'",
+          "description": "How the instructions will be displayed",
+          "enum": [
+            "default",
+            "popped"
+          ],
+          "title": "instructionsType",
           "type": "string"
         },
         "maxSubmissions": {
@@ -8415,6 +8378,16 @@
         "instructions": {
           "description": "Instructions to be displayed before the form",
           "title": "instructions",
+          "type": "string"
+        },
+        "instructionsType": {
+          "default": "'default'",
+          "description": "How the instructions will be displayed",
+          "enum": [
+            "default",
+            "popped"
+          ],
+          "title": "instructionsType",
           "type": "string"
         },
         "intensityInput": {
@@ -8670,6 +8643,16 @@
           "title": "instructions",
           "type": "string"
         },
+        "instructionsType": {
+          "default": "'default'",
+          "description": "How the instructions will be displayed",
+          "enum": [
+            "default",
+            "popped"
+          ],
+          "title": "instructionsType",
+          "type": "string"
+        },
         "maxSubmissions": {
           "default": 0,
           "description": "Maximum number of submissions a user can make for the task.",
@@ -8790,13 +8773,23 @@
           ]
         },
         "form": {
-          "$ref": "#/definitions/FormSpec<InputSpec>_1",
+          "$ref": "#/definitions/FormSpec<InputSpec>",
           "description": "a form to display after the content.",
           "title": "form"
         },
         "instructions": {
           "description": "Instructions to be displayed before the form",
           "title": "instructions",
+          "type": "string"
+        },
+        "instructionsType": {
+          "default": "'default'",
+          "description": "How the instructions will be displayed",
+          "enum": [
+            "default",
+            "popped"
+          ],
+          "title": "instructionsType",
           "type": "string"
         },
         "maxSubmissions": {
@@ -8872,6 +8865,16 @@
           "title": "instructions",
           "type": "string"
         },
+        "instructionsType": {
+          "default": "'default'",
+          "description": "How the instructions will be displayed",
+          "enum": [
+            "default",
+            "popped"
+          ],
+          "title": "instructionsType",
+          "type": "string"
+        },
         "maxSubmissions": {
           "default": 0,
           "description": "Maximum number of submissions a user can make for the task.",
@@ -8930,77 +8933,30 @@
           "title": "autoSubmit",
           "type": "boolean"
         },
-        "content": {
-          "description": "Main static content of the page (eg. consent terms, instructions)",
-          "title": "content",
-          "oneOf": [
-            {
-              "additionalProperties": false,
-              "description": "Props for raw Markdown/HTML data",
-              "properties": {
-                "content": {
-                  "description": "A valid Markdown/HTML string",
-                  "title": "content",
-                  "type": "string"
-                },
-                "type": {
-                  "default": "raw",
-                  "enum": [
-                    "raw"
-                  ],
-                  "title": "type",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "content",
-                "type"
-              ],
-              "title": "MarkdownContentRawSpec",
-              "type": "object"
-            },
-            {
-              "additionalProperties": false,
-              "description": "Supplied is a link to a Markdown/HTML file.",
-              "properties": {
-                "type": {
-                  "default": "link",
-                  "enum": [
-                    "link"
-                  ],
-                  "title": "type",
-                  "type": "string"
-                },
-                "url": {
-                  "description": "A url pointing to a valid Markdown/HTML file.",
-                  "title": "url",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "type",
-                "url"
-              ],
-              "title": "MarkdownContentLinkSpec",
-              "type": "object"
-            }
-          ],
-          "discriminator": {
-            "propertyName": "type"
-          },
-          "required": [
-            "type"
-          ]
-        },
         "instructions": {
           "description": "Instructions to be displayed before the form",
           "title": "instructions",
+          "type": "string"
+        },
+        "instructionsType": {
+          "default": "'default'",
+          "description": "How the instructions will be displayed",
+          "enum": [
+            "default",
+            "popped"
+          ],
+          "title": "instructionsType",
           "type": "string"
         },
         "maxSubmissions": {
           "default": 0,
           "description": "Maximum number of submissions a user can make for the task.",
           "title": "maxSubmissions",
+          "type": "number"
+        },
+        "minDevices": {
+          "description": "Minimum number of devices in the call necessary to start the queries",
+          "title": "minDevices",
           "type": "number"
         },
         "name": {
@@ -9012,6 +8968,29 @@
           "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
           "title": "prerequisite",
           "type": "boolean"
+        },
+        "queries": {
+          "description": "Spec of the forms to be answered",
+          "items": {
+            "properties": {
+              "form": {
+                "$ref": "#/definitions/FormSpec<InputSpec>",
+                "title": "form"
+              },
+              "offset": {
+                "description": "Time in seconds since the start of the call",
+                "title": "offset",
+                "type": "number"
+              }
+            },
+            "required": [
+              "form",
+              "offset"
+            ],
+            "type": "object"
+          },
+          "title": "queries",
+          "type": "array"
         },
         "timer": {
           "description": "Timing config",
@@ -9039,8 +9018,9 @@
         }
       },
       "required": [
-        "content",
+        "minDevices",
         "name",
+        "queries",
         "type"
       ],
       "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
@@ -9179,6 +9159,16 @@
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "intensityInput": {
@@ -9434,6 +9424,16 @@
                     "title": "instructions",
                     "type": "string"
                   },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
+                    "type": "string"
+                  },
                   "maxSubmissions": {
                     "default": 0,
                     "description": "Maximum number of submissions a user can make for the task.",
@@ -9504,6 +9504,16 @@
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
@@ -9627,13 +9637,23 @@
                     ]
                   },
                   "form": {
-                    "$ref": "#/definitions/FormSpec<InputSpec>_1",
+                    "$ref": "#/definitions/FormSpec<InputSpec>",
                     "description": "a form to display after the content.",
                     "title": "form"
                   },
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
@@ -9694,77 +9714,30 @@
                     "title": "autoSubmit",
                     "type": "boolean"
                   },
-                  "content": {
-                    "description": "Main static content of the page (eg. consent terms, instructions)",
-                    "title": "content",
-                    "oneOf": [
-                      {
-                        "additionalProperties": false,
-                        "description": "Props for raw Markdown/HTML data",
-                        "properties": {
-                          "content": {
-                            "description": "A valid Markdown/HTML string",
-                            "title": "content",
-                            "type": "string"
-                          },
-                          "type": {
-                            "default": "raw",
-                            "enum": [
-                              "raw"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "content",
-                          "type"
-                        ],
-                        "title": "MarkdownContentRawSpec",
-                        "type": "object"
-                      },
-                      {
-                        "additionalProperties": false,
-                        "description": "Supplied is a link to a Markdown/HTML file.",
-                        "properties": {
-                          "type": {
-                            "default": "link",
-                            "enum": [
-                              "link"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          },
-                          "url": {
-                            "description": "A url pointing to a valid Markdown/HTML file.",
-                            "title": "url",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "url"
-                        ],
-                        "title": "MarkdownContentLinkSpec",
-                        "type": "object"
-                      }
-                    ],
-                    "discriminator": {
-                      "propertyName": "type"
-                    },
-                    "required": [
-                      "type"
-                    ]
-                  },
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
                     "default": 0,
                     "description": "Maximum number of submissions a user can make for the task.",
                     "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "minDevices": {
+                    "description": "Minimum number of devices in the call necessary to start the queries",
+                    "title": "minDevices",
                     "type": "number"
                   },
                   "name": {
@@ -9776,6 +9749,29 @@
                     "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
                     "title": "prerequisite",
                     "type": "boolean"
+                  },
+                  "queries": {
+                    "description": "Spec of the forms to be answered",
+                    "items": {
+                      "properties": {
+                        "form": {
+                          "$ref": "#/definitions/FormSpec<InputSpec>",
+                          "title": "form"
+                        },
+                        "offset": {
+                          "description": "Time in seconds since the start of the call",
+                          "title": "offset",
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "form",
+                        "offset"
+                      ],
+                      "type": "object"
+                    },
+                    "title": "queries",
+                    "type": "array"
                   },
                   "timer": {
                     "description": "Timing config",
@@ -9803,8 +9799,9 @@
                   }
                 },
                 "required": [
-                  "content",
+                  "minDevices",
                   "name",
+                  "queries",
                   "type"
                 ],
                 "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
@@ -9835,6 +9832,16 @@
         "instructions": {
           "description": "Instructions to be displayed before the form",
           "title": "instructions",
+          "type": "string"
+        },
+        "instructionsType": {
+          "default": "'default'",
+          "description": "How the instructions will be displayed",
+          "enum": [
+            "default",
+            "popped"
+          ],
+          "title": "instructionsType",
           "type": "string"
         },
         "maxSubmissions": {
@@ -10173,6 +10180,11 @@
           "title": "showProgress",
           "type": "boolean"
         },
+        "showSubmitButton": {
+          "description": "Show the button to submit the HIT",
+          "title": "showSubmitButton",
+          "type": "boolean"
+        },
         "type": {
           "default": "timeline",
           "description": "type of interface.",
@@ -10233,6 +10245,16 @@
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "intensityInput": {
@@ -10488,6 +10510,16 @@
                     "title": "instructions",
                     "type": "string"
                   },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
+                    "type": "string"
+                  },
                   "maxSubmissions": {
                     "default": 0,
                     "description": "Maximum number of submissions a user can make for the task.",
@@ -10558,6 +10590,16 @@
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
@@ -10681,13 +10723,23 @@
                     ]
                   },
                   "form": {
-                    "$ref": "#/definitions/FormSpec<InputSpec>_1",
+                    "$ref": "#/definitions/FormSpec<InputSpec>",
                     "description": "a form to display after the content.",
                     "title": "form"
                   },
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
@@ -10748,77 +10800,30 @@
                     "title": "autoSubmit",
                     "type": "boolean"
                   },
-                  "content": {
-                    "description": "Main static content of the page (eg. consent terms, instructions)",
-                    "title": "content",
-                    "oneOf": [
-                      {
-                        "additionalProperties": false,
-                        "description": "Props for raw Markdown/HTML data",
-                        "properties": {
-                          "content": {
-                            "description": "A valid Markdown/HTML string",
-                            "title": "content",
-                            "type": "string"
-                          },
-                          "type": {
-                            "default": "raw",
-                            "enum": [
-                              "raw"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "content",
-                          "type"
-                        ],
-                        "title": "MarkdownContentRawSpec",
-                        "type": "object"
-                      },
-                      {
-                        "additionalProperties": false,
-                        "description": "Supplied is a link to a Markdown/HTML file.",
-                        "properties": {
-                          "type": {
-                            "default": "link",
-                            "enum": [
-                              "link"
-                            ],
-                            "title": "type",
-                            "type": "string"
-                          },
-                          "url": {
-                            "description": "A url pointing to a valid Markdown/HTML file.",
-                            "title": "url",
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "url"
-                        ],
-                        "title": "MarkdownContentLinkSpec",
-                        "type": "object"
-                      }
-                    ],
-                    "discriminator": {
-                      "propertyName": "type"
-                    },
-                    "required": [
-                      "type"
-                    ]
-                  },
                   "instructions": {
                     "description": "Instructions to be displayed before the form",
                     "title": "instructions",
+                    "type": "string"
+                  },
+                  "instructionsType": {
+                    "default": "'default'",
+                    "description": "How the instructions will be displayed",
+                    "enum": [
+                      "default",
+                      "popped"
+                    ],
+                    "title": "instructionsType",
                     "type": "string"
                   },
                   "maxSubmissions": {
                     "default": 0,
                     "description": "Maximum number of submissions a user can make for the task.",
                     "title": "maxSubmissions",
+                    "type": "number"
+                  },
+                  "minDevices": {
+                    "description": "Minimum number of devices in the call necessary to start the queries",
+                    "title": "minDevices",
                     "type": "number"
                   },
                   "name": {
@@ -10830,6 +10835,29 @@
                     "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
                     "title": "prerequisite",
                     "type": "boolean"
+                  },
+                  "queries": {
+                    "description": "Spec of the forms to be answered",
+                    "items": {
+                      "properties": {
+                        "form": {
+                          "$ref": "#/definitions/FormSpec<InputSpec>",
+                          "title": "form"
+                        },
+                        "offset": {
+                          "description": "Time in seconds since the start of the call",
+                          "title": "offset",
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "form",
+                        "offset"
+                      ],
+                      "type": "object"
+                    },
+                    "title": "queries",
+                    "type": "array"
                   },
                   "timer": {
                     "description": "Timing config",
@@ -10857,8 +10885,9 @@
                   }
                 },
                 "required": [
-                  "content",
+                  "minDevices",
                   "name",
+                  "queries",
                   "type"
                 ],
                 "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
@@ -10876,77 +10905,30 @@
           "title": "children",
           "type": "array"
         },
-        "content": {
-          "description": "Main static content of the page (eg. consent terms, instructions)",
-          "title": "content",
-          "oneOf": [
-            {
-              "additionalProperties": false,
-              "description": "Props for raw Markdown/HTML data",
-              "properties": {
-                "content": {
-                  "description": "A valid Markdown/HTML string",
-                  "title": "content",
-                  "type": "string"
-                },
-                "type": {
-                  "default": "raw",
-                  "enum": [
-                    "raw"
-                  ],
-                  "title": "type",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "content",
-                "type"
-              ],
-              "title": "MarkdownContentRawSpec",
-              "type": "object"
-            },
-            {
-              "additionalProperties": false,
-              "description": "Supplied is a link to a Markdown/HTML file.",
-              "properties": {
-                "type": {
-                  "default": "link",
-                  "enum": [
-                    "link"
-                  ],
-                  "title": "type",
-                  "type": "string"
-                },
-                "url": {
-                  "description": "A url pointing to a valid Markdown/HTML file.",
-                  "title": "url",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "type",
-                "url"
-              ],
-              "title": "MarkdownContentLinkSpec",
-              "type": "object"
-            }
-          ],
-          "discriminator": {
-            "propertyName": "type"
-          },
-          "required": [
-            "type"
-          ]
-        },
         "instructions": {
           "description": "Instructions to be displayed before the form",
           "title": "instructions",
+          "type": "string"
+        },
+        "instructionsType": {
+          "default": "'default'",
+          "description": "How the instructions will be displayed",
+          "enum": [
+            "default",
+            "popped"
+          ],
+          "title": "instructionsType",
           "type": "string"
         },
         "maxSubmissions": {
           "default": 0,
           "description": "Maximum number of submissions a user can make for the task.",
           "title": "maxSubmissions",
+          "type": "number"
+        },
+        "minDevices": {
+          "description": "Minimum number of devices in the call necessary to start the queries",
+          "title": "minDevices",
           "type": "number"
         },
         "name": {
@@ -10958,6 +10940,29 @@
           "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
           "title": "prerequisite",
           "type": "boolean"
+        },
+        "queries": {
+          "description": "Spec of the forms to be answered",
+          "items": {
+            "properties": {
+              "form": {
+                "$ref": "#/definitions/FormSpec<InputSpec>",
+                "title": "form"
+              },
+              "offset": {
+                "description": "Time in seconds since the start of the call",
+                "title": "offset",
+                "type": "number"
+              }
+            },
+            "required": [
+              "form",
+              "offset"
+            ],
+            "type": "object"
+          },
+          "title": "queries",
+          "type": "array"
         },
         "timer": {
           "description": "Timing config",
@@ -10985,8 +10990,9 @@
         }
       },
       "required": [
-        "content",
+        "minDevices",
         "name",
+        "queries",
         "type"
       ],
       "title": "VideocallTaskSpec",

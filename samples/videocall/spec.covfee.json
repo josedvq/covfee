@@ -1,0 +1,24 @@
+{
+    "id": "1d_annot",
+    "name": "Continuous annot sample",
+    "email": "j.d.vargasquiros@tudelft.nl",
+    "hits": [
+        {
+            "id": "Videocall",
+            "name": "Videocall sample",
+            "tasks": [
+                {
+                    "type": "VideocallTask",
+                    "name": "Videocall",
+                    "minDevices": 1,
+                    "queries": [{
+                        "offset": 5,
+                        "form": {
+                            "fields": []
+                        }
+                    }]
+                }
+            ]
+        }
+    ]
+}
