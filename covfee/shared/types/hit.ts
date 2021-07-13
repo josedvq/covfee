@@ -25,6 +25,28 @@ export interface HitBaseSpec {
      * Extra hit-level information to display
      */
     extra?: MarkdownContentSpec
+    /**
+     * HIT configuration and other params
+     */
+    config?: {
+        /**
+         * Completion code to give back to participants. Used for crowdsourcing in eg. Prolific
+         */
+        completionCode?: string
+        /**
+         * Redirect URL. URL to redirect participants to after completing the HIT.
+         */
+        redirect?: {
+            /**
+             * Name of the website/platform to redirect to, eg. Prolific
+             */
+            name: string
+            /**
+             * URL to redirect to
+             */
+            url: string
+        }
+    }
 }
 
 export interface BaseInterface {

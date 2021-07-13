@@ -14,7 +14,7 @@ const { Option } = Select
 import {HITSpec} from '../hit/hit_loader'
 import Constants from 'Constants'
 import { myerror, fetcher, throwBadResponse, myinfo } from '../utils'
-import { IdcardFilled, LoadingOutlined, RightOutlined } from '@ant-design/icons'
+import { CopyOutlined, IdcardFilled, LoadingOutlined, RightOutlined } from '@ant-design/icons'
 import download from 'downloadjs'
 
 class InstanceListAsync extends React.Component {
@@ -144,7 +144,8 @@ class HITList extends React.Component<HITListProps> {
                 id: hit.id,
                 name: hit.name,
                 instances: hit.instances.length,
-                submitted: hit.submitted
+                submitted: hit.submitted,
+                generatorUrl: hit.generator_url
             }
         })
 
@@ -152,12 +153,6 @@ class HITList extends React.Component<HITListProps> {
             {
                 title: 'HIT',
                 dataIndex: 'name',
-                defaultSortOrder: 'descend',
-                sorter: (a, b) => a.toString().localeCompare(b.toString()),
-            },
-            {
-                title: 'Type',
-                dataIndex: 'type',
                 defaultSortOrder: 'descend',
                 sorter: (a, b) => a.toString().localeCompare(b.toString()),
             },
@@ -172,6 +167,11 @@ class HITList extends React.Component<HITListProps> {
                 dataIndex: 'submitted',
                 defaultSortOrder: 'descend',
                 sorter: (a, b) => a.toString().localeCompare(b.toString()),
+            },
+            {
+                title: 'Links',
+                dataIndex: 'generatorUrl',
+                render: url => <CopyOutlined onClick={()=>{navigator.clipboard.writeText(url)}}/>
             }
         ]
 

@@ -22,8 +22,14 @@ export interface CommonTaskSpec {
      */
     name: string,
     /**
+     * If true, this task must have a valid submission before the HIT can be submitted
+     * @default True
+     */
+    required?: boolean
+    /**
      * Task is marked as a prerrequisite
      * Prerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.
+     * @default False
      */
     prerequisite?: boolean
     /**

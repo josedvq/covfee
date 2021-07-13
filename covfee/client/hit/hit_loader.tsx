@@ -109,9 +109,7 @@ class HitLoader extends React.Component<Props, State> {
                 }, 1000)
               })
         ]).then(()=>{
-            // return new Promise((resolve, _) => {
             this.setState({loading: false}, ()=>{if(cb) cb()})
-            // })
         })
     }
 
@@ -124,6 +122,12 @@ class HitLoader extends React.Component<Props, State> {
         }
         let p = fetcher(this.url + '/submit', requestOptions)
             .then(throwBadResponse)
+            .then(()=>{this.setState({
+                hit: {
+                    ...this.state.hit,
+                    submitted: true
+                }
+            })})
 
         return p
     }

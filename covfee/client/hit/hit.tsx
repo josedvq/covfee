@@ -3,6 +3,7 @@ import io from 'socket.io-client'
 import styled from 'styled-components'
 import { withRouter, generatePath, RouteComponentProps } from 'react-router'
 import {
+    ArrowRightOutlined,
     PlusOutlined
 } from '@ant-design/icons'
 import {
@@ -316,20 +317,31 @@ export class Hit extends React.Component<Props, HitState> {
         if (e.key == 'extra') this.setState({extraOpen: !this.state.extraOpen})
     }
 
+    showCompletionInfo = () => {
+        const config = this.props.config
+        return Modal.success({
+            title: 'HIT submitted!',
+            content: <>
+                <p>Thank you! Your work has been submitted.</p>
+                <p>Your completion code is:</p>
+                <pre>{config.completionCode}</pre>
+                {config.redirect &&
+                    <>
+                    <p>If you came from one of these crowdsourcing sites, you may also click here to be redirected:</p>
+                    <Button type='primary' icon={<ArrowRightOutlined />} href={config.redirect.url}>Back to {config.redirect.name}</Button>
+                    </>
+                }
+            </>
+        })
+    }
+
     handleHitSubmit = () => {
         this.props.onSubmit()
-            .then(hit=>{
-                Modal.success({
-                    title: 'HIT submitted!',
-                    content: <>
-                        <p>Thank you. Your work has been submitted.</p>
-                        <p>Your completion code is:</p>
-                        <pre>{hit.completion_code}</pre>
-                    </>
-                })
+            .then(()=>{
+                this.showCompletionInfo()
             })
             .catch(err=>{
-                myerror('Error submitting HIT. Please try again later or contact the organizers.', err)
+                myerror('Error submitting HIT. Please try again or contact the organizers.', err)
             })
     }
 
@@ -341,7 +353,6 @@ export class Hit extends React.Component<Props, HitState> {
             return parent
         })
 
-        console.log(this.getTask(this.state.currTask))
         return <>
             
             <Sidebar
@@ -362,6 +373,9 @@ export class Hit extends React.Component<Props, HitState> {
                             <Button type="link" onClick={this.handleHitSubmit}>Submit HIT</Button>
                         </Panel>
                     </Collapse>}
+                {this.props.submitted &&
+                    <Button type="primary" style={{width: '100%', backgroundColor: '#5b8c00', borderColor: '#5b8c00'}} onClick={this.showCompletionInfo}>Show completion code</Button>
+                }
             </Sidebar>
         </>
     }

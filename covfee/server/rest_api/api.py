@@ -2,7 +2,7 @@ from io import BytesIO
 
 import zipstream
 from flask import request, jsonify, Blueprint, send_file, make_response, Response,\
-     stream_with_context
+     stream_with_context, redirect
 from sqlalchemy.orm.attributes import flag_modified
 
 from ..orm import db, Project, HIT, HITInstance, Task, TaskResponse, Chunk
@@ -122,33 +122,8 @@ def hit(hid):
                           with_instance_tasks=with_instance_tasks)
 
 
-@api.route('/hits/<hid>/instances/add')
-def instance_add(hid):
-    """Adds an instance (link) to the HIT
-
-    Args:
-        hid (str): HIT ID
-
-    Returns:
-        json: the added instance object
-    """
-    num_instances = request.args.get('num_instances', 1)
-    hit = db.session.query(HIT).get(bytes.fromhex(hid))
-    if hit is None:
-        return {'msg': 'not found'}, 404
-
-    for i in range(0, num_instances):
-        hit.instantiate()
-
-    with_instances = request.args.get('with_instances', True)
-    with_instance_tasks = request.args.get('with_instance_tasks', False)
-
-    return jsonify_or_404(hit,
-                          with_instances=with_instances,
-                          with_instance_tasks=with_instance_tasks)
-
-
 # INSTANCES
+
 # return one HIT instance
 @api.route('/instances/<iid>')
 def instance(iid):
@@ -171,9 +146,59 @@ def instance_submit(iid):
     instance = db.session.query(HITInstance).get(bytes.fromhex(iid))
     if instance is None:
         return jsonify({'msg': 'invalid instance'}), 400
-    instance.submitted = True
+    is_submitted, err = instance.submit()
+
+    if not is_submitted:
+        return jsonify({'msg': err}), 400
 
     return jsonify(instance.as_dict(with_tasks=True))
+
+
+@api.route('/hits/<hid>/instances/add')
+def instance_add(hid):
+    """Adds an instance (link) to the HIT
+
+    Args:
+        hid (str): HIT ID
+
+    Returns:
+        json: the added instance object
+    """
+    num_instances = request.args.get('num_instances', 1)
+    hit = db.session.query(HIT).get(bytes.fromhex(hid))
+    if hit is None:
+        return jsonify({'msg': 'not found'}), 404
+
+    for i in range(0, num_instances):
+        hit.instantiate()
+
+    db.session.commit()
+    with_instances = request.args.get('with_instances', True)
+    with_instance_tasks = request.args.get('with_instance_tasks', False)
+
+    return jsonify_or_404(hit,
+                          with_instances=with_instances,
+                          with_instance_tasks=with_instance_tasks)
+
+
+@api.route('/hits/<hid>/instances/add_and_redirect')
+def instance_add_and_redirect(hid):
+    """Adds an instance (link) to the HIT and redirects to the new URL.
+
+    Args:
+        hid (str): HIT ID
+    """
+    hit = db.session.query(HIT).get(bytes.fromhex(hid))
+    if hit is None:
+        return jsonify({'msg': 'not found'}), 404
+
+    instance = hit.instantiate()
+    if instance is None:
+        return jsonify({'msg': 'unable to add instance.'}), 400
+    instance.set_extra(request.args)
+
+    db.session.commit()
+    return redirect(instance.get_url(), 302)
 
 
 @api.route('/instances/<iid>/download')

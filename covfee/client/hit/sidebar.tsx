@@ -71,19 +71,18 @@ export class Sidebar extends React.Component<Props, State> {
         }
     }
 
-    taskElementProps: React.RefObject<TaskSection>[]
+    taskElementRefs: TaskSection[] = []
 
     constructor(props: Props) {
         super(props)
-
-        this.taskElementProps = this.props.tasks.map(t => React.createRef<TaskSection>())
     }
 
     componentDidUpdate(prevProps: Props) {
         const curr = this.props.currTask
         if(prevProps.currTask != curr) {
-            if(this.taskElementProps[curr[0]].current)
-                this.taskElementProps[curr[0]].current.scrollIntoView()
+            if(this.taskElementRefs[curr[0]]) {
+               this.taskElementRefs[curr[0]].scrollIntoView()
+            }
         }
     }
 
@@ -121,6 +120,7 @@ export class Sidebar extends React.Component<Props, State> {
     }
 
     render() {
+        this.taskElementRefs = []
         return <SidebarContainer>
             {this.props.editMode.enabled &&
                 ((()=>{
@@ -144,25 +144,28 @@ export class Sidebar extends React.Component<Props, State> {
                         }}
                         onClose={this.handleEditTaskCancel}
                         onDelete={() => { return this.props.editMode.onTaskDelete(this.state.editTaskModal.taskIndex) }} />
-                })())
-                
+                })())   
             }
+            <SidebarHead>
+                {this.props.children}
+            </SidebarHead>
+
+            {(this.props.editMode.enabled && this.props.editMode.allowNew) &&
             <Button
                 type="primary"
                 className="sidebar-new"
-                disabled={!this.props.editMode.enabled || !this.props.editMode.allowNew}
                 block={true}
                 onClick={() => { this.handleClickAdd(null) }}
                 icon={<PlusCircleOutlined />}>
                 New Task
-                </Button>
+                </Button>}
             
             <SidebarScrollable>
                 <ol className={'task-group'}>
                     {this.props.tasks.map((task, index) => 
                         <TaskSection
                             key={task.id}
-                            ref={this.taskElementProps[index]}
+                            ref={el=>{this.taskElementRefs[index] = el}}
                             name={task.spec.name} 
                             children={task.children ? task.children.map((child, idx) =>{
                                 return {
@@ -182,9 +185,7 @@ export class Sidebar extends React.Component<Props, State> {
                     
                 </ol>
             </SidebarScrollable>
-            <nav className='sidebar-bottom'>
-                {this.props.children}
-            </nav>
+            
         </SidebarContainer>
     }
 }
@@ -340,6 +341,15 @@ const SidebarContainer = styled.nav`
       padding-left: 25px;
     }    
   }`
+
+  const SidebarHead = styled.nav`
+    background-color: #464646;
+    padding: 5;
+
+    > button {
+        border-radius: 0;
+    }
+  `
 
   const SidebarScrollable = styled.div`
     flex: 2;

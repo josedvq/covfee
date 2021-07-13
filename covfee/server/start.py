@@ -48,7 +48,6 @@ def main():
                            bundle_url=app.config['BUNDLE_URL'])
 
 
-
 # admin interface
 @frontend.route('/admin')
 @admin_required

@@ -27,6 +27,7 @@ class TaskSpec(db.Model):
                                cascade="all, delete")
     tasks = db.relationship("Task", backref="spec", cascade="all, delete")
 
+    required = db.Column(db.Boolean)
     prerequisite = db.Column(db.Boolean)
     order = db.Column(db.Integer)
     editable = db.Column(db.Boolean)
@@ -34,8 +35,9 @@ class TaskSpec(db.Model):
     config = db.Column(db.JSON)
 
     def __init__(self, maxSubmissions=0, autoSubmit=False, timer=None,
-                 editable=False, prerequisite=False, **spec):
+                 editable=False, required=True, prerequisite=False, **spec):
         self.editable = editable
+        self.required = required
         self.prerequisite = prerequisite
         self.config = {
             'maxSubmissions': maxSubmissions,
