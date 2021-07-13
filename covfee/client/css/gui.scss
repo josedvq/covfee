@@ -128,3 +128,30 @@ table.simple-table > tr > th {
     max-height: 100px;
   }
 } 
+
+/* Instructions task helpers */
+.md-block {
+  margin: 15 0;
+  padding: 5 10;
+  color: #f5f5f5;
+  border-radius: 4px;
+
+  &.danger {
+    background-color: #871400;
+    border: 1px solid #610b00;
+  }
+
+  &.warning {
+    background-color: #ad8b00;
+    border: 1px solid #876800;
+  }
+
+  &.info {
+    background-color: #096dd9;
+    border: 1px solid #002766;
+  }
+
+  > h1, h2, h3, h4, h5, h6 {
+    color: #f5f5f5;
+  }
+}

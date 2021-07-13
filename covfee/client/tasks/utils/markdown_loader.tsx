@@ -30,7 +30,17 @@ export class MarkdownLoader extends React.Component<Props, State> {
                 markdown: this.props.content.content
             })
         } else {
-            fetcher(this.props.content.url)
+
+            const myHeaders = new Headers()
+            myHeaders.append('pragma', 'no-cache')
+            myHeaders.append('cache-control', 'no-cache')
+
+            var myInit = {
+                method: 'GET',
+                headers: myHeaders,
+            }
+
+            fetcher(this.props.content.url, myInit)
                 .then(res => res.text())
                 .then(doc => {
                     this.setState({
