@@ -123,7 +123,7 @@ class Task(db.Model):
         self.responses.append(response)
         return response
 
-    def stream_download(self, z, base_path, csv=False):
+    def stream_download(self, z, base_path, index, csv=False):
         responses = [resp for resp in self.responses if resp.submitted]
 
         for i, response in enumerate(responses):
@@ -134,7 +134,7 @@ class Task(db.Model):
                     stream = BytesIO()
                     df.to_csv(stream, mode='wb')
                     stream.seek(0)
-                    z.write_iter(os.path.join(base_path, response.get_download_filename(i) + '.csv'),
+                    z.write_iter(os.path.join(base_path, response.get_download_filename(task_index=index, response_index=i) + '.csv'),
                                 stream)
 
             # write the json response
@@ -143,7 +143,7 @@ class Task(db.Model):
             stream = BytesIO()
             stream.write(json.dumps(response_dict).encode())
             stream.seek(0)
-            z.write_iter(os.path.join(base_path, response.get_download_filename(i) + '.json'),
+            z.write_iter(os.path.join(base_path, response.get_download_filename(task_index=index, response_index=i) + '.json'),
                          stream)
 
             yield from z.flush()
@@ -203,12 +203,12 @@ class TaskResponse(db.Model):
             task_json = task_object.to_dict(self.data, None)
         return task_json
 
-    def get_download_filename(self, index):
+    def get_download_filename(self, task_index, response_index):
         if self.task.parent:
             # start with the parent name for children tasks
-            return f'{self.task.parent.spec.spec["name"]}-{self.task.spec.spec["name"]}_{index:d}'
+            return f'{self.task.parent.spec.spec["name"]}-{self.task.spec.spec["name"]}_{response_index:d}'
         else:
-            return f'{self.task.spec.spec["name"]}_{index:d}'
+            return f'{task_index}_{self.task.spec.spec["name"]}_{response_index:d}'
 
     def pack_chunks(self):
         chunks = self.chunks.order_by(Chunk.index.desc()).all()

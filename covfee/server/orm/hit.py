@@ -151,5 +151,5 @@ class HITInstance(db.Model):
         return instance_dict
 
     def stream_download(self, z, base_path, csv=False):
-        for task in self.tasks:
-            yield from task.stream_download(z, base_path, csv)
+        for i, task in enumerate(self.tasks):
+            yield from task.stream_download(z, base_path, i, csv)
