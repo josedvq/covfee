@@ -35,7 +35,7 @@ class TaskSpec(db.Model):
     config = db.Column(db.JSON)
 
     def __init__(self, maxSubmissions=0, autoSubmit=False, timer=None,
-                 editable=False, required=True, prerequisite=False, **spec):
+                 editable=False, required=False, prerequisite=False, **spec):
         self.editable = editable
         self.required = required
         self.prerequisite = prerequisite
