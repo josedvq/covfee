@@ -27,6 +27,7 @@
             ],
             "interface": {
                 "type": "annotation",
+                "showSubmitButton": true,
                 "userTasks": {
                     "continuous": {
                         "name": "Sample",

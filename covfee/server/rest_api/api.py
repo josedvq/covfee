@@ -151,7 +151,8 @@ def instance_submit(iid):
     if not is_submitted:
         return jsonify({'msg': err}), 400
 
-    return jsonify(instance.as_dict(with_tasks=True))
+    db.session.commit()
+    return jsonify(instance.as_dict(with_tasks=False))
 
 
 @api.route('/hits/<hid>/instances/add')

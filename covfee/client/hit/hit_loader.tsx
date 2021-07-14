@@ -80,7 +80,7 @@ class HitLoader extends React.Component<Props, State> {
             fetch(url)
             .then(throwBadResponse)
             .then((hit: HitType) => {
-                const status = hit.submitted ? 'finished' : 'ready'
+                const status = 'ready'
                 const tasksDict = {}
                 hit.tasks.forEach(task => {
                     tasksDict[task.id] = task
@@ -122,10 +122,11 @@ class HitLoader extends React.Component<Props, State> {
         }
         let p = fetcher(this.url + '/submit', requestOptions)
             .then(throwBadResponse)
-            .then(()=>{this.setState({
+            .then(hit=>{this.setState({
                 hit: {
                     ...this.state.hit,
-                    submitted: true
+                    submitted: true,
+                    completionInfo: hit.completionInfo
                 }
             })})
 

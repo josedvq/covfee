@@ -286,7 +286,6 @@ export class Hit extends React.Component<Props, HitState> {
         Object.values(this.props.tasks).forEach(t => {
             if(t.prerequisite && !t.valid) prerequisitesCompleted = false 
         })
-        console.log(prerequisitesCompleted)
         return prerequisitesCompleted
     }
 
@@ -318,17 +317,19 @@ export class Hit extends React.Component<Props, HitState> {
     }
 
     showCompletionInfo = () => {
-        const config = this.props.config
+        const config = this.props.completionInfo
         return Modal.success({
             title: 'HIT submitted!',
             content: <>
                 <p>Thank you! Your work has been submitted.</p>
                 <p>Your completion code is:</p>
                 <pre>{config.completionCode}</pre>
-                {config.redirect &&
+                {config.redirect && !!config.redirect.length &&
                     <>
-                    <p>If you came from one of these crowdsourcing sites, you may also click here to be redirected:</p>
-                    <Button type='primary' icon={<ArrowRightOutlined />} href={config.redirect.url}>Back to {config.redirect.name}</Button>
+                        <p>If you came from one of these crowdsourcing sites, you may also click here to be redirected:</p>
+                        {config.redirect.map(r => {
+                            return <Button type='primary' icon={<ArrowRightOutlined />} href={r.url}>Back to {r.name}</Button>
+                        })}
                     </>
                 }
             </>
@@ -367,12 +368,9 @@ export class Hit extends React.Component<Props, HitState> {
                     onTaskCreate: this.handleTaskCreate,
                     onTaskDelete: this.handleTaskDelete,
                 }}>
-                {this.props.interface.showSubmitButton &&
-                    <Collapse defaultActiveKey={1}>
-                        <Panel header={this.props.name} key="1">
-                            <Button type="link" onClick={this.handleHitSubmit}>Submit HIT</Button>
-                        </Panel>
-                    </Collapse>}
+                {!this.props.submitted && this.props.interface.showSubmitButton &&
+                    <Button type="primary" style={{width: '100%', backgroundColor: '#5b8c00', borderColor: '#5b8c00'}} onClick={this.handleHitSubmit}>Submit HIT</Button>
+                }
                 {this.props.submitted &&
                     <Button type="primary" style={{width: '100%', backgroundColor: '#5b8c00', borderColor: '#5b8c00'}} onClick={this.showCompletionInfo}>Show completion code</Button>
                 }

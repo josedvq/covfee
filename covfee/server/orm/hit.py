@@ -84,7 +84,7 @@ class HIT(db.Model):
         self.instances.append(instance)
         return instance
 
-    def as_dict(self, with_project=True, with_instances=False, with_instance_tasks=False):
+    def as_dict(self, with_project=True, with_instances=False, with_instance_tasks=False, with_config=False):
         hit_dict = {c.name: getattr(self, c.name)
                     for c in self.__table__.columns}
         hit_dict['id'] = hit_dict['id'].hex()
@@ -97,6 +97,9 @@ class HIT(db.Model):
         if with_project:
             hit_dict['project'] = self.project.as_dict()
         del hit_dict['project_id']
+
+        if not with_config:
+            del hit_dict['config']
 
         return hit_dict
     
@@ -147,10 +150,12 @@ class HITInstance(db.Model):
     def get_preview_url(self):
         return f'{app.config["APP_URL"]}/hits/{self.preview_id.hex():s}?preview=1'
 
-    def get_completion_code(self):
-        if self.hit.config.completionCode:
-            return self.hit.config.completionCode
-        return sha256((self.id.hex() + app.config['COVFEE_SECRET_KEY']).encode()).digest().hex()[:12]
+    def get_completion_info(self):
+        completion = {
+            'completionCode': self.hit.config.get('completionCode', sha256((self.id.hex() + app.config['COVFEE_SECRET_KEY']).encode()).digest().hex()[:12]),
+            'redirect': self.hit.config.get('redirect', [])
+        }
+        return completion
 
     def get_hmac(self):
         h = hmac.new(app.config['COVFEE_SECRET_KEY'].encode('utf-8'), self.id, hashlib.sha256 )
@@ -192,8 +197,9 @@ class HITInstance(db.Model):
                 instance_dict['tasks'] = [task.as_dict() for task in prerequisite_tasks]
 
         if self.submitted:
-            # generates a default completion code if not provided
-            instance_dict['config']['completionCode'] = self.get_completion_code()
+            instance_dict['completionInfo'] = self.get_completion_info()
+        #     # generates a default completion code if not provided
+        #     instance_dict['config']['completionCode'] = self.get_completion_code()
 
         return instance_dict
 
