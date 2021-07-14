@@ -163,7 +163,7 @@ class HITInstance(db.Model):
         }
 
     def submit(self):
-        if any([(task.required and not task.has_valid_response()) for task in self.tasks]):
+        if any([(task.spec.required and not task.has_valid_response()) for task in self.tasks]):
             # cant submit if at least one required task has no valid submissions
             return False, 'Some required tasks have no valid responses.'
         else:
