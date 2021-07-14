@@ -168,7 +168,7 @@ class HITInstance(db.Model):
             return False, 'Some required tasks have no valid responses.'
         else:
             self.submitted = True
-            return True
+            return True, None
 
     def as_dict(self, with_tasks=False, with_response_info=False):
         instance_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
