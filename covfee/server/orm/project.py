@@ -1,4 +1,5 @@
-from .db import db
+
+import datetime
 from hashlib import sha256
 import os
 import json
@@ -6,6 +7,7 @@ import json
 import pandas as pd
 from flask import current_app as app
 
+from .db import db
 from .hit import HIT
 
 
@@ -17,6 +19,9 @@ class Project(db.Model):
     name = db.Column(db.String)
     email = db.Column(db.String)
     hits = db.relationship("HIT", backref="project", cascade="all, delete-orphan")
+
+    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
 
     def __init__(self, id, name, email, hits, **kwargs):
         hashstr = Project.get_hashtr(id)

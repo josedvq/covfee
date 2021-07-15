@@ -22,6 +22,10 @@ export interface CommonTaskSpec {
      */
     name: string,
     /**
+     * ID of the task. Used (if provided) only to name the download (results) files
+     */
+    id?: string
+    /**
      * If true, this task must have a valid submission before the HIT can be submitted
      * @default True
      */

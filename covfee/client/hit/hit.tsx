@@ -346,6 +346,17 @@ export class Hit extends React.Component<Props, HitState> {
             })
     }
 
+    /**
+     * True if the hit can be submitted:
+     * - all required tasks have a valid response
+     */
+    canSubmitHit = () => {
+        for (const task of Object.values(this.props.tasks)) {
+            if(task.required && !task.valid) return false
+        }
+        return true
+    }
+
     renderMenu = () => {
         const tasks = this.state.taskIds.map(row => {
             const children = row[1].map(childId => this.props.tasks[childId])
@@ -369,7 +380,10 @@ export class Hit extends React.Component<Props, HitState> {
                     onTaskDelete: this.handleTaskDelete,
                 }}>
                 {!this.props.submitted && this.props.interface.showSubmitButton &&
-                    <Button type="primary" style={{width: '100%', backgroundColor: '#5b8c00', borderColor: '#5b8c00'}} onClick={this.handleHitSubmit}>Submit HIT</Button>
+                    <Button type="primary" 
+                            style={{width: '100%', backgroundColor: '#5b8c00', borderColor: '#5b8c00'}} 
+                            onClick={this.handleHitSubmit}
+                            disabled={!this.canSubmitHit()}>Submit HIT</Button>
                 }
                 {this.props.submitted &&
                     <Button type="primary" style={{width: '100%', backgroundColor: '#5b8c00', borderColor: '#5b8c00'}} onClick={this.showCompletionInfo}>Show completion code</Button>
@@ -395,6 +409,8 @@ export class Hit extends React.Component<Props, HitState> {
         </Button>
     }
 
+    
+
     render() {
         console.log(this.state.currTask)
         const taskProps = this.getTask(this.state.currTask)
@@ -405,7 +421,7 @@ export class Hit extends React.Component<Props, HitState> {
         const hitExtra = this.getHitExtra()
 
         return <>
-            <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark" style={{position: 'sticky', top: 0, width: '100%', zIndex: 100000}}>
+            <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark" style={{position: 'sticky', top: 0, width: '100%'}}>
                 <Menu.Item key="logo" disabled>
                     <CovfeeMenuItem/>
                 </Menu.Item>

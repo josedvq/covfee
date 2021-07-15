@@ -17,7 +17,12 @@ pytype = type
 
 
 class TaskSpec(db.Model):
-    """ Represents a task specification """
+    """ Represents a task specification.
+        Task specifications include the user-provided params (spec) for the task. It can be divided into:
+            - Task-specific specification (spec), defined on the task's Typescript interface.
+            - Generic task options: required, prerrequisite, maxSubmissions, autoSubmit, timer. These apply to all tasks.
+            - Task children (children), recursively defined (points to the same table).
+     """
     __tablename__ = 'taskspecs'
     id = db.Column(db.Integer, primary_key=True)
     parent_id = db.Column(db.Integer, db.ForeignKey('taskspecs.id'))
@@ -33,6 +38,9 @@ class TaskSpec(db.Model):
     editable = db.Column(db.Boolean)
     spec = db.Column(db.JSON)
     config = db.Column(db.JSON)
+
+    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
 
     def __init__(self, maxSubmissions=0, autoSubmit=False, timer=None,
                  editable=False, required=False, prerequisite=False, **spec):
@@ -72,14 +80,16 @@ class TaskSpec(db.Model):
 
 
 class Task(db.Model):
-    """ Represents a single task, like eg. annotating one video """
+    """ A Task is an instantiation of a TaskSpec, associated to a HitInstance.
+        It represents a task to be solved within a hit instance.
+    """
     __tablename__ = 'tasks'
 
     id = db.Column(db.Integer, primary_key=True)
     parent_id = db.Column(db.Integer, db.ForeignKey('tasks.id'))
     # backref parent
     hitinstance_id = db.Column(db.LargeBinary, db.ForeignKey('hitinstances.id'))
-    # backref hitinstances
+    # backref hitinstance
     taskspec_id = db.Column(db.Integer, db.ForeignKey('taskspecs.id'))
     # backref spec
 
@@ -171,6 +181,10 @@ class TaskResponse(db.Model):
     valid = db.Column(db.Boolean)
     data = db.Column(db.JSON)
 
+    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    submitted_at = db.Column(db.DateTime)
+
     task_object = None
 
     def __init__(self):
@@ -210,6 +224,9 @@ class TaskResponse(db.Model):
             # start with the parent name for children tasks
             return f'{self.task.parent.spec.spec["name"]}-{self.task.spec.spec["name"]}_{response_index:d}'
         else:
+            # use the task id if available
+            if self.task.spec.spec.get('id', False):
+                return f'{task_index}_{self.task.spec.spec["id"]}_{response_index:d}'
             return f'{task_index}_{self.task.spec.spec["name"]}_{response_index:d}'
 
     def pack_chunks(self):
@@ -279,6 +296,7 @@ class TaskResponse(db.Model):
         if response is not None:
             self.data = response
         self.submitted = True
+        self.submitted_at = datetime.datetime.now()
         self.valid = (validation_result == True)
         self.task.has_unsubmitted_response = False
 

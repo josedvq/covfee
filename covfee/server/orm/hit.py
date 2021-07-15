@@ -40,9 +40,10 @@ class HIT(db.Model):
     interface = db.Column(db.JSON)
     config = db.Column(db.JSON)
 
+    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
 
     def __init__(self, id, project_id, name, interface={}, extra=None, tasks=[], config={}, **kwargs):
-        # hashstr = HIT.get_hashstr(hashstr, id)
         self.id = sha256(f'{id}_{project_id}_{app.config["COVFEE_SECRET_KEY"]}'.encode()).digest()
         self.name = name
 
@@ -51,7 +52,6 @@ class HIT(db.Model):
         task_specs = []
         for i, spec in enumerate(tasks):
             if 'name' not in spec:
-                print(spec)
                 spec['name'] = str(i)
             spec['order'] = i
             task_specs.append(TaskSpec(**spec))
@@ -131,6 +131,7 @@ class HITInstance(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.datetime.now)
     updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    submitted_at = db.Column(db.DateTime)
 
     def __init__(self, id, taskspecs=[], submitted=False):
         self.id = id
@@ -173,6 +174,7 @@ class HITInstance(db.Model):
             return False, 'Some required tasks have no valid responses.'
         else:
             self.submitted = True
+            self.submitted_at = datetime.datetime.now()
             return True, None
 
     def as_dict(self, with_tasks=False, with_response_info=False):
