@@ -1,11 +1,8 @@
 import os
 import json
 import subprocess
-import collections
 
-from jsonschema import Draft7Validator
-from jsonschema.exceptions import ValidationError as JsonValidationError
-
+from flask import current_app as app
 from .validation_errors import ValidationError
 import zmq
 context = zmq.Context()
@@ -19,7 +16,7 @@ class AjvValidator:
         port = self.socket.bind_to_random_port("tcp://127.0.0.1")
 
         # start the nodejs validation server in the same interface
-        self.process = subprocess.Popen(["node", '--trace-warnings', os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ajv_validator.js'), "serve", str(port)])
+        self.process = subprocess.Popen(["node", '--trace-warnings', os.path.join(app.config['SHARED_PATH'], 'validator', 'validator_service.js'), "serve", str(port)])
 
     def __del__(self):
         # pass
@@ -55,7 +52,7 @@ class AjvValidator:
             err = result['errors'][0]
             raise ValidationError(
                 message=self.get_friendly_error_message(err),
-                path=AjvValidator.parse_ajv_path(err['instancePath']),
+                path=AjvValidator.parse_ajv_path(err['dataPath']),
                 instance=err['data']
             )
 

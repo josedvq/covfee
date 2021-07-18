@@ -22,12 +22,12 @@ import Collapsible from 'react-collapsible'
 const { Text } = Typography
 
 import Constants from 'Constants'
-import { myerror, fetcher, throwBadResponse} from '../utils'
+import { myerror } from '../utils'
 import { MarkdownLoader} from '../tasks/instructions'
 import {CovfeeMenuItem} from '../gui'
-import {Sidebar} from './sidebar'
+import {Sidebar, TaskEditCallback, TaskCreateCallback, TaskDeleteCallback} from './sidebar'
 
-import { HitType } from '@covfee-types/hit'
+import { AnnotationInterface, HitInstanceType } from '@covfee-types/hit'
 import { TaskType } from '@covfee-types/task'
 import { TaskLoader } from './task_loader';
 import './hit.scss'
@@ -37,7 +37,7 @@ interface MatchParams {
     taskId: string
 }
 
-type Props = HitType & RouteComponentProps<MatchParams> & {
+type Props = HitInstanceType & RouteComponentProps<MatchParams> & {
     /**
      * height of the container (used for adjusting sidebar height)
      */
@@ -52,9 +52,10 @@ type Props = HitType & RouteComponentProps<MatchParams> & {
     routingEnabled: boolean
 
     // ASYNC OPERATIONS
-    deleteTask: Function
-    editTask: Function
-    createTask: Function
+    deleteTask: TaskDeleteCallback
+    editTask: TaskEditCallback
+    createTask: TaskCreateCallback
+    submitTaskResponse: Function
     fetchTaskResponse: Function
     reloadHit: Function
     /**
@@ -68,8 +69,7 @@ interface TaskState {
     accessible: boolean
 }
 
-interface HitState {
-    taskMenuState: {id: number, accessible: boolean, children: {id: number, accessible: boolean}}[]
+interface State {
     /**
      * taskIds that are being displayed in the menu
      * The first number is the parent number and points to this.props.tasks
@@ -101,8 +101,10 @@ interface HitState {
 }
 
 
-export class Hit extends React.Component<Props, HitState> {
-    state: any = {
+export class Hit extends React.Component<Props, State> {
+    state: State = {
+        taskIds: [],
+        currTask: [null, null],
         currKey: 0,
         loadingTask: true,
         extraOpen: false,
@@ -160,33 +162,9 @@ export class Hit extends React.Component<Props, HitState> {
         }
     }
 
-    // makeTaskMenuState = () => {
-    //     const hierarchy: {[key: string]: {children: number[]}} = {}
-    //     for (const task of Object.values(this.props.tasks)) {
-    //         if(task.parent_id == null) hierarchy[task.id] = {children: []}
-    //         else {
-    //             if(!(task.parent_id in hierarchy)) hierarchy[task.parent_id] = {children: []}
-    //             hierarchy[task.parent_id].children.push(task.id)
-    //         }
-    //     }
-
-    //     const taskIds = Object.keys(hierarchy).map((key, _) => {
-    //         return [parseInt(key), hierarchy[key]['children']]
-    //     })
-    // }
-
     makeTaskIds = () => {
-        const hierarchy: {[key: string]: {children: number[]}} = {}
-        for (const task of Object.values(this.props.tasks)) {
-            if(task.parent_id == null) hierarchy[task.id] = {children: []}
-            else {
-                if(!(task.parent_id in hierarchy)) hierarchy[task.parent_id] = {children: []}
-                hierarchy[task.parent_id].children.push(task.id)
-            }
-        }
-
-        const taskIds = Object.keys(hierarchy).map((key, _) => {
-            return [parseInt(key), hierarchy[key]['children']]
+        const taskIds = this.props.tasks.map((task, i) => {
+            return [i, task.children.map((c, j) => j)]
         })
 
         return taskIds as [number, number[]][]
@@ -204,10 +182,12 @@ export class Hit extends React.Component<Props, HitState> {
     }
 
     getTask = (taskId: [number, number]) => {
+        const parentIdx = this.state.taskIds[taskId[0]][0]
         if(taskId[1] == null) {
-            return this.props.tasks[this.state.taskIds[taskId[0]][0]]
+            return this.props.tasks[parentIdx]
         } else {
-            return this.props.tasks[this.state.taskIds[taskId[0]][1][taskId[1]]]
+            const childIdx = this.state.taskIds[taskId[0]][1][taskId[1]]
+            return this.props.tasks[parentIdx].children[childIdx]
         }
     }
 
@@ -226,7 +206,7 @@ export class Hit extends React.Component<Props, HitState> {
         if(child === 0) {
             if(parent === 0) return [null, null] as [number, number]
             prevParent = parent-1
-            prevChild = this.props.tasks[prevParent].children.length
+            prevChild = this.state.taskIds[prevParent][1].length
         } else {
             prevParent = parent
             prevChild = child - 1
@@ -253,7 +233,7 @@ export class Hit extends React.Component<Props, HitState> {
 
         nextChild  = nextChild ? nextChild - 1 : null
 
-        if(nextParent === this.props.tasks.length) nextParent = null
+        if(nextParent === this.state.taskIds.length) nextParent = null
             
         return [nextParent, nextChild] as [number, number]
     }
@@ -283,8 +263,11 @@ export class Hit extends React.Component<Props, HitState> {
 
     prerequisitesCompleted = () => {
         let prerequisitesCompleted = true
-        Object.values(this.props.tasks).forEach(t => {
+        this.props.tasks.forEach(t => {
             if(t.prerequisite && !t.valid) prerequisitesCompleted = false 
+            t.children.forEach(c => {
+                if(t.prerequisite && !t.valid) prerequisitesCompleted = false 
+            })
         })
         return prerequisitesCompleted
     }
@@ -309,8 +292,6 @@ export class Hit extends React.Component<Props, HitState> {
             }))
         }
     }
-
-    
 
     handleMenuClick = (e: any) => {
         if (e.key == 'extra') this.setState({extraOpen: !this.state.extraOpen})
@@ -351,17 +332,17 @@ export class Hit extends React.Component<Props, HitState> {
      * - all required tasks have a valid response
      */
     canSubmitHit = () => {
-        for (const task of Object.values(this.props.tasks)) {
-            if(task.required && !task.valid) return false
-        }
-        return true
+        let canSubmit = true
+        this.props.tasks.forEach(task => {
+            if(task.required && !task.valid) canSubmit = false
+        })
+        return canSubmit
     }
 
     renderMenu = () => {
         const tasks = this.state.taskIds.map(row => {
-            const children = row[1].map(childId => this.props.tasks[childId])
             const parent = this.props.tasks[row[0]]
-            parent.children = children
+            parent.children = row[1].map(childId => parent.children[childId])
             return parent
         })
 
@@ -374,10 +355,10 @@ export class Hit extends React.Component<Props, HitState> {
                 editMode={{
                     enabled: true,
                     allowNew: ('userTasks' in this.props.interface && Object.entries(this.props.interface.userTasks).length > 0),
-                    presets: this.props.interface.userTasks,
-                    onTaskEdit: this.handleTaskEdit,
-                    onTaskCreate: this.handleTaskCreate,
-                    onTaskDelete: this.handleTaskDelete,
+                    presets: (this.props.interface as AnnotationInterface).userTasks,
+                    onTaskEdit: this.props.editTask,
+                    onTaskCreate: this.props.createTask,
+                    onTaskDelete: this.props.deleteTask,
                 }}>
                 {!this.props.submitted && this.props.interface.showSubmitButton &&
                     <Button type="primary" 
@@ -412,7 +393,6 @@ export class Hit extends React.Component<Props, HitState> {
     
 
     render() {
-        console.log(this.state.currTask)
         const taskProps = this.getTask(this.state.currTask)
         const parentProps = this.state.currTask[1] != null ? 
                             this.getTask([this.state.currTask[0], null]) : 
@@ -480,7 +460,7 @@ export class Hit extends React.Component<Props, HitState> {
 
 
 
-const SidebarContainer = styled.div`
+const SidebarContainer = styled.div<any>`
     position: sticky;
     display: inline-block;
     vertical-align: top;

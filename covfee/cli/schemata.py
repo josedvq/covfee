@@ -143,7 +143,7 @@ class Schemata:
                 # modify the schema accordingly
                 for child in children:
                     child['additionalProperties'] = False
-                node['oneOf'] = children
+                node['oneOf'] = node['anyOf']
                 del node['anyOf']
                 node['discriminator'] = {'propertyName': pivot_prop}
                 if 'required' not in node:

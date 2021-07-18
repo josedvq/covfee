@@ -1,20 +1,20 @@
 
 import * as React from 'react'
 import styled from 'styled-components'
+import { Modal } from 'antd'
+import Title from 'antd/lib/typography/Title'
 import { withRouter } from 'react-router'
-import Hit from './hit'
-import Constants from 'Constants'
-import { fetcher, getUrlQueryParam, myerror, throwBadResponse} from '../utils'
-
 import {
     LoadingOutlined, WindowsFilled,
-} from '@ant-design/icons';
+} from '@ant-design/icons'
 import {
     Route, RouteComponentProps,
 } from "react-router-dom"
-import {HitType} from '@covfee-types/hit'
-import { Modal } from 'antd'
-import Title from 'antd/lib/typography/Title'
+
+import Constants from 'Constants'
+import Hit from './hit'
+import { fetcher, getUrlQueryParam, myerror, throwBadResponse, ErrorPage} from '../utils'
+import {HitInstanceType} from '@covfee-types/hit'
 import { EditableTaskFields, TaskResponse, TaskType } from '@covfee-types/task'
 
 interface MatchParams {
@@ -24,30 +24,55 @@ interface MatchParams {
 interface Props extends RouteComponentProps<MatchParams> {}
 
 interface State {
+    /**
+     * True when the hit is being (re)loaded.
+     */
     loading: boolean
-    status: string
+    /**
+     * Holds the status of the component
+     * - init is the initial state
+     * - ready when the HIT has been loaded successfully
+     * - error when the HIT is not found (404) or other error
+     */
+    status: 'init' | 'ready' | 'error'
+    /**
+     * If the HIT should be loaded in preview mode (no data recording)
+     */
     previewMode: boolean
+    /**
+     * Error message received from the server
+     * Only set if status == 'error'
+     */
     error: string
-    hit: HitType
+    /**
+     * Tracks the state of the window
+     * Fed to the sidebar to adjust its height
+     */
     containerHeight: number
+    tasks: TaskType[]
 }
 
 /**
- * Retrieves the HIT and renders and Hit component. Stores the preview state.
+ * Retrieves the HIT and reders it in a HIT component.
+ * Implements most of the async operations and callbacks of the HIT component.
  */
 class HitLoader extends React.Component<Props, State> {
     id: string
     url: string
-    onresize:Function
+    onresize: () => void
 
     state: State = {
         loading: true,
-        status: 'loading',
+        status: 'init',
         previewMode: false,
         error: null,
-        hit: null,
-        containerHeight: 0
+        containerHeight: 0,
+        tasks: []
     }
+
+    hit: HitInstanceType
+    
+    idTaskMap: {[key:string]: {parentIndex: number, childIndex: number}}
 
     constructor(props: Props) {
         super(props)
@@ -60,10 +85,11 @@ class HitLoader extends React.Component<Props, State> {
 
     componentDidMount() {
         this.loadHit()
-        this.onresize = (e: Event) => {
+        this.onresize = () => {
             //note i need to pass the event as an argument to the function
-            this.setState({containerHeight: e.target.outerHeight})
+            this.setState({containerHeight: window.innerHeight})
         }
+        this.onresize()
         addEventListener("resize", this.onresize);
     }
 
@@ -79,26 +105,31 @@ class HitLoader extends React.Component<Props, State> {
         return Promise.all([
             fetch(url)
             .then(throwBadResponse)
-            .then((hit: HitType) => {
+            .then((hit: HitInstanceType) => {
                 const status = 'ready'
-                const tasksDict = {}
-                hit.tasks.forEach(task => {
-                    tasksDict[task.id] = task
-                    task.children.forEach(child => {
-                        tasksDict[child.id] = child
+                this.hit = hit
+
+                const tasks = hit.tasks
+                delete hit['tasks']
+
+                this.idTaskMap = {}
+                tasks.forEach((task, i) => {
+                    this.idTaskMap[task.id] = {parentIndex: i, childIndex: null}
+                    task.children.forEach((child, j) => {
+                        this.idTaskMap[child.id] = {parentIndex: i, childIndex: j}
                     })
-                    delete task['children']
                 })
-                hit.tasks = tasksDict
+                
+
                 this.setState({
+                    tasks: tasks,
                     status: status,
-                    hit: hit
                 })
             }).catch(error => {
                 this.setState({
                     status: 'error',
                     error
-                });
+                })
             }),
             // minimum duration of the "loading" state will be 1s
             // avoid a flickering modal
@@ -122,13 +153,14 @@ class HitLoader extends React.Component<Props, State> {
         }
         let p = fetcher(this.url + '/submit', requestOptions)
             .then(throwBadResponse)
-            .then(hit=>{this.setState({
-                hit: {
-                    ...this.state.hit,
+            .then(hit => {
+                this.hit = {
+                    ...this.hit,
                     submitted: true,
                     completionInfo: hit.completionInfo
                 }
-            })})
+                this.setState(this.state)
+            })
 
         return p
     }
@@ -140,14 +172,22 @@ class HitLoader extends React.Component<Props, State> {
         return fetch(url)
             .then(throwBadResponse)
             .then(_ => {
-                const tasks = {...this.state.hit.tasks}
-                tasks[taskId] = undefined 
-                this.setState({
-                    hit: {
-                        ...this.state.hit,
-                        tasks: tasks
+                const {parentIndex, childIndex} = this.idTaskMap[taskId]
+                if(childIndex === null) {
+                    const tasks = [...this.state.tasks]
+                    tasks.splice(parentIndex, 1)
+                    this.setState({tasks: tasks})
+                } else {
+                    const tasks = [...this.state.tasks]
+                    const children = [...this.state.tasks[parentIndex].children]
+                    children.splice(childIndex)
+                    tasks[parentIndex] = {
+                        ...this.state.tasks[parentIndex],
+                        children: children
                     }
-                })
+                    this.setState({tasks: tasks})
+                }
+                delete this.idTaskMap[taskId]
             })
     }
 
@@ -163,14 +203,21 @@ class HitLoader extends React.Component<Props, State> {
         return fetch(url, requestOptions)
             .then(throwBadResponse)
             .then(data => {
-                const tasks = {...this.state.hit.tasks}
-                tasks[taskId] = data 
-                this.setState({
-                    hit: {
-                        ...this.state.hit,
-                        tasks: tasks
+                const {parentIndex, childIndex} = this.idTaskMap[taskId]
+                if(childIndex !== null) {
+                    const tasks = [...this.state.tasks]
+                    tasks[parentIndex] = data
+                    this.setState({tasks: tasks})
+                } else {
+                    const tasks = [...this.state.tasks]
+                    const children = [...this.state.tasks[parentIndex].children]
+                    children[childIndex] = data
+                    tasks[parentIndex] = {
+                        ...this.state.tasks[parentIndex],
+                        children: children
                     }
-                })
+                    this.setState({tasks: tasks})
+                }
             })
     }
 
@@ -186,13 +233,9 @@ class HitLoader extends React.Component<Props, State> {
         return fetch(url, requestOptions)
             .then(throwBadResponse)
             .then(data => {
-                const tasks = {...this.state.hit.tasks}
-                tasks[data.id] = data 
+                const tasks = [...this.state.tasks, data]
                 this.setState({
-                    hit: {
-                        ...this.state.hit,
-                        tasks: tasks
-                    }
+                    tasks: tasks
                 })
             })
     }
@@ -212,17 +255,15 @@ class HitLoader extends React.Component<Props, State> {
             .then(throwBadResponse)
             
         p.then(res => {
-            const tasks = { ...this.state.hit.tasks }
-            tasks[response.task_id] = {...this.state.hit.tasks[response.task_id]}
-            tasks[response.task_id].valid = res.valid
-            tasks[response.task_id].num_submissions += 1
+            const {parentIndex, childIndex} = this.idTaskMap[response.task_id]
+            const tasks = [...this.state.tasks]
+            tasks[response.task_id] = {
+                ...this.state.tasks[response.task_id],
+                valid: res.valid,
+                num_submissions: tasks[response.task_id].num_submissions + 1
+            }
             
-            this.setState({    
-                hit: {
-                    ...this.state.hit,
-                    tasks: tasks
-                }
-            })
+            this.setState({ tasks: tasks})
         })
 
         return p
@@ -241,7 +282,13 @@ class HitLoader extends React.Component<Props, State> {
         return p
     }
 
+    render404() {
+        return <ErrorPage/>
+    }
+
     render() {
+        if(this.state.status == 'error') return this.render404()
+
         return <>
             {this.state.loading === true && 
                 <Modal title={<Title level={4}><LoadingOutlined /> Loading tasks</Title>} visible={true} footer={null} closable={false}>
@@ -254,8 +301,9 @@ class HitLoader extends React.Component<Props, State> {
                     case 'ready':
                         return <Route path={`${this.props.match.path}/:taskId?`}>
                             <Hit
-                                {...this.state.hit}
-                                height={window.innerHeight}
+                                {...this.hit}
+                                tasks={this.state.tasks}
+                                height={this.state.containerHeight}
                                 routingEnabled={true}
                                 previewMode={this.state.previewMode}
                                 reloadHit={this.loadHit}

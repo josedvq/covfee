@@ -2,6 +2,7 @@ import os
 import hmac
 import hashlib
 import datetime
+import random
 
 from flask import current_app as app
 from werkzeug.datastructures import MultiDict
@@ -49,14 +50,6 @@ class HIT(db.Model):
 
         self.interface = interface
 
-        task_specs = []
-        for i, spec in enumerate(tasks):
-            if 'name' not in spec:
-                spec['name'] = str(i)
-            spec['order'] = i
-            task_specs.append(TaskSpec(**spec))
-        self.taskspecs = task_specs
-
         if extra is not None:
             if 'url' in extra and extra['url'][:4] != 'http':
                 extra['url'] = os.path.join(app.config['PROJECT_WWW_URL'], extra['url'])
@@ -65,6 +58,41 @@ class HIT(db.Model):
         self.config = config
         self.config['maxInstances'] = self.config.get('maxInstances', 100)
 
+        self.set_task_specs(tasks)
+
+    def set_task_specs(self, tasks_spec):
+        ''' This method will separate the tasks specification into a generator specification
+            that will specify how a HIT is instantiated (incl shuffling of the tasks) and refers to tasks via IDs
+            and a list of tasks, containing only covfee tasks (excl shufflers), and whose index in the list match
+            the IDs in the generator.
+        '''
+        
+        task_list = []
+        state = {"task_idx": 0}
+
+        # traverse the tasks_spec looking for covfee tasks
+        def dfs(ts):
+            for i, spec in enumerate(ts):
+                if spec['type'] == 'shuffle':
+                    for child_ts in spec['tasks']:
+                        dfs(child_ts)
+                else:
+                    task_list.append(spec)
+                    ts[i] = state['task_idx']
+                    state['task_idx'] += 1
+
+        # recurse starting at the root HIT tasks spec
+        dfs(tasks_spec)
+
+        # store the covfee tasks specifications
+        for i, spec in enumerate(task_list):
+            if 'name' not in spec:
+                spec['name'] = f'Task {i}'
+            self.taskspecs.append(TaskSpec(**spec))
+        
+        # store the generator specification
+        self.config['generator'] = tasks_spec
+
     def get_hashstr(self, id):
         ''' Used to generate the string to be hashed as an ID to the HIT instances of this HIT.
         '''
@@ -72,14 +100,37 @@ class HIT(db.Model):
 
     def instantiate(self):
         ''' Generates a new hit instance/URL by instantiating the HIT.
+            Task specs are arranged per config.generator and passed to TaskInstance in final order
         '''
         if(len(self.instances) >= self.config['maxInstances']):
             return None
 
+        task_specs = []
+        def recursive_generate(gen_list):
+            ''' Recursive method that will DFS the generator structure.
+                - new tasks are added to task_specs when an integer ID is found
+                - the recursion step is taken on special objects (eg. type='shuffle')
+            '''
+            for elem in gen_list:
+                if type(elem) == int:
+                    task_specs.append(self.taskspecs[elem])
+                elif type(elem) == dict:
+                    if elem['type'] == 'shuffle':
+                        shuffled = random.sample(elem['tasks'], len(elem['tasks']))
+                        for child_gen_list in shuffled:
+                            recursive_generate(child_gen_list)
+                    else:
+                        raise Exception(f'Unrecognized element type property "{elem["type"]}" in generator.')
+                else:
+                    raise Exception(f'Unrecognized element type "{str(type(elem))}" in generator.')
+
+        # start recursion on the root generator
+        recursive_generate(self.config['generator'])    
+
         instance = HITInstance(
             id=sha256(self.get_hashstr(f'instance{len(self.instances)}').encode()).digest(),
             submitted=False,
-            taskspecs=self.taskspecs
+            taskspecs=task_specs
         )
         self.instances.append(instance)
         return instance

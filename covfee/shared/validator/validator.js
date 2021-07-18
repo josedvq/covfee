@@ -1,6 +1,6 @@
 const Ajv = require("ajv")
 
-export class Validator {
+class Validator {
     constructor(schemata) {
         this.schemata = schemata
         this.ajv = new Ajv({discriminator: true, verbose: true, logger:false, allErrors: false})
@@ -36,3 +36,5 @@ export class Validator {
         return path
     }
 }
+
+module.exports.Validator = Validator

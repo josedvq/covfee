@@ -3,6 +3,6 @@
     "version": "0.0.0",
     "main": "index.ts",
     "dependencies": {
-        "ajv": "^8.0.5"
+        "ajv": "github.com/josedvq/ajv"
     }
 }

@@ -10,6 +10,10 @@ import { TaskEditorModal } from './task_editor'
 
 import { EditableTaskFields, TaskSpec, TaskType} from '@covfee-types/task'
 
+export type TaskEditCallback = (arg0: number, arg1: EditableTaskFields) => Promise<void>
+export type TaskCreateCallback = (arg0: number, arg1: EditableTaskFields) => Promise<void>
+export type TaskDeleteCallback = (arg0: number) => Promise<void>
+
 interface Props {
     /**
      * Id of the task that is currently active
@@ -38,15 +42,15 @@ interface Props {
         /**
          * Called when a task is edited via the sidebar
          */
-        onTaskEdit: (arg0: [number, number], arg1: EditableTaskFields) => Promise<void>
+        onTaskEdit: TaskEditCallback
         /**
          * Called when a new task is created via the sidebar
          */
-        onTaskCreate: (arg0: number, arg1: EditableTaskFields) => Promise<void>
+        onTaskCreate: TaskCreateCallback
         /**
          * Called when a task is deleted
          */
-        onTaskDelete: (arg0: [number, number]) => Promise<void>
+        onTaskDelete: TaskDeleteCallback
         /**
          * Spec of the types of tasks that can be created
          */
@@ -140,7 +144,7 @@ export class Sidebar extends React.Component<Props, State> {
                         onSubmit={(task) => {
                             return this.state.editTaskModal.new ?
                                 this.props.editMode.onTaskCreate(this.state.editTaskModal.taskId[0], task) :
-                                this.props.editMode.onTaskEdit(this.state.editTaskModal.taskId, task)
+                                this.props.editMode.onTaskEdit(task.id, task)
                         }}
                         onClose={this.handleEditTaskCancel}
                         onDelete={() => { return this.props.editMode.onTaskDelete(this.state.editTaskModal.taskIndex) }} />
