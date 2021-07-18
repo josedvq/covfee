@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { Provider } from 'react-redux'
+import { configureStore } from '@reduxjs/toolkit'
 import styled from 'styled-components'
 import ReactDOM from 'react-dom'
 import {
@@ -6,33 +8,32 @@ import {
     Modal,
     Popover,
 } from 'antd';
-import classNames from 'classnames'
 
 import { myerror, fetcher, throwBadResponse, makeCancelablePromise, CancelablePromise } from '../utils'
-import { getTaskClass } from '../task_utils'
+import { getPlayerClass, getTask } from '../task_utils'
 import { TaskResponse, TaskSpec, TaskType } from '@covfee-types/task'
-import { AnnotationBuffer } from '../buffers/buffer'
 import { TaskOverlay } from './overlay'
-import ButtonEventManagerContext from '../input/button_manager'
-import { ContinuousTaskPlayer, PlayerStatusType } from './continuous_task_player'
+import { ContinuousTaskPlayer, PlayerStatusType, VideoPlayerContext } from './continuous_task_player'
 import buttonManagerContext from '../input/button_manager_context'
 import { QuestionCircleOutlined } from '@ant-design/icons'
-import { CovfeeTask } from 'tasks/base'
-import { BasicTaskPlayer } from './basic_task_player';
-
-export interface PlayerState {
-    status: PlayerStatusType
-    loading: boolean
-    currTask: number
-    replayMode: boolean
-}
+import { ContinuousTaskProps, CovfeeTask } from 'tasks/base'
+import { BinaryDataCaptureBuffer } from '../buffers/binary_dc_buffer'
+import { AnnotationBuffer } from 'buffers/buffer';
+import { ContinuousPlayerProps, CovfeeContinuousPlayer } from 'players/base';
+import { Socket } from 'socket.io-client'
 
 interface State {
     /**
      * Lifecycle states of the loader
-     * loaded: responses are loaded. overlay is shown if continuous or timed task is submitted
-     * ready: task is ready to be played
-     * ended: player called onEnd
+     * loading: responses and / or media are being loaded.
+     * loaded: (continuous/timed only) responses are loaded. overlay is shown if
+     *      - continuous task response is closed (new response is necessary)
+     *      - timed task is not started or is finished
+     * ready: task is ready to be played / completed. shown when:
+     *      - timed task is underway
+     *      - continuous task response is open
+     *      - all non-continuous, non-timed tasks
+     * ended: (continuous only) player called onEnd
      * submitted: task has been submitted
      */
     status: 'loading' | 'loaded' | 'ready' | 'ended' | 'submitted'
@@ -43,7 +44,8 @@ interface State {
     /**
      * Player state
      */
-    player : PlayerState
+    replayMode: boolean
+    // player : PlayerState
     /**
      * State of the error modal 
      */
@@ -65,6 +67,11 @@ interface State {
     instructions: {
         visible: boolean
     }
+    player: {
+        loaded: boolean
+        paused: boolean
+        muted: boolean
+    }
 }
 
 interface Props {
@@ -76,6 +83,10 @@ interface Props {
      * Props and specification of parent task
      */
     parent: TaskType
+    /**
+     * socketio instance for multi-party tasks
+     */
+    socket: Socket
     /**
      * If true, the task cannot be interacted with
      */
@@ -119,26 +130,32 @@ interface Props {
 
 export class TaskLoader extends React.Component<Props, State> {
 
+    player: CovfeeContinuousPlayer<any, any>
+
     response: TaskResponse
     parentResponse: TaskResponse
-    taskClass: any
-    taskPlayer: React.Component
+    taskConstructor: any
+    taskReducer: any
+    taskStore: any
     taskElement: CovfeeTask<any, any>
     taskInstructionsElem: HTMLDivElement
 
     mountPromise: CancelablePromise<any>
 
+    buffer: AnnotationBuffer
+    parentBuffer: AnnotationBuffer
     endTaskResult: any = null
-    endTaskBuffer: AnnotationBuffer = null
+    // endTaskBuffer: AnnotationBuffer = null
+    listeners: {[key: string]: ((...args: any[]) => void)[] } = {}
     
     state: State = {
         status: 'loading',
         renderAs: null,
+        replayMode: false,
         player: {
-            status: 'ready',
-            loading: true,
-            currTask: 0,
-            replayMode: false
+            loaded: false,
+            paused: true,
+            muted: false
         },
         errorModal: {visible: false},
         overlay: {visible: false},
@@ -147,15 +164,51 @@ export class TaskLoader extends React.Component<Props, State> {
 
     constructor(props: Props) {
         super(props)
-        this.taskClass = getTaskClass(this.props.task.spec.type)
+
+        const {taskConstructor, taskReducer} = getTask(this.props.task.spec.type)
+        this.taskConstructor = taskConstructor
+        this.taskReducer = taskReducer
+
         this.state.renderAs = this.getTaskRenderAs()
         this.state.instructions.visible = (this.props.task.spec.instructionsType == 'popped')
+
+        const loggerMiddleware = storeAPI => next => action => {
+            // send actions to the server
+            if(!action._fromServer) return this.props.socket.emit('action', action) 
+            let result = next(action)
+            // console.log('next state', storeAPI.getState())
+            return result
+        }
+
+        if(taskReducer) {
+            this.taskStore = configureStore({
+                reducer: {
+                    task: this.taskReducer
+                },
+                middleware: [loggerMiddleware]
+            })
+        }
+
+        this.props.socket.emit('join', { 'username': 'josedvq', 'room': this.props.task.id.toString() });
+
+        // receive and dispatch actions to the store.
+        this.props.socket.on('action', actionObject => {
+            // add the fromServer flag to allow it past middleware
+            this.taskStore.dispatch({...actionObject, _fromServer: true})
+        })
+
+        // if(props.media.speed === 0) {
+        //     this.state.player.speed = 1
+        //     this.state.player.speedEnabled = true
+        // }
+        // if(this.isContinuousTask())
+        //     this.createBuffers()
     }
 
     getTaskRenderAs = () => {
         // if(this.props.task.timer && this.props.task.timer.maxTime)
         //     return 'timed-task'
-        const taskType = this.taskClass.taskType
+        const taskType = this.taskConstructor.taskType
 
         let type = 'default'
         if (taskType == 'continuous') type = 'continuous-task'
@@ -165,6 +218,8 @@ export class TaskLoader extends React.Component<Props, State> {
             timed: false
         }
     }
+
+    isContinuousTask = () => (this.state.renderAs.type == 'continuous-task')
 
     componentDidMount = () => {
         // read the taks and parent responses.
@@ -180,11 +235,7 @@ export class TaskLoader extends React.Component<Props, State> {
         this.mountPromise.promise.then(_ => {
             if(this.response && this.response.submitted) {
                 this.setState({
-                    status: 'loaded',
-                    player: {
-                        ...this.state.player,
-                        status: 'ended'
-                    }
+                    status: 'loaded'
                 })
             } else {
                 this.loadTask(true)
@@ -200,24 +251,40 @@ export class TaskLoader extends React.Component<Props, State> {
 
     loadTask = (annot = true) => {
         this.setState({
-            player: {
-                ...this.state.player, 
-                status: 'ready',
-                currTask: 0,
-                replayMode: !annot
-            },
+            replayMode: !annot,
             status: 'ready'
         })
+
+        // this.props.setState({status: 'ready', loading: true})
+        if(this.isContinuousTask()) {
+            this.player.currentTime(0)
+            
+            this.createBuffers()
+            if(this.state.replayMode) {
+                this.loadBuffers().finally(()=>{
+                    this.setState({loading: false})
+                })
+            } else {
+                this.setState({loading: false})
+            }
+        }
     }
 
-    // Player props
-    setPlayerState = (state: PlayerState) => {
-        this.setState({
-            player: {
-                ...this.state.player,
-                ...state
-            }
-        })
+    createBuffers = () => {        
+        this.buffer = new BinaryDataCaptureBuffer(
+            false,
+            1,   // sample length
+            200, //chunk length
+            (this.props.task as any).spec.media.fps || 60,
+            this.response.url,
+            this.handleBufferError)
+    }
+
+    loadBuffers = () => {
+        return Promise.all([
+            this.buffer ? this.buffer._load() : Promise.resolve(),
+            this.parentBuffer ? this.parentBuffer._load(): Promise.resolve()
+        ])
     }
 
     loadTaskForReplay = () => { this.loadTask(false) }
@@ -265,7 +332,7 @@ export class TaskLoader extends React.Component<Props, State> {
     handleTaskEnd = (taskResult: any, buffer: AnnotationBuffer, timer=false) => {
         // if (!['annotready', 'replayready'].includes(this.state.status))
         //     console.error(`onEnd called in invalid state ${this.state.status}.`)
-        if(this.props.task.autoSubmit && !this.state.player.replayMode)
+        if(this.props.task.autoSubmit && !this.state.replayMode)
             return this.handleTaskSubmit(taskResult, buffer, false)
         
         this.endTaskResult = taskResult
@@ -444,6 +511,10 @@ export class TaskLoader extends React.Component<Props, State> {
         }
     }
 
+    createPlayerRef = (element: CovfeeContinuousPlayer<any,any>) => {
+        this.player = element
+    }
+
     hideInstructions = () => {
         this.setState({
             instructions: {...this.state.instructions, visible: false}
@@ -483,7 +554,7 @@ export class TaskLoader extends React.Component<Props, State> {
                     return <TaskOverlay visible={true} {...this.getOverlayInitTimedTask()}/>
                 break
             case 'ended':
-                if(this.state.player.replayMode)
+                if(this.state.replayMode)
                     return <TaskOverlay visible={true} {...this.getOverlayAfterReplayOrStop()}/>
                 else
                     return <TaskOverlay visible={true} {...this.getOverlayNonSubmittedTask()}/>
@@ -497,48 +568,86 @@ export class TaskLoader extends React.Component<Props, State> {
         }
     }
 
-    renderContinuousTask = () => {
-        const tasks = [this.props.task]
-        const responses = [this.response]
-        let media = this.props.task.spec.media
-        if (this.props.parent) {
-            tasks.push(this.props.parent)
-            responses.push(this.parentResponse)
-            media = this.props.parent.spec.media
-        }
-        
-        return <ContinuousTaskPlayer
-            ref={e => { this.taskPlayer = e }}
-            status={this.state.player.status}
-            disabled={this.props.disabled}
-            setState={this.setPlayerState}
-            createTaskRef={this.createTaskRef}
-            media={media}
-            tasks={tasks}
-            responses={responses}
-            currTask={this.state.player.currTask}
-            replayMode={this.state.player.replayMode}
-            onBufferError={this.handleBufferError}
-            // lifecycle
-            onLoad={this.handleTaskLoad}
-            onEnd={this.handleTaskEnd} />
+    /**
+     * Player access
+     */
+     setPaused = (val: boolean) => {
+        this.setState({
+            player: {
+                ...this.state.player,
+                paused: val
+            }
+        })
     }
 
-    renderTaskDefault = () => {
-        return <BasicTaskPlayer
-            ref={e => { this.taskPlayer = e }}
-            disabled={this.props.disabled}
-            createTaskRef={this.createTaskRef}
-            task={this.props.task}
-            response={this.response}
-            replayMode={this.state.player.replayMode}
-            onBufferError={this.handleBufferError}
-            // lifecycle
-            onLoad={this.handleTaskLoad}
-            onSubmit={this.handleTaskSubmit}
-            // interface
-            renderTaskSubmitButton={this.props.renderTaskSubmitButton}/>
-    }    
+    setMuted = (val: boolean) => {
+        this.setState({
+            player: {
+                ...this.state.player,
+                muted: val
+            }
+        })
+    }
+
+    addListener = (eventName: string, callback: (...args: any[]) => void) => {
+        if(!(eventName in this.listeners))
+            this.listeners[eventName] = []
+
+        this.listeners[eventName].push(callback)
+    }
+
+    dispatch = (eventName: string, ...args: any[]) => {
+        if(!(eventName in this.listeners)) return
+        this.listeners[eventName].forEach(fn => {
+            fn(...args)
+        })
+    }
+
+    handlePlayerLoad = (duration: number, fps?: number) => {
+        this.dispatch('load', duration, fps)
+    }
+
+    handlePlayerFrame = (time: number) => {
+        this.dispatch('frame', time)
+    }
+
+    handlePlayerEnd = () => {
+        this.dispatch('end')
+    }
+
+    getPlayerContext = () => {
+        const ctx: VideoPlayerContext = {
+            togglePlayPause: ()=>{this.setPaused(!this.state.player.paused)},
+            play: ()=>{this.setPaused(true)},
+            pause: ()=>{this.setPaused(false)},
+            mute: ()=>{this.setMuted(true)},
+            unmute: ()=>{this.setMuted(false)},
+            currentTime: (val?: number)=>{return this.player.currentTime(val)},
+            addListener: this.addListener,
+        }
+        return ctx
+    }
+
+    renderPlayer = (extraProps: any = {}) => {
+        const playerProps = this.taskConstructor.getPlayerProps(this.props.task.spec.media)
+        const playerClass = getPlayerClass(playerProps.type)
+        const props: ContinuousPlayerProps = {
+            ref: this.createPlayerRef,
+            media: this.props.task.spec.media,
+            paused: this.state.player.paused,
+            setPaused: this.setPaused,
+            // speed: this.state.player.speed,
+            // setSpeed: (this.props.task.spec.media.speed === 0) && this.setSpeed,
+            muted: this.state.player.muted,
+            setMuted: this.setMuted,
+            onLoad: this.handlePlayerLoad,
+            onFrame: this.handlePlayerFrame,
+            onEnd: this.handlePlayerEnd,
+            onEvent: this.dispatch,
+            ...extraProps // task can control any non-standard player props it wishes to control
+        }
+        return React.createElement(playerClass, props, null)
+    }
 
     render() {
         return <>
@@ -546,22 +655,40 @@ export class TaskLoader extends React.Component<Props, State> {
             {this.renderErrorModal()}
             <div ref={e=>{this.taskInstructionsElem = e}}></div>
             <div style={{width: '100%'}}>
-                <ButtonEventManagerContext>
-                    {(()=>{
-                        if(this.state.status == 'loading') return null
-                        switch (this.state.renderAs.type) {
-                            case 'continuous-task':
-                                return this.renderContinuousTask()
-                            default:
-                                return this.renderTaskDefault()
-                        }
-                    })()}
-                </ButtonEventManagerContext>
+                {(()=>{
+                    if(this.state.status == 'loading') return null
+
+                    const taskElement = React.createElement(this.taskConstructor, {
+                        // task props
+                        ref: (elem)=>{this.createTaskRef(elem)},
+                        spec: this.props.task.spec,
+                        dispatch: this.taskStore.dispatch,
+            
+                        // only provide a response in replay mode, or for secondary tasks
+                        response: (this.state.replayMode) ? this.response : null,
+                        buffer: this.buffer,
+                        renderPlayer: this.renderPlayer,
+                        player: this.getPlayerContext(),
+                        buttons: this.context.getContext(),
+            
+                        // task lifecycle
+                        onLoad: this.handleTaskLoad,
+                        onEnd: this.handleTaskEnd,
+                    }, null)
+
+                    if(this.taskReducer) {
+                        
+                    
+                        return <Provider store={this.taskStore}>{taskElement}</Provider>
+                    } else {
+                        return taskElement
+                    }
+                })()}
             </div>
         </>
     }
 }
-ContinuousTaskPlayer.contextType = buttonManagerContext
+TaskLoader.contextType = buttonManagerContext
 
 const InstructionsPopoverContent = styled.div`
     width: calc(30vw);

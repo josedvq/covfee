@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { getPlayerClass, getTaskClass } from '../task_utils'
+import { getPlayerClass, getTask } from '../task_utils'
 import { TaskType } from '@covfee-types/task'
 import { AnnotationBuffer } from '../buffers/buffer';
 import { CovfeeContinuousPlayer, ContinuousPlayerProps } from '../players/base';
@@ -18,10 +18,7 @@ export interface VideoPlayerContext {
     mute: () => void
     unmute: () => void
     currentTime: (arg0?: number, callback?: ()=>{}) => number | void
-    setSpeed: (arg0: number) => void
     addListener: (arg0: string, arg1: (...args: any[]) => void) => void
-    //optional
-    setActiveMedia?: (arg0: number) => void
 }
 
 
@@ -79,8 +76,11 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
         status: 'ready'
     }
 
+    taskConstructor: any
+    taskReducer: any
+
     buffers: AnnotationBuffer[]
-    taskElements: any[] = []
+    taskRef: any
 
     player: CovfeeContinuousPlayer<any, any>
     /**
@@ -102,6 +102,12 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
 
     constructor(props: Props) {
         super(props)
+        // load the task class
+        const currTask = this.props.tasks[this.props.currTask]
+        const {taskConstructor, taskReducer} = getTask(currTask.spec.type)
+        this.taskConstructor = taskConstructor
+        this.taskReducer = taskReducer
+
         if(props.media.speed === 0) {
             this.state.player.speed = 1
             this.state.player.speedEnabled = true
@@ -163,11 +169,11 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
     /**
      * Reference creation
      */
-    createTaskRef = (index: number, element: any) => {
-        this.taskElements[index] = element
-        const numRefs = this.taskElements.reduce((acc, cv) => (cv) ? acc + 1 : acc, 0)
-        if (numRefs === this.props.tasks.length && !this.state.refsReady) this.setState({ refsReady: true})
-        if (index === this.props.currTask) this.props.createTaskRef(element)
+    createTaskRef = (element: any) => {
+        this.taskRef = element
+        // const numRefs = this.taskElements.reduce((acc, cv) => (cv) ? acc + 1 : acc, 0)
+        // if (numRefs === this.props.tasks.length && !this.state.refsReady) this.setState({ refsReady: true})
+        this.props.createTaskRef(element)
     }
 
     createPlayerRef = (element: CovfeeContinuousPlayer<any,any>) => {
@@ -296,9 +302,8 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
 
         let playerElement: any = null
         if (this.state.refsReady) { // load the player
-            const currTask = this.props.tasks[this.props.currTask]
-            const taskClass = getTaskClass(currTask.spec.type)
-            const playerProps = taskClass.getPlayerProps(this.props.media)
+            
+            const playerProps = this.taskConstructor.getPlayerProps(this.props.media)
             const playerClass = getPlayerClass(playerProps.type)
             const props: ContinuousPlayerProps = {
                 ref: this.createPlayerRef,
@@ -318,31 +323,25 @@ export class ContinuousTaskPlayer extends React.Component<Props, State> {
             playerElement = React.createElement(playerClass, props, null)
         }
 
-        return <>            
-            {this.props.tasks.map((task, index) => {
-                const taskClass = getTaskClass(task.spec.type)
-                const isCurrTask = (index === this.props.currTask)
+        const task = this.props.tasks[this.props.currTask]
+        const response = this.props.responses[this.props.currTask]
 
-                return React.createElement(taskClass, {
-                    key: index,
+        const taskElement = React.createElement(this.taskConstructor, {
+            // task props
+            ref: (elem)=>{this.createTaskRef(elem)},
+            spec: task.spec,
 
-                    // task props
-                    ref: (elem)=>{this.createTaskRef(index, elem)},
-                    spec: task.spec,
-                    // only provide a response in replay mode, or for secondary tasks
-                    response: (!isCurrTask || this.props.replayMode) ? this.props.responses[index] : null,
-                    buffer: this.buffers[index],
-                    playerElement: isCurrTask ? playerElement : null,
-                    player: isCurrTask ? this.getControllerContext(): this.getListenerContext(),
-                    buttons: isCurrTask ? this.context.getContext() : this.context.getDummyContext(),
+            // only provide a response in replay mode, or for secondary tasks
+            response: (this.props.replayMode) ? response : null,
+            buffer: this.buffers[this.props.currTask],
+            playerElement: playerElement,
+            player: this.getControllerContext(),
+            buttons: this.context.getContext(),
 
-                    // task lifecycle
-                    onLoad: isCurrTask ? this.handleTaskLoad : () => {},
-                    onEnd: isCurrTask ? this.handleTaskEnd : ()=>{},
-                }, null)
-            })}
-        </>
-
+            // task lifecycle
+            onLoad: this.handleTaskLoad,
+            onEnd: this.handleTaskEnd,
+        }, null)
     }
 }
 ContinuousTaskPlayer.contextType = buttonManagerContext

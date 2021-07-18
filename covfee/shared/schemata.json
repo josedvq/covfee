@@ -1937,6 +1937,11 @@
           "title": "maxSubmissions",
           "type": "number"
         },
+        "minDevices": {
+          "description": "Minimum number of devices in the call necessary to start the queries",
+          "title": "minDevices",
+          "type": "number"
+        },
         "name": {
           "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
           "title": "name",
@@ -1980,8 +1985,9 @@
         }
       },
       "required": [
-        "content",
+        "minDevices",
         "name",
+        "queries",
         "type"
       ],
       "title": "Omit<VideocallTaskSpec,\"media\"|\"children\">",
@@ -2589,6 +2595,11 @@
           "title": "maxSubmissions",
           "type": "number"
         },
+        "minDevices": {
+          "description": "Minimum number of devices in the call necessary to start the queries",
+          "title": "minDevices",
+          "type": "number"
+        },
         "name": {
           "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
           "title": "name",
@@ -2632,8 +2643,9 @@
         }
       },
       "required": [
-        "content",
+        "minDevices",
         "name",
+        "queries",
         "type"
       ],
       "title": "VideocallTaskSpec",

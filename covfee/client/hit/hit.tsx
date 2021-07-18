@@ -1,5 +1,5 @@
 import * as React from 'react'
-import io from 'socket.io-client'
+import io, { Socket } from 'socket.io-client'
 import styled from 'styled-components'
 import { withRouter, generatePath, RouteComponentProps } from 'react-router'
 import {
@@ -26,6 +26,7 @@ import { myerror } from '../utils'
 import { MarkdownLoader} from '../tasks/instructions'
 import {CovfeeMenuItem} from '../gui'
 import {Sidebar, TaskEditCallback, TaskCreateCallback, TaskDeleteCallback} from './sidebar'
+import ButtonEventManagerContext from '../input/button_manager'
 
 import { AnnotationInterface, HitInstanceType } from '@covfee-types/hit'
 import { TaskType } from '@covfee-types/task'
@@ -115,7 +116,7 @@ export class Hit extends React.Component<Props, State> {
     tasks: Array<TaskType>
     taskKeys: Array<string>
     instructionsFn: Function = null
-    socket: any
+    socket: Socket
 
     replayIndex = 0
 
@@ -400,7 +401,7 @@ export class Hit extends React.Component<Props, State> {
 
         const hitExtra = this.getHitExtra()
 
-        return <>
+        return <ButtonEventManagerContext>
             <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark" style={{position: 'sticky', top: 0, width: '100%'}}>
                 <Menu.Item key="logo" disabled>
                     <CovfeeMenuItem/>
@@ -440,6 +441,7 @@ export class Hit extends React.Component<Props, State> {
                         key={this.state.currKey}
                         task={taskProps}
                         parent={parentProps}
+                        socket={this.socket}
                         interfaceMode={this.props.interface.type}
                         disabled={(taskProps.maxSubmissions ? (taskProps.num_submissions >= taskProps.maxSubmissions) : false) || (taskProps.prerequisite && taskProps.valid)}
                         previewMode={this.props.previewMode}
@@ -454,7 +456,7 @@ export class Hit extends React.Component<Props, State> {
                         onSubmit={this.handleTaskSubmitted}/>
                 </Row>
             </ContentContainer>            
-        </>
+        </ButtonEventManagerContext>
     }
 }
 

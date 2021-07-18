@@ -35,6 +35,7 @@
   "license": "ISC",
   "dependencies": {
     "@ant-design/icons": "^4.2.1",
+    "@reduxjs/toolkit": "^1.6.0",
     "@types/styled-components": "^5.1.11",
     "antd": "<=4.12.3",
     "babel-loader": "^8.1.0",
@@ -53,6 +54,7 @@
     "react-cookie": "^4.0.3",
     "react-dom": "^17.0.2",
     "react-markdown": "^5.0.3",
+    "react-redux": "^7.2.4",
     "react-router-dom": "^5.2.0",
     "sass": "^1.32.9",
     "socket.io-client": "^4.1.2",

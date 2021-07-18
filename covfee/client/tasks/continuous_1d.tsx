@@ -210,11 +210,11 @@ class Continuous1DTask extends CovfeeContinuousTask<Props, State> {
     }
 
     render() {
-        if (this.props.playerElement) {   // if it is a child (active) task
+        if (this.props.renderPlayer) {   // if it is a child (active) task
             return <>
                 <Row>
                     <Col span={20}>
-                        {this.props.playerElement}
+                        {this.props.renderPlayer()}
                     </Col>
                     <Col span={4}>
                         <OneDIntensity

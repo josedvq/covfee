@@ -1,4 +1,7 @@
-class CountdownTimer extends React.Component {
+import * as React from 'react'
+import './countdown.scss'
+
+export class CountdownTimer extends React.Component {
     render() {
         return <div className="demo">
             <div className="demo__colored-blocks">
@@ -13,7 +16,7 @@ class CountdownTimer extends React.Component {
             <div className="demo__inner">
             <svg className="demo__numbers" viewBox="0 0 100 100">
                 <defs>
-                <path className="demo__num-path-1" d="M40,28 55,22 55,78"/> -->
+                <path className="demo__num-path-1" d="M40,28 55,22 55,78"/>
                 <path className="demo__num-join-1-2" d="M55,78 55,83 a17,17 0 1,0 34,0 a20,10 0 0,0 -20,-10"/>
                 <path className="demo__num-path-2" d="M69,73 l-35,0 l30,-30 a16,16 0 0,0 -22.6,-22.6 l-7,7"/>
                 <path className="demo__num-join-2-3" d="M28,69 Q25,44 34.4,27.4"/>

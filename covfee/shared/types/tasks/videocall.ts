@@ -1,4 +1,5 @@
 import { CommonTaskSpec } from '../task'
+import { FormSpec, InputSpec } from './questionnaire'
 import {MarkdownContentSpec} from './utils'
 
 /**
@@ -10,9 +11,19 @@ export interface VideocallTaskBaseSpec {
      */
     type: 'VideocallTask'
     /**
-     * Main static content of the page (eg. consent terms, instructions)
+     * Spec of the forms to be answered
      */
-    content: MarkdownContentSpec
+    queries: {
+        /**
+         * Time in seconds since the start of the call 
+         */
+        offset: number
+        form: FormSpec<InputSpec>
+    }[]
+    /**
+     * Minimum number of devices in the call necessary to start the queries
+     */
+    minDevices: number
 }
 
 /**

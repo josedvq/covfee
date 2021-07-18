@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Provider } from 'react-redux'
 import { CookiesProvider } from 'react-cookie'
 import { 
     Layout, 
@@ -16,6 +17,8 @@ import {
     Route,
     Link,
 } from "react-router-dom"
+
+import store from './store'
 import { HitLoaderWithRouter} from './hit/hit_loader'
 
 const { Header, Footer, Content, Sider } = Layout;
@@ -29,32 +32,34 @@ class Root extends React.Component {
     }
 
     render() {
-        return <Router>
-            <CookiesProvider>
-                <UserContext>
-                    <Layout>
+        return <Provider store={store}>
+            <Router>
+                <CookiesProvider>
+                    <UserContext>
                         <Layout>
-                            <Switch>
-                                <Route path="/about">
-                                    <About />
-                                </Route>
-                                <Route path="/login">
-                                    <LoginWithRouter />
-                                </Route>
-                                <Route path="/hits/:hitId">
-                                    <HitLoaderWithRouter/>
-                                </Route>
-                            </Switch>
+                            <Layout>
+                                <Switch>
+                                    <Route path="/about">
+                                        <About />
+                                    </Route>
+                                    <Route path="/login">
+                                        <LoginWithRouter />
+                                    </Route>
+                                    <Route path="/hits/:hitId">
+                                        <HitLoaderWithRouter/>
+                                    </Route>
+                                </Switch>
+                            </Layout>
+                            {/* <Footer>
+                                <Text style={{float: 'right'}}>
+                                    Interface created with <a href="https://github.com/josedvq/covfee">covfee</a>
+                                </Text>
+                            </Footer> */}
                         </Layout>
-                        {/* <Footer>
-                            <Text style={{float: 'right'}}>
-                                Interface created with <a href="https://github.com/josedvq/covfee">covfee</a>
-                            </Text>
-                        </Footer> */}
-                    </Layout>
-                </UserContext>
-            </CookiesProvider>
-        </Router>
+                    </UserContext>
+                </CookiesProvider>
+            </Router>
+        </Provider>
     }
 }
 
