@@ -23,6 +23,10 @@ export interface Continuous1DTaskBaseSpec {
      */
     useRequestAnimationFrame?: boolean
     /**
+     * Enable player's countdown animation
+     */
+    showCountdown?: boolean
+    /**
      * sets the input button controls for the task
      */
     controls?: {

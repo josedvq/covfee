@@ -354,6 +354,11 @@
           "title": "required",
           "type": "boolean"
         },
+        "showCountdown": {
+          "description": "Enable player's countdown animation",
+          "title": "showCountdown",
+          "type": "boolean"
+        },
         "timer": {
           "description": "Timing config",
           "properties": {
@@ -1017,37 +1022,9 @@
       "additionalProperties": false,
       "properties": {
         "config": {
+          "$ref": "#/definitions/completionInfo",
           "description": "HIT configuration and other params",
-          "properties": {
-            "completionCode": {
-              "description": "Completion code to give back to participants. Used for crowdsourcing in eg. Prolific",
-              "title": "completionCode",
-              "type": "string"
-            },
-            "redirect": {
-              "description": "Redirect URL. URL to redirect participants to after completing the HIT.",
-              "properties": {
-                "name": {
-                  "description": "Name of the website/platform to redirect to, eg. Prolific",
-                  "title": "name",
-                  "type": "string"
-                },
-                "url": {
-                  "description": "URL to redirect to",
-                  "title": "url",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "name",
-                "url"
-              ],
-              "title": "redirect",
-              "type": "object"
-            }
-          },
-          "title": "config",
-          "type": "object"
+          "title": "config"
         },
         "extra": {
           "description": "Extra hit-level information to display",
@@ -1513,6 +1490,11 @@
           "title": "required",
           "type": "boolean"
         },
+        "showCountdown": {
+          "description": "Enable player's countdown animation",
+          "title": "showCountdown",
+          "type": "boolean"
+        },
         "timer": {
           "description": "Timing config",
           "properties": {
@@ -1893,24 +1875,6 @@
           "title": "autoSubmit",
           "type": "boolean"
         },
-        "content": {
-          "description": "Main static content of the page (eg. consent terms, instructions)",
-          "title": "content",
-          "oneOf": [
-            {
-              "$ref": "#/definitions/MarkdownContentRawSpec"
-            },
-            {
-              "$ref": "#/definitions/MarkdownContentLinkSpec"
-            }
-          ],
-          "discriminator": {
-            "propertyName": "type"
-          },
-          "required": [
-            "type"
-          ]
-        },
         "id": {
           "description": "ID of the task. Used (if provided) only to name the download (results) files",
           "title": "id",
@@ -1952,6 +1916,29 @@
           "description": "Task is marked as a prerrequisite\nPrerrequisite tasks must be completed before the rests of the tasks in the HIT are revealed.",
           "title": "prerequisite",
           "type": "boolean"
+        },
+        "queries": {
+          "description": "Spec of the forms to be answered",
+          "items": {
+            "properties": {
+              "form": {
+                "$ref": "#/definitions/FormSpec<InputSpec>",
+                "title": "form"
+              },
+              "offset": {
+                "description": "Time in seconds since the start of the call",
+                "title": "offset",
+                "type": "number"
+              }
+            },
+            "required": [
+              "form",
+              "offset"
+            ],
+            "type": "object"
+          },
+          "title": "queries",
+          "type": "array"
         },
         "required": {
           "default": "True",
@@ -2551,24 +2538,6 @@
           "title": "children",
           "type": "array"
         },
-        "content": {
-          "description": "Main static content of the page (eg. consent terms, instructions)",
-          "title": "content",
-          "oneOf": [
-            {
-              "$ref": "#/definitions/MarkdownContentRawSpec"
-            },
-            {
-              "$ref": "#/definitions/MarkdownContentLinkSpec"
-            }
-          ],
-          "discriminator": {
-            "propertyName": "type"
-          },
-          "required": [
-            "type"
-          ]
-        },
         "id": {
           "description": "ID of the task. Used (if provided) only to name the download (results) files",
           "title": "id",
@@ -2611,6 +2580,29 @@
           "title": "prerequisite",
           "type": "boolean"
         },
+        "queries": {
+          "description": "Spec of the forms to be answered",
+          "items": {
+            "properties": {
+              "form": {
+                "$ref": "#/definitions/FormSpec<InputSpec>",
+                "title": "form"
+              },
+              "offset": {
+                "description": "Time in seconds since the start of the call",
+                "title": "offset",
+                "type": "number"
+              }
+            },
+            "required": [
+              "form",
+              "offset"
+            ],
+            "type": "object"
+          },
+          "title": "queries",
+          "type": "array"
+        },
         "required": {
           "default": "True",
           "description": "If true, this task must have a valid submission before the HIT can be submitted",
@@ -2649,6 +2641,41 @@
         "type"
       ],
       "title": "VideocallTaskSpec",
+      "type": "object"
+    },
+    "completionInfo": {
+      "properties": {
+        "completionCode": {
+          "description": "Completion code to give back to participants. Used for crowdsourcing in eg. Prolific",
+          "title": "completionCode",
+          "type": "string"
+        },
+        "redirect": {
+          "description": "Redirect URL. URL to redirect participants to after completing the HIT.",
+          "items": {
+            "properties": {
+              "name": {
+                "description": "Name of the website/platform to redirect to, eg. Prolific",
+                "title": "name",
+                "type": "string"
+              },
+              "url": {
+                "description": "URL to redirect to",
+                "title": "url",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "url"
+            ],
+            "type": "object"
+          },
+          "title": "redirect",
+          "type": "array"
+        }
+      },
+      "title": "completionInfo",
       "type": "object"
     }
   }

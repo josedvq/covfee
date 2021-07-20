@@ -127,11 +127,14 @@ class CovfeeFolder:
         db.session.commit()
 
     def link_bundles(self):
+        master_bundle_path = os.path.join(app.config['MASTER_BUNDLE_PATH'], 'main.js')
+        if not os.path.exists(master_bundle_path):
+            raise Exception('Master bundles not found.')
         bundle_path = os.path.join(app.config['PROJECT_WWW_PATH'], 'main.js')
         if os.path.exists(bundle_path):
             os.remove(bundle_path)
         os.symlink(
-            os.path.join(app.config['MASTER_BUNDLE_PATH'], 'main.js'),
+            master_bundle_path,
             bundle_path
         )
 

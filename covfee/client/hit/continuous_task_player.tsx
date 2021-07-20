@@ -12,6 +12,8 @@ import { CovfeeContinuousTask, CovfeeTask } from 'tasks/base';
 import { PlayerState } from './task_loader';
 
 export interface VideoPlayerContext {
+    paused: boolean
+    muted: boolean
     togglePlayPause: () => void
     play: () => void
     pause: () => void

@@ -29,7 +29,7 @@ import {Sidebar, TaskEditCallback, TaskCreateCallback, TaskDeleteCallback} from 
 import ButtonEventManagerContext from '../input/button_manager'
 
 import { AnnotationInterface, HitInstanceType } from '@covfee-types/hit'
-import { TaskType } from '@covfee-types/task'
+import { TaskResponse, TaskType } from '@covfee-types/task'
 import { TaskLoader } from './task_loader';
 import './hit.scss'
 
@@ -56,8 +56,8 @@ type Props = HitInstanceType & RouteComponentProps<MatchParams> & {
     deleteTask: TaskDeleteCallback
     editTask: TaskEditCallback
     createTask: TaskCreateCallback
-    submitTaskResponse: Function
-    fetchTaskResponse: Function
+    submitTaskResponse: (arg0: TaskResponse, arg1: any) => Promise<TaskResponse>
+    fetchTaskResponse: (arg0: TaskType) => Promise<TaskResponse>
     reloadHit: Function
     /**
      * Called when the Hit submit button is clicked
@@ -273,7 +273,10 @@ export class Hit extends React.Component<Props, State> {
         return prerequisitesCompleted
     }
 
-    handleTaskSubmitted = (valid: any, gotoNext=false) => {
+    handleTaskSubmitted = (source: ('task' | 'modal')) => {
+
+        const gotoNext = (this.props.interface.type == 'timeline') && (source == 'task')
+
         const prerequisitesCompleted = this.prerequisitesCompleted()
         if(!this.state.prerequisitesCompleted && prerequisitesCompleted) {
             // prerequisites were just completed
@@ -402,7 +405,7 @@ export class Hit extends React.Component<Props, State> {
         const hitExtra = this.getHitExtra()
 
         return <ButtonEventManagerContext>
-            <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark" style={{position: 'sticky', top: 0, width: '100%'}}>
+            <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark" style={{position: 'sticky', top: 0, width: '100%', zIndex: 10000}}>
                 <Menu.Item key="logo" disabled>
                     <CovfeeMenuItem/>
                 </Menu.Item>

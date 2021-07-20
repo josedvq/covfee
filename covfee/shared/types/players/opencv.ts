@@ -1,4 +1,5 @@
 import { BasicVideo } from './media'
+
 export interface OpencvFlowPlayerMedia extends BasicVideo {
     /**
      * Video resolution. This is the resolution of the original video. The final stacked video has double the horizontal resolution.
@@ -9,3 +10,11 @@ export interface OpencvFlowPlayerMedia extends BasicVideo {
      */
     fps: number
 }
+
+export interface OpencvFlowPlayerOptions {
+    /**
+     * If true, a countdown is shown before the video plays
+     */
+    countdown?: boolean
+}
+

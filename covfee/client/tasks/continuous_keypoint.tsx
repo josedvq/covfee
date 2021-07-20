@@ -6,8 +6,7 @@ import {
 const { Title, Text } = Typography
 import MouseTracker from '../input/mouse_tracker'
 import MouseVisualizer from '../input/mouse_visualizer'
-import { withCookies } from 'react-cookie'
-import { ContinuousTaskProps, CovfeeContinuousTask, TaskInfo } from './base'
+import { ContinuousTaskProps, CovfeeContinuousTask } from './base'
 import { ContinuousKeypointTaskSpec} from '@covfee-types/tasks/continuous_keypoint'
 import { TaskType } from '@covfee-types/task';
 import { OpencvFlowPlayerMedia } from '@covfee-types/players/opencv';
@@ -17,43 +16,46 @@ interface Props extends TaskType, ContinuousTaskProps {
 }
 
 interface State {
-    occluded: boolean,
-    mouse_valid: boolean,
-    opticalFlowEnabled: boolean,
+    occluded: boolean
+    mouse_valid: boolean
+    opticalFlowEnabled: boolean
+    playbackRateIdx: number
 }
-export class ContinuousKeypointTask extends CovfeeContinuousTask<Props, State> {
-    static taskInfo: TaskInfo = {
-        supportsVisualization: true
+export default class ContinuousKeypointTask extends CovfeeContinuousTask<Props, State> {
+    static taskInfo = {
+        bufferDataLen: 2
     }
 
     state: State = {
         occluded: false,
         mouse_valid: false,
         opticalFlowEnabled: true,
+        playbackRateIdx: 7
     }
     tracker = React.createRef<MouseTracker>()
     mouse_normalized = [0,0]
 
+    private playbackRates = [1/10, 1/8, 1/6, 1/5, 1/4, 1/3, 1/2, 1, 2, 3, 4]
+
+    updateMouseVisualization: (arg0: [number, number]) => void
+
     constructor(props: Props) {
         super(props)
-        this.state.opticalFlowEnabled = (this.props.cookies.get('opticalFlowEnabled') === 'true')
-    }
-
-    static getPlayerProps = (media: OpencvFlowPlayerMedia) => {
-        return {
-            type: 'OpencvFlowPlayer'
+        const opticalFlowEnabled = localStorage.getItem('opticalFlowEnabled')
+        if(opticalFlowEnabled !== null) {
+            this.state.opticalFlowEnabled = (opticalFlowEnabled == '1')
         }
     }
 
     componentDidMount() {
         this.props.buttons.addListener('speedup', 'ArrowRight', 'Increase playback speed.')
             .addEvent('keydown', (e: Event) => {
-                
+                this.speedup()
             })
 
         this.props.buttons.addListener('speeddown', 'ArrowLeft', 'Decrease playback speed.')
             .addEvent('keydown', (e: Event) => {
-                
+                this.speeddown()
             })
 
         this.props.buttons.addListener('play', ' ', 'Toggle play/pause the video.')
@@ -63,12 +65,12 @@ export class ContinuousKeypointTask extends CovfeeContinuousTask<Props, State> {
 
         this.props.buttons.addListener('back2s', 'x', 'Go back 2s.')
             .addEvent('keydown', (e: Event) => {
-                
+                this.back2s()
             })
 
         this.props.buttons.addListener('back10s', 'c', 'Go back 10s.')
             .addEvent('keydown', (e: Event) => {
-                
+                this.back10s()
             })
 
         this.props.buttons.addListener('occlusion', 'z', 'Toggle occlusion flag.')
@@ -95,6 +97,24 @@ export class ContinuousKeypointTask extends CovfeeContinuousTask<Props, State> {
         this.props.buttons.removeListener('opticalflow')
     }
 
+    speedup = () => {
+        this.setState({ playbackRateIdx: Math.min(this.state.playbackRateIdx + 1, this.playbackRates.length - 1) })
+    }
+
+    speeddown = () => {
+        this.setState({ playbackRateIdx: Math.max(this.state.playbackRateIdx - 1, 0) })
+    }
+
+    back2s = () => {
+        const t = Math.max(0, (this.props.player.currentTime() as number) - 2)
+        this.props.player.currentTime(t)
+    }
+
+    back10s = () => {
+        const t = Math.max(0, (this.props.player.currentTime() as number) - 10)
+        this.props.player.currentTime(t)
+    }
+
     toggleOcclusion = () => {
         this.setState({ occluded: !this.state.occluded })
     }
@@ -115,10 +135,11 @@ export class ContinuousKeypointTask extends CovfeeContinuousTask<Props, State> {
     }
 
 
-    handleToggleOpticalFlow = () => {
-        this.props.cookies.set('opticalFlowEnabled', !this.state.opticalFlowEnabled);
+    setOpticalFlowEnabled = (value: boolean) => {
         this.setState({
-            opticalFlowEnabled: !this.state.opticalFlowEnabled
+            opticalFlowEnabled: value
+        }, () => { 
+            localStorage.setItem('opticalFlowEnabled', value ? '1' : '0')
         })
     }
 
@@ -126,14 +147,14 @@ export class ContinuousKeypointTask extends CovfeeContinuousTask<Props, State> {
     // Takes care of replaying an annotation given a log
 
     // writes mouse position to the buffer on every frame
-    handleFrame = (frame: number, delay: number) => {
-        if(this.props.replayMode) {
-            this.replayUntilFrame(frame)
+    handleFrame = (time: number) => {
+        if(this.props.response) {
+            this.replayUntil(time)
         } else {
-            // this.props.buffer(
-            //     frame,
-            //     [...this.mouse_normalized, this.state.mouse_valid ? 1 : 0, this.state.occluded ? 1 : 0]
-            // )
+            this.props.buffer.data(
+                time,
+                [...this.mouse_normalized, this.state.mouse_valid ? 1 : 0, this.state.occluded ? 1 : 0]
+            )
         }
     }
 
@@ -142,13 +163,19 @@ export class ContinuousKeypointTask extends CovfeeContinuousTask<Props, State> {
     }
 
     // recreate annotation (replay mode) until the given frame
-    replayUntilFrame = (frame: number) => {
-        let action = this.props.getCurrReplayAction()
+    replayUntil = (time: number) => {
+        let data, logs
+        [data, logs] = this.props.buffer.read(time)
 
-        while (action != null && action[2] <= frame) {
-            this.replayAction(action)
-            action = this.props.getNextReplayAction()
-        }
+        console.log(data)
+        if(data)
+            this.updateMouseVisualization([data[1], data[2]])
+
+        // if(logs) {
+        //     logs.forEach(log => {
+        //         this.replayAction(log[2])
+        //     })
+        // }
     }
 
     replayAction = (action: Array<any>) => {
@@ -182,87 +209,36 @@ export class ContinuousKeypointTask extends CovfeeContinuousTask<Props, State> {
         }
     }
 
-    
+    wrapPlayerElement = (elem: React.ReactNode ) => {
+        return <MouseTracker
+            disable={this.props.replayMode} // disable mouse tracking in replay mode
+            paused={false}
+            occluded={this.state.occluded}
+            mouseActive={this.state.mouse_valid}
+            onData={this.handleMouseData} 
+            onMouseActiveChange={this.handleMouseActiveChange}>
 
-    // startReverseCount = () => {
-    //     this.setState({
-    //         reverseCount: {
-    //             visible: true,
-    //             count: 3
-    //         }
-    //     })
-
-    //     this.reverseCountTimerId = window.setInterval(() => {
-    //         if (this.state.reverseCount.count == 1) {
-    //             // play the video
-    //             this.cancelReverseCount()
-    //             this.handlePausePlay(false)
-    //         } else {
-    //             this.setState({
-    //                 reverseCount: {
-    //                     ...this.state.reverseCount,
-    //                     count: this.state.reverseCount.count - 1
-    //                 }
-    //             })
-    //         }
-    //     }, 800)
-    // }
-
-    // cancelReverseCount = (cb?: Function) => {
-    //     if (this.reverseCountTimerId != null) {
-    //         window.clearInterval(this.reverseCountTimerId)
-    //         this.reverseCountTimerId = null
-    //     }
-    //     this.setState({
-    //         reverseCount: {
-    //             ...this.state.reverseCount,
-    //             visible: false,
-    //         }
-    //     }, () => { if (cb) cb() })
-    // }
-
-
-    wrapPlayer = () => {
-        return <MouseVisualizer disable={!this.props.replayMode} data={this.state.replayMode.data}>
-
-        </MouseVisualizer>
+            <MouseVisualizer ref={e=>{if(e) this.updateMouseVisualization = e.setData}}>
+                {elem}
+            </MouseVisualizer>
+        </MouseTracker>
     }
 
     render() {
-        if(this.props.playerElement) {
-            return <>
-                <MouseTracker
-                    disable={this.props.replayMode} // disable mouse tracking in replay mode
-                    paused={false}
-                    occluded={this.state.occluded}
-                    mouseActive={this.state.mouse_valid}
-                    onData={this.handleMouseData} 
-                    onMouseActiveChange={this.handleMouseActiveChange} 
-                    ref={this.tracker}>
-                        {this.props.playerElement}
-                        {/* <OpencvFlowPlayer
-                            media={this.props.spec.media}
-                            paused={this.state.paused}
-                            opticalFlowEnabled={this.state.opticalFlowEnabled}
-                            pausePlay={this.handlePausePlay}
-                            rate={this.playbackRates[this.state.playbackRateIdx]}
-                            getMousePosition={this.getMousePosition}
-                            ref={this.player}
-                            onEnded={this.handleVideoEnded}
-                            onLoad={this.handleVideoLoad}
-                            onError={this.handleVideoError}
-                            onFrame={this.handleFrame}>
-                            </OpencvFlowPlayer> */}
-                </MouseTracker>
-            </>
-        } else return null
+        return <>
+                {this.props.renderPlayer({
+                    type: 'OpencvFlowPlayer',
+                    media: this.props.spec.media,
+                    opticalFlowEnabled: this.state.opticalFlowEnabled,
+                    setOpticalFlowEnabled: this.setOpticalFlowEnabled,
+                    playbackRateMultiplier: this.playbackRates[this.state.playbackRateIdx],
+                    getMousePosition: this.getMousePosition,
+                    wrapPlayerElement: this.wrapPlayerElement
+                })}
+        </>
     }
 
     instructions = () => {
-        return <>
-            
-        </>
+        return this.props.buttons.renderInfo()
     }
 }
-
-export default withCookies(ContinuousKeypointTask)

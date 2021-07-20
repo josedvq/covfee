@@ -50,8 +50,6 @@ module.exports = env => {
             ]
         },
         externals: {
-            // "react": "React",
-            // "react-dom": "ReactDOM",
             "cv": "cv",
             "video.js": "videojs",
             "Constants": "Constants"

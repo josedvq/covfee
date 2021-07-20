@@ -65,7 +65,6 @@ export class PlayerBar extends React.Component<BarProps, State> {
                     onChange={this.props.setSpeed}/>
             </div>}
             {this.props.children}
-            {/* {this.state.reverseCount.visible ? <div className="annot-bar-section" style={{ 'color': 'red' }}>{this.state.reverseCount.count}</div> : <></>} */}
         </div>
     }
 }

@@ -1,14 +1,15 @@
 import CovfeeTasks from './tasks'
-import CovfeePlayers, { PlayerProps } from './players'
+import CovfeePlayers from './players'
 
 
 export const getTask = (type: string) => {
     if (type in CovfeeTasks) {
         const taskImport = CovfeeTasks[type]
-        if(typeof taskImport === 'object' && taskImport !== null)
+        if(typeof taskImport === 'object' && 'taskConstructor' in taskImport && 'taskReducer' in taskImport) {
             return taskImport
-        else
+        } else {
             return {taskConstructor: taskImport, taskReducer: null}
+        }
     } else {
         return null
     }

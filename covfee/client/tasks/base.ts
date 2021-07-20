@@ -1,20 +1,12 @@
 import React from 'react';
 import { AnnotationBuffer } from '../buffers/buffer'
-import { Cookies } from 'react-cookie';
 import { VideoPlayerContext } from 'hit/continuous_task_player';
 
-export interface TaskInfo {
-    /**
-     * If true the task will be assumed to implement visualization.
-     * If true the option to visualize task results will be shown by default after a continuous task.
-     */
-    supportsVisualization?: boolean
-}
-
-
-export abstract class CovfeeTask<T extends BaseTaskProps, S> extends React.Component<T, S> {
+export abstract class CovfeeTask<T extends BasicTaskProps, S> extends React.Component<T, S> {
     static taskType = 'component'
-    static taskInfo: TaskInfo
+    static taskInfo: {
+        bufferDataLen: number
+    }
     /**
      * Used to provide a function that renders the task instructions.
      */
@@ -31,64 +23,77 @@ export abstract class CovfeeContinuousTask<T extends ContinuousTaskProps, S> ext
 }
 
 
-/**
- * Props used by a normal non-continuous task
- */
-export interface BaseTaskProps {
+export interface CommonTaskProps {
     /**
-     * Returns a submit button to be rendered in the task. Alternative to directly calling onSubmit.
+     * The task specification
      */
-    renderSubmitButton: (arg0?: any) => React.ReactNode
-    /**
-     * To be called when the task has been submitted by the user (eg. via a submit button)
-     * arg0 is the task response
-     * arg1 is a task buffer
-     * arg2 indicates whether covfee should move to the next task
-     */
-    onSubmit: (arg0: any, arg1: any, arg2: boolean) => Promise<void>,
+    spec: any
+
     /**
      * Task response to be displayed, possibly for editing
      * A null value indicates the task should initialize an empty state
      * The response will normally be loaded into the task state for visualization / edition
      */
     response: any
+
+    /**
+     * This buffer should be used to record data or log events during continuous tasks.
+     * It takes care of communication with the server.
+     */
+    buffer: AnnotationBuffer
+
+    /**
+     * Interface to the buttons manager
+     */
+    buttons: any
+
+}
+
+/**
+ * Props used by a normal non-continuous task
+ */
+export interface BasicTaskProps extends CommonTaskProps {
+
     /**
      * Whether the task should be disabled (cannot be edited)
      * Only relevant when response != null
      */
     disabled: boolean
+    
     /**
-     * Cookies object for tasks to store user settings
+     * To be called when the task has been submitted by the user (eg. via a submit button)
+     * arg0 is the task response
      */
-    cookies: Cookies
+    onSubmit: (response: any) => void
+
+    /**
+     * Returns a submit button to be rendered in the task. Alternative to directly calling onSubmit.
+     */
+    renderSubmitButton: (arg0?: any) => React.ReactNode
+
 }
 
-export interface ContinuousTaskProps extends BaseTaskProps {
-    /**
-     * Called when a continuous task ends
-     */
-    onEnd: (arg0: any) => void,
-    /**
-     * This buffer should be used to record data or log events during continuous tasks.
-     * It takes care of communication with the server.
-     */
-    buffer: AnnotationBuffer,
-    /**
-     * If true, the task should visualize the action log in addition to the data.
-     */
-    visualizeActionsOn?: boolean
-    /**
-     * Element that renders the video player in the task.
-     * Should be rendered when provided
-     */
-    renderPlayer?: (arg0: any) => React.ReactNode
+export interface ContinuousTaskProps extends CommonTaskProps {
+
     /**
      * Object representing the video player
      * Includes utilities for listening to events and controlling the player
      */
     player: VideoPlayerContext
+    
     /**
-     * Interface to the buttons manager
+     * If true, the task should visualize the action log in addition to the data.
      */
-    buttons: any
+    visualizeActionsOn?: boolean
+    
+    /**
+     * Element that renders the video player in the task.
+     * Should be rendered when provided
+     */
+    renderPlayer?: (arg0?: any) => React.ReactNode
+    
+    /**
+     * Called when a continuous task ends
+     */
+    onEnd: (arg0: any) => void
 }

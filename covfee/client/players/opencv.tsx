@@ -3,26 +3,46 @@ declare global {
     var cv: any
 }
 import * as React from 'react'
-import { OpencvFlowPlayerMedia } from '@covfee-types/players/opencv'
-import { urlReplacer, myinfo } from '../utils'
+import { OpencvFlowPlayerMedia, OpencvFlowPlayerOptions } from '@covfee-types/players/opencv'
+import { urlReplacer } from '../utils'
 import { CovfeeContinuousPlayer, ContinuousPlayerProps } from './base'
-import { CaretRightOutlined, CloseOutlined } from '@ant-design/icons'
-import { Button } from 'antd'
+import { CaretRightOutlined, CloseOutlined, RiseOutlined } from '@ant-design/icons'
+import { Button, Checkbox } from 'antd'
+
+import {CountdownTimer} from './utils/countdown'
+import { PlayerBar } from './videoplayer_bar'
 
 // video player using opencv to control playback speed
-export interface Props extends ContinuousPlayerProps {
+interface Props extends ContinuousPlayerProps, OpencvFlowPlayerOptions {
     media: OpencvFlowPlayerMedia
-    /**
-     * If true, automatic optical-flow-based speed adjustment is enabled
-     */
-    opticalFlowEnabled?: boolean,
     /**
      * Returns the mouse position, used to adjust the video playback speed.
      */
-    getMousePosition: Function,
+    getMousePosition: Function
+    /**
+     * Multiplier to the playback speed of the video
+     */
+    playbackRateMultiplier: number
+    wrapPlayerElement: (arg0: React.ReactNode) => React.ReactNode
+    /**
+     * If true, automatic optical-flow-based speed adjustment is enabled
+     */
+    opticalFlowEnabled: boolean
+    setOpticalFlowEnabled: (arg0: boolean) => void
 }
 
-export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, {}> {
+interface State {
+    /**
+     * True while the countdown is active
+     */
+    countdownActive: boolean
+    /**
+     * The duration of the video
+     */
+    duration: number
+}
+
+export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
     videoTag: HTMLVideoElement
     canvasTag: HTMLCanvasElement
     canvasCtx: CanvasRenderingContext2D
@@ -37,11 +57,20 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, {}> {
     ratio: number = 0.5
 
     state = {
-        ready: false
+        countdownActive: false,
+        duration: 0
     }
 
     static defaultProps = {
-        opticalFlowEnabled: true
+        countdown: true,
+        opticalFlowEnabled: true,
+        playbackRateMultiplier: 1
+    }
+
+    countdownTimeoutId: any = null
+
+    constructor(props: Props) {
+        super(props)
     }
 
     componentDidMount() {
@@ -81,8 +110,8 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, {}> {
             })
 
         this.videoTag.addEventListener('loadeddata', (e: Event) => {
-            this.setState({ready: true})
             this.copyVideoToCanvas()
+            this.setState({duration: this.videoTag.duration})
             this.props.onLoad(this.videoTag.duration, this.props.media.fps)
         })
 
@@ -96,7 +125,12 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, {}> {
         // Typical usage (don't forget to compare props):
         if (this.props.paused !== prevProps.paused) {
             if(this.props.paused) this.pause()
-            else this.play()
+            else {
+                if(this.props.countdown)
+                    this.startPlayCountdown()
+                else
+                    this.play()
+            }
         }
     }
 
@@ -126,10 +160,11 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, {}> {
         const roi = this.frame_flow.roi(rect)
         cv.meanStdDev(roi, this.myMean, this.myStddev)
         const delay = this.myMean.doubleAt(0, 0)
-        const rate = Math.min(1.0, Math.max(0.1, 1.0 / delay))
-
+        let rate = Math.min(1.0, Math.max(0.1, 1.0 / delay))
+        
+        rate = rate *  this.props.playbackRateMultiplier
         if (!this.props.opticalFlowEnabled || mouse_normalized === undefined)
-            this.videoTag.playbackRate = 1
+            this.videoTag.playbackRate = 1 * this.props.playbackRateMultiplier
         else {
             this.videoTag.playbackRate = rate
         }
@@ -144,8 +179,15 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, {}> {
         this.req_id = (this.videoTag as any).requestVideoFrameCallback(this.frameCallback)
     }
 
+    startPlayCountdown = () => {
+        this.setState({countdownActive: true})
+        this.countdownTimeoutId = setTimeout(()=>{
+            this.setState({countdownActive: false}, ()=>{this.play()})
+        }, 1500)
+    }
+
     pause() {
-        cancelAnimationFrame(this.req_id)
+        this.videoTag.pause()
         this.req_id = false
     }
 
@@ -154,6 +196,7 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, {}> {
     }
 
     currentTime = (time?: number, callback?: ()=>{}) => {
+        if(!this.videoTag) return null
         if(time !== undefined) {
             this.videoTag.currentTime = time
             this.props.setPaused(true) // pause the video
@@ -162,23 +205,52 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, {}> {
         else return this.videoTag.currentTime
     }
 
+    handleToggleOpticalFlow = () => {
+        this.props.setOpticalFlowEnabled(!this.props.opticalFlowEnabled)
+    }
+
     renderBar = () => {
-        return <div className="annot-bar-right">
-            <CaretRightOutlined /> 
-            <Button size={'small'} type={'danger'}>{pr_str}</Button> <CloseOutlined /> 
-            <Button size={'small'} type={this.state.opticalFlowEnabled ? 'danger' : 'dashed'}>
-            {this.state.playbackBaseSpeed.toPrecision(2)} <Checkbox checked={this.state.opticalFlowEnabled} onChange={this.handleToggleOpticalFlow}></Checkbox>
-            </Button>
-        </div>
+        let pr_str = ''
+        if(Number.isInteger(this.props.playbackRateMultiplier)) {
+            pr_str = this.props.playbackRateMultiplier.toString()
+        } else {
+            pr_str = this.props.playbackRateMultiplier.toPrecision(2)
+        }
+
+        return <PlayerBar
+            duration={this.state.duration}
+            currentTime={this.currentTime}
+            paused={this.props.paused}
+            setPaused={this.props.setPaused}
+            speed={this.props.speed}
+            setSpeed={this.props.setSpeed}
+            muted={this.props.muted}
+            setMuted={this.props.setMuted}>
+            <div className="annot-bar-right">
+                <CaretRightOutlined /> 
+                <Button size='small' type='primary' danger>{pr_str}</Button> <CloseOutlined /> 
+                <Button size='small' danger={this.props.opticalFlowEnabled} type={this.props.opticalFlowEnabled ? 'primary' : 'default'}>
+                    <RiseOutlined /> <Checkbox checked={this.props.opticalFlowEnabled} onChange={this.handleToggleOpticalFlow}></Checkbox>
+                </Button>
+            </div>
+        </PlayerBar>
     }
 
     render() {
         return <>
-            <canvas 
-                ref={e=>{this.canvasTag = e}}
-                style={{width: '100%'}}
-                width={800}
-                height={450}/>
+
+            {this.renderBar()}
+            {this.props.wrapPlayerElement(
+                <div style={{position: 'relative'}}>
+                    <canvas 
+                        ref={e=>{this.canvasTag = e}}
+                        style={{width: '100%'}}
+                        width={800}
+                        height={450}/>
+                    {this.state.countdownActive && <CountdownTimer/>}
+                </div>
+            )}
+            
             <video 
                 ref={e=>{this.videoTag = e}}
                 width={this.props.media.res[0]*2}

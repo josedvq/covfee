@@ -179,10 +179,10 @@ class HitLoader extends React.Component<Props, State> {
                     this.setState({tasks: tasks})
                 } else {
                     const tasks = [...this.state.tasks]
-                    const children = [...this.state.tasks[parentIndex].children]
+                    const children = [...tasks[parentIndex].children]
                     children.splice(childIndex)
                     tasks[parentIndex] = {
-                        ...this.state.tasks[parentIndex],
+                        ...tasks[parentIndex],
                         children: children
                     }
                     this.setState({tasks: tasks})
@@ -204,16 +204,16 @@ class HitLoader extends React.Component<Props, State> {
             .then(throwBadResponse)
             .then(data => {
                 const {parentIndex, childIndex} = this.idTaskMap[taskId]
-                if(childIndex !== null) {
+                if(childIndex === null) {
                     const tasks = [...this.state.tasks]
                     tasks[parentIndex] = data
                     this.setState({tasks: tasks})
                 } else {
                     const tasks = [...this.state.tasks]
-                    const children = [...this.state.tasks[parentIndex].children]
+                    const children = [...tasks[parentIndex].children]
                     children[childIndex] = data
                     tasks[parentIndex] = {
-                        ...this.state.tasks[parentIndex],
+                        ...tasks[parentIndex],
                         children: children
                     }
                     this.setState({tasks: tasks})
@@ -252,19 +252,33 @@ class HitLoader extends React.Component<Props, State> {
 
         // now send the task results
         const p = fetcher(url, requestOptions)
-            .then(throwBadResponse)
-            
-        p.then(res => {
+        .then(throwBadResponse)   
+        .then(res => {
             const {parentIndex, childIndex} = this.idTaskMap[response.task_id]
             const tasks = [...this.state.tasks]
-            tasks[response.task_id] = {
-                ...this.state.tasks[response.task_id],
-                valid: res.valid,
-                num_submissions: tasks[response.task_id].num_submissions + 1
+            if(childIndex === null) {
+                tasks[parentIndex] = {
+                    ...tasks[parentIndex],
+                    valid: res.valid,
+                    num_submissions: tasks[parentIndex].num_submissions + 1
+                }
+            } else {
+                const children = [...this.state.tasks[parentIndex].children]
+                children[childIndex] = {
+                    ...children[childIndex],
+                    valid: res.valid,
+                    num_submissions: tasks[parentIndex].num_submissions + 1
+                }
+                tasks[parentIndex] = {
+                    ...tasks[parentIndex],
+                    children: children
+                }
             }
             
-            this.setState({ tasks: tasks})
+            return new Promise(resolve => this.setState({ tasks: tasks}, () => {resolve(res)}))
+            
         })
+        
 
         return p
     }

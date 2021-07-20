@@ -48,33 +48,7 @@ cursor: pointer;
 .task-container {
 width: 100%;
 }
-.task-overlay {
-  position: fixed;
-  padding: 1em 0;
-  width: 50%;
-  margin: 0 25%;
-  top: 35%;
-  transform: translate(0, -100%);
-  background-color: rgba(0, 0, 0, .7);
-  border-width: 3px;
-  border-style: solid;
-  border-color: #363636;
-  z-index: 2;
 
-  &-off {
-    display: none;
-  }
-
-  .main-option {
-    display: inline-block;
-    margin: 0 5px;
-  }
-
-  nav {
-    width: 100%;
-    text-align: center;
-  }
-}
 .video-overlay-nav>button {
 margin: 0 5px;
 }

@@ -1,18 +1,22 @@
 import * as React from 'react'
 import './html5.css'
 
-import { HTML5PlayerSpec } from '@covfee-types/players/html5'
+import { HTML5PlayerMedia, HTML5PlayerOptions } from '@covfee-types/players/html5'
 import { CovfeeContinuousPlayer, ContinuousPlayerProps } from './base'
 import {PlayerBar} from './videoplayer_bar'
 import {CountdownTimer} from './utils/countdown'
 
 import { urlReplacer} from '../utils'
 
-export interface Props extends ContinuousPlayerProps, HTML5PlayerSpec {
+export interface Props extends ContinuousPlayerProps, HTML5PlayerOptions {
     /**
      * The numerical ID of the currently-active media element (for multiple video support)
      */
     activeMedia: number
+    /**
+     * Media specification for the player
+     */
+    media: HTML5PlayerMedia
 }
 
 interface State {

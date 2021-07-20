@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Button } from 'antd'
 import {useSelector, useDispatch} from 'react-redux'
-import { BaseTaskProps, CovfeeTask } from './base'
+import { BasicTaskProps, CovfeeTask } from './base'
 
 import { VideocallTaskSpec } from '@covfee-types/tasks/videocall'
 import { TaskType } from '@covfee-types/task'
@@ -9,7 +9,7 @@ import { TaskType } from '@covfee-types/task'
 import reducer, {incrementValue} from './videocallSlice'
 
 
-interface Props extends TaskType, BaseTaskProps {
+interface Props extends TaskType, BasicTaskProps {
     spec: VideocallTaskSpec
 }
 

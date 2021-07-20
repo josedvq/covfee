@@ -154,7 +154,7 @@ def make(force, unsafe, rms, no_browser, no_launch, file_or_folder):
                 project_folder.validate(with_spinner=True)
             except ValidationError as err:
                 err.print_friendly()
-                return spinner.fail('Error validating covfee files. Covfee maker aborted.')
+                return spinner.fail('Error validating covfee files. Aborted.')
             spinner.succeed('all covfee project files are valid.')
 
         # init project folder if necessary
@@ -167,7 +167,11 @@ def make(force, unsafe, rms, no_browser, no_launch, file_or_folder):
             
         # open covfee
         with Halo(text='Linking covfee bundles', spinner='dots') as spinner:
-            project_folder.link_bundles()
+            try:
+                project_folder.link_bundles()
+            except Exception as e:
+                spinner.fail('Error linking bundles. Aborted.')
+                return print(e)
             spinner.succeed('covfee bundles linked.')
 
         if no_launch: 

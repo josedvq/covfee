@@ -1,7 +1,9 @@
+@use "sass:math";
+
   $bgColor: #32386D;
   
   $numOfColBlocks: 3; // must be higher than 2
-  $deg: 360deg / $numOfColBlocks;
+  $deg: math.div(360deg, $numOfColBlocks);
   
   $red: #FD3359;
   $yellow: #F4D302;
@@ -36,7 +38,7 @@
     top: 50%;
     width: $sizeBig;
     height: $size;
-    margin-top: $size / -2;
+    margin-top: math.div($size, -2);
     padding: $pad;
     border-radius: 20px;
     transform: translateX(-50%);
@@ -48,7 +50,7 @@
       top: 0;
       width: $sizeBig;
       height: 100%;
-      margin-left: $sizeBig/-2;
+      margin-left: math.div($sizeBig,-2);
       padding: $pad;
       border-radius: 50%;
       perspective: 1000px;
@@ -104,8 +106,8 @@
       top: 50%;
       width: $numSize;
       height: $numSize;
-      margin-left: $numSize/-2;
-      margin-top: $numSize/-2;
+      margin-left: math.div($numSize, -2);
+      margin-top: math.div($numSize, -2);
   
       &-path {
         fill: none;
@@ -137,7 +139,7 @@
       stroke-dashoffset: -$num3Len - $numJoin2-3 -$numJoin3-0;
     }
     76% {
-      stroke-dasharray: $num1Len + $numJoin1-2/2, $totalLen;
+      stroke-dasharray: $num1Len + math.div($numJoin1-2, 2), $totalLen;
       stroke-dashoffset: -$num3Len - $numJoin2-3 - $num2Len - $numJoin1-2 -$numJoin3-0;
     }
     76%, 100% {

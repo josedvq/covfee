@@ -42,9 +42,6 @@ class Schemata:
             if 'anyOf' in node:
                 node['anyOf'] = [resolve(n) for n in node['anyOf']]
                 return node
-                # return [resolve(n) for n in node['anyOf']]
-
-            # print(node)
 
             if node['type'] == 'object' and 'properties' in node and node['properties']:
                 node['properties'] = {k: resolve(n) for k, n in node['properties'].items()}

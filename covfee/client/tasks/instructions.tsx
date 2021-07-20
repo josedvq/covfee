@@ -5,11 +5,11 @@ import {
 } from 'antd'
 import { InstructionsTaskSpec } from '@covfee-types/tasks/instructions'
 import { MarkdownLoader } from './utils/markdown_loader'
-import { BaseTaskProps, CovfeeTask } from './base'
+import { BasicTaskProps, CovfeeTask } from './base'
 import { TaskType } from '@covfee-types/task'
 import { Form } from '../input/form'
 
-interface Props extends TaskType, BaseTaskProps {
+interface Props extends TaskType, BasicTaskProps {
     spec: InstructionsTaskSpec
 }
 
