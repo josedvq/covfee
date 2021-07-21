@@ -36,7 +36,6 @@ class Schemata:
                 raise Exception('found oneOf in node')
 
             if '$ref' in node:
-                print(node['$ref'])
                 return resolve(self.get_ref(node['$ref']))
 
             if 'anyOf' in node:

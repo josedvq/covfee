@@ -30,6 +30,9 @@ export class HITVisualizer extends React.Component<HITVisualizerProps, HITVisual
         let hitProps = JSON.parse(JSON.stringify(this.props.hit))
         hitProps.tasks = hitProps.tasks.map((task, idx) => {
             task.id = idx
+            if(!task.children) {
+                task.children = []
+            }
             return task
         })
         return <BrowserOnly fallback={<div>The fallback content to display on prerendering</div>}>
@@ -45,6 +48,8 @@ export class HITVisualizer extends React.Component<HITVisualizerProps, HITVisual
                             routingEnabled={false}
                             url={null}
                             previewMode={true}
+
+                            fetchTaskResponse={()=>Promise.resolve(null)}
                             onSubmit={() => { }} />
                     </div>
                 </HashRouter>

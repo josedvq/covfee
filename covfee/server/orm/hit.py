@@ -116,11 +116,8 @@ class HIT(db.Model):
                     task_specs.append(self.taskspecs[elem])
                 elif type(elem) == dict:
                     if elem['type'] == 'shuffle':
-                        # shuffled = random.sample(elem['tasks'], len(elem['tasks']))
                         idxs = random.sample(range(len(elem['tasks'])), len(elem['tasks']))
-                        print(idxs)
                         shuffled = [elem['tasks'][i] for i in idxs]
-                        # random.shuffle(elem['tasks'])
                         for child_gen_list in shuffled:
                             recursive_generate(child_gen_list)
                     else:
@@ -131,7 +128,6 @@ class HIT(db.Model):
         # start recursion on the root generator
         recursive_generate(self.config['generator'])    
 
-        # print(ts_id)
         instance = HITInstance(
             id=sha256(self.get_hashstr(f'instance{len(self.instances)}').encode()).digest(),
             submitted=False,
