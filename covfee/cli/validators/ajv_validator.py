@@ -52,7 +52,7 @@ class AjvValidator:
             err = result['errors'][0]
             raise ValidationError(
                 message=self.get_friendly_error_message(err),
-                path=AjvValidator.parse_ajv_path(err['dataPath']),
+                path=AjvValidator.parse_ajv_path(err['instancePath']),
                 instance=err['data']
             )
 

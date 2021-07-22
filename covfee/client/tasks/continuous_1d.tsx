@@ -146,7 +146,8 @@ export default class Continuous1DTask extends CovfeeContinuousTask<Props, State>
                 <Col span={20}>
                     {this.props.renderPlayer({
                         type: 'HTML5Player',
-                        media: this.props.spec.media
+                        media: this.props.spec.media,
+                        countdown: this.props.spec.showCountdown
                      })}
                 </Col>
                 <Col span={4}>
