@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "main": "index.ts",
     "dependencies": {
-        "ajv": "github.com/josedvq/ajv",
+        "ajv": "git+https://github.com/josedvq/ajv",
         "zeromq": "^6.0.0-beta.6",
         "yargs": "^16.2.0"
     }
