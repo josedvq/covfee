@@ -167,7 +167,6 @@ export default class ContinuousKeypointTask extends CovfeeContinuousTask<Props, 
         let data, logs
         [data, logs] = this.props.buffer.read(time)
 
-        console.log(data)
         if(data)
             this.updateMouseVisualization([data[1], data[2]])
 

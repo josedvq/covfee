@@ -13,35 +13,29 @@
             "repeat": 2,
             "tasks": [
                 {
-                    "type": "Continuous1DTask",
-                    "required": true,
-                    "name": "Sample",
+                    "type": "ContinuousKeypointTask",
+                    "name": "Head",
                     "media": {
                         "type": "video",
-                        "url": "$$www$$/sample.mp4",
+                        "url": "$$www$$/sign.mp4",
                         "fps": 25
                     },
-                    "intensityInput": {
-                        "mode": "continuous-mousemove"
-                    }
+                    "children": [
+                        {
+                            "type": "Continuous1DTask",
+                            "required": true,
+                            "name": "Speaking",
+                            "intensityInput": {
+                                "mode": "continuous-mousemove"
+                            }
+                        }
+                    ]
                 }
             ],
             "interface": {
                 "type": "annotation",
                 "showSubmitButton": true,
                 "userTasks": {
-                    "continuous": {
-                        "name": "Sample",
-                        "type": "Continuous1DTask",
-                        "media": {
-                            "type": "video",
-                            "url": "$$www$$/sample.mp4",
-                            "fps": 25
-                        },
-                        "intensityInput": {
-                            "mode": "continuous-mousemove"
-                        }
-                    }
                 }
             }
         }

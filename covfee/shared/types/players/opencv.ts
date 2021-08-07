@@ -2,9 +2,11 @@ import { BasicVideo } from './media'
 
 export interface OpencvFlowPlayerMedia extends BasicVideo {
     /**
-     * Video resolution. This is the resolution of the original video. The final stacked video has double the horizontal resolution.
+     * If true, the video file is assumed to include an optical flow video stacked horizontally, such that:
+     * - the left half of the video contains the video to be displayed
+     * - the right half of the video contains the optical flow video (hidden)
      */
-    res: number[]
+    hasFlow?: boolean
     /**
      * Video fps. Required to obtain frame number from time (since frame number is not directly accesible in browsers).
      */

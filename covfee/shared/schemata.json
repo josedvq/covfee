@@ -1993,18 +1993,15 @@
           "title": "fps",
           "type": "number"
         },
+        "hasFlow": {
+          "description": "If true, the video file is assumed to include an optical flow video stacked horizontally, such that:\n- the left half of the video contains the video to be displayed\n- the right half of the video contains the optical flow video (hidden)",
+          "title": "hasFlow",
+          "type": "boolean"
+        },
         "muted": {
           "description": "Video should be played without audio",
           "title": "muted",
           "type": "boolean"
-        },
-        "res": {
-          "description": "Video resolution. This is the resolution of the original video. The final stacked video has double the horizontal resolution.",
-          "items": {
-            "type": "number"
-          },
-          "title": "res",
-          "type": "array"
         },
         "speed": {
           "description": "Speed of the video in multiples of real time (1x)\n0 will allow the user to change speed (starting at 1x)",
@@ -2027,7 +2024,6 @@
       },
       "required": [
         "fps",
-        "res",
         "type",
         "url"
       ],

@@ -26,6 +26,7 @@ interface Props extends ContinuousPlayerProps, OpencvFlowPlayerOptions {
     wrapPlayerElement: (arg0: React.ReactNode) => React.ReactNode
     /**
      * If true, automatic optical-flow-based speed adjustment is enabled
+     * Only effective if a flow video is given and res is specified.
      */
     opticalFlowEnabled: boolean
     setOpticalFlowEnabled: (arg0: boolean) => void
@@ -40,6 +41,10 @@ interface State {
      * The duration of the video
      */
     duration: number
+    /**
+     * If true OF-based speed adjustment is on
+     */
+    opticalFlowEnabled: boolean
 }
 
 export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
@@ -54,11 +59,13 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
 
     req_id: any = false
     rect: DOMRectReadOnly
+    res: [number, number]
     ratio: number = 0.5
 
     state = {
         countdownActive: false,
-        duration: 0
+        duration: 0,
+        opticalFlowEnabled: false
     }
 
     static defaultProps = {
@@ -71,12 +78,13 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
 
     constructor(props: Props) {
         super(props)
+
+        this.state.opticalFlowEnabled = !!props.media.hasFlow && props.opticalFlowEnabled
     }
 
-    componentDidMount() {
-
+    opencv_init = () => {
         const cv_init = () => {
-            this.frame_flow = new cv.Mat(this.props.media.res[1], this.props.media.res[0]*2, cv.CV_8UC4)
+            this.frame_flow = new cv.Mat(this.res[1], this.res[0]*2, cv.CV_8UC4)
             this.myMean = new cv.Mat(1, 4, cv.CV_64F)
             this.myStddev = new cv.Mat(1, 4, cv.CV_64F)
             this.cap = new cv.VideoCapture(this.videoTag)
@@ -89,15 +97,26 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
         } else {
             cv_init()
         }
-        
+    }
+
+    componentDidMount() {
+        const self = this
+        this.videoTag.addEventListener('loadedmetadata', function(e) {
+            self.res = [this.videoWidth, this.videoHeight]
+
+            // init opencv
+            if(self.state.opticalFlowEnabled)
+                self.opencv_init()
+        }, false)
+
         this.canvasCtx = this.canvasTag.getContext('2d')
 
         // update the ratio of flow_res / video_res
-        let observer = new ResizeObserver((entries: ResizeObserverEntry[]) => {
-            this.rect = entries[0].contentRect
-            this.ratio = this.props.media.res[0] / this.rect.width
-        })
-        observer.observe(this.canvasTag)
+        // let observer = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+        //     this.rect = entries[0].contentRect
+        //     this.ratio = this.props.media.res[0] / this.rect.width
+        // })
+        // observer.observe(this.canvasTag)
 
         // preload video and flow video
         fetch(urlReplacer(this.props.media.url))
@@ -132,41 +151,57 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
                     this.play()
             }
         }
+
+        // enable OF if res props is present.
+        if (this.props.opticalFlowEnabled !== prevProps.opticalFlowEnabled) {
+            this.setState({
+                opticalFlowEnabled: !!this.props.media.hasFlow && this.props.opticalFlowEnabled
+            }, () => {
+                if(this.state.opticalFlowEnabled)
+                this.opencv_init()
+            })
+        }
     }
 
     copyVideoToCanvas = () => {
         // copy the video content to the main canvas
         const width = this.canvasTag.width
         const height = this.canvasTag.height
-        this.canvasCtx.drawImage(this.videoTag, 0, 0, this.props.media.res[0], this.props.media.res[1], 0, 0, width, height)
+        this.canvasCtx.drawImage(this.videoTag, 0, 0, this.res[0], this.res[1], 0, 0, width, height)
     }
 
     frameCallback = () => {
-        const mouse_normalized = this.props.getMousePosition()
+        if(this.state.opticalFlowEnabled) {
+            const mouse_normalized = this.props.getMousePosition()
 
-        const mouse = [
-            mouse_normalized[0] * this.rect.width,
-            mouse_normalized[0] * this.rect.height
-        ]
+            const mouse = [
+                mouse_normalized[0] * this.res[0],
+                mouse_normalized[0] * this.res[1]
+            ]
 
-        // start processing.
-        this.cap.read(this.frame_flow)
-        const x1 = Math.max(0, mouse[0] * this.ratio - 10)
-        const x2 = Math.min(mouse[0] * this.ratio + 10, this.props.media.res[0])
-        const y1 = Math.max(0, mouse[1] * this.ratio - 10)
-        const y2 = Math.min(mouse[1] * this.ratio + 10, this.props.media.res[1])
+            // start processing.
+            this.cap.read(this.frame_flow)
+            const x1 = Math.max(0, mouse[0] - 10)
+            const x2 = Math.min(mouse[0] + 10, this.res[0])
+            const y1 = Math.max(0, mouse[1] - 10)
+            const y2 = Math.min(mouse[1] + 10, this.res[1])
 
-        const rect = new cv.Rect(this.props.media.res[0] +x1, y1, x2-x1, y2-y1)
-        const roi = this.frame_flow.roi(rect)
-        cv.meanStdDev(roi, this.myMean, this.myStddev)
-        const delay = this.myMean.doubleAt(0, 0)
-        let rate = Math.min(1.0, Math.max(0.1, 1.0 / delay))
-        
-        rate = rate *  this.props.playbackRateMultiplier
-        if (!this.props.opticalFlowEnabled || mouse_normalized === undefined)
-            this.videoTag.playbackRate = 1 * this.props.playbackRateMultiplier
-        else {
+            const rect = new cv.Rect(this.res[0] +x1, y1, x2-x1, y2-y1)
+            const roi = this.frame_flow.roi(rect)
+            cv.meanStdDev(roi, this.myMean, this.myStddev)
+            const delay = this.myMean.doubleAt(0, 0)
+            let rate = Math.min(1.0, Math.max(0.1, 1.0 / delay))
+            
+            rate = rate *  this.props.playbackRateMultiplier
             this.videoTag.playbackRate = rate
+
+            // if (!this.props.opticalFlowEnabled || mouse_normalized === undefined)
+                
+            // else {
+                
+            // }
+        } else {
+            this.videoTag.playbackRate = 1 * this.props.playbackRateMultiplier
         }
 
         this.props.onFrame(this.videoTag.currentTime)
@@ -253,8 +288,8 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
             
             <video 
                 ref={e=>{this.videoTag = e}}
-                width={this.props.media.res[0]*2}
-                height={this.props.media.res[1]}
+                // width={this.props.media.res[0]*2}
+                // height={this.props.media.res[1]}
                 crossOrigin="Anonymous"
                 style={{ display: 'none' }}
                 preload="auto"
