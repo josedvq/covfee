@@ -8,14 +8,17 @@ import {
 import {
     Link,
 } from "react-router-dom"
+import {CopyToClipboard} from 'react-copy-to-clipboard'
 import { ColumnsType } from 'antd/es/table'
 const { Title, Paragraph} = Typography
 const { Option } = Select
 import {HITSpec} from '../hit/hit_loader'
 import Constants from 'Constants'
 import { myerror, fetcher, throwBadResponse, myinfo } from '../utils'
-import { CopyOutlined, IdcardFilled, LoadingOutlined, RightOutlined } from '@ant-design/icons'
+import { CopyOutlined, EditOutlined, IdcardFilled, LoadingOutlined, RightOutlined } from '@ant-design/icons'
 import download from 'downloadjs'
+import Modal from 'antd/lib/modal/Modal'
+import { HitEditorForm } from './hit_editor'
 
 class InstanceListAsync extends React.Component {
     state = {
@@ -135,11 +138,15 @@ interface ProjectSpec {
     hits: Array<HITSpec>
 }
 
-interface HITListProps { hits: Array<HITSpec>}
+interface HITListProps { 
+    hits: Array<HITSpec>
+    onEditHit: (arg0: number) => {}
+}
 class HITList extends React.Component<HITListProps> {
     render() {
         const data = this.props.hits.map((hit, index)=>{
             return {
+                index: index,
                 key: hit.id,
                 id: hit.id,
                 name: hit.name,
@@ -171,8 +178,15 @@ class HITList extends React.Component<HITListProps> {
             {
                 title: 'Links',
                 dataIndex: 'generatorUrl',
-                render: url => <CopyOutlined onClick={()=>{navigator.clipboard.writeText(url)}}/>
+                render: url => <><CopyToClipboard text={url}><CopyOutlined/></CopyToClipboard></>
+            },
+            {
+                title: 'Edit',
+                dataIndex: 'index',
+                render: index => <EditOutlined onClick={()=>{this.props.onEditHit(index)}}/>
             }
+
+            
         ]
 
         return <Table dataSource={data} columns={columns} size="small" pagination={false} expandable={{
@@ -183,9 +197,13 @@ class HITList extends React.Component<HITListProps> {
 }
 
 interface State {
-    status: string,
-    currProject: number,
+    status: string
+    currProject: number
     loadingProject: boolean
+    hitEditor: {
+        hitIndex: number
+        visible: boolean
+    }
 }
 
 interface Props {}
@@ -195,7 +213,11 @@ class AdminProject extends React.Component<Props, State> {
     state: State = {
         status: 'loading',
         currProject: null,
-        loadingProject: true
+        loadingProject: true,
+        hitEditor: {
+            hitIndex: null,
+            visible: false
+        }
     }
 
     project: ProjectSpec
@@ -254,7 +276,44 @@ class AdminProject extends React.Component<Props, State> {
             })
     }
 
+    handleHitUpdate = (hit: any) => {
+        const url = this.project.hits[this.state.hitEditor.hitIndex].api_url + '/edit?' + new URLSearchParams({
+        })
+
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(hit)
+        }
+
+        fetcher(url, requestOptions)
+            .then(throwBadResponse)
+            .then(hit => {
+                this.project.hits[this.state.hitEditor.hitIndex] = {
+                    ...this.project.hits[this.state.hitEditor.hitIndex],
+                    ...hit
+                }
+                this.setState({hitEditor:{
+                    ...this.state.hitEditor,
+                    visible: false
+                }})
+            })
+            .catch(error => {
+                myerror('error fetching project details', error)
+            })
+    }
+
+    handleClickEditHit = (index: number)=>{
+        this.setState({
+            hitEditor:{
+                hitIndex: index,
+                visible: true
+            }
+        })
+    }
+
     render() {
+        console.log(this.state.hitEditor.hitIndex)
         switch (this.state.status) {
             case 'loading':
                 return <div className={'site-layout-content'}>
@@ -267,30 +326,33 @@ class AdminProject extends React.Component<Props, State> {
                     </Paragraph>
                 </>
             case 'ready':
-                const select = <Select 
-                    value={this.state.currProject} 
-                    onChange={this.handleProjectChange} 
-                    style={{ width: 240 }}>
-                    {this.projects.map((p, index) => {
-                        return <Option key={index} value={index}>{p.name}</Option>
-                    })}
-                </Select>
-
-                let hits
-                if(this.state.loadingProject) {
-                    hits = <LoadingOutlined />
-                } else {
-                    hits = <HITList hits={this.project.hits}></HITList>
-                }
-                
-
                 return <>
+                    {!this.state.loadingProject &&
+                    <Modal visible={this.state.hitEditor.visible} footer={null} onCancel={()=>{this.setState({hitEditor:{...this.state.hitEditor, visible: false}})}}>
+                        <HitEditorForm
+                            key={this.state.hitEditor.hitIndex}
+                            initialValues={this.project.hits[this.state.hitEditor.hitIndex]}
+                            onUpdate={this.handleHitUpdate}/>
+                    </Modal>}
+
                     <div style={{margin: '2em 1em'}}>
-                        Project: {select}
+                        Project: <Select 
+                            value={this.state.currProject} 
+                            onChange={this.handleProjectChange} 
+                            style={{ width: 240 }}>
+                            {this.projects.map((p, index) => {
+                                return <Option key={index} value={index}>{p.name}</Option>
+                            })}
+                        </Select>
                         <Button type='primary' href={Constants.api_url + '/projects/' + this.projects[this.state.currProject].id + '/csv'}>Download URLs</Button>
                         <Button href={Constants.api_url + '/projects/' + this.projects[this.state.currProject].id + '/download?csv=1'}>Download results (CSV)</Button>
                     </div>
-                    {hits}
+                    {this.state.loadingProject?
+                        <LoadingOutlined />:
+                        <HITList 
+                            hits={this.project.hits}
+                            onEditHit={this.handleClickEditHit}/>
+                    }
                 </>
             default:
                 return <></>

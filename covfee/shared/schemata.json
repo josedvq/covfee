@@ -2646,29 +2646,15 @@
           "title": "completionCode",
           "type": "string"
         },
-        "redirect": {
+        "redirectName": {
+          "description": "Name/label of the website to redirect to",
+          "title": "redirectName",
+          "type": "string"
+        },
+        "redirectUrl": {
           "description": "Redirect URL. URL to redirect participants to after completing the HIT.",
-          "items": {
-            "properties": {
-              "name": {
-                "description": "Name of the website/platform to redirect to, eg. Prolific",
-                "title": "name",
-                "type": "string"
-              },
-              "url": {
-                "description": "URL to redirect to",
-                "title": "url",
-                "type": "string"
-              }
-            },
-            "required": [
-              "name",
-              "url"
-            ],
-            "type": "object"
-          },
-          "title": "redirect",
-          "type": "array"
+          "title": "redirectUrl",
+          "type": "string"
         }
       },
       "title": "completionInfo",

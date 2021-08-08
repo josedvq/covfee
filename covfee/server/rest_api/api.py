@@ -48,7 +48,7 @@ def project(pid):
     with_hits = request.args.get('with_hits', False)
     with_instances = request.args.get('with_instances', False)
     res = db.session.query(Project).get(bytes.fromhex(pid))
-    return jsonify_or_404(res, with_hits=with_hits, with_instances=with_instances)
+    return jsonify_or_404(res, with_hits=with_hits, with_instances=with_instances, with_config=True)
 
 
 @api.route('/projects/<pid>/csv')
@@ -121,6 +121,18 @@ def hit(hid):
                           with_instances=with_instances,
                           with_instance_tasks=with_instance_tasks)
 
+@api.route('/hits/<hid>/edit', methods=['POST'])
+@admin_required
+def hit_edit(hid):
+    """ Edits the hit configuration using the received config.
+    """
+    hit = db.session.query(HIT).get(bytes.fromhex(hid))
+    if hit is None:
+        return jsonify({'msg': 'invalid hit'}), 400
+
+    hit.update(request.json)
+    db.session.commit()
+    return jsonify_or_404(hit, with_instances=False, with_config=True)
 
 # INSTANCES
 

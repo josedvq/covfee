@@ -53,12 +53,12 @@ class Project(db.Model):
         
         return df
 
-    def as_dict(self, with_hits=False, with_instances=False):
+    def as_dict(self, with_hits=False, with_instances=False, with_config=False):
         project_dict = {c.name: getattr(self, c.name)
                         for c in self.__table__.columns}
         project_dict['id'] = project_dict['id'].hex()
         if with_hits:
-            project_dict['hits'] = [hit.as_dict(with_instances=with_instances) for hit in self.hits]
+            project_dict['hits'] = [hit.as_dict(with_instances=with_instances, with_config=with_config) for hit in self.hits]
         return project_dict
 
     def info(self):

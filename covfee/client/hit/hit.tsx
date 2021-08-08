@@ -307,14 +307,14 @@ export class Hit extends React.Component<Props, State> {
             title: 'HIT submitted!',
             content: <>
                 <p>Thank you! Your work has been submitted.</p>
-                <p>Your completion code is:</p>
-                <pre>{config.completionCode}</pre>
-                {config.redirect && !!config.redirect.length &&
+                {config.redirectUrl ?
                     <>
-                        <p>If you came from one of these crowdsourcing sites, you may also click here to be redirected:</p>
-                        {config.redirect.map(r => {
-                            return <Button type='primary' icon={<ArrowRightOutlined />} href={r.url}>Back to {r.name}</Button>
-                        })}
+                        <p>If you came from {config.redirectName ? config.redirectName : 'another site'} you may click here to be redirected:</p>
+                        <Button type='primary' icon={<ArrowRightOutlined />} href={config.redirectUrl}>Back to {config.redirectName ? config.redirectName : 'site'}</Button>
+                    </> : 
+                    <>
+                        <p>Your completion code is:</p>
+                        <pre>{config.completionCode}</pre>
                     </>
                 }
             </>

@@ -54,20 +54,14 @@ export interface completionInfo {
      */
     completionCode?: string
     /**
+     * Name/label of the website to redirect to
+     */
+    redirectName?: string
+    /**
      * Redirect URL. URL to redirect participants to after completing the HIT.
      */
-    redirect?: {
-        /**
-         * Name of the website/platform to redirect to, eg. Prolific
-         */
-        name: string
-        /**
-         * URL to redirect to
-         */
-        url: string
-    }[]
+    redirectUrl?: string
 }
-
 /**
 * @TJS-additionalProperties false
 */

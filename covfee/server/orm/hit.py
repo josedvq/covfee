@@ -60,6 +60,9 @@ class HIT(db.Model):
 
         self.set_task_specs(tasks)
 
+    def update(self, params):
+        self.config = {**self.config, **params['config']}
+
     def set_task_specs(self, tasks_spec):
         ''' This method will separate the tasks specification into a generator specification
             that will specify how a HIT is instantiated (incl shuffling of the tasks) and refers to tasks via IDs
@@ -136,10 +139,14 @@ class HIT(db.Model):
         self.instances.append(instance)
         return instance
 
+    def get_api_url(self):
+        return f'{app.config["API_URL"]}/hits/{self.id.hex()}'
+
     def as_dict(self, with_project=True, with_instances=False, with_instance_tasks=False, with_config=False):
         hit_dict = {c.name: getattr(self, c.name)
                     for c in self.__table__.columns}
         hit_dict['id'] = hit_dict['id'].hex()
+        hit_dict['api_url'] = self.get_api_url()
         hit_dict['generator_url'] = self.get_generator_url()
 
         if with_instances:
@@ -206,7 +213,8 @@ class HITInstance(db.Model):
     def get_completion_info(self):
         completion = {
             'completionCode': self.hit.config.get('completionCode', sha256((self.id.hex() + app.config['COVFEE_SECRET_KEY']).encode()).digest().hex()[:12]),
-            'redirect': self.hit.config.get('redirect', [])
+            'redirectName': self.hit.config.get('redirectName', None),
+            'redirectUrl': self.hit.config.get('redirectUrl', None)
         }
         return completion
 
