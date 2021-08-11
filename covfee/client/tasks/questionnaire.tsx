@@ -33,7 +33,7 @@ export class QuestionnaireTask extends CovfeeTask<Props, State> {
         },
         form: {
             // values: this.props.spec.form && this.props.spec.form.fields.map(field=>{return {name: field.name}}),
-            values: {},
+            values: null,
             disabled: this.props.disabled
         }
     }
@@ -58,8 +58,7 @@ export class QuestionnaireTask extends CovfeeTask<Props, State> {
                     ...values
                 }
             }
-        }, ()=>{console.log(this.state.form.values)})
-        
+        })
     }
 
     handleMediaEnded = () => {

@@ -76,7 +76,6 @@ export class TaskForm extends React.Component<Props, State> {
     }
 
     handleFormChange = (data) => {
-        console.log(data)
         this.setState({
             formData: {...data['formData']}
         })

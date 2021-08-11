@@ -313,7 +313,6 @@ class AdminProject extends React.Component<Props, State> {
     }
 
     render() {
-        console.log(this.state.hitEditor.hitIndex)
         switch (this.state.status) {
             case 'loading':
                 return <div className={'site-layout-content'}>

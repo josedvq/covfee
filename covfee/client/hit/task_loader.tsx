@@ -262,7 +262,6 @@ export class TaskLoader extends React.Component<Props, State> {
             
             this.createBuffers()
             if(!annot) {
-                console.log('loading buffers')
                 this.loadBuffers().finally(()=>{
                     this.setState({loading: false})
                 })
@@ -660,7 +659,7 @@ export class TaskLoader extends React.Component<Props, State> {
 
                     const commonProps: CommonTaskProps = {
                         spec: this.props.task.spec,
-                        response: (this.state.replayMode) ? this.response : null,
+                        response: (this.state.renderAs.type == 'continuous-task' && this.state.replayMode) ? null : this.response,
                         buffer: this.buffer,
                         buttons: this.context.getContext(),
                     }

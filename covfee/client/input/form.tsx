@@ -92,18 +92,23 @@ export class Form extends React.Component<Props> {
         withSubmitButton: false
     }
 
+    initialValues: {[key: string]: any} = {}
+
     constructor(props: Props) {
         super(props)
 
-        const initialValues: {[key: string]: any} = {}
-        if(props.fields) {
-            props.fields.forEach((field, idx) => {
-                const initialValue = field.input.defaultValue !== undefined ? field.input.defaultValue : 
-                                    field.input.defaultChecked !== undefined ? field.input.defaultChecked : 
-                                    null
-                initialValues[field.name] = initialValue
-            })
-            props.setValues(initialValues)
+        if(this.props.values) {
+            this.initialValues = this.props.values
+        } else {
+
+            if(props.fields) {
+                props.fields.forEach((field, idx) => {
+                    const initialValue = field.input.defaultValue !== undefined ? field.input.defaultValue : 
+                                        field.input.defaultChecked !== undefined ? field.input.defaultChecked : 
+                                        null
+                    this.initialValues[field.name] = initialValue
+                })
+            }
         }
     }
 
@@ -159,7 +164,7 @@ export class Form extends React.Component<Props> {
                 ref={this.formRef}
                 layout={this.props.layout}
                 style={{margin: '1em'}}
-                initialValues={this.props.values}
+                initialValues={this.initialValues}
                 onValuesChange={(changedValues, allValues) => { this.props.setValues(changedValues) }}
                 onFinish={this.handleFinish}>
                 
@@ -181,6 +186,8 @@ export class Form extends React.Component<Props> {
             
                         const elementProps = this.patchProps({...field.input})
                         delete elementProps['inputType']
+                        delete elementProps['defaultValue']
+                        delete elementProps['defaultChecked']
                         return this.renderInputElement(field.input.inputType, elementProps, this.props.disabled)
                     })()}
                     
