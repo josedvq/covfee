@@ -659,7 +659,7 @@ export class TaskLoader extends React.Component<Props, State> {
 
                     const commonProps: CommonTaskProps = {
                         spec: this.props.task.spec,
-                        response: (this.state.renderAs.type == 'continuous-task' && this.state.replayMode) ? null : this.response,
+                        response: (this.state.renderAs.type == 'continuous-task' && !this.state.replayMode) ? null : this.response,
                         buffer: this.buffer,
                         buttons: this.context.getContext(),
                     }
