@@ -8,22 +8,29 @@ class BaseCovfeeTask:
     def __init__(self, response):
         self.response = response
 
-    def to_dict(self, response: object, data: np.ndarray = None) -> dict:
+    def to_dict(self, with_chunk_data: bool) -> dict:
         """Processes a task response to return a friendly dict (JSON) with task results and metadata
         Called when data is downloaded in JSON format.
         Does not affect the data in the database.
 
         Args:
-            response (object): The task response. The format is task-specific.
-            data (np.ndarray, optional): The continuous data. Defaults to None.
+            with_chunk_data (bool): If true, include the continuous response data.
 
         Returns:
             dict: task response and summary metadata
         """
-        # TODO: add more metadata to the aggregated content
+        if with_chunk_data:
+            chunk_data, chunk_logs = self.response.get_ndarray()
+        else:
+            chunk_data, chunk_logs = (None, None)
+
         return {
-            'response': response,
-            'data': data.tolist() if data is not None else []
+            'response': self.response.data,
+            'data': chunk_data.tolist() if chunk_data is not None else [],
+            'logs': chunk_logs if chunk_logs is not None else [],
+            'created_at': self.response.created_at.isoformat(),
+            'updated_at': self.response.updated_at.isoformat(),
+            'submitted_at': self.response.submitted_at.isoformat(),
         }
 
     def to_dataframe(self, data: np.ndarray) -> pd.DataFrame:

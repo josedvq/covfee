@@ -3,7 +3,7 @@ import json
 import os
 import sys
 from io import BytesIO
-from typing import Any
+from typing import Any, Tuple
 
 import numpy as np
 from flask import current_app as app
@@ -212,12 +212,12 @@ class TaskResponse(db.Model):
 
     def get_json(self, with_chunk_data=True):
         task_object = self.get_task_object()
-        if with_chunk_data:
-            chunk_data, chunk_logs = self.get_ndarray()
-            task_json = task_object.to_dict(self.data, chunk_data)
-        else:
-            task_json = task_object.to_dict(self.data, None)
-        return task_json
+        # if with_chunk_data:
+        #     chunk_data, chunk_logs = self.get_ndarray()
+        #     task_json = task_object.to_dict(self.data, chunk_data)
+        # else:
+        #     task_json = task_object.to_dict(self.data, None)
+        return task_object.to_dict(with_chunk_data)
 
     def get_download_filename(self, task_index, response_index):
         if self.task.parent:
@@ -235,7 +235,7 @@ class TaskResponse(db.Model):
         chunk_bytes += b''.join([chunk.data for chunk in chunks])
         return chunk_bytes
 
-    def get_ndarray(self) -> (np.ndarray, Any):
+    def get_ndarray(self) -> Tuple[np.ndarray, Any]:
         """This method takes care of aggregating a list of binary data chunks into a single numpy array.
 
         Args:
