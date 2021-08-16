@@ -110,6 +110,7 @@ export class Form extends React.Component<Props> {
                 })
             }
         }
+        this.props.setValues(this.initialValues)
     }
 
     componentDidMount() {
