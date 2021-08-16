@@ -91,7 +91,9 @@ class Project(db.Model):
 
         return Project(**proj_dict)
 
-    def stream_download(self, z, base_path, csv=False):
+    def stream_download(self, z, base_path, submitted_only=True, csv=False):
         for hit in self.hits:
             for instance in hit.instances:
+                if submitted_only and not instance.submitted:
+                    continue
                 yield from instance.stream_download(z, os.path.join(base_path, instance.id.hex()), csv=csv)
