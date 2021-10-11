@@ -1,47 +1,97 @@
 import hashlib
 import hmac
 
-from flask import current_app as app
+from ..orm import db
+from .. import tasks
+from ..tasks.base import BaseCovfeeTask
+from flask import current_app as app, session
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
+from covfee.server.orm.task import TaskResponse
+from covfee.server.socketio.redux_store import ReduxStoreService
+from covfee.server.deepstream.deepstream_subscriber import DeepStreamSubscriber
 
 socketio = SocketIO()
+# store = ReduxStoreService()
+deepstream = DeepStreamSubscriber()
 
-@socketio.on('connect')
-def connect(auth):
+def get_task_object(responseId: int):
+    response = db.session.query(TaskResponse).get(responseId)
+    if response is None:
+        return None
+    
+    task = response.task
+    task_class = getattr(tasks, task.spec.spec['type'], BaseCovfeeTask)
+    task_object = task_class(response=response)
+    return task_object
 
-    try:
-        id = bytes.fromhex(auth['hitId'])
-    except ValueError:
-        return False
-
-    targetToken = hmac.new(app.config['COVFEE_SECRET_KEY'].encode('utf-8'), id, hashlib.sha256 )
-    if targetToken.hexdigest() != auth['token']:
-        return False
-
-@socketio.on('disconnect')
-def disconnect():
-    print('Client disconnected')
-
-@socketio.on('join')
-def on_join(data):
-    username = data['username']
-    room = data['room']
-    join_room(room)
-    print(username + ' has entered the room.')
-    send(username + ' has entered the room.', to=room)
-
-@socketio.on('leave')
-def on_leave(data):
-    username = data['username']
-    room = data['room']
-    leave_room(room)
-    send(username + ' has left the room.', to=room)
 
 @socketio.on('message')
 def handle_message(data):
-    print('received message: ' + data)
+    pass
+
+
+@socketio.on('join')
+def on_join(data):
+    room = str(data['room'])
+
+    res = store.join(room)
+    if res['success']:
+        join_room(room)
+        session['room'] = room
+        emit('state', res)
+
+        # if this is the first join, run the on_first_join callback
+        if res['numConnections'] == 1:
+            get_task_object(int(room)).on_first_join()
+
+    else:
+        send(f'Unable to join room {room}')
+
 
 @socketio.on('action')
 def on_action(data):
-    emit('action', data, broadcast=True)
-    print(data)
+    action = data['action']
+    room = str(data['room'])
+    if room != session['room']:
+        return send(f'data["room"] does not match session\'s room variable. {room} != {session["room"]}')
+
+    res = store.action(room, action)
+    if res['success']:
+        emit('action', res, to=room)
+
+
+@socketio.on('state')
+def on_state(data):
+    room = str(data['room'])
+    if room != session['room']:
+        return send(f'data["room"] does not match session\'s room variable. {room} != {session["room"]}')
+
+    res = store.state(room)
+    if res['success']:
+        emit('state', res)
+
+
+@socketio.on('leave')
+def on_leave(data):
+    room = str(data['room'])
+    if room != session['room']:
+        return send(f'data["room"] does not match session\'s room variable. {room} != {session["room"]}')
+
+    res = store.leave(room)
+    session['room'] = None
+    leave_room(room)
+
+    # if the room is now empty
+    if res['numConnections'] == 0:
+        get_task_object(int(room)).on_last_leave()
+
+@socketio.on('disconnect')
+def disconnect():
+    if 'room' in session:
+        room = session['room']
+        res = store.leave(room)
+        session['room'] = None
+        leave_room(room)
+
+
+

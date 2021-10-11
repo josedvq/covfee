@@ -36,6 +36,9 @@ class HIT(db.Model):
     taskspecs = db.relationship(
         "TaskSpec", secondary=hits_taskspecs, backref='hits', cascade="all, delete")
 
+    # shared_tasks = db.relationship(
+    #     "Task", backref='hit', cascade="all, delete")
+
     name = db.Column(db.String)
     extra = db.Column(db.JSON)
     interface = db.Column(db.JSON)
@@ -91,7 +94,7 @@ class HIT(db.Model):
         for i, spec in enumerate(task_list):
             if 'name' not in spec:
                 spec['name'] = f'Task {i}'
-            self.taskspecs.append(TaskSpec(**spec))
+                self.taskspecs.append(TaskSpec(**spec))
         
         # store the generator specification
         self.config['generator'] = tasks_spec
@@ -266,3 +269,4 @@ class HITInstance(db.Model):
     def stream_download(self, z, base_path, csv=False):
         for i, task in enumerate(self.tasks):
             yield from task.stream_download(z, base_path, i, csv)
+

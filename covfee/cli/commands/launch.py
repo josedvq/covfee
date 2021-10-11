@@ -11,11 +11,13 @@ from flask import current_app as app
 from flask.cli import FlaskGroup, pass_script_info
 
 from covfee.server.start import create_app
-from ..covfee_folder import CovfeeFolder, ProjectExistsException
+from ...covfee_folder import CovfeeFolder, ProjectExistsException
 from halo.halo import Halo
-from covfee.cli.validators.validation_errors import ValidationError
-from covfee.cli.schemata import Schemata
+from covfee.shared.validator.validation_errors import ValidationError
+from covfee.shared.schemata import Schemata
 from covfee.cli.utils import NPMPackage
+from covfee import _make as covfee_make, start_deepstream
+from covfee.server.rtstore import rtstore
 
 colorama_init()
 
@@ -24,18 +26,32 @@ colorama_init()
 def covfee_cli():
     pass
 
-def start_covfee(socketio, app, mode='local'):
+def start_covfee(socketio, app, mode='local', host='localhost'):
+    if app.config['SSL_ENABLED']:
+        ssl_options = {
+            
+            'keyfile': app.config['SSL_KEY_FILE'],
+            'certfile': app.config['SSL_CERT_FILE']
+        }
+    else:
+        ssl_options = {}
+
+    if app.config['RTSTORE_ENABLED']:
+        # run the realtime store service
+        rtstore.run()
+
     if mode == 'local':
-        socketio.run(app, host='localhost', port=5000)
+        socketio.run(app, host=host, port=5000 **ssl_options)
     elif mode == 'dev':
-        socketio.run(app, host='localhost', port=5000, debug=True)
+        socketio.run(app, host=host, port=5000, debug=True, **ssl_options)
     elif mode == 'deploy':
-        socketio.run(app, host='localhost')
+        socketio.run(app, host=host, **ssl_options)
     else:
         raise f'unrecognized mode {mode}'
 
 @covfee_cli.command()
-def webpack():
+@click.option("--host", default='localhost', help="Specify the IP address to serve webpack dev server. Use for testing in a local network.")
+def webpack(host):
     """
     Launches a webpack instance for use in dev mode
     """
@@ -47,7 +63,7 @@ def webpack():
             return print(Fore.RED+'Working directory is not a valid covfee project folder. '
                                 'Did you run covfee-maker in the current folder?')
 
-        covfee_folder.launch_webpack()
+        covfee_folder.launch_webpack(host=host)
 
 @covfee_cli.command()
 def build():
@@ -64,12 +80,21 @@ def build():
 
         covfee_folder.build()
 
+@covfee_cli.command(name="start-deepstream")
+def launch_deepstream():
+    """
+    Starts the daemon in charge of updating the true store (state).
+    Required for shared tasks.
+    """
+    start_deepstream()
+
 
 @covfee_cli.command()
 @click.option("--dev", is_flag=True, help="Run covfee in dev mode")
 @click.option("--deploy", is_flag=True, help="Run covfee in deployment mode")
+@click.option("--host", default='localhost', help="IP address where covfee will be served. Use for testing in a local network.")
 @click.option('--no-browser', is_flag=True, help='Disables launching of the web browser.')
-def start(dev, deploy, no_browser):
+def start(dev, deploy, host, no_browser):
     """
     Starts covfee in local mode by default. Use --deploy or --dev to start deployment (public) or development servers.
     """
@@ -79,7 +104,7 @@ def start(dev, deploy, no_browser):
     if deploy: mode = 'deploy'
     unsafe_mode_on = (mode in ['local', 'dev'])
 
-    socketio, app = create_app(mode)  
+    socketio, app = create_app(mode, host=host)  
 
     with app.app_context():
         covfee_folder = CovfeeFolder(os.getcwd())
@@ -90,9 +115,9 @@ def start(dev, deploy, no_browser):
         if not no_browser:
             covfee_folder.launch_in_browser(unsafe_mode_on)
 
-    # covfee_folder.launch_prod(unsafe, launch_browser=not no_browser)
-    app.config['UNSAFE_MODE_ON'] = unsafe_mode_on
-    start_covfee(socketio, app, mode)
+        # covfee_folder.launch_prod(unsafe, launch_browser=not no_browser)
+        app.config['UNSAFE_MODE_ON'] = unsafe_mode_on
+        start_covfee(socketio, app, mode, host=host)
 
 
 @covfee_cli.command(name="open")
@@ -133,55 +158,27 @@ def make(force, unsafe, rms, no_browser, no_launch, file_or_folder):
 
     with app.app_context():
         install_npm_packages_if_not_installed()
-        project_folder = CovfeeFolder(os.getcwd())
 
-        # add the covfee files to the project
-        with Halo(text='Adding .covfee.json files', spinner='dots') as spinner:
-            covfee_files = project_folder.add_covfee_files(file_or_folder)
-
-            if len(covfee_files) == 0:
-                return spinner.fail(f'No valid covfee files found. Make sure that {file_or_folder}'
-                                    'points to a file or to a folder containing .covfee.json files.')
-
-            spinner.succeed(f'{len(covfee_files)} covfee project files found.')
-
-        # validate the covfee files
-        schema = Schemata()
-        if rms or not schema.exists():
-            schema.make()
-        with Halo(text='Validating covfee project files', spinner='dots') as spinner:
-            try:
-                project_folder.validate(with_spinner=True)
-            except ValidationError as err:
-                err.print_friendly()
-                return spinner.fail('Error validating covfee files. Aborted.')
-            spinner.succeed('all covfee project files are valid.')
-
-        # init project folder if necessary
-        if not project_folder.is_project():
-            project_folder.init()
         try:
-            project_folder.push_projects(force=force, interactive=True)
-        except ProjectExistsException: 
+            covfee_make(file_or_folder, force=force, rms=rms, stdout_enabled=True)
+        except FileNotFoundError:
+            pass
+        except ValidationError as err:
+            return err.print_friendly()
+        except ProjectExistsException as err:
             return print(' Add --force option to overwrite.')
-            
-        # open covfee
-        with Halo(text='Linking covfee bundles', spinner='dots') as spinner:
-            try:
-                project_folder.link_bundles()
-            except Exception as e:
-                spinner.fail('Error linking bundles. Aborted.')
-                return print(e)
-            spinner.succeed('covfee bundles linked.')
+        except Exception as err:
+            return print(err)
 
         if no_launch: 
             return
 
         if not no_browser:
+            project_folder = CovfeeFolder(os.getcwd())
             project_folder.launch_in_browser(unsafe)
 
-    app.config['UNSAFE_MODE_ON'] = unsafe
-    start_covfee(socketio, app, 'local')
+        app.config['UNSAFE_MODE_ON'] = unsafe
+        start_covfee(socketio, app, 'local')
 
 @covfee_cli.command()
 def mkuser():

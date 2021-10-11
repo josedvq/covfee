@@ -24,6 +24,7 @@ setup(
     },
     install_requires=[
         'Flask == 1.*',
+        'requests == 2.*',
         'flask_cors == 3.*',
         'Flask-SQLAlchemy == 2.*',
         'flask-socketio == 5.*',
@@ -38,7 +39,8 @@ setup(
         'numpy == 1.*',
         'zipstream-new == 1.*',
         'construct == 2.*',
-        'eventlet == 0.*'
+        'eventlet == 0.*',
+        'google-auth == 2.*'
     ],
     python_requires='>=3.6'
 )

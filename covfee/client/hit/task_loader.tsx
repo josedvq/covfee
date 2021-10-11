@@ -21,6 +21,8 @@ import { BinaryDataCaptureBuffer } from '../buffers/binary_dc_buffer'
 import { AnnotationBuffer } from 'buffers/buffer';
 import { ContinuousPlayerProps, CovfeeContinuousPlayer } from 'players/base';
 import { Socket } from 'socket.io-client'
+import { DeepstreamClient } from '@deepstream/client'
+import useSharedState from './use_deepstream'
 
 interface State {
     /**
@@ -87,6 +89,10 @@ interface Props {
      * socketio instance for multi-party tasks
      */
     socket: Socket
+    /**
+     * DeepStream client instance
+     */
+    deepstreamClient: DeepstreamClient
     /**
      * If true, the task cannot be interacted with
      */
@@ -173,31 +179,6 @@ export class TaskLoader extends React.Component<Props, State> {
         this.state.renderAs = this.getTaskRenderAs()
         this.state.instructions.visible = (this.props.task.spec.instructionsType == 'popped')
 
-        const loggerMiddleware = storeAPI => next => action => {
-            // send actions to the server
-            if(!action._fromServer) return this.props.socket.emit('action', action) 
-            let result = next(action)
-            // console.log('next state', storeAPI.getState())
-            return result
-        }
-
-        if(taskReducer) {
-            this.taskStore = configureStore({
-                reducer: {
-                    task: this.taskReducer
-                },
-                middleware: [loggerMiddleware]
-            })
-        }
-
-        this.props.socket.emit('join', { 'username': 'josedvq', 'room': this.props.task.id.toString() });
-
-        // receive and dispatch actions to the store.
-        this.props.socket.on('action', actionObject => {
-            // add the fromServer flag to allow it past middleware
-            this.taskStore.dispatch({...actionObject, _fromServer: true})
-        })
-
         // if(props.media.speed === 0) {
         //     this.state.player.speed = 1
         //     this.state.player.speedEnabled = true
@@ -243,6 +224,49 @@ export class TaskLoader extends React.Component<Props, State> {
             }
         })
     }
+
+    getSharedState = () => {
+        const record = this.props.deepstreamClient.record.getRecord(`tasks/${this.response.id}`)
+        record.whenReady((record)=>{
+            console.log(record)
+        })
+        return useSharedState(record)
+    }
+
+    // startSockets = () => {
+    //     const loggerMiddleware = storeAPI => next => action => {
+    //         // send actions to the server
+    //         if(!action._fromServer) return this.props.socket.emit('action', {room: this.response.id, action: action}) 
+    //         let result = next(action)
+    //         // console.log('next state', storeAPI.getState())
+    //         return result
+    //     }
+
+    //     if(this.taskReducer) {
+    //         this.taskStore = configureStore({
+    //             reducer: {
+    //                 task: this.taskReducer
+    //             },
+    //             preloadedState: this.response.state == null ? undefined : {task: this.response.state},
+    //             middleware: [loggerMiddleware]
+    //         })
+    //     }
+
+    //     this.props.socket.emit('join', {'room': this.response.id.toString() });
+
+    //     // receive and dispatch actions to the store.
+    //     this.props.socket.on('action', actionObject => {
+    //         // add the fromServer flag to allow it past middleware
+    //         this.taskStore.dispatch({...actionObject.action, _fromServer: true})
+    //     })
+
+    //     // receive state updates
+    //     // this.props.socket.on('state', stateObject => {
+    //     //     console.log(stateObject)
+    //     //     // add the fromServer flag to allow it past middleware
+    //     //     this.taskStore.dispatch({...actionObject, _fromServer: true})
+    //     // })
+    // }
 
     componentWillUnmount() {
         this.mountPromise.promise.catch(()=>{})
@@ -657,11 +681,15 @@ export class TaskLoader extends React.Component<Props, State> {
                 {(()=>{
                     if(this.state.status == 'loading') return null
 
-                    const commonProps: CommonTaskProps = {
+                    let commonProps: CommonTaskProps = {
                         spec: this.props.task.spec,
                         response: (this.state.renderAs.type == 'continuous-task' && !this.state.replayMode) ? null : this.response,
                         buffer: this.buffer,
                         buttons: this.context.getContext(),
+                        getSharedState: this.getSharedState
+                    }
+                    if('taskSpecific' in this.props.task) {
+                        commonProps = {...commonProps, ...this.props.task.taskSpecific}
                     }
 
                     let taskTypeProps: any
@@ -693,11 +721,7 @@ export class TaskLoader extends React.Component<Props, State> {
                         ...taskTypeProps
                     }, null)
 
-                    if(this.taskReducer) {
-                        return <Provider store={this.taskStore}>{taskElement}</Provider>
-                    } else {
-                        return taskElement
-                    }
+                    return taskElement
                 })()}
             </div>
         </>

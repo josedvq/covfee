@@ -47,6 +47,10 @@ export interface CommonTaskProps {
      */
     buttons: any
 
+    /**
+     * Called to get access to shared (synced) state and shared state setter
+     */
+    getSharedState: () => [any, (arg0: any) => void]
 }
 
 /**

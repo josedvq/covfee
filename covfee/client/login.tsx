@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { withRouter } from 'react-router'
 
 import {
     Form,
@@ -12,8 +11,14 @@ import {
 import userContext from './userContext'
 import Constants from 'Constants'
 import CovfeeLogo from './art/logo.svg'
+import { GoogleLogin } from 'react-google-login'
 
-class Login extends React.Component {
+interface Props {
+    onSuccess: () => void
+    onError: () => void
+}
+
+export default class LoginForm extends React.Component<Props> {
     state = {
         error: null,
         submitting: false,
@@ -40,51 +45,40 @@ class Login extends React.Component {
             wrapperCol: { offset: 8, span: 16 },
         }
 
-        return <Row style={{marginTop: '40px'}}>
-            <Col xs={{span: 16, offset: 4}} lg={{span: 8, offset: 8}}>
-                <div className={'covfee-banner'}>
-                    <CovfeeLogo width="70" height="70" /> covfee
-                </div>
-                <Form
-                {...layout}
-                name="basic"
-                initialValues={{ remember: true }}
-                onFinish={this.handleFormSubmit}>
-                    <Form.Item
-                        label="Username"
-                        name="username"
-                        rules={[{ required: true, message: 'Please input your username!' }]}
-                    >
-                        <Input />
-                    </Form.Item>
+        return <Form
+            {...layout}
+            name="basic"
+            initialValues={{ remember: true }}
+            onFinish={this.handleFormSubmit}>
+                <Form.Item
+                    label="Username"
+                    name="username"
+                    rules={[{ required: true, message: 'Please input your username!' }]}
+                >
+                    <Input />
+                </Form.Item>
 
-                    <Form.Item
-                        label="Password"
-                        name="password"
-                        rules={[{ required: true, message: 'Please input your password!' }]}
-                    >
-                        <Input.Password />
-                    </Form.Item>
+                <Form.Item
+                    label="Password"
+                    name="password"
+                    rules={[{ required: true, message: 'Please input your password!' }]}
+                >
+                    <Input.Password />
+                </Form.Item>
 
-                    {
-                    (this.state.error != null) ?
-                    <Alert message={this.state.error} type="error" style={{marginBottom: '1em'}} showIcon /> :
-                    <></>
-                    }
-                    
-                    <Form.Item {...tailLayout}>
-                        <Button type="primary" htmlType="submit">
-                            Log in
-                        </Button>
-                    </Form.Item>
-                </Form>
-            </Col>
-        </Row>
+                {
+                (this.state.error != null) ?
+                <Alert message={this.state.error} type="error" style={{marginBottom: '1em'}} showIcon /> :
+                <></>
+                }
+                
+                <Form.Item {...tailLayout}>
+                    <Button type="primary" htmlType="submit">
+                        Log in
+                    </Button>
+                </Form.Item>
+        </Form>
     }
 }
 
-Login.contextType = userContext
-
-const LoginWithRouter = withRouter(Login);
-
-export { LoginWithRouter }
+LoginForm.contextType = userContext

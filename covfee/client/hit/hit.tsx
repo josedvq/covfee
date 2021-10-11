@@ -1,5 +1,4 @@
 import * as React from 'react'
-import io, { Socket } from 'socket.io-client'
 import styled from 'styled-components'
 import { withRouter, generatePath, RouteComponentProps } from 'react-router'
 import {
@@ -20,6 +19,7 @@ import 'antd/dist/antd.css'
 const { Panel } = Collapse
 import Collapsible from 'react-collapsible'
 const { Text } = Typography
+import { DeepstreamClient } from '@deepstream/client'
 
 import Constants from 'Constants'
 import { myerror } from '../utils'
@@ -30,7 +30,8 @@ import ButtonEventManagerContext from '../input/button_manager'
 
 import { AnnotationInterface, HitInstanceType } from '@covfee-types/hit'
 import { TaskResponse, TaskType } from '@covfee-types/task'
-import { TaskLoader } from './task_loader';
+import { TaskLoader } from './task_loader'
+
 import './hit.scss'
 
 interface MatchParams {
@@ -51,6 +52,10 @@ type Props = HitInstanceType & RouteComponentProps<MatchParams> & {
      * Tells the annotation component to keep urls up to date
      */
     routingEnabled: boolean
+    /**
+     * DeepStream client instance
+     */
+    deepstreamClient: DeepstreamClient
 
     // ASYNC OPERATIONS
     deleteTask: TaskDeleteCallback
@@ -116,7 +121,6 @@ export class Hit extends React.Component<Props, State> {
     tasks: Array<TaskType>
     taskKeys: Array<string>
     instructionsFn: Function = null
-    socket: Socket
 
     replayIndex = 0
 
@@ -149,18 +153,6 @@ export class Hit extends React.Component<Props, State> {
         }
         
         this.updateUrl(parentTask)
-
-        // Connect to socket io
-        if(Constants.socketio_enabled) {
-            this.socket = io(Constants.base_url, {
-                auth: {
-                    hitId: this.props.id,
-                    token: this.props.token
-                },
-                transports: ['websocket'],
-                upgrade: true
-            })
-        }
     }
 
     makeTaskIds = () => {
@@ -444,7 +436,7 @@ export class Hit extends React.Component<Props, State> {
                         key={this.state.currKey}
                         task={taskProps}
                         parent={parentProps}
-                        socket={this.socket}
+                        deepstreamClient={this.props.deepstreamClient}
                         interfaceMode={this.props.interface.type}
                         disabled={(taskProps.maxSubmissions ? (taskProps.num_submissions >= taskProps.maxSubmissions) : false) || (taskProps.prerequisite && taskProps.valid)}
                         previewMode={this.props.previewMode}

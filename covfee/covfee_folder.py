@@ -2,18 +2,18 @@ import os
 import shutil
 import sys
 import subprocess
+import random
 
 from flask import current_app as app
 from halo import Halo
 from colorama import init as colorama_init, Fore
 
-from ..server.start import create_app
-from ..server.orm import db
-from ..server.orm.user import User
+from covfee.server.orm import db
+from covfee.server.orm.user import User
 from covfee.cli.utils import working_directory
 from pathlib import Path
-from covfee.cli.validators.ajv_validator import AjvValidator
-from covfee.cli.validators.validation_errors import ValidationError
+from covfee.shared.validator.ajv_validator import AjvValidator
+from covfee.shared.validator.validation_errors import ValidationError
 import json
 from covfee.server.orm.project import Project
 from shutil import which
@@ -97,12 +97,12 @@ class CovfeeFolder:
                 self.projects.append((project_spec, cf))
                 spinner.succeed(f'Project \"{project_spec["name"]}\" in {cf} is valid.')
 
-    def push_projects(self, force=False, interactive=False):
+    def push_projects(self, force=False, with_spinner=False):
         for project_spec, cf in self.projects:
             # delete existing project with the same id
             with Halo(text=f'Looking for existing projects with id {project_spec["id"]}',
                       spinner='dots',
-                      enabled=interactive) as spinner:
+                      enabled=with_spinner) as spinner:
 
                 projid = Project.get_id(project_spec['id'])
                 existing_project = Project.query.filter_by(id=projid).first()
@@ -113,13 +113,14 @@ class CovfeeFolder:
                         spinner.warn(
                             f'Deleted existing project with conflicting ID {project_spec["id"]}')
                     else:
-                        spinner.fail(f'Project with ID {project_spec["id"]} already exists.')
-                        raise ProjectExistsException('Project already exists in the database.')
+                        msg = f'Project with ID {project_spec["id"]} already exists.'
+                        spinner.fail(msg)
+                        raise ProjectExistsException(msg)
 
             # making
             with Halo(text=f'Making project {project_spec["name"]} from file {cf}',
                       spinner='dots',
-                      enabled=interactive) as spinner:
+                      enabled=with_spinner) as spinner:
                 project = Project(**project_spec)
                 db.session.add(project)
                 spinner.succeed(
@@ -146,23 +147,15 @@ class CovfeeFolder:
             admin_bundle_path
         )
 
-    def launch_webpack(self):
+    def launch_webpack(self, host=None):
         cwd = os.getcwd()
         # run the dev server
         with working_directory(app.config['COVFEE_CLIENT_PATH']):
             os.system('npx webpack serve' +
                       ' --env COVFEE_WD=' + cwd +
-                      ' --config ./webpack.dev.js')
+                      ' --config ./webpack.dev.js' +
+                      ('' if host is None else ' --host ' + host))
 
-    # def build(self):
-    #     cwd = os.getcwd()
-
-    #     bundle_path = app.config['PROJECT_WWW_PATH']
-
-    #     with working_directory(app.config['COVFEE_CLIENT_PATH']):
-    #         os.system('npx webpack' +
-    #                   ' --env COVFEE_WD=' + cwd +
-    #                   ' --config ./webpack.prod.js' + ' --output-path '+bundle_path)
 
     def launch_in_browser(self, unsafe=False):
         target_url = app.config["ADMIN_URL"] if unsafe else app.config["LOGIN_URL"]
@@ -173,6 +166,30 @@ class CovfeeFolder:
         else:
             print(Fore.GREEN +
                   f' * covfee is available at {target_url}')
+
+    def start_deepstream(self):
+        # compile the TS to Js
+        with working_directory(os.path.join(app.config['COVFEE_SERVER_PATH'], 'deepstream')):
+            
+            # generate a random password for deepstream
+            password = random.getrandbits(128).to_bytes(16, 'little').hex()
+            users_json = {   
+                "admin": {
+                    "password": password,
+                    "serverData": {
+                        "role": "superadmin"
+                    }
+                }
+            }
+            json.dump(users_json, open(os.path.join('..', 'conf', 'users.json'), 'w'))
+
+            os.system('npx tsc')
+            subprocess.Popen(['npx', 'deepstream', 'daemon'])
+            subprocess.Popen(['npx', 'pm2', 'start', 'server.js', '-i', '1', '--watch', '--', 
+                            'serve', password, 
+                            str(app.config['DS_SERVER_PORT']), 
+                            str(app.config['DS_CLIENT_PUB_PORT']), 
+                            str(app.config['DS_CLIENT_SUB_PORT'])])
 
     def mkuser(self, username, password):
         user = User(username, password, ['admin'])

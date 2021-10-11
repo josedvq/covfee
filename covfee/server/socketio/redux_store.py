@@ -2,7 +2,6 @@ import os
 import json
 
 import zmq
-from covfee.server.orm.task import Task 
 context = zmq.Context()
 
 class ReduxStoreService:
@@ -18,7 +17,7 @@ class ReduxStoreService:
     def __init__(self):
         #  Socket to talk to server
         self.socket = context.socket(zmq.REQ)
-        # bind to a random port in loopback iface
+        self.socket.setsockopt(zmq.RCVTIMEO, 500)
         self.socket.connect("tcp://127.0.0.1:5555")
 
     def socket_request(self, payload):
@@ -26,34 +25,33 @@ class ReduxStoreService:
         message = self.socket.recv()
         return json.loads(message.decode('utf-8'))
 
-    def join(self, taskId):
+    def join(self, responseId):
         return self.socket_request({
             'command': 'join', 
-            'taskId': taskId
+            'responseId': responseId
         })
 
-    def leave(self, taskId):
+    def leave(self, responseId):
         return self.socket_request({
             'command': 'leave', 
-            'taskId': taskId
+            'responseId': responseId
         })
 
-    def action(self, taskId, action):
+    def action(self, responseId, action):
         return self.socket_request({
             'command': 'action', 
-            'taskId': taskId,
+            'responseId': responseId,
             'action': action
         })
-        # if not result['valid']:
-        #     err = result['errors'][0]
-        #     raise ValidationError(
-        #         message=self.get_friendly_error_message(err),
-        #         path=AjvValidator.parse_ajv_path(err['instancePath']),
-        #         instance=err['data']
-        #     )
 
-    def state(self, task):
+    def state(self, responseId):
         return self.socket_request({
             'command': 'state', 
-            'task': task
+            'responseId': responseId
+        })
+    
+    def reset(self, responseId):
+        return self.socket_request({
+            'command': 'reset', 
+            'responseId': responseId
         })

@@ -3,20 +3,38 @@ from hashlib import pbkdf2_hmac
 
 from flask import current_app as app
 
+def password_hash(password: str):
+    return pbkdf2_hmac('sha256', password.encode(), app.config['JWT_SECRET_KEY'].encode(), 10000)
+
 class User(db.Model):
     """ Represents a covfee user """
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String)
-    password = db.Column(db.LargeBinary)
     roles = db.Column(db.JSON)
 
-    def __init__(self, username: str, password: str, roles: list = ['user']):
+    providers = db.relationship("AuthProvider", backref="user", cascade="all, delete")
+
+    def __init__(self, username: str, roles: list = ['user', 'admin']):
         self.username = username
-        self.password = User.password_hash(password)
         self.roles = roles
 
-    @staticmethod
-    def password_hash(password: str):
-        return pbkdf2_hmac('sha256', password.encode(), app.config['JWT_SECRET_KEY'].encode(), 10000)
+    def add_provider(self, *args, **kwargs):
+        self.providers.append(AuthProvider(*args, **kwargs))
+
+class AuthProvider(db.Model):
+    __tablename__ = 'auth_providers'
+
+    provider_id = db.Column(db.String, db.ForeignKey('users.id'), primary_key=True)
+    user_id = db.Column(db.String, primary_key=True)
+
+    # holds provider specific information like the password for password provider
+    extra = db.Column(db.JSON)
+
+    def __init__(self, provider_id: str, user_id: str, extra=None):
+        self.provider_id = provider_id
+        self.user_id = user_id
+        self.extra = extra
+
+    

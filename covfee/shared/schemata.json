@@ -354,6 +354,11 @@
           "title": "required",
           "type": "boolean"
         },
+        "shared": {
+          "description": "If true, the task is shared among all instances of the HIT\nUseful for group tasks requiring a single shared submission (symmetric)",
+          "title": "shared",
+          "type": "boolean"
+        },
         "showCountdown": {
           "description": "Enable player's countdown animation",
           "title": "showCountdown",
@@ -565,6 +570,11 @@
           "default": "True",
           "description": "If true, this task must have a valid submission before the HIT can be submitted",
           "title": "required",
+          "type": "boolean"
+        },
+        "shared": {
+          "description": "If true, the task is shared among all instances of the HIT\nUseful for group tasks requiring a single shared submission (symmetric)",
+          "title": "shared",
           "type": "boolean"
         },
         "timer": {
@@ -1077,6 +1087,11 @@
           "title": "repeat",
           "type": "number"
         },
+        "requireLogin": {
+          "description": "If true, the user will be required to log in before starting the task",
+          "title": "requireLogin",
+          "type": "boolean"
+        },
         "tasks": {
           "$ref": "#/definitions/TaskListObject",
           "description": "list of tasks in the HIT",
@@ -1264,6 +1279,11 @@
           "default": "True",
           "description": "If true, this task must have a valid submission before the HIT can be submitted",
           "title": "required",
+          "type": "boolean"
+        },
+        "shared": {
+          "description": "If true, the task is shared among all instances of the HIT\nUseful for group tasks requiring a single shared submission (symmetric)",
+          "title": "shared",
           "type": "boolean"
         },
         "timer": {
@@ -1490,6 +1510,11 @@
           "title": "required",
           "type": "boolean"
         },
+        "shared": {
+          "description": "If true, the task is shared among all instances of the HIT\nUseful for group tasks requiring a single shared submission (symmetric)",
+          "title": "shared",
+          "type": "boolean"
+        },
         "showCountdown": {
           "description": "Enable player's countdown animation",
           "title": "showCountdown",
@@ -1631,6 +1656,11 @@
           "title": "required",
           "type": "boolean"
         },
+        "shared": {
+          "description": "If true, the task is shared among all instances of the HIT\nUseful for group tasks requiring a single shared submission (symmetric)",
+          "title": "shared",
+          "type": "boolean"
+        },
         "timer": {
           "description": "Timing config",
           "properties": {
@@ -1738,6 +1768,11 @@
           "title": "required",
           "type": "boolean"
         },
+        "shared": {
+          "description": "If true, the task is shared among all instances of the HIT\nUseful for group tasks requiring a single shared submission (symmetric)",
+          "title": "shared",
+          "type": "boolean"
+        },
         "timer": {
           "description": "Timing config",
           "properties": {
@@ -1833,6 +1868,11 @@
           "title": "required",
           "type": "boolean"
         },
+        "shared": {
+          "description": "If true, the task is shared among all instances of the HIT\nUseful for group tasks requiring a single shared submission (symmetric)",
+          "title": "shared",
+          "type": "boolean"
+        },
         "timer": {
           "description": "Timing config",
           "properties": {
@@ -1906,6 +1946,16 @@
           "title": "minDevices",
           "type": "number"
         },
+        "mode": {
+          "default": "speaker",
+          "description": "Type of view of the call participants",
+          "enum": [
+            "gallery",
+            "speaker"
+          ],
+          "title": "mode",
+          "type": "string"
+        },
         "name": {
           "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
           "title": "name",
@@ -1946,6 +1996,11 @@
           "title": "required",
           "type": "boolean"
         },
+        "shared": {
+          "description": "If true, the task is shared among all instances of the HIT\nUseful for group tasks requiring a single shared submission (symmetric)",
+          "title": "shared",
+          "type": "boolean"
+        },
         "timer": {
           "description": "Timing config",
           "properties": {
@@ -1973,6 +2028,7 @@
       },
       "required": [
         "minDevices",
+        "mode",
         "name",
         "queries",
         "type"
@@ -2174,6 +2230,11 @@
           "default": "True",
           "description": "If true, this task must have a valid submission before the HIT can be submitted",
           "title": "required",
+          "type": "boolean"
+        },
+        "shared": {
+          "description": "If true, the task is shared among all instances of the HIT\nUseful for group tasks requiring a single shared submission (symmetric)",
+          "title": "shared",
           "type": "boolean"
         },
         "timer": {
@@ -2565,6 +2626,16 @@
           "title": "minDevices",
           "type": "number"
         },
+        "mode": {
+          "default": "speaker",
+          "description": "Type of view of the call participants",
+          "enum": [
+            "gallery",
+            "speaker"
+          ],
+          "title": "mode",
+          "type": "string"
+        },
         "name": {
           "description": "Name of the task. It is displayed in covfee (eg. \"Video 3\")",
           "title": "name",
@@ -2605,6 +2676,11 @@
           "title": "required",
           "type": "boolean"
         },
+        "shared": {
+          "description": "If true, the task is shared among all instances of the HIT\nUseful for group tasks requiring a single shared submission (symmetric)",
+          "title": "shared",
+          "type": "boolean"
+        },
         "timer": {
           "description": "Timing config",
           "properties": {
@@ -2632,6 +2708,7 @@
       },
       "required": [
         "minDevices",
+        "mode",
         "name",
         "queries",
         "type"

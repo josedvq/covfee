@@ -75,6 +75,22 @@ class UserContext extends React.Component<Props, UserState> {
         }
     }
 
+    _onLogin = (userData) => {
+        const newState = {
+            logged: true,
+            username: data.username,
+            loginTime: Date.now()
+        }
+        this.setState(newState)
+        localStorage.setItem('user', JSON.stringify(newState));
+    }
+
+    _onFailure = () => {
+        this.setState({
+            logged: false
+        })
+    }
+
     login = (info: LoginInfo) => {
         const url = Constants.auth_url + '/login'
         const requestOptions = {
@@ -88,18 +104,32 @@ class UserContext extends React.Component<Props, UserState> {
 
         res
         .then(data=>{
-            const newState = {
-                logged: true,
-                username: data.username,
-                loginTime: Date.now()
-            }
-            this.setState(newState)
-            localStorage.setItem('user', JSON.stringify(newState));
+            this._onLogin(data)
         })
         .catch(()=>{
-            this.setState({
-                logged: false
-            })
+            this._onFailure()
+        })
+
+        return res
+    }
+
+    loginWithGoogle = (token: string) => {
+        const url = Constants.auth_url + '/login-google'
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({'token': token})
+        }
+
+        let res = fetcher(url, requestOptions)
+            .then(throwBadResponse)
+
+        res
+        .then(data=>{
+            this._onLogin(data)
+        })
+        .catch(()=>{
+            this._onFailure()
         })
 
         return res

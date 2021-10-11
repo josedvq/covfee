@@ -1,14 +1,20 @@
 import os
+import hmac
+import hashlib
+
 from functools import wraps
 
-from flask import request, jsonify, Blueprint, current_app as app
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from flask import abort, request, jsonify, Blueprint, current_app as app
 from flask_jwt_extended import (
     JWTManager, jwt_required, create_access_token, create_refresh_token, get_current_user,
     set_access_cookies, set_refresh_cookies, jwt_refresh_token_required, unset_jwt_cookies,
     get_jwt_identity, get_jwt_claims, verify_jwt_in_request
 )
 
-from ..orm import User
+from ..orm import User, AuthProvider, password_hash
+
 # AUTHENTICATION
 # Using the user_claims_loader, we can specify a method that will be
 # called when creating access tokens, and add these claims to the said
@@ -64,19 +70,36 @@ def add_claims_to_access_token(user):
 auth = Blueprint('auth', __name__)
 
 
-@auth.route('/login', methods=['POST'])
-def login():
-    username = request.json.get('username', None)
-    password = request.json.get('password', None)
+@auth.route('/deepstream', methods=['POST'])
+def deepstream_login():
+    ''' https://deepstream.io/tutorials/core/auth/http-webhook/
+        clientData will be available in the client.login() callback and serverData sent to the permissions handler.
+    '''
+    auth = request.json['authData']
+    if 'hitId' not in auth or 'token' not in auth:
+        abort(401)
 
-    if username is None or password is None:
-        return jsonify({"msg": "Bad username or password"}), 401
+    try:
+        id = bytes.fromhex(auth['hitId'])
+    except ValueError:
+        abort(401)
 
-    user = User.query.filter_by(
-        username=username, password=User.password_hash(password)).first()
+    targetToken = hmac.new(app.config['COVFEE_SECRET_KEY'].encode('utf-8'), id, hashlib.sha256 )
+    if targetToken.hexdigest() != auth['token']:
+        abort(401)
 
-    if user is None:
-        return jsonify({"msg": "Bad username or password"}), 401
+    return jsonify({
+        'id': 'josedvq',
+        'clientData': {},
+        'serverData': {
+            'role': 'visitor',
+            'hitId': auth['hitId']
+        }
+    }), 200
+
+def login_user(user):
+    ''' Logs a user and returns their tokens
+    '''
 
     # Create the tokens we will be sending back to the user
     access_token = create_access_token(identity=user)
@@ -89,6 +112,71 @@ def login():
     set_access_cookies(res, access_token)
     set_refresh_cookies(res, refresh_token)
     return res, 200
+
+
+@auth.route('/login-password', methods=['POST'])
+def login_password():
+    username = request.json.get('username', None)
+    password = request.json.get('password', None)
+
+    if username is None or password is None:
+        return jsonify({"msg": "Bad username or password"}), 401
+
+    provider = AuthProvider.query.filter_by(
+        user_id=username, provider_id='password').first()
+
+    if provider is None or provider.extra['password'] != password_hash(password):
+        return jsonify({"msg": "Bad username or password"}), 401
+
+    return login_user(provider.user)
+
+
+@auth.route('/login-google', methods=['POST'])
+def login_google():
+    token = request.json.get('token', None)
+
+    if token is None:
+        return jsonify({"msg": "Missing auth token"}), 401
+
+    try:
+        # Specify the CLIENT_ID of the app that accesses the backend:
+        idinfo = id_token.verify_oauth2_token(token, requests.Request(), app.config.get('GOOGLE_CLIENT_ID', None))
+
+        # ID token is valid. Get the user's Google Account ID from the decoded token.
+        userid = idinfo['sub']
+    except ValueError:
+        # Invalid token
+        return jsonify({"msg": "Invalid auth token"}), 401
+
+    provider = AuthProvider.query.filter_by(
+        user_id=userid, provider_id='google').first()
+
+    if provider is None:
+        user = User(userid, roles=['user'])
+        user.add_provider('google', userid)
+        return login_user(user)
+    else:
+        return login_user(provider.user)
+
+
+@auth.route('/signup-password', methods=['POST'])
+def signup():
+    username = request.json.get('username', None)
+    password = request.json.get('password', None)
+
+    if username is None or password is None:
+        return jsonify({"msg": "Missing username or password"}), 401
+
+    provider = AuthProvider.query.filter_by(
+        user_id=username, provider='password').first()
+
+    if provider is not None:
+        return jsonify({"msg": "Username exists"}), 401
+
+    # Create the new user
+    user = User(username, roles=['user'])
+    user.add_provider('password', username, {'password': password})
+    return login_user(user)
 
 
 @auth.route('/refresh', methods=['POST'])

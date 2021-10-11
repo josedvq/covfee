@@ -91,6 +91,10 @@ export interface HitSpec {
      */
     interface?: AnnotationInterface | TimelineInterface
     /**
+     * If true, the user will be required to log in before starting the task
+     */
+    requireLogin?: boolean
+    /**
      * HIT configuration and other params
      */
     config?: completionInfo
@@ -112,7 +116,7 @@ export type HitInstanceType = Omit<HitSpec, 'tasks'> & {
      */
     completionInfo?: completionInfo
     /**
-     * The token for connecting via socketio
+     * The token for connecting via deepstream
      * This token is specific to the HIT instance and is verified in the server.
      */
     token: string

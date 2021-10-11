@@ -43,14 +43,15 @@ class TaskSpec(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
 
     def __init__(self, maxSubmissions=0, autoSubmit=False, timer=None,
-                 editable=False, required=False, prerequisite=False, **spec):
+                 editable=False, required=False, prerequisite=False, shared=False, **spec):
         self.editable = editable
         self.required = required
         self.prerequisite = prerequisite
         self.config = {
             'maxSubmissions': maxSubmissions,
             'autoSubmit': autoSubmit,
-            'timer': timer
+            'timer': timer,
+            'shared': shared
         }
 
         if 'children' in spec:
@@ -62,6 +63,10 @@ class TaskSpec(db.Model):
         self.spec = spec
 
     def instantiate(self):
+        # return singleton task for shared tasks
+        if self.config['shared'] and len(self.tasks) > 0:
+            return self.tasks[0]
+
         task = Task()
         self.tasks.append(task)
 
@@ -106,6 +111,11 @@ class Task(db.Model):
         self.has_unsubmitted_response = False
         self.add_response() # add initial empty response
 
+    def get_task_object(self):
+        task_class = getattr(tasks, self.spec.spec['type'], BaseCovfeeTask)
+        task_object = task_class(task=self)
+        return task_object
+
     def as_dict(self):
         # merge task and spec dicts
         task_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns
@@ -113,6 +123,7 @@ class Task(db.Model):
         if task_dict['hitinstance_id']:   # child tasks may have no hitinstance_id
             task_dict['hitinstance_id'] = task_dict['hitinstance_id'].hex()
         spec_dict = self.spec.as_dict()
+
         task_dict = {**spec_dict, **task_dict}
 
         task_dict['responses'] = [response.as_dict() for response in self.responses]
@@ -124,6 +135,9 @@ class Task(db.Model):
             task_dict['children'] = []
         task_dict['num_submissions'] = sum([1 if res.submitted else 0 for res in self.responses])
         task_dict['url'] = f'{app.config["API_URL"]}/tasks/{task_dict["id"]}'
+
+        task_object = self.get_task_object()
+        task_dict['taskSpecific'] = task_object.get_task_specific_props()
 
         return task_dict
 
@@ -185,24 +199,27 @@ class TaskResponse(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     submitted_at = db.Column(db.DateTime)
 
-    task_object = None
+    # can be used to store server state (eg. state of recording)
+    extra = db.Column(db.JSON)
 
     def __init__(self):
         self.submitted = False
         self.valid = False
+        self.extra = {}
 
     def as_dict(self):
         response_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        response_dict = {**response_dict}
         response_dict['url'] = f'{app.config["API_URL"]}/responses/{response_dict["id"]}'
+        del response_dict['extra']
+        
         return response_dict
 
     def get_task_object(self):
-        if self.task_object:
-            return self.task_object
 
         task_class = getattr(tasks, self.task.spec.spec['type'], BaseCovfeeTask)
-        self.task_object = task_class(self)
-        return self.task_object
+        task_object = task_class(response=self)
+        return task_object
 
     def get_dataframe(self):
         task_object = self.get_task_object()

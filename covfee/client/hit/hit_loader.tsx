@@ -10,7 +10,7 @@ import {
 import {
     Route, RouteComponentProps,
 } from "react-router-dom"
-
+import { DeepstreamClient } from '@deepstream/client'
 import Constants from 'Constants'
 import Hit from './hit'
 import { fetcher, getUrlQueryParam, myerror, throwBadResponse, ErrorPage} from '../utils'
@@ -73,6 +73,7 @@ class HitLoader extends React.Component<Props, State> {
     hit: HitInstanceType
     
     idTaskMap: {[key:string]: {parentIndex: number, childIndex: number}}
+    deepstreamClient = new DeepstreamClient('localhost:6020')
 
     constructor(props: Props) {
         super(props)
@@ -119,18 +120,30 @@ class HitLoader extends React.Component<Props, State> {
                         this.idTaskMap[child.id] = {parentIndex: i, childIndex: j}
                     })
                 })
-                
 
-                this.setState({
-                    tasks: tasks,
-                    status: status,
+                // Connect to deepstream
+                this.deepstreamClient.login({
+                    hitId: this.hit.id, 
+                    token: this.hit.token
+                }, (success, data) => {
+                    if(success) {
+                        console.log('logged IN!!')
+                        this.setState({
+                            tasks: tasks,
+                            status: status,
+                        })
+                    }
+                    
                 })
+                
             }).catch(error => {
                 this.setState({
                     status: 'error',
                     error
                 })
             }),
+
+            
             // minimum duration of the "loading" state will be 1s
             // avoid a flickering modal
             new Promise((resolve, _) => {
@@ -321,6 +334,7 @@ class HitLoader extends React.Component<Props, State> {
                                 routingEnabled={true}
                                 previewMode={this.state.previewMode}
                                 reloadHit={this.loadHit}
+                                deepstreamClient={this.deepstreamClient}
 
                                 // async operations
                                 deleteTask={this.handleTaskDelete}

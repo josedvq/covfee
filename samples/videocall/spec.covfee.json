@@ -10,13 +10,21 @@
                 {
                     "type": "VideocallTask",
                     "name": "Videocall",
+                    "mode": "speaker",
                     "minDevices": 1,
                     "queries": [{
                         "offset": 5,
                         "form": {
                             "fields": []
                         }
-                    }]
+                    }],
+                    "shared": true
+                },
+                {
+                    "type": "generator",
+                    "name": "Appraisal",
+                    "numTasks": 10,
+                    "generatorFn": "generators.generate"
                 }
             ]
         }

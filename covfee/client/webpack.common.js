@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack')
 
 module.exports = env => {
     return {
@@ -49,6 +50,11 @@ module.exports = env => {
                 }
             ]
         },
+        plugins: [
+            new webpack.ProvidePlugin({
+                Buffer: [require.resolve("buffer/"), "Buffer"],
+            }),
+        ],
         externals: {
             "cv": "cv",
             "video.js": "videojs",

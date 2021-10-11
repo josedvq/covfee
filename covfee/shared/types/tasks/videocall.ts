@@ -11,6 +11,11 @@ export interface VideocallTaskBaseSpec {
      */
     type: 'VideocallTask'
     /**
+     * Type of view of the call participants
+     * @default "speaker"
+     */
+    mode: 'speaker' | 'gallery'
+    /**
      * Spec of the forms to be answered
      */
     queries: {
@@ -24,6 +29,7 @@ export interface VideocallTaskBaseSpec {
      * Minimum number of devices in the call necessary to start the queries
      */
     minDevices: number
+
 }
 
 /**

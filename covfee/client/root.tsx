@@ -6,7 +6,6 @@ import {
 import './css/gui.scss'
 
 const { Title, Paragraph, Text } = Typography;
-import { LoginWithRouter} from './login'
 import UserContext from './user'
 
 import {
@@ -37,9 +36,6 @@ class Root extends React.Component {
                             <Switch>
                                 <Route path="/about">
                                     <About />
-                                </Route>
-                                <Route path="/login">
-                                    <LoginWithRouter />
                                 </Route>
                                 <Route path="/hits/:hitId">
                                     <HitLoaderWithRouter/>

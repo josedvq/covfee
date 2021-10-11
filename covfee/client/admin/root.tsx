@@ -22,6 +22,7 @@ import UserContext from '../user'
 import AdminProject from './project'
 import AdminHIT from './hit'
 import AdminHeader from './header'
+import LoginPage from './login'
 
 class Root extends React.Component {
 
@@ -37,6 +38,9 @@ class Root extends React.Component {
                             </Route>
                             <Route path="/projects/:projectId">
                                 <AdminProject />
+                            </Route>
+                            <Route path="/login">
+                                <LoginPage/>
                             </Route>
                             <Route path="/">
                                 <AdminProject />

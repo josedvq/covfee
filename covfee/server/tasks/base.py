@@ -1,12 +1,25 @@
 import pandas as pd
 import numpy as np
 from typing import Tuple, List, Any
-
+# from ..orm.task import Task, TaskResponse
 
 class BaseCovfeeTask:
 
-    def __init__(self, response):
+    def __init__(self, response=None, task=None):
         self.response = response
+
+        if response:
+            self.task = response.task
+        else:
+            self.task = task
+
+    def get_task_specific_props(self) -> dict:
+        """Used to extend the dict that is send to the browser as props for the task element.
+
+        Returns:
+            dict: new props to be merged with the default props
+        """
+        return {}
 
     def to_dict(self, with_chunk_data: bool) -> dict:
         """Processes a task response to return a friendly dict (JSON) with task results and metadata
@@ -65,3 +78,15 @@ class BaseCovfeeTask:
             [type]: [description]
         """
         return True
+
+    def on_first_join():
+        """ Called when the first visitor joins the task.
+            (for socketio-enabled tasks)
+        """
+        pass
+
+    def on_last_leave():
+        """ Called when the last person left leaves the task page
+            (for socketio-enabled tasks)
+        """
+        pass

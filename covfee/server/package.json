@@ -4,13 +4,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "store": ""
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@deepstream/client": "^5.2.4",
+    "@deepstream/server": "^5.2.4",
     "@reduxjs/toolkit": "^1.6.0",
     "knex": "^0.95.7",
-    "sqlite3": "^5.0.2"
+    "pm2": "^5.1.0",
+    "sqlite3": "^5.0.2",
+    "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "typescript": "^4.3.5"
   }
 }

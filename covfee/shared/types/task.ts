@@ -37,6 +37,11 @@ export interface CommonTaskSpec {
      */
     prerequisite?: boolean
     /**
+     * If true, the task is shared among all instances of the HIT
+     * Useful for group tasks requiring a single shared submission (symmetric)
+     */
+    shared?: boolean
+    /**
      * Timing config
      */
     timer?: {
@@ -93,7 +98,8 @@ export interface TaskResponse {
     submitted: boolean,
     data: object,
     hasChunkData: boolean,
-    chunkData?: object
+    chunkData?: object,
+    state: any
 }
 export interface TaskType extends Omit<CommonTaskSpec, 'children'> {
     children: Array<TaskType>
@@ -125,6 +131,10 @@ export interface TaskType extends Omit<CommonTaskSpec, 'children'> {
      * True if the task has been successfully validated
      */
     valid: boolean
+    /**
+     * Task-specific props to be fed to the task
+     */
+    taskSpecific?: any
 }
 
 export interface EditableTaskFields {

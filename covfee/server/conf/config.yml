@@ -1,0 +1,83 @@
+# https://deepstream.io/docs/server/configuration/
+# general configuration with default values
+serverName: UUID
+showLogo: true
+dependencyInitializationTimeout: 2000
+exitOnFatalError: false
+
+httpServer:
+  type: default
+  options:
+    # url path for http health-checks, GET requests to this path will return 200 if deepstream is alive
+    healthCheckPath: /health-check
+    # -- CORS --
+    # if disabled, only requests with an 'Origin' header matching one specified under 'origins'
+    # below will be permitted and the 'Access-Control-Allow-Credentials' response header will be
+    # enabled
+    allowAllOrigins: true
+    # SSL
+    # ssl:
+    #   key: fileLoad(/home/jose/drive/docs/home_cert_authority/home_desktop/home-desktop.key)
+    #   cert: fileLoad(/home/jose/drive/docs/home_cert_authority/home_desktop/home-desktop.crt)
+    #   ca: fileLoad(/home/jose/drive/docs/home_cert_authority/easy-rsa/pki/ca.crt)
+
+connectionEndpoints:
+  - type: http
+    options:
+      # allow 'authData' parameter in POST requests, if disabled only token and OPEN auth is
+      # possible
+      allowAuthData: true
+      # enable the authentication endpoint for requesting tokens/userData.
+      # note: a custom authentication handler is required for token generation
+      enableAuthEndpoint: false
+      # path for authentication requests
+      authPath: /auth
+      # path for POST requests
+      postPath: /
+      # path for GET requests
+      getPath: /
+      # maximum allowed size of an individual message in bytes
+      maxMessageSize: 1024
+  - type: ws-binary
+    options:
+      # url path websocket connections connect to
+      urlPath: /deepstream
+      # the amount of milliseconds between each ping/heartbeat message
+      heartbeatInterval: 30000
+      # the amount of milliseconds that writes to sockets are buffered
+      outgoingBufferTimeout: 10
+      # the maximum amount of bytes to buffer before flushing, stops the client from large enough packages
+      # to block its responsiveness
+      maxBufferByteSize: 100000
+
+      # Security
+      # amount of time a connection can remain open while not being logged in
+      unauthenticatedClientTimeout: 1000
+      # invalid login attempts before the connection is cut
+      maxAuthAttempts: 3
+      # maximum allowed size of an individual message in bytes
+      maxMessageSize: 1048576
+
+#Authentication
+auth:
+  - type: http
+    options:
+      endpointUrl: http://localhost:5000/auth/deepstream
+      permittedStatusCodes: [ 200 ]
+      requestTimeout: 2000
+      retryStatusCodes: [ 404, 504 ]
+      retryAttempts: 3
+      retryInterval: 5000
+      reportInvalidParameters: false # return when credentials are incorrect: missing username or password
+  - type: file
+    options:
+      users: fileLoad(users.json) # Path to the user file. Can be json, js or yml
+      # hash: 'md5' # the name of a HMAC digest algorithm
+      # iterations: 100 # the number of times the algorithm should be applied
+      # keyLength: 32 # the length of the resulting key
+      reportInvalidParameters: true # return when credentials are incorrect: missing username or password
+
+permission:
+  type: config
+  options:
+    permissions: fileLoad(permissions.yml)
