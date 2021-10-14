@@ -10,6 +10,7 @@ import userContext from '../userContext'
 import Constants from 'Constants'
 import CovfeeLogo from '../art/logo.svg'
 import '../css/gui.scss'
+import { CovfeeMenuItem } from '../gui'
 
 const { Header} = Layout;
 
@@ -24,8 +25,10 @@ class AdminHeader extends React.Component {
 
     render() {
         return <Header className="header" >
-            <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['2']}>
-                <Menu.Item key="1"><Link to="/" className='header-covfee'><CovfeeLogo width="30" height="30" /> covfee</Link></Menu.Item>
+            <Menu mode="horizontal" theme="dark" style={{position: 'sticky', top: 0, width: '100%', zIndex: 10000}}>
+                <Menu.Item key="1" disabled>
+                    <CovfeeMenuItem/>
+                </Menu.Item>
                 <Menu.Item key="2" onClick={this.handleLogout} style={{float:'right'}}>Logout</Menu.Item>
             </Menu>
         </Header >

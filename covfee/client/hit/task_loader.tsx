@@ -21,8 +21,6 @@ import { BinaryDataCaptureBuffer } from '../buffers/binary_dc_buffer'
 import { AnnotationBuffer } from 'buffers/buffer';
 import { ContinuousPlayerProps, CovfeeContinuousPlayer } from 'players/base';
 import { Socket } from 'socket.io-client'
-import { DeepstreamClient } from '@deepstream/client'
-import useSharedState from './use_deepstream'
 
 interface State {
     /**
@@ -89,10 +87,6 @@ interface Props {
      * socketio instance for multi-party tasks
      */
     socket: Socket
-    /**
-     * DeepStream client instance
-     */
-    deepstreamClient: DeepstreamClient
     /**
      * If true, the task cannot be interacted with
      */
@@ -223,14 +217,6 @@ export class TaskLoader extends React.Component<Props, State> {
                 this.loadTask(true)
             }
         })
-    }
-
-    getSharedState = () => {
-        const record = this.props.deepstreamClient.record.getRecord(`tasks/${this.response.id}`)
-        record.whenReady((record)=>{
-            console.log(record)
-        })
-        return useSharedState(record)
     }
 
     // startSockets = () => {

@@ -94,7 +94,7 @@ class HIT(db.Model):
         for i, spec in enumerate(task_list):
             if 'name' not in spec:
                 spec['name'] = f'Task {i}'
-                self.taskspecs.append(TaskSpec(**spec))
+            self.taskspecs.append(TaskSpec(**spec))
         
         # store the generator specification
         self.config['generator'] = tasks_spec

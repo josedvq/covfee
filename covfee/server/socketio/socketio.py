@@ -7,12 +7,10 @@ from ..tasks.base import BaseCovfeeTask
 from flask import current_app as app, session
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 from covfee.server.orm.task import TaskResponse
-from covfee.server.socketio.redux_store import ReduxStoreService
-from covfee.server.deepstream.deepstream_subscriber import DeepStreamSubscriber
+from covfee.server.socketio.redux_store import ReduxStoreClient
 
 socketio = SocketIO()
-# store = ReduxStoreService()
-deepstream = DeepStreamSubscriber()
+store = ReduxStoreClient()
 
 def get_task_object(responseId: int):
     response = db.session.query(TaskResponse).get(responseId)

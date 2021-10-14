@@ -1,3 +1,3 @@
-from covfee.server.deepstream.events import deepstream
+from covfee.server.socketio.redux_store import ReduxStoreService
 
-rtstore = deepstream
+rtstore = ReduxStoreService()

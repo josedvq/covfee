@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
 
-import { DeepstreamClient } from '@deepstream/client'
-import {Record} from '@deepstream/client/dist/src/record/record'
 
 export default function useSharedState(taskId: string) : [any, (arg0: any)=>void] {
   const [state, setState] = useState<any>(undefined);

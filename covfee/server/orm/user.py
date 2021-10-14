@@ -11,7 +11,7 @@ class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String)
+    username = db.Column(db.String, unique=True)
     roles = db.Column(db.JSON)
 
     providers = db.relationship("AuthProvider", backref="user", cascade="all, delete")
@@ -26,8 +26,8 @@ class User(db.Model):
 class AuthProvider(db.Model):
     __tablename__ = 'auth_providers'
 
-    provider_id = db.Column(db.String, db.ForeignKey('users.id'), primary_key=True)
-    user_id = db.Column(db.String, primary_key=True)
+    provider_id = db.Column(db.String, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
 
     # holds provider specific information like the password for password provider
     extra = db.Column(db.JSON)

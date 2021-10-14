@@ -3,13 +3,14 @@ import shutil
 import sys
 import subprocess
 import random
+import traceback
 
 from flask import current_app as app
 from halo import Halo
 from colorama import init as colorama_init, Fore
 
 from covfee.server.orm import db
-from covfee.server.orm.user import User
+from covfee.server.orm.user import User, password_hash
 from covfee.cli.utils import working_directory
 from pathlib import Path
 from covfee.shared.validator.ajv_validator import AjvValidator
@@ -102,7 +103,7 @@ class CovfeeFolder:
             # delete existing project with the same id
             with Halo(text=f'Looking for existing projects with id {project_spec["id"]}',
                       spinner='dots',
-                      enabled=with_spinner) as spinner:
+                      enabled=False) as spinner:
 
                 projid = Project.get_id(project_spec['id'])
                 existing_project = Project.query.filter_by(id=projid).first()
@@ -112,6 +113,7 @@ class CovfeeFolder:
                         db.session.commit()
                         spinner.warn(
                             f'Deleted existing project with conflicting ID {project_spec["id"]}')
+        
                     else:
                         msg = f'Project with ID {project_spec["id"]} already exists.'
                         spinner.fail(msg)
@@ -120,7 +122,7 @@ class CovfeeFolder:
             # making
             with Halo(text=f'Making project {project_spec["name"]} from file {cf}',
                       spinner='dots',
-                      enabled=with_spinner) as spinner:
+                      enabled=False) as spinner:
                 project = Project(**project_spec)
                 db.session.add(project)
                 spinner.succeed(
@@ -191,7 +193,9 @@ class CovfeeFolder:
                             str(app.config['DS_CLIENT_PUB_PORT']), 
                             str(app.config['DS_CLIENT_SUB_PORT'])])
 
+
     def mkuser(self, username, password):
-        user = User(username, password, ['admin'])
+        user = User(username, ['admin'])
+        user.add_provider('password', username, {'password': password_hash(password).hex()})
         db.session.add(user)
         db.session.commit()

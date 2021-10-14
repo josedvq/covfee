@@ -1,10 +1,23 @@
 import os
 import json
+import subprocess
 
 import zmq
+
+from covfee.cli.utils import working_directory
+from flask import current_app as app
 context = zmq.Context()
 
 class ReduxStoreService:
+    def run(self):
+        with working_directory(os.path.join(app.config['COVFEE_SERVER_PATH'], 'socketio')):
+            subprocess.Popen(['npx', 'pm2', 'start', 'reduxStore.js', '-i', '1', '--watch', '--', 
+                'serve',
+                '--database',
+                app.config['DATABASE_PATH']
+            ])
+
+class ReduxStoreClient:
     ''' This class takes care of replicating the shared state in multi-party tasks server-side for 
     persistence and synchronization.
     Multiparty tasks use a synced redux store for state. The server maintains the true state by dispatching

@@ -92,7 +92,7 @@ class UserContext extends React.Component<Props, UserState> {
     }
 
     login = (info: LoginInfo) => {
-        const url = Constants.auth_url + '/login'
+        const url = Constants.auth_url + '/login-password'
         const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

@@ -39,7 +39,7 @@ def _make(file_or_folder, force=False, rms=False, stdout_enabled=True):
     if not project_folder.is_project():
         project_folder.init()
     project_folder.push_projects(force=force, with_spinner=stdout_enabled)
-        
+
     # link bundles
     with Halo(text='Linking covfee bundles', spinner='dots', enabled=stdout_enabled) as spinner:
         try:

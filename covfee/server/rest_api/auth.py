@@ -13,7 +13,7 @@ from flask_jwt_extended import (
     get_jwt_identity, get_jwt_claims, verify_jwt_in_request
 )
 
-from ..orm import User, AuthProvider, password_hash
+from ..orm import db, User, AuthProvider, password_hash
 
 # AUTHENTICATION
 # Using the user_claims_loader, we can specify a method that will be
@@ -69,34 +69,6 @@ def add_claims_to_access_token(user):
 # AUTH routes
 auth = Blueprint('auth', __name__)
 
-
-@auth.route('/deepstream', methods=['POST'])
-def deepstream_login():
-    ''' https://deepstream.io/tutorials/core/auth/http-webhook/
-        clientData will be available in the client.login() callback and serverData sent to the permissions handler.
-    '''
-    auth = request.json['authData']
-    if 'hitId' not in auth or 'token' not in auth:
-        abort(401)
-
-    try:
-        id = bytes.fromhex(auth['hitId'])
-    except ValueError:
-        abort(401)
-
-    targetToken = hmac.new(app.config['COVFEE_SECRET_KEY'].encode('utf-8'), id, hashlib.sha256 )
-    if targetToken.hexdigest() != auth['token']:
-        abort(401)
-
-    return jsonify({
-        'id': 'josedvq',
-        'clientData': {},
-        'serverData': {
-            'role': 'visitor',
-            'hitId': auth['hitId']
-        }
-    }), 200
-
 def login_user(user):
     ''' Logs a user and returns their tokens
     '''
@@ -122,10 +94,17 @@ def login_password():
     if username is None or password is None:
         return jsonify({"msg": "Bad username or password"}), 401
 
-    provider = AuthProvider.query.filter_by(
-        user_id=username, provider_id='password').first()
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        return jsonify({"msg": "Bad username or password"}), 401
 
-    if provider is None or provider.extra['password'] != password_hash(password):
+    password_providers = [prov for prov in user.providers if prov.provider_id == 'password']
+    if len(password_providers) != 1:
+        return jsonify({"msg": "Bad username or password"}), 401
+    
+    provider = password_providers[0]
+
+    if provider.extra['password'] != password_hash(password).hex():
         return jsonify({"msg": "Bad username or password"}), 401
 
     return login_user(provider.user)

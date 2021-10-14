@@ -19,7 +19,6 @@ import 'antd/dist/antd.css'
 const { Panel } = Collapse
 import Collapsible from 'react-collapsible'
 const { Text } = Typography
-import { DeepstreamClient } from '@deepstream/client'
 
 import Constants from 'Constants'
 import { myerror } from '../utils'
@@ -52,10 +51,6 @@ type Props = HitInstanceType & RouteComponentProps<MatchParams> & {
      * Tells the annotation component to keep urls up to date
      */
     routingEnabled: boolean
-    /**
-     * DeepStream client instance
-     */
-    deepstreamClient: DeepstreamClient
 
     // ASYNC OPERATIONS
     deleteTask: TaskDeleteCallback
@@ -436,7 +431,6 @@ export class Hit extends React.Component<Props, State> {
                         key={this.state.currKey}
                         task={taskProps}
                         parent={parentProps}
-                        deepstreamClient={this.props.deepstreamClient}
                         interfaceMode={this.props.interface.type}
                         disabled={(taskProps.maxSubmissions ? (taskProps.num_submissions >= taskProps.maxSubmissions) : false) || (taskProps.prerequisite && taskProps.valid)}
                         previewMode={this.props.previewMode}

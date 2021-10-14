@@ -6,7 +6,6 @@ from flask import Flask, Blueprint, render_template, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_socketio import SocketIO
-from .deepstream.events import deepstream
 
 from .orm import db, load_config
 from .rest_api import api, auth, admin_required, add_claims_to_access_token, user_identity_lookup, \
