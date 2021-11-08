@@ -51,8 +51,8 @@ def load_config(app, mode, host=None):
         SQLALCHEMY_DATABASE_URI=f'sqlite:///{app.config["DATABASE_PATH"]}',
 
         # create derived URLs
-        PROJECT_WWW_URL=app.config['BASE_URL'] + '/www',
-        BUNDLE_URL=app.config['BASE_URL'] + '/www',
+        PROJECT_WWW_URL=app.config.get('PROJECT_WWW_URL', app.config['BASE_URL'] + '/www'),
+        BUNDLE_URL=app.config.get('BUNDLE_URL', app.config['BASE_URL'] + '/www'),
         APP_URL=app.config['BASE_URL'] + '/#',
         ADMIN_URL=app.config['BASE_URL'] + '/admin#',
         LOGIN_URL=app.config['BASE_URL'] + '#login',
