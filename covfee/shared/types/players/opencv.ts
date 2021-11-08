@@ -11,9 +11,21 @@ export interface OpencvFlowPlayerMedia extends BasicVideo {
      * Video fps. Required to obtain frame number from time (since frame number is not directly accesible in browsers).
      */
     fps: number
+    /**
+     * Video resolution
+     */
+    resolution: [number, number]
 }
 
 export interface OpencvFlowPlayerOptions {
+    /**
+     * Size of the square (LxL) around the cursor position to use for OF calculation
+     */
+    L: number
+    /**
+     * Lenght/stregth of the temporal smoothing
+     */
+    T: number
     /**
      * If true, a countdown is shown before the video plays
      */

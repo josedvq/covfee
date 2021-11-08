@@ -59,7 +59,6 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
 
     req_id: any = false
     rect: DOMRectReadOnly
-    res: [number, number]
     ratio: number = 0.5
 
     rates: number[]
@@ -73,7 +72,7 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
 
     static defaultProps = {
         L: 10,
-        T: 60,
+        T: 0, // disabled by default
         countdown: true,
         opticalFlowEnabled: true,
         playbackRateMultiplier: 1
@@ -90,7 +89,7 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
 
     opencv_init = () => {
         const cv_init = () => {
-            this.frame_flow = new cv.Mat(this.res[1], this.res[0]*2, cv.CV_8UC4)
+            this.frame_flow = new cv.Mat(this.props.media.resolution[1], this.props.media.resolution[0]*2, cv.CV_8UC4)
 
 
             this.myMean = new cv.Mat(1, 4, cv.CV_64F)
@@ -110,27 +109,13 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
     componentDidMount() {
         const self = this
         this.videoTag.addEventListener('loadedmetadata', function(e) {
-            
-
             // init opencv
             if(self.state.opticalFlowEnabled) {
-                
-                // self.res = [this.videoWidth, this.videoHeight]
-                self.res = [Math.floor(this.videoWidth /2), this.videoHeight]
                 self.opencv_init()
-            } else {
-                self.res = [this.videoWidth, this.videoHeight]
             }
         }, false)
 
         this.canvasCtx = this.canvasTag.getContext('2d')
-
-        // update the ratio of flow_res / video_res
-        // let observer = new ResizeObserver((entries: ResizeObserverEntry[]) => {
-        //     this.rect = entries[0].contentRect
-        //     this.ratio = this.props.media.res[0] / this.rect.width
-        // })
-        // observer.observe(this.canvasTag)
 
         // preload video and flow video
         fetch(urlReplacer(this.props.media.url))
@@ -181,7 +166,7 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
         // copy the video content to the main canvas
         const width = this.canvasTag.width
         const height = this.canvasTag.height
-        this.canvasCtx.drawImage(this.videoTag, 0, 0, this.res[0], this.res[1], 0, 0, width, height)
+        this.canvasCtx.drawImage(this.videoTag, 0, 0, this.props.media.resolution[0], this.props.media.resolution[1], 0, 0, width, height)
     }
 
     getRatesMovingAverage = () => {
@@ -195,18 +180,18 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
             const mouse_normalized = this.props.getMousePosition()
 
             const mouse = [
-                mouse_normalized[0] * this.res[0],
-                mouse_normalized[1] * this.res[1]
+                mouse_normalized[0] * this.props.media.resolution[0],
+                mouse_normalized[1] * this.props.media.resolution[1]
             ]
 
             // start processing.
             this.cap.read(this.frame_flow)
             const x1 = Math.max(0, mouse[0] - this.props.L)
-            const x2 = Math.min(mouse[0] + this.props.L, this.res[0])
+            const x2 = Math.min(mouse[0] + this.props.L, this.props.media.resolution[0])
             const y1 = Math.max(0, mouse[1] - this.props.L)
-            const y2 = Math.min(mouse[1] + this.props.L, this.res[1])
+            const y2 = Math.min(mouse[1] + this.props.L, this.props.media.resolution[1])
 
-            const rect = new cv.Rect(this.res[0] +x1, y1, x2-x1, y2-y1)
+            const rect = new cv.Rect(this.props.media.resolution[0] +x1, y1, x2-x1, y2-y1)
             const roi = this.frame_flow.roi(rect)
             cv.meanStdDev(roi, this.myMean, this.myStddev)
             const delay = Math.max(1.0, this.myMean.doubleAt(0, 0))
@@ -216,17 +201,13 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
             rate = Math.min(4.0, Math.max(0.1, rate))
 
             // cap the rate when it goes above the moving average
-            // const rateMA = this.getRatesMovingAverage()
-            // if(rate > rateMA) {
-            //     rate = Math.min(rate, rateMA*1.2)
-            // }
-            // console.log([rate, x1,x2,y1,y2])
+            if(this.props.T != 0) {
+                const rateMA = this.getRatesMovingAverage()
+                if(rate > rateMA) {
+                    rate = Math.min(rate, rateMA*1.2)
+                }
+            }
 
-            // if (!this.props.opticalFlowEnabled || mouse_normalized === undefined)
-                
-            // else {
-                
-            // }
         } else {
             rate = 1 * this.props.playbackRateMultiplier    
         }

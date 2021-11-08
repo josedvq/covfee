@@ -18,13 +18,13 @@ def compute_flow(video: str, flow: str, width: int):
 
     flow_res = (width, int(width * video_res[1] / video_res[0]))
 
-    fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+    fourcc = cv2.VideoWriter_fourcc(*'X264')
     out = cv2.VideoWriter(flow, fourcc, frame_rate, flow_res, 0)
 
     _, prev_frame = cap.read()
     for i in trange(num_frames-1):
         _, frame = cap.read()
-        of = pixelwise_movement(prev_frame, frame, max_value=0.4, res=flow_res)
+        of = pixelwise_movement(prev_frame, frame, max_value=1.2, res=flow_res)
         out.write(of)
         prev_frame = frame
     out.write(of)  # repeat the last frame to have the same number
