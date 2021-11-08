@@ -10,7 +10,7 @@ from halo.halo import Halo
 
 from covfee.server.start import create_app
 from covfee.cli.utils import working_directory
-from covfee.cli.schemata import Schemata
+from covfee.shared.schemata import Schemata
 
 @click.group(name='covfee-dev')
 def covfee_dev_cli():
