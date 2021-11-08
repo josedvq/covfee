@@ -8,7 +8,7 @@ from .task import *
 from .user import *
 
 
-def load_config(app, mode, host=None):
+def load_config(app, mode):
     app.config['COVFEE_ENV'] = mode
     # load the base configuration object
     app.config.from_object('covfee.server.config')
@@ -29,15 +29,6 @@ def load_config(app, mode, host=None):
     # check if SSL enabled
     app.config['SSL_ENABLED'] = ('SSL_KEY_FILE' in app.config and 'SSL_CERT_FILE' in app.config)
 
-    protocol = 'https' if app.config['SSL_ENABLED'] else 'http'
-    host = host if host is not None else '127.0.0.1'
-
-    # URL that will be used to access the app
-    app.config['BASE_URL'] = f'{protocol}://{host}:5000'
-    
-    # URL of the webpack hot bundle
-    app.config['DEV_BUNDLE_URL'] = f'{protocol}://{host}:8085'
-        
     # apply extended config
     app_path = urlparse(app.config['BASE_URL']).path
     if app_path == '':

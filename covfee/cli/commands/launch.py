@@ -92,9 +92,8 @@ def launch_deepstream():
 @covfee_cli.command()
 @click.option("--dev", is_flag=True, help="Run covfee in dev mode")
 @click.option("--deploy", is_flag=True, help="Run covfee in deployment mode")
-@click.option("--host", default='localhost', help="IP address where covfee will be served. Use for testing in a local network.")
 @click.option('--no-browser', is_flag=True, help='Disables launching of the web browser.')
-def start(dev, deploy, host, no_browser):
+def start(dev, deploy, no_browser):
     """
     Starts covfee in local mode by default. Use --deploy or --dev to start deployment (public) or development servers.
     """
@@ -104,7 +103,7 @@ def start(dev, deploy, host, no_browser):
     if deploy: mode = 'deploy'
     unsafe_mode_on = (mode in ['local', 'dev'])
 
-    socketio, app = create_app(mode, host=host)  
+    socketio, app = create_app(mode)  
 
     with app.app_context():
         covfee_folder = CovfeeFolder(os.getcwd())
@@ -117,7 +116,7 @@ def start(dev, deploy, host, no_browser):
 
         # covfee_folder.launch_prod(unsafe, launch_browser=not no_browser)
         app.config['UNSAFE_MODE_ON'] = unsafe_mode_on
-        start_covfee(socketio, app, mode, host=host)
+        start_covfee(socketio, app, mode)
 
 
 @covfee_cli.command(name="open")

@@ -11,12 +11,12 @@ from .orm import db, load_config
 from .rest_api import api, auth, admin_required, add_claims_to_access_token, user_identity_lookup, \
     user_loader_callback
 
-def create_app(mode, host=None):
+def create_app(mode):
     app = Flask(__name__, static_folder=None)
-    load_config(app, mode=mode, host=host)
+    load_config(app, mode=mode)
     db.init_app(app)
     socketio = SocketIO()
-    socketio.init_app(app, cors_allowed_origins=['http://desktop.home:5000', 'https://desktop.home:5000', 'http://desktop.home:6062', 'https://desktop.home:6062'])
+    socketio.init_app(app)
 
     app.register_blueprint(frontend, url_prefix='/')
     app.register_blueprint(api, url_prefix='/api')
