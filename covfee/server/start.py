@@ -52,7 +52,6 @@ def main():
 
 # admin interface
 @frontend.route('/admin')
-@admin_required
 def admin():
     return render_template('admin.html',
                            constants=json.dumps(app.config['FRONTEND_CONFIG']),
