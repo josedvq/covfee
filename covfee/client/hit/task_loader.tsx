@@ -13,7 +13,6 @@ import { myerror, fetcher, throwBadResponse, makeCancelablePromise, CancelablePr
 import { getPlayerClass, getTask } from '../task_utils'
 import { TaskResponse, TaskSpec, TaskType } from '@covfee-types/task'
 import { TaskOverlay } from './overlay'
-import { ContinuousTaskPlayer, PlayerStatusType, VideoPlayerContext } from './continuous_task_player'
 import buttonManagerContext from '../input/button_manager_context'
 import { QuestionCircleOutlined } from '@ant-design/icons'
 import { CommonTaskProps, BasicTaskProps, ContinuousTaskProps, CovfeeTask } from 'tasks/base'
@@ -21,6 +20,18 @@ import { BinaryDataCaptureBuffer } from '../buffers/binary_dc_buffer'
 import { AnnotationBuffer } from 'buffers/buffer';
 import { ContinuousPlayerProps, CovfeeContinuousPlayer } from 'players/base';
 import { Socket } from 'socket.io-client'
+
+export interface VideoPlayerContext {
+    paused: boolean
+    muted: boolean
+    togglePlayPause: () => void
+    play: () => void
+    pause: () => void
+    mute: () => void
+    unmute: () => void
+    currentTime: (arg0?: number, callback?: ()=>{}) => number | void
+    addListener: (arg0: string, arg1: (...args: any[]) => void) => void
+}
 
 interface State {
     /**
@@ -196,6 +207,10 @@ export class TaskLoader extends React.Component<Props, State> {
     }
 
     isContinuousTask = () => (this.state.renderAs.type == 'continuous-task')
+
+    isMaxSubmissionsReached = () => {
+        return (this.props.task.maxSubmissions && this.props.task.num_submissions >= this.props.task.maxSubmissions)
+    }
 
     componentDidMount = () => {
         // read the taks and parent responses.
@@ -437,7 +452,7 @@ export class TaskLoader extends React.Component<Props, State> {
                 <Button danger
                     type="primary"
                     onClick={this.clearAndReloadTask}
-                    disabled={this.props.task.num_submissions >= this.props.task.maxSubmissions}
+                    disabled={this.isMaxSubmissionsReached()}
                     >Restart Task</Button>,
 
                 <Button
@@ -464,7 +479,7 @@ export class TaskLoader extends React.Component<Props, State> {
                 <Button danger
                     type="primary"
                     onClick={this.clearAndReloadTask}
-                    disabled={this.props.task.maxSubmissions && this.props.task.num_submissions >= this.props.task.maxSubmissions}
+                    disabled={this.isMaxSubmissionsReached()}
                     >Discard &amp; Restart</Button>,
 
                 <Button
@@ -496,7 +511,7 @@ export class TaskLoader extends React.Component<Props, State> {
                 <Button danger
                     type="primary"
                     onClick={this.clearAndReloadTask}
-                    disabled={this.props.task.maxSubmissions && this.props.task.num_submissions >= this.props.task.maxSubmissions}
+                    disabled={this.isMaxSubmissionsReached()}
                     >Submit again</Button>,
 
                 <Button

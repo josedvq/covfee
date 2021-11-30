@@ -6,7 +6,7 @@ interface Props {
 }
 
 class MouseVisualizer extends React.Component<Props> {
-    container = React.createRef<HTMLDivElement>()
+    container:HTMLDivElement = null
     rect: DOMRectReadOnly = null
     pointerRef: HTMLDivElement = null
     posPx: [number, number] = [0,0]
@@ -22,7 +22,7 @@ class MouseVisualizer extends React.Component<Props> {
             this.rect = entries[0].contentRect
         })
 
-        if(!this.props.disable) observer.observe(this.container.current)
+        observer.observe(this.container)
     }
 
     setData = (data: [number, number]) => {
@@ -38,14 +38,15 @@ class MouseVisualizer extends React.Component<Props> {
 
     render() {
         // do not render to save cycles when disabled
-        if(this.props.disable) return this.props.children
+        console.log(this.props.disable)
 
-        return <div className='mouse-visualizer' ref={this.container}>
+        return <div className='mouse-visualizer' ref={e=>{this.container=e}}>
             {this.props.children}
-            <div className='mouse-visualizer-pointer' ref={e=>{this.pointerRef = e}} style={{
-                top: this.posPx[1] + 'px',
-                left: this.posPx[0] + 'px'
-            }}></div>
+            {!this.props.disable &&
+                <div className='mouse-visualizer-pointer' ref={e=>{this.pointerRef = e}} style={{
+                    top: this.posPx[1] + 'px',
+                    left: this.posPx[0] + 'px'
+                }}></div>}
         </div>
     }
 }

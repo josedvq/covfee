@@ -45,6 +45,14 @@ export default class ContinuousKeypointTask extends CovfeeContinuousTask<Props, 
         if(opticalFlowEnabled !== null) {
             this.state.opticalFlowEnabled = (opticalFlowEnabled == '1')
         }
+        if(props.response !== null)
+            this.state.opticalFlowEnabled = false
+        // console.log(this.state.opticalFlowEnabled)
+    }
+
+    componentDidUpdate() {
+        if(this.props.response !== null)
+            this.state.opticalFlowEnabled = false
     }
 
     componentDidMount() {
@@ -80,7 +88,7 @@ export default class ContinuousKeypointTask extends CovfeeContinuousTask<Props, 
 
         this.props.buttons.addListener('opticalflow', 'v', 'Toggle optical flow-based speed adjustment.')
             .addEvent('keydown', (e: Event) => {
-                this.handleToggleOpticalFlow()
+                this.toggleOpticalFlow()
             })
 
         this.props.player.addListener('frame', this.handleFrame)
@@ -143,6 +151,10 @@ export default class ContinuousKeypointTask extends CovfeeContinuousTask<Props, 
         })
     }
 
+    toggleOpticalFlow = () => {
+        this.setOpticalFlowEnabled(!this.state.opticalFlowEnabled)
+    }
+
     // Replaying logic
     // Takes care of replaying an annotation given a log
 
@@ -183,11 +195,7 @@ export default class ContinuousKeypointTask extends CovfeeContinuousTask<Props, 
             this.mouse_normalized = [action[3], action[4]]
             this.setState({
                 mouse_valid: !!action[5],
-                occluded: !!action[6],
-                replayMode: {
-                    ...this.state.replayMode,
-                    data: [action[3], action[4]]
-                }
+                occluded: !!action[6]
             })
             return
         }
@@ -210,14 +218,16 @@ export default class ContinuousKeypointTask extends CovfeeContinuousTask<Props, 
 
     wrapPlayerElement = (elem: React.ReactNode ) => {
         return <MouseTracker
-            disable={this.props.replayMode} // disable mouse tracking in replay mode
+            disable={this.props.response !== null} // disable mouse tracking in replay mode
             paused={false}
             occluded={this.state.occluded}
             mouseActive={this.state.mouse_valid}
             onData={this.handleMouseData} 
             onMouseActiveChange={this.handleMouseActiveChange}>
 
-            <MouseVisualizer ref={e=>{if(e) this.updateMouseVisualization = e.setData}}>
+            <MouseVisualizer 
+                disable={this.props.response === null}
+                ref={e=>{if(e) this.updateMouseVisualization = e.setData}}>
                 {elem}
             </MouseVisualizer>
         </MouseTracker>
