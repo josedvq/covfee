@@ -13,7 +13,7 @@ yarn.lock
 lerna-debug.log
 
 # generated files
-covfee/server/schemata.json
+covfee/shared/schemata.json
 covfee/server/tmp
 
 # file formats

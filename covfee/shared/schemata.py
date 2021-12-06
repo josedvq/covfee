@@ -69,8 +69,9 @@ class Schemata:
             pass
         # make the typescript into json schemata
         with working_directory(app.config['SHARED_PATH']):
-            os.system('npx typescript-json-schema tsconfig.json "MyProjectSpec" --titles '
-                      f'--ignoreErrors --required -o {app.config["SCHEMATA_PATH"]}')
+            tsconfig_path = os.path.join(app.config['SHARED_PATH'], 'tsconfig.json')
+            cmd = f'npx typescript-json-schema {tsconfig_path} "MyProjectSpec" --titles --ignoreErrors --required -o {app.config["SCHEMATA_PATH"]}'
+            os.system(cmd)
 
         # process the schemata for validation
         schemata = json.load(open(app.config["SCHEMATA_PATH"]))
@@ -116,6 +117,7 @@ class Schemata:
             return False
 
         # returns a node with cases of anyOf with conditional property transformed into if then else statements.
+        # $refs are resolved to avoid AJV bug: https://github.com/ajv-validator/ajv/pull/1815
         def recursive_dfs(node, path=[]):
             if '$ref' in node:
                 return node

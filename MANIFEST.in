@@ -1,12 +1,5 @@
-recursive-include covfee/client *
-recursive-include covfee/shared *
-recursive-include covfee/cli/validators *.js
+include covfee/shared/validator/*.js
+include covfee/shared/schemata.json
+recursive-include covfee/client/bundles *
 
-include covfee/server/templates/*
-
-include covfee/cli/package.json
-include covfee/client/package.json
-
-prune covfee/client/node_modules
-prune covfee/cli/node_modules
-global-exclude package-lock.json .DS_Store *.stories.mdx *.stories.tsx
+global-exclude package-lock.json .DS_Store

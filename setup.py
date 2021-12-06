@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='covfee',
-    version='0.0.5',
+    version='0.0.6',
     author="Jose Vargas",
     author_email="josedvq@gmail.com",
     description="Continuous video feedback tool",
@@ -34,7 +34,7 @@ setup(
         'pandas == 1.*',
         'jsonschema == 3.*',
         'halo == 0.*',
-        'colorama == 0.3.*',
+        'colorama == 0.4.*',
         'pyzmq == 22.*',
         'numpy == 1.*',
         'zipstream-new == 1.*',
