@@ -130,7 +130,10 @@ export class TaskForm extends React.Component<Props, State> {
                 fontSize={16}
                 onChange={null}
                 name="UNIQUE_ID_OF_DIV"
-                editorProps={{ $blockScrolling: true }}/>
+                editorProps={{ $blockScrolling: true }}
+                setOptions={{
+                    useWorker: false
+                  }}/>
                 {/* <SyntaxHighlighter language="javascript" style={docco}>
                     {JSON.stringify(this.state.formData, null, 2)}
                 </SyntaxHighlighter> */}

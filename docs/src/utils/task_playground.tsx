@@ -167,7 +167,10 @@ export class TaskPlayground extends React.Component<Props, State> {
                     fontSize={16}
                     onChange={this.handleFormChange}
                     name="UNIQUE_ID_OF_DIV"
-                    editorProps={{ $blockScrolling: true }}/>
+                    editorProps={{ $blockScrolling: true }}
+                    setOptions={{
+                        useWorker: false
+                    }}/>
             </div>
         </>
     }

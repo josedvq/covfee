@@ -405,7 +405,8 @@ export class Hit extends React.Component<Props, State> {
             <SidebarContainer height={this.props.height}>
                 {this.renderMenu()}
             </SidebarContainer>
-            <ContentContainer>
+            
+            <ContentContainer height={this.props.height}>
                 
                 {hitExtra &&
                     <Collapsible open={this.state.extraOpen}>
@@ -461,9 +462,10 @@ const SidebarContainer = styled.div<any>`
 	overflow: auto;
 `
 
-const ContentContainer = styled.div`
+const ContentContainer = styled.div<any>`
     display: inline-block;
     vertical-align: top;
+    height: ${props => (Math.floor(props.height) - 46 + 'px;')}
     width: calc(100% - 25%);
     overflow: auto;
 `

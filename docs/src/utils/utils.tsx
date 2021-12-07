@@ -25,7 +25,7 @@ export class CodeBlock extends React.Component {
 export class LivePreviewFrame extends React.Component {
     render() {
         return <>
-            <div style={{border: '1px solid #c8c8c8'}}>
+            <div style={{border: '1px solid #c8c8c8', overflow: 'hidden'}}>
                 <div style={{ backgroundColor: '#d8d8d8', padding: '3px 5px', textAlign: 'center', color: '#555555'}}>LIVE PREVIEW: data is not being collected</div>
                 {this.props.children}
             </div >

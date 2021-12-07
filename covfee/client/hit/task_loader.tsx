@@ -231,6 +231,7 @@ export class TaskLoader extends React.Component<Props, State> {
         
         this.mountPromise.promise.then(_ => {
             if(this.response && this.response.submitted) {
+                // task already submitted
                 this.setState({
                     status: 'loaded'
                 })
@@ -303,6 +304,11 @@ export class TaskLoader extends React.Component<Props, State> {
                     taskKey: this.state.taskKey + 1
                 })
             }
+        } else {
+            this.setState({
+                status: 'ready',
+                taskKey: this.state.taskKey + 1
+            })
         }
     }
 
