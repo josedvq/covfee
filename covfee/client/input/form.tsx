@@ -22,6 +22,7 @@ import {
     Form as AntdForm,
     Button
 } from 'antd'
+import { log } from '../utils'
 import { FieldSpec, FormSpec, InputSpec } from '@covfee-types/tasks/questionnaire'
 import { FormInstance } from 'antd/lib/form'
 import { StarOutlined, ThunderboltFilled } from '@ant-design/icons'
@@ -143,7 +144,7 @@ export class Form extends React.Component<Props> {
         if(!this.props.values || !condition) return true
         
         if(!(condition in this.props.values)) {
-            console.warn(`Unable to resolve condition ${condition}`)
+            log.warn(`Unable to resolve condition ${condition}`)
             return true
         }
 

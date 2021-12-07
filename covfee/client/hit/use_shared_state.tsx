@@ -10,10 +10,8 @@ export default function useSharedState(taskId: string) : [any, (arg0: any)=>void
 
   useEffect(()=>{
     if (!record) return
-    console.log(record.name)
 
     // record.subscribe((data) => {
-    //   console.log(data)
     //   setState(data)
     // }, true)
     

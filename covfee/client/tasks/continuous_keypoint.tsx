@@ -1,5 +1,6 @@
 // declare global cv;
 import * as React from 'react'
+import log from 'loglevel'
 import {
     Typography,
 } from 'antd';
@@ -10,6 +11,7 @@ import { ContinuousTaskProps, CovfeeContinuousTask } from './base'
 import { ContinuousKeypointTaskSpec} from '@covfee-types/tasks/continuous_keypoint'
 import { TaskType } from '@covfee-types/task';
 import { OpencvFlowPlayerMedia } from '@covfee-types/players/opencv';
+import { LoginOutlined } from '@ant-design/icons';
 
 interface Props extends TaskType, ContinuousTaskProps {
     spec: ContinuousKeypointTaskSpec
@@ -47,15 +49,12 @@ export default class ContinuousKeypointTask extends CovfeeContinuousTask<Props, 
         }
         if(props.response !== null)
             this.state.opticalFlowEnabled = false
-        // console.log(this.state.opticalFlowEnabled)
-    }
-
-    componentDidUpdate() {
-        if(this.props.response !== null)
-            this.state.opticalFlowEnabled = false
+        
+        log.info(`constructing task ${this.props.myKey}`)
     }
 
     componentDidMount() {
+        log.info(`mounting task ${this.props.myKey}`)
         this.props.buttons.addListener('speedup', 'ArrowRight', 'Increase playback speed.')
             .addEvent('keydown', (e: Event) => {
                 this.speedup()
@@ -96,6 +95,7 @@ export default class ContinuousKeypointTask extends CovfeeContinuousTask<Props, 
     }
 
     componentWillUnmount() {
+        log.info(`unmounting task ${this.props.myKey}`)
         this.props.buttons.removeListener('speedup')
         this.props.buttons.removeListener('speeddown')
         this.props.buttons.removeListener('play')
@@ -103,6 +103,9 @@ export default class ContinuousKeypointTask extends CovfeeContinuousTask<Props, 
         this.props.buttons.removeListener('back10s')
         this.props.buttons.removeListener('occlusion')
         this.props.buttons.removeListener('opticalflow')
+
+        this.props.player.removeListeners('frame')
+        this.props.player.removeListeners('end')
     }
 
     speedup = () => {

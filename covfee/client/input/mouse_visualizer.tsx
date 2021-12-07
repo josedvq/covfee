@@ -38,8 +38,6 @@ class MouseVisualizer extends React.Component<Props> {
 
     render() {
         // do not render to save cycles when disabled
-        console.log(this.props.disable)
-
         return <div className='mouse-visualizer' ref={e=>{this.container=e}}>
             {this.props.children}
             {!this.props.disable &&

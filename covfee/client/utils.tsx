@@ -1,7 +1,14 @@
 import * as React from 'react'
+import log from 'loglevel'
 import {message, Result} from 'antd'
 
 import Constants from 'Constants'
+if(Constants.env == 'development') {
+    log.setLevel('debug')
+} else {
+    log.setLevel('error')
+}
+export {log}
 
 // read a cookie in the browser
 export function getCookieValue(a: string) {
@@ -29,7 +36,7 @@ export function myerror(msg: string, error?: any) {
         message.error(msg + ' Please try again later or contact the organizer(s).')
     } else {
         if(error) {
-            console.error(error)
+            log.error(error)
             message.error(error.stack, 0)
         }
     }

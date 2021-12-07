@@ -40,6 +40,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
     url: string
     disabled: boolean
     eager: boolean
+    writeTimestamp: boolean
     onError: OnErrorCallback
 
     // state
@@ -61,16 +62,17 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
 
     constructor(disabled = false, sampleLength = 1, chunkLength = 200, 
                 fps=60, url = '', onError: OnErrorCallback = () => { }, 
-                eager=true, outBufferErrorLength=5) {
+                eager=true, outBufferErrorLength=5, writeTimestamp=true) {
         this.chunkLength = chunkLength
         this.fps = fps
         this.sampleLength = sampleLength
-        this.recordLength = sampleLength + 1
+        this.recordLength = sampleLength + 1 + (writeTimestamp ? 1 : 0)
         this.outBufferErrorLength = outBufferErrorLength
         this.chunkByteLength = this.chunkLength * (4 + 8 * (this.recordLength))
         this.url = url
         this.disabled = disabled
         this.eager = eager
+        this.writeTimestamp = writeTimestamp
         if (disabled) this.fetch_fn = dummyFetch
         this.onError = onError
     }
@@ -143,9 +145,9 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         }
     }
 
-    timestampToChunkSample = (timestamp: number) => {
+    mediatimeToChunkSample = (mediatime: number) => {
         // calculate sample and chunk numbers
-        const frameNum = Math.round(timestamp * this.fps)
+        const frameNum = Math.round(mediatime * this.fps)
         const chunkNum = Math.floor(frameNum / this.chunkLength)
         const sampleNum = frameNum % this.chunkLength
 
@@ -158,16 +160,21 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
 
     /**
      * Puts a data sample into the data buffer.
-     * @param timestamp - A media timestamp (eg. video or audio time in seconds)
+     * @param mediatime - A media mediatime (eg. video or audio time in seconds)
      * @param data - A data sample / row
      */
-    data = (timestamp: number, data: DataSample) => {
+    data = (mediatime: number, data: DataSample) => {
         if(this.disabled) return
         this.receivedData = true
 
-        const record: DataRecord = [timestamp, ...data]
+        let record
+        if(this.writeTimestamp) {
+           record = [mediatime, Date.now(), ...data] 
+        } else {
+            record = [mediatime, ...data] 
+        }
 
-        const [chunkNum, sampleNum] = this.timestampToChunkSample(timestamp)
+        const [chunkNum, sampleNum] = this.mediatimeToChunkSample(mediatime)
         this.createChunksUntil(chunkNum)
 
         // write into data buffer
@@ -183,8 +190,8 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
             this.advanceTail()
     } 
 
-    read = (timestamp: number) => {
-        const [chunkNum, sampleNum] = this.timestampToChunkSample(timestamp)
+    read = (mediatime: number) => {
+        const [chunkNum, sampleNum] = this.mediatimeToChunkSample(mediatime)
         if(this.dataBuffer[chunkNum] === undefined || 
             this.dataBuffer[chunkNum].idxs[sampleNum] === undefined)
             return [null, null] as [number[], LogRecord[]]
@@ -193,14 +200,14 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         if (this.dataBuffer[chunkNum].idxs[sampleNum] === 0) res = null
         else {
             res = []
-            const ini = sampleNum * this.recordLength
+            const ini = sampleNum * this.recordLength + (this.writeTimestamp ? 1 : 0)
             for (let i = 0; i < this.recordLength; i++) {
                 res.push(this.dataBuffer[chunkNum].data[ini+i])
             }
         }
 
         while (this.logptr < this.dataBuffer[chunkNum].logs.length
-              && this.dataBuffer[chunkNum].logs[this.logptr][1] < timestamp) {
+              && this.dataBuffer[chunkNum].logs[this.logptr][1] < mediatime) {
             logs.push(this.dataBuffer[chunkNum].logs[this.logptr])
             this.logptr += 1
         }
@@ -209,13 +216,13 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
     }
 
 
-    log = (timestamp: number, data: LogSample) => {
+    log = (mediatime: number, data: LogSample) => {
         this.receivedData = true
 
-        const [chunkNum, _] = this.timestampToChunkSample(timestamp)
+        const [chunkNum, _] = this.mediatimeToChunkSample(mediatime)
         this.createChunksUntil(chunkNum)
 
-        const record: LogRecord = [this.cntr++, timestamp, data]
+        const record: LogRecord = [this.cntr++, mediatime, data]
         this.dataBuffer[chunkNum].logs.push(record)
     }
 

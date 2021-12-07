@@ -2,6 +2,7 @@ import * as React from 'react'
 import {
     Row,
     Col,
+    Alert
 } from 'antd'
 import ReactMarkdown from 'react-markdown/with-html'
 import { MarkdownContentSpec } from "@covfee-types/tasks/utils"
@@ -54,7 +55,18 @@ export class MarkdownLoader extends React.Component<Props, State> {
         }
     }
 
+    renderError() {
+        return <>
+            <Alert
+                message="Instructions task"
+                description={`Error fetching file ${this.props.content.url}. Make sure the URL points to a valid file.`}
+                type="error"/>
+        </>
+    }
+
     render() {
+        if(this.state.error) return this.renderError()
+        
         return <>
             <Row gutter={0}>
                 <Col span={24}>

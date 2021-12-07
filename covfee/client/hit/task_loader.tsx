@@ -9,7 +9,7 @@ import {
     Popover,
 } from 'antd';
 
-import { myerror, fetcher, throwBadResponse, makeCancelablePromise, CancelablePromise } from '../utils'
+import { log, myerror, fetcher, throwBadResponse, makeCancelablePromise, CancelablePromise } from '../utils'
 import { getPlayerClass, getTask } from '../task_utils'
 import { TaskResponse, TaskSpec, TaskType } from '@covfee-types/task'
 import { TaskOverlay } from './overlay'
@@ -31,6 +31,7 @@ export interface VideoPlayerContext {
     unmute: () => void
     currentTime: (arg0?: number, callback?: ()=>{}) => number | void
     addListener: (arg0: string, arg1: (...args: any[]) => void) => void
+    removeListeners: (arg0: string) => void
 }
 
 interface State {
@@ -53,6 +54,10 @@ interface State {
         timed: boolean
     }
     /**
+     * Key, causes task to be reloaded on replay / re-do
+     */
+    taskKey: number,
+     /**
      * Player state
      */
     replayMode: boolean
@@ -163,6 +168,7 @@ export class TaskLoader extends React.Component<Props, State> {
         status: 'loading',
         renderAs: null,
         replayMode: false,
+        taskKey: 0,
         player: {
             loaded: false,
             paused: true,
@@ -277,21 +283,25 @@ export class TaskLoader extends React.Component<Props, State> {
 
     loadTask = (annot = true) => {
         this.setState({
-            replayMode: !annot,
-            status: 'ready'
+            replayMode: !annot
         })
 
         // this.props.setState({status: 'ready', loading: true})
         if(this.isContinuousTask()) {
-            this.player.currentTime(0)
-            
+            log.info('creating buffers')
             this.createBuffers()
             if(!annot) {
                 this.loadBuffers().finally(()=>{
-                    this.setState({loading: false})
+                    this.setState({
+                        status: 'ready',
+                        taskKey: this.state.taskKey + 1
+                    })
                 })
             } else {
-                this.setState({loading: false})
+                this.setState({
+                    status: 'ready',
+                    taskKey: this.state.taskKey + 1
+                })
             }
         }
     }
@@ -621,6 +631,11 @@ export class TaskLoader extends React.Component<Props, State> {
         this.listeners[eventName].push(callback)
     }
 
+    removeListeners = (eventName: string) => {
+        if(eventName in this.listeners)
+            delete this.listeners[eventName]
+    }
+
     dispatchPlayerEvent = (eventName: string, ...args: any[]) => {
         if(!(eventName in this.listeners)) return
         this.listeners[eventName].forEach(fn => {
@@ -651,6 +666,7 @@ export class TaskLoader extends React.Component<Props, State> {
             unmute: ()=>{this.setMuted(false)},
             currentTime: (val?: number)=>{return this.player.currentTime(val)},
             addListener: this.addListener,
+            removeListeners: this.removeListeners
         }
         return ctx
     }
@@ -718,6 +734,8 @@ export class TaskLoader extends React.Component<Props, State> {
                     }
 
                     const taskElement = React.createElement(this.taskConstructor, {
+                        key: this.state.taskKey,
+                        myKey: this.state.taskKey,
                         ref: (elem: any)=>{this.createTaskRef(elem)},
                         ...taskTypeProps
                     }, null)

@@ -1,7 +1,7 @@
 import { List, Typography } from 'antd'
 const { Title, Text } = Typography
 import * as React from 'react'
-import { myerror } from "../utils"
+import { log, myerror } from "../utils"
 import buttonManagerContext from './button_manager_context'
 
 type ButtonEventHandler = (arg0: KeyboardEvent) => void
@@ -108,8 +108,11 @@ class ButtonEventManagerContext extends React.Component {
         }
     }
 
-    removeListener = (events: ButtonEventSpec) => {
-        // TODO: implement code for removing events
+    removeListener = (id: string) => {
+        log.info(`removing listener ${id}`)
+        const key = this.listeners[id]['defaultKey']
+        delete this.keysToListeners[key]
+        delete this.listeners[id]
     }
 
     applyMap = (buttonMap: { [key: string]: string }) => {

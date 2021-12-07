@@ -245,7 +245,6 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
         if(time !== undefined) {
             this.videoTag.currentTime = time
             this.props.setPaused(true) // pause the video
-            console.log('ere')
             this.copyVideoToCanvas()
             if(callback) return callback()
         }
