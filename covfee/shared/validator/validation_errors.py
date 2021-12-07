@@ -37,9 +37,9 @@ class ValidationError(Exception):
         while True:
             try:
                 path_segment = self.path.pop()
-                if type(path_segment) == int:
+                if path_segment.isnumeric():
                     path_string += f'[{path_segment}]'
-                elif type(path_segment) == str:
+                else:
                     path_string += f'["{path_segment}"]'
             except IndexError:
                 return path_string

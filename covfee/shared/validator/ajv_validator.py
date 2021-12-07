@@ -34,7 +34,7 @@ class AjvValidator:
     def parse_ajv_path(ajv_instance_path):
         if ajv_instance_path == '/': return ''
 
-        parts = ajv_instance_path.split('/')[1::2]
+        parts = ajv_instance_path.split('/')[1:]
         return parts
 
     def get_friendly_error_message(self, err):
