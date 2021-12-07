@@ -11,7 +11,7 @@ module.exports = {
   organizationName: 'josedvq', // Usually your GitHub org/user name.
   projectName: 'covfee', // Usually your repo name.
   scripts: [
-    'https://cdn.jsdelivr.net/gh/josedvq/covfee@master/covfee/static/js/opencv.js',
+    'https://cdn.jsdelivr.net/gh/josedvq/covfee@8050fa938ae270ae70244c33903ead9d905bca92/covfee/static/js/opencv.js',
   ],
   stylesheets: [
     'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'

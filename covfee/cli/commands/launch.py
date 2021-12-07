@@ -42,7 +42,7 @@ def start_covfee(socketio, app, mode='local', host='localhost'):
         rtstore.run()
 
     if mode == 'local':
-        socketio.run(app, host=host, port=5000 **ssl_options)
+        socketio.run(app, host=host, port=5000, **ssl_options)
     elif mode == 'dev':
         socketio.run(app, host=host, port=5000, debug=True, **ssl_options)
     elif mode == 'deploy':
@@ -171,7 +171,7 @@ def make(force, unsafe, rms, no_browser, no_launch, file_or_folder):
         except ValidationError as err:
             return err.print_friendly()
         except ProjectExistsException as err:
-            return print(' Add --force option to overwrite.')
+            return print('Project exists in covfee. Add --force option to overwrite.')
         except Exception as err:
             print(traceback.format_exc())
             if 'js_stack_trace' in dir(err):
