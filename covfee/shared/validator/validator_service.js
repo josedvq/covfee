@@ -10,7 +10,10 @@ class ValidatorService {
 
     async run(port) {
         const sock = new zmq.Reply
-        await sock.connect(`tcp://localhost:${port}`)
+        const addr = `tcp://localhost:${port}`
+        await sock.connect(addr)
+
+        console.log(`Waiting on ${addr}`)
         for await (const [buffer] of sock) {
           const msg = JSON.parse(buffer.toString('utf-8'))
           const res = this.validator.validate_schema(msg.schema, msg.data)

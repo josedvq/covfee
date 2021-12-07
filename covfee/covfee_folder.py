@@ -85,6 +85,7 @@ class CovfeeFolder:
                 except Exception as e:
                     spinner.fail(f'Error reading file {cf} as JSON. Are you sure it is valid json?')
                     raise e
+                spinner.succeed(f'Read covfee file {cf}.')
 
             with Halo(text=f'Validating project {project_spec["name"]} in {cf}',
                       spinner='dots',
@@ -93,6 +94,9 @@ class CovfeeFolder:
                 try:
                     self.validate_project(project_spec, cf, with_spinner=with_spinner)
                 except ValidationError as e:
+                    spinner.fail(f'Error validating project \"{project_spec["name"]}\" in {cf}.\n')
+                    raise e
+                except Exception as e:
                     spinner.fail(f'Error validating project \"{project_spec["name"]}\" in {cf}.\n')
                     raise e
                 self.projects.append((project_spec, cf))

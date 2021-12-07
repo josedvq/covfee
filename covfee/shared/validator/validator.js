@@ -1,4 +1,4 @@
-const Ajv = require("ajv")
+const Ajv = require("@josedvq/ajv")
 
 class Validator {
     constructor(schemata) {

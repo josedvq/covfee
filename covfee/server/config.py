@@ -23,7 +23,7 @@ COVFEE_BASE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..
 COVFEE_CLI_PATH = os.path.join(COVFEE_BASE_PATH, 'cli')
 COVFEE_CLIENT_PATH = os.path.join(COVFEE_BASE_PATH, 'client')
 COVFEE_SERVER_PATH = os.path.join(COVFEE_BASE_PATH, 'server')
-SHARED_PATH = os.path.join(COVFEE_BASE_PATH, 'shared')
+COVFEE_SHARED_PATH = os.path.join(COVFEE_BASE_PATH, 'shared')
 # for storing the json schemata for validation
 SCHEMATA_PATH = os.path.join(COVFEE_BASE_PATH, 'shared', 'schemata.json')
 

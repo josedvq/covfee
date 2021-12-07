@@ -6,6 +6,7 @@ import os
 import sys
 from colorama import init as colorama_init, Fore
 import click
+import traceback
 
 from flask import current_app as app
 from flask.cli import FlaskGroup, pass_script_info
@@ -134,16 +135,21 @@ def open_covfee():
 
 
 def install_npm_packages_if_not_installed():
-    cli_path = app.config['COVFEE_CLI_PATH']
-    npm_package = NPMPackage(cli_path)
+    server_path = app.config['COVFEE_SERVER_PATH']
+    npm_package = NPMPackage(server_path)
     if not npm_package.is_installed():
         npm_package.install()
 
-    client_path = app.config['COVFEE_CLIENT_PATH']
-    npm_package = NPMPackage(client_path)
+    shared_path = app.config['COVFEE_SHARED_PATH']
+    npm_package = NPMPackage(shared_path)
     if not npm_package.is_installed():
         npm_package.install()
 
+@covfee_cli.command()
+def installjs():
+    _, app = create_app('local')
+    with app.app_context():
+        install_npm_packages_if_not_installed()
 
 @covfee_cli.command()
 @click.option("--force", is_flag=True, help="Specify to overwrite existing databases.")
@@ -167,7 +173,10 @@ def make(force, unsafe, rms, no_browser, no_launch, file_or_folder):
         except ProjectExistsException as err:
             return print(' Add --force option to overwrite.')
         except Exception as err:
-            return print(err)
+            print(traceback.format_exc())
+            if 'js_stack_trace' in dir(err):
+                print(err.js_stack_trace)
+            return
 
         if no_launch: 
             return

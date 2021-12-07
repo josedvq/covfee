@@ -27,13 +27,8 @@ def _make(file_or_folder, force=False, rms=False, stdout_enabled=True):
     schema = Schemata()
     if rms or not schema.exists():
         schema.make()
-    with Halo(text='Validating covfee project files', spinner='dots', enabled=stdout_enabled) as spinner:
-        try:
-            project_folder.validate(with_spinner=stdout_enabled)
-        except ValidationError as err:
-            spinner.fail('Error validating covfee files. Aborted.')
-            raise err
-        spinner.succeed('all covfee project files are valid.')
+    
+    project_folder.validate(with_spinner=stdout_enabled)
 
     # init project folder if necessary
     if not project_folder.is_project():

@@ -68,8 +68,8 @@ class Schemata:
         except OSError:
             pass
         # make the typescript into json schemata
-        with working_directory(app.config['SHARED_PATH']):
-            tsconfig_path = os.path.join(app.config['SHARED_PATH'], 'tsconfig.json')
+        with working_directory(app.config['COVFEE_SHARED_PATH']):
+            tsconfig_path = os.path.join(app.config['COVFEE_SHARED_PATH'], 'tsconfig.json')
             cmd = f'npx typescript-json-schema {tsconfig_path} "MyProjectSpec" --titles --ignoreErrors --required -o {app.config["SCHEMATA_PATH"]}'
             os.system(cmd)
 

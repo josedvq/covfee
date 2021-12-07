@@ -14,10 +14,18 @@ class AjvValidator:
         self.socket = context.socket(zmq.REQ)
         # bind to a random port in loopback iface
         port = self.socket.bind_to_random_port("tcp://127.0.0.1")
+        validator_path = os.path.join(app.config['COVFEE_SHARED_PATH'], 'validator', 'validator_service.js')
 
         # start the nodejs validation server in the same interface
-        self.process = subprocess.Popen(["node", '--trace-warnings', os.path.join(app.config['SHARED_PATH'], 'validator', 'validator_service.js'), "serve", str(port)])
+        self.process = subprocess.Popen(["node", '--trace-warnings', validator_path, "serve", str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+        # check that the service is up and running
+        if 'Waiting' not in self.process.stdout.readline().decode():
+            stderr = self.process.stderr.read().decode()
+            e = Exception(f'Error running JS validator {validator_path}')
+            e.js_stack_trace = stderr
+            raise e
+        
     def __del__(self):
         # pass
         self.process.kill()

@@ -36,7 +36,7 @@
     "react-ace": "^9.4.1",
     "react-dom": "^17.0.1",
     "simplebar-react": "^2.3.4",
-    "style-loader": "^2.0.0",
+    "style-loader": "^2.0.0"
   },
   "browserslist": {
     "production": [
