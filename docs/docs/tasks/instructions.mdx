@@ -7,6 +7,7 @@ import {TaskPlayground} from '../../src/utils/task_playground'
 
 The instructions task was created as a way to provide a page with instructions for participants or annotators. This also includes consent forms and *Thank you* pages. An instructions tasks consists in a text document followed by an optional form, which can be used to request consent or ask for basic participant information.
 
+:::info
 Markdown is a simple document syntax that allows you to structure rich web documents, including media. Other than rich text formatting, Markdown supports the following useful features:
 
 - Hyperlinks
@@ -17,8 +18,9 @@ For more information about markdown:
 
 - [markdownguide.org](https://www.markdownguide.org/cheat-sheet/) for a quick and basic Markdown cheatsheet.
 - [GitLab guide](https://about.gitlab.com/handbook/markdown-guide/) for an in-depth guide, including how to display videos with HTML.
+:::
 
-# Basic
+## Inline text
 
 The easiest way to provide instructions is to pass Markdown code directly to the `InstructionsTask`. Note however that this is only recommended for short instructions. The reason is that JSON does not preserve line breaks, and therefore any linebreaks must be explicitly input with <Typography.Text code>\\n</Typography.Text>:
 

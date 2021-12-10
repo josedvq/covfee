@@ -5,9 +5,7 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import styles from './styles.module.css';
-import {TaskForm} from '../utils/task_form'
 
-let a = new TaskForm({})
 const features = [
   {
     title: 'Easy to Use',

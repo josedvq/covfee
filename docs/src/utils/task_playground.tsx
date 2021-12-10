@@ -7,14 +7,13 @@ import { CodeBlock, LivePreviewFrame, arrayUnique} from './utils'
 import { HITVisualizer} from './hit_visualizer'
 import {Validator} from 'covfee-shared/validator'
 import schemata from '@schemata'
-import AceEditor from 'react-ace'
+import BrowserOnly from '@docusaurus/BrowserOnly'
 
 import 'antd/dist/antd.css'
-import 'ace-builds/src-noconflict/mode-json'
-import 'ace-builds/src-noconflict/theme-github'
 
 
 interface Props {
+    height: number,
     tasks: Array<{
         schema: string
         label: string
@@ -111,6 +110,7 @@ export class TaskPlayground extends React.Component<Props, State> {
     render() {
         
         return <>
+            
             <LivePreviewFrame>
                 {(()=>{
                     const task = this.state.specs[this.state.currTask]
@@ -125,6 +125,8 @@ export class TaskPlayground extends React.Component<Props, State> {
                             }
                         ]
                     }
+                    // return null
+                
                     return <HITVisualizer hit={hitProps} key={this.state.currKey}></HITVisualizer>
                 })()}
             </LivePreviewFrame>
@@ -154,23 +156,30 @@ export class TaskPlayground extends React.Component<Props, State> {
                     
                 </nav>
 
-                <AceEditor
-                    width={'100%'}
-                    maxLines={Infinity}
-                    wrapEnabled={true}
-                    value={this.state.currSpec}
-                    showPrintMargin={true}
-                    showGutter={true}
-                    highlightActiveLine={true}
-                    mode="json"
-                    theme="github"
-                    fontSize={16}
-                    onChange={this.handleFormChange}
-                    name="UNIQUE_ID_OF_DIV"
-                    editorProps={{ $blockScrolling: true }}
-                    setOptions={{
-                        useWorker: false
-                    }}/>
+                <BrowserOnly fallback={<div>The fallback content to display on prerendering</div>}>
+                {()=>{
+                    const AceEditor = require('react-ace').default
+                    require('ace-builds/src-noconflict/mode-json')
+                    require('ace-builds/src-noconflict/theme-github')
+                    return <AceEditor
+                        width={'100%'}
+                        maxLines={Infinity}
+                        wrapEnabled={true}
+                        value={this.state.currSpec}
+                        showPrintMargin={true}
+                        showGutter={true}
+                        highlightActiveLine={true}
+                        mode="json"
+                        theme="github"
+                        fontSize={16}
+                        onChange={this.handleFormChange}
+                        name="UNIQUE_ID_OF_DIV"
+                        editorProps={{ $blockScrolling: true }}
+                        setOptions={{
+                            useWorker: false
+                        }}/>
+                }}
+                </BrowserOnly>
             </div>
         </>
     }

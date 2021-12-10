@@ -6,6 +6,32 @@ import {TaskPlayground} from '../../src/utils/task_playground'
 
 The continuous keypoint task was created for annotation of keypoints in a video. In the original application these keypoints corresponded to extremities of people in a social interaction. The task makes use of an optical flow video to play the video slower when the mouse cursor is close to moving parts, to aid annotators in the process. Skeletal keypoints were annotated one-by-one continuously, instead of traditional frame-based annotation in which some image frames are annotated to then be interpolated. In general, this task is especially useful when the target keypoint are visible for long periods of time.
 
+:::caution
+This task requires the use of desktop Google Chrome as it relies on [requestVideoFrameCallback()](https://wicg.github.io/video-rvfc/)
+:::
+
+## Automatic speed adjustment
+
+Covfee solves the problem of continuously annotating keypoints via a new annotation technique, which consists in the automatic adjustment of the playback rate of the video in real time, according to the magnitude of the optical flow around the mouse cursor. The rate is adjusted such that it is higher when the optical flow is high and lower when optical flow is little around the mouse cursor. This has the effect of slowing down the video when the joint being tracked moves fast and speeding up the video for slow-moving or static joints. It allows the users to annotate slow-moving joints at multiples of real time rate (eg. 4x playback rate), and fast gestures at fractions of it (eg. 0.1x playback rate) on the fly without additional user intervention.
+
+Concretely, for a cursor position $x,y$ (in pixels) at frame $f$ an $N x N$ neighborhood in the vicinity of $(x,y)$ is considered, such that the playback rate at frame $f+1$ is given by: 
+
+$$
+r_{f+1} = C \cdot \sum_{i=x-N/2} ^ {x+N/2} \sum_{i=y-N/2} ^ {y+N/2} |O_{f,i,j}|
+$$
+
+where $O_{f,x,y}$ is the optical flow vector for frame $f$ at image location $(x, y)$ and $C$ is a constant. The best value of $N$ depends on the video being annotated, and is a configurable parameter.
+
+This rate is additionally bounded to prevent extremely low or high playback rates and a user-controllable multiplier $C_u$ is added to allow the user to control the overall playback rate:
+
+$$
+r = C_u * max(r_{min}, min(r_{max}, r_i))
+$$
+
+The rate $r$ (equivalently, the delay until the next frame) is adjusted on every frame. This can only be implemented efficiently online if the flow computation is done offline and only the local averaging is calculated in the user's machine. For this, Covfee makes use of a pre-computed optical flow video, which is processed in the browser making use of a Javascript version of OpenCV.js.
+
+## Playground
+
 export const playgroundTasks = [
     {
         'schema': 'ContinuousKeypointTaskSpec',
@@ -35,3 +61,13 @@ export const playgroundTasks = [
 ]
 
 <TaskPlayground tasks={playgroundTasks} />
+
+## Optical flow computation
+
+:::caution
+Optical flow can be extremely unreliable for videos with high noise (eg. low lighting conditions). Input videos might need to be denoised before optical flow pre-computation. We had good results with ffmpeg's (hqdn3d)[https://ffmpeg.org/ffmpeg-filters.html#hqdn3d-1]:
+
+```
+fmpeg -i input.mp4 -vf hqdn3d=luma_tmp=20 -vcodec libx264 -tune film output.mp4 -y
+```
+:::

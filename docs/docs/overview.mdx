@@ -18,7 +18,9 @@ Covfee is an extensible web framework for (continuous) annotation, built for **c
 - **Enterprise-level software**. Covfee is meant to facilitate research and experimentation. It is not thoroughly tested and contains bugs.
 - **Cross-browser compatible**. For the time being, covfee is meant to be used in desktop or laptop computers, not on mobile phones or tablets. Also, continuous video annotation specifically currently works only in Google Chrome due to its reliance on [requestVideoFrameCallback()](https://wicg.github.io/video-rvfc/). This will probably improve with more browser support. That being said, with this exception covfee should work correctly on all modern desktop browsers.
 
-
+:::caution
+Covfee is still in alpha stage and is not mature software. 
+:::
 
 ## The covfee workflow
 
@@ -45,6 +47,8 @@ Some of the main features of covfee are:
 - **High-frequency annotations** Modern web browsers implement animation and video frame callbacks (via [requestAnimationFrame()](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) and [requestVideoFrameCallback()](https://wicg.github.io/video-rvfc/)) which are designed to run on each display refresh. On most modern displays and browsers this is a rate of 60fps. In practice this can be lower depending on the capacity and load of the user's machine.
 
 ## Continuous annotation
+
+Covfee supports continuous annotation tasks in modern desktop browsers. Browsers implement animation and video frame callbacks (via [requestAnimationFrame()](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame) and [requestVideoFrameCallback()](https://wicg.github.io/video-rvfc/) which are designed to run on each screen refresh. On most modern displays and browsers this is a rate of 60fps. This is not guaranteed and may be lower depending on the capacity and load of the user's machine but in practice we have observed consistent annotation rates of close to 60fps on most user machines.
 
 
 ## Extending covfee
