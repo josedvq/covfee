@@ -98,7 +98,7 @@ interface Props {
     /**
      * Props and specification of parent task
      */
-    parent: TaskType
+    parent?: TaskType
     /**
      * socketio instance for multi-party tasks
      */
@@ -106,20 +106,26 @@ interface Props {
     /**
      * If true, the task cannot be interacted with
      */
-    disabled: boolean
+    disabled?: boolean
     /**
      * If true, the task is only previewed: submission and server communication are disabled.
      * Used for previews and playground where no server is available.
      */
-    previewMode: boolean
+    previewMode?: boolean
 
     // INTERFACE
 
     /**
      * Interface mode: used to adjust the way the task is displayed in annotation or timeline modes.
      */
-    interfaceMode: 'annotation' | 'timeline'
+    interfaceMode?: 'annotation' | 'timeline'
+    /**
+     * Passed to tasks to render the submit button
+     */
     renderTaskSubmitButton: (arg0?: any) => React.ReactNode
+    /**
+     * Used in the class to render the "next" button
+     */
     renderTaskNextButton: (arg0?: any) => React.ReactNode
 
     // ASYNC OPERATIONS
@@ -127,24 +133,41 @@ interface Props {
     /**
      * Retrieves a response for a given task
      */
-    fetchTaskResponse: (arg0: TaskType) => Promise<TaskResponse>
+    fetchTaskResponse?: (arg0: TaskType) => Promise<TaskResponse>
     /**
      * Submits a response to a task
      */
-    submitTaskResponse: (arg0: TaskResponse, arg1: any) => Promise<TaskResponse>
+    submitTaskResponse?: (arg0: TaskResponse, arg1: any) => Promise<TaskResponse>
 
     // CALLBACKS
     /**
      * To be called when the task is submitted.
      */
-    onSubmit: (source: 'task' | 'modal') => void
+    onSubmit?: (source: 'task' | 'modal') => void
     /**
      * To be called when the user clicks to go to the next task
      */
-    onClickNext: () => void
+    onClickNext?: () => void
 }
 
-export class TaskLoader extends React.Component<Props, State> {
+type defaultProps = Required<Pick<Props, 'parent' | 'disabled' | 'previewMode' | 'interfaceMode' | 'renderTaskSubmitButton' | 'renderTaskNextButton' | 'fetchTaskResponse' | 'submitTaskResponse' | 'onSubmit' | 'onClickNext'>>
+
+const defaultProps = Object.freeze<defaultProps>({
+    parent: null,
+    disabled: false,
+    previewMode: false,
+    interfaceMode: 'annotation',
+    renderTaskSubmitButton: null,
+    renderTaskNextButton: null,
+    fetchTaskResponse: () => Promise.resolve(null),
+    submitTaskResponse: () => Promise.resolve(null),
+    onSubmit: () => {},
+    onClickNext: () => {}
+})
+
+export class TaskLoader extends React.Component<Props & defaultProps, State> {
+
+    static defaultProps = defaultProps
 
     player: CovfeeContinuousPlayer<any, any>
 
@@ -177,6 +200,10 @@ export class TaskLoader extends React.Component<Props, State> {
         errorModal: {visible: false},
         overlay: {visible: false},
         instructions: {visible: false}
+    }
+
+    defaultProps = {
+        fetchTaskResponse: ()=>Promise.resolve(null)
     }
 
     constructor(props: Props) {
@@ -314,11 +341,11 @@ export class TaskLoader extends React.Component<Props, State> {
 
     createBuffers = () => {        
         this.buffer = new BinaryDataCaptureBuffer(
-            false,
+            this.props.previewMode || this.response === null,
             this.taskConstructor.taskInfo.bufferDataLen,   // sample length
             200, //chunk length
             (this.props.task as any).spec.media.fps || 60,
-            this.response.url,
+            this.response ? this.response.url : null,
             this.handleBufferError)
     }
 
@@ -351,10 +378,6 @@ export class TaskLoader extends React.Component<Props, State> {
 
 
     handleTaskSubmit = (taskResult: any, source: ('task' | 'modal')) => {
-        // if(!['annotready'].includes(this.state.status)) {
-        //     console.log(`submit() called in invalid state ${this.state.status}.`)
-        // }
-
         (this.buffer ? this.buffer.flush() : Promise.resolve())
             .then(()=>{return this.props.submitTaskResponse(this.response, taskResult)})
             .then((data) => {
@@ -372,8 +395,6 @@ export class TaskLoader extends React.Component<Props, State> {
     }
 
     handleTaskEnd = (taskResult: any, timer=false) => {
-        // if (!['annotready', 'replayready'].includes(this.state.status))
-        //     console.error(`onEnd called in invalid state ${this.state.status}.`)
         if(this.props.task.autoSubmit && !this.state.replayMode)
             return this.handleTaskSubmit(taskResult, 'modal')
         

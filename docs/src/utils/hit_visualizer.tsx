@@ -49,7 +49,7 @@ export class HITVisualizer extends React.Component<HITVisualizerProps, HITVisual
                             url={null}
                             previewMode={true}
 
-                            fetchTaskResponse={()=>Promise.resolve(null)}
+                            fetchTaskResponse={()=>Promise.resolve({})}
                             onSubmit={() => { }} />
                     </div>
                 </HashRouter>

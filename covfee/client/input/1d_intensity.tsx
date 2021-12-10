@@ -36,7 +36,7 @@ export class OneDIntensity extends React.Component<Props> {
 
     animationId: number
     container = React.createRef<HTMLDivElement>()
-    indicator = React.createRef<HTMLDivElement>()
+    indicator = HTMLDivElement
     observer: ResizeObserver = null
     containerHeight: number = 0
 
@@ -173,6 +173,7 @@ export class OneDIntensity extends React.Component<Props> {
         }
     }
 
+    
     animate = (timestamp: number) => {
         if(this.props.visualizationModeOn) {
             this.intensity = this.props.getIntensity()
@@ -199,7 +200,7 @@ export class OneDIntensity extends React.Component<Props> {
     render() {
         return <div ref={this.container} className='gui-vertical'>
             {!['binary'].includes(this.inputProps.mode) &&
-            <div ref={this.indicator} className='gui-indicator' style={{bottom: 0}}></div>
+            <div ref={e=>{this.indicator = e}} className='gui-indicator' style={{bottom: 0}}></div>
             }
         </div>
     }
