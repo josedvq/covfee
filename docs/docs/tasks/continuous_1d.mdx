@@ -2,36 +2,32 @@
 title: Continuous 1D
 ---
 
-import {TaskForm} from '../../src/utils/task_form'
+import {TaskPlayground} from '../../src/utils/task_playground'
 
 This component was designed to capture the continuous annotation of a single one-dimensional variable, like arousal or valence in annotations of emotional expresion. The user controls the annotation interface via mouse or keyboard.
 
-export const taskSpec = {
-    "name": "Continuous annotation example",
-    "type": "Continuous1DTask",
-    "media": {
-        "type": "video",
-        "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@type-check/samples/intensity_annotation/www/sample.mp4",
-        "mute": true,
-    },
-    "intensityInput": {
-        "mode": "gravity-keyboard",
-        "jump_speed": 0.1,
-        "acceleration_constant": 0.0025,
-        "controls": {
-            "up": "a"
+export const playgroundTasks = [
+    {
+        'schema': 'Continuous1DTaskSpec',
+        'label': 'Keyboard-controlled',
+        'spec': {
+            "name": "Continuous annotation example",
+            "type": "Continuous1DTask",
+            "media": {
+                "type": "video",
+                "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@type-check/samples/intensity_annotation/www/sample.mp4",
+                "mute": true,
+            },
+            "intensityInput": {
+                "mode": "gravity-keyboard",
+                "jump_speed": 0.1,
+                "acceleration_constant": 0.0025,
+                "controls": {
+                    "up": "a"
+                }
+            }
         }
     }
-}
+]
 
-export const uiSchema = {
-    'ui:order': ['name', 'type', 'intensityInput', 'media','controls','useRequestAnimationFrame'],
-    type: {'ui:widget':'hidden'},
-    intensityInput: {
-        mode: {'ui:widget':'hidden'}
-    }
-}
-
-<TaskForm spec={taskSpec} 
-    schemaName={'Continuous1DTaskSpec'}
-    uiSchema={uiSchema}/>
+<TaskPlayground tasks={playgroundTasks} />

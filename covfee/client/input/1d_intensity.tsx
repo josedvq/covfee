@@ -35,8 +35,8 @@ export class OneDIntensity extends React.Component<Props> {
     speed: number = 0
 
     animationId: number
-    container = React.createRef<HTMLDivElement>()
-    indicator = HTMLDivElement
+    container: HTMLDivElement
+    indicator: HTMLDivElement
     observer: ResizeObserver = null
     containerHeight: number = 0
 
@@ -50,7 +50,7 @@ export class OneDIntensity extends React.Component<Props> {
         this.observer = new ResizeObserver((entries: any) => {
             this.containerHeight = entries[0].contentRect.height - 20
         })
-        this.observer.observe(this.container.current)
+        this.observer.observe(this.container)
         
         if(!this.props.visualizationModeOn)
             this.startInput()
@@ -61,9 +61,7 @@ export class OneDIntensity extends React.Component<Props> {
         // this.props.buttons.removeEvents()
         document.removeEventListener('mousemove', this.mousemove, false)
         this.observer.disconnect()
-        // if(this.animationId) {
         cancelAnimationFrame(this.animationId)
-        // }
     }
 
     componentDidUpdate(prevProps: Props) {
@@ -107,7 +105,7 @@ export class OneDIntensity extends React.Component<Props> {
     }
 
     mousemove = (e: MouseEvent) => {
-        const rect = this.container.current.getBoundingClientRect()
+        const rect = this.container.getBoundingClientRect()
         const unboundedIntensity = (rect.bottom - e.clientY) / this.containerHeight
         this.intensity = Math.max(0.0, Math.min(1.0, unboundedIntensity))
     }
@@ -162,14 +160,16 @@ export class OneDIntensity extends React.Component<Props> {
         return this.intensity
     }
 
-    write = (intensity: number) => {
+    updateIndicators = (intensity: number) => {
+        if(this.container === null || this.indicator === null) return
+         
         if (['binary'].includes(this.inputProps.mode)) {
             // mode uses no indicator
-            this.container.current.style.backgroundColor = intensity ? 'green' : 'black'
+            this.container.style.backgroundColor = intensity ? 'green' : 'black'
         } else {
             // move the indicator
             const position = Math.round(intensity * this.containerHeight)
-            this.indicator.current.style.bottom = position.toString() + 'px'
+            this.indicator.style.bottom = position.toString() + 'px'
         }
     }
 
@@ -193,12 +193,12 @@ export class OneDIntensity extends React.Component<Props> {
             this.props.setIntensity(this.intensity)
         }
 
-        this.write(this.intensity)
+        this.updateIndicators(this.intensity)
         this.animationId = requestAnimationFrame(this.animate)
     }
 
     render() {
-        return <div ref={this.container} className='gui-vertical'>
+        return <div ref={e=>{this.container = e}} className='gui-vertical'>
             {!['binary'].includes(this.inputProps.mode) &&
             <div ref={e=>{this.indicator = e}} className='gui-indicator' style={{bottom: 0}}></div>
             }

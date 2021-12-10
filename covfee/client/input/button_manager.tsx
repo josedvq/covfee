@@ -110,6 +110,7 @@ class ButtonEventManagerContext extends React.Component {
 
     removeListener = (id: string) => {
         log.info(`removing listener ${id}`)
+        if(!(id in this.listeners)) return log.warn(`listener ${id} not found.`)
         const key = this.listeners[id]['defaultKey']
         delete this.keysToListeners[key]
         delete this.listeners[id]

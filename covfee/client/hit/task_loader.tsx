@@ -202,10 +202,6 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         instructions: {visible: false}
     }
 
-    defaultProps = {
-        fetchTaskResponse: ()=>Promise.resolve(null)
-    }
-
     constructor(props: Props) {
         super(props)
 
