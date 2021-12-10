@@ -39,6 +39,14 @@ module.exports = {
     prism: {
       theme: require('prism-react-renderer/themes/github'),
     },
+    announcementBar: {
+      id: 'support_us',
+      content:
+        '⭐ If you like covfee, give it a star on GitHub!',
+      backgroundColor: '#fafbfc',
+      textColor: '#091E42',
+      isCloseable: true,
+    },
     navbar: {
       title: 'covfee',
       logo: {
