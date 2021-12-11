@@ -45,7 +45,8 @@ def admin_required(fn):
 
 
 def user_loader_callback(identity):
-    return User.query.filter_by(username=identity).first()
+    return db.session.query(User).get(identity)
+    # return User.query.filter_by(username=identity).first()
 
 # Create a function that will be called whenever create_access_token
 # is used. It will take whatever object is passed into the
@@ -54,7 +55,7 @@ def user_loader_callback(identity):
 
 
 def user_identity_lookup(user):
-    return user.username
+    return int(user.id)
 
 # Create a function that will be called whenever create_access_token
 # is used. It will take whatever object is passed into the
@@ -78,6 +79,7 @@ def login_user(user):
     refresh_token = create_refresh_token(identity=user)
 
     res = jsonify({
+        'id': user.id,
         'username': user.username,
         'roles': user.roles
     })
@@ -131,8 +133,11 @@ def login_google():
         user_id=userid, provider_id='google').first()
 
     if provider is None:
+        # create the new user
         user = User(userid, roles=['user'])
         user.add_provider('google', userid)
+        db.session.add(user)
+        db.session.commit()
         return login_user(user)
     else:
         return login_user(provider.user)

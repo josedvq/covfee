@@ -144,6 +144,7 @@ class UserContext extends React.Component<Props, UserState> {
     
             res
             .then(data=>{
+                log.debug(`/auth/login-google responded with ${JSON.stringify(data)}`)
                 this._onLogin(data)
             })
             .catch(()=>{

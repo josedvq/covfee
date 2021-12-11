@@ -1,13 +1,25 @@
 import * as React from 'react'
 import CovfeeLogo from '../art/logo.svg'
 import LoginForm from '../login_form'
-import { Col, Row } from 'antd'
+import { Alert, Col, Row } from 'antd'
 import { withRouter } from 'react-router-dom'
 import Constants from 'Constants'
 
-class LoginPage extends React.Component {
+interface State {
+    error: string
+}
 
-    onLogin = () => {
+class LoginPage extends React.Component<any, State> {
+
+    state: State = {
+        error: null
+    }
+
+    onLogin = (data) => {
+        // only admins and requestors can access the admin panel
+        if(!('admin' in data.roles || 'requester' in data.roles)) {
+            return this.setState({error: 'A role of "admin" or "requester" is required to access the admin panel. Please contact an administrator to request access.'})
+        }
         window.location.replace(Constants.admin_url)
     }
 
@@ -17,6 +29,10 @@ class LoginPage extends React.Component {
                 <div className={'covfee-banner'}>
                     <CovfeeLogo width="70" height="70" style={{verticalAlign: 'middle'}}/> covfee
                 </div>
+
+                {this.state.error &&
+                    <Alert message={this.state.error} type="error" style={{marginBottom: '1em'}} showIcon />}
+
                 <LoginForm onSuccess={this.onLogin}/>
             </Col>
         </Row>

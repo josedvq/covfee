@@ -11,7 +11,7 @@ class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String, unique=True)
+    username = db.Column(db.String)
     roles = db.Column(db.JSON)
 
     providers = db.relationship("AuthProvider", backref="user", cascade="all, delete")
