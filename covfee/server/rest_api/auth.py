@@ -158,6 +158,7 @@ def signup():
     return login_user(user)
 
 
+
 @auth.route('/refresh', methods=['POST'])
 @jwt_refresh_token_required
 def refresh():
@@ -173,3 +174,17 @@ def logout():
     res = jsonify({'success': True})
     unset_jwt_cookies(res)
     return res, 200
+
+
+
+# USER MANAGEMENT
+@auth.route('/users/<uid>/delete')
+@admin_required
+def user_delete(uid):
+    # Get the new user
+    user = db.session.query(User).get(bytes.fromhex(uid))
+    if user is None:
+        return jsonify({'msg': 'invalid user'}), 400
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({'success': True}), 200

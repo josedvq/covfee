@@ -46,7 +46,7 @@ def load_config(app, mode):
         BUNDLE_URL=app.config.get('BUNDLE_URL', app.config['BASE_URL'] + '/www'),
         APP_URL=app.config['BASE_URL'] + '/#',
         ADMIN_URL=app.config['BASE_URL'] + '/admin#',
-        LOGIN_URL=app.config['BASE_URL'] + '#login',
+        LOGIN_URL=app.config['BASE_URL'] + '/admin#login',
         API_URL=app.config['BASE_URL'] + '/api',
         AUTH_URL=app.config['BASE_URL'] + '/auth',
         # Set the cookie paths, so that you are only sending your access token

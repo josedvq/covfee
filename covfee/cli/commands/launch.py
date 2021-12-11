@@ -94,7 +94,8 @@ def launch_deepstream():
 @click.option("--dev", is_flag=True, help="Run covfee in dev mode")
 @click.option("--deploy", is_flag=True, help="Run covfee in deployment mode")
 @click.option('--no-browser', is_flag=True, help='Disables launching of the web browser.')
-def start(dev, deploy, no_browser):
+@click.option('--safe', is_flag=True, help='Enables login protection in local and dev mode (disabled by default).')
+def start(dev, deploy, no_browser, safe):
     """
     Starts covfee in local mode by default. Use --deploy or --dev to start deployment (public) or development servers.
     """
@@ -102,7 +103,7 @@ def start(dev, deploy, no_browser):
     mode = 'local'
     if dev: mode = 'dev'
     if deploy: mode = 'deploy'
-    unsafe_mode_on = (mode in ['local', 'dev'])
+    unsafe = False if mode == 'deploy' else (not safe)
 
     socketio, app = create_app(mode)  
 
@@ -113,10 +114,9 @@ def start(dev, deploy, no_browser):
                                 ' covfee maker in the current folder?')
 
         if not no_browser:
-            covfee_folder.launch_in_browser(unsafe_mode_on)
+            covfee_folder.launch_in_browser(unsafe)
 
-        # covfee_folder.launch_prod(unsafe, launch_browser=not no_browser)
-        app.config['UNSAFE_MODE_ON'] = unsafe_mode_on
+        app.config['UNSAFE_MODE_ON'] = unsafe
         start_covfee(socketio, app, mode)
 
 
@@ -153,13 +153,17 @@ def installjs():
 
 @covfee_cli.command()
 @click.option("--force", is_flag=True, help="Specify to overwrite existing databases.")
-@click.option("--unsafe", is_flag=True, help="Disables authentication for the covfee instance.")
+@click.option("--deploy", is_flag=True, help="Run covfee in deployment / production mode.")
+@click.option("--safe", is_flag=True, help="Enable authentication in local mode.")
 @click.option("--rms", is_flag=True, help="Re-makes the schemata for validation.")
 @click.option("--no-launch", is_flag=True, help="Do not launch covfee, only make the DB")
 @click.option("--no-browser", is_flag=True, help="Do not launch in the browser")
 @click.argument("file_or_folder")
-def make(force, unsafe, rms, no_browser, no_launch, file_or_folder):
-    socketio, app = create_app('local')
+def make(force, deploy, safe, rms, no_browser, no_launch, file_or_folder):
+
+    mode = 'deploy' if deploy else 'local'
+    unsafe = False if deploy else (not safe)
+    socketio, app = create_app(mode)
 
     with app.app_context():
         install_npm_packages_if_not_installed()

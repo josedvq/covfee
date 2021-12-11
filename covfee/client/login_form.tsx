@@ -16,6 +16,9 @@ import CovfeeLogo from './art/logo.svg'
 import { GoogleLogin } from 'react-google-login'
 import './login_form.scss'
 
+import { log } from './utils'
+
+
 interface Props {
     onSuccess: () => void
     onError?: () => void
@@ -27,7 +30,7 @@ export default class LoginForm extends React.Component<Props> {
         submitting: false,
     }
 
-    handleFormSubmit = (values: object) => {
+    handleFormSubmit = (values: any) => {
         this.setState({ submitting: true })
 
         this.context.login(values)
@@ -39,8 +42,16 @@ export default class LoginForm extends React.Component<Props> {
             })
     }
 
-    onSuccessGoogle = () => {
-
+    onSuccessGoogle = (response: any) => {
+        log.debug(response)
+        log.debug(Constants.google_client_id)
+        this.context.loginWithGoogle(response.tokenId)
+            .then(data => {
+                this.props.onSuccess(data)
+            })
+            .catch(error => {
+                this.setState({ error: error.toString(), submitting: false })
+            })
     }
 
     onFailureGoogle = () => {
@@ -59,13 +70,14 @@ export default class LoginForm extends React.Component<Props> {
         return <>
 
             <GoogleLogin
-                    clientId={Constants.google_client_id}
-                    buttonText="Sign in with Google"
-                    onSuccess={this.onSuccessGoogle}
-                    onFailure={this.onFailureGoogle}
-                    cookiePolicy={'single_host_origin'}
-                    theme='light'
-                    className='login-google-btn'/>
+                clientId={Constants.google_client_id}
+                responseType='id_token'
+                buttonText="Sign in with Google"
+                onSuccess={this.onSuccessGoogle}
+                onFailure={this.onFailureGoogle}
+                cookiePolicy={'single_host_origin'}
+                theme='light'
+                className='login-google-btn'/>
 
             <Divider />
             <Form

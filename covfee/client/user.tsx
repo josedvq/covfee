@@ -1,7 +1,7 @@
 import * as React from 'react'
 import userContext from './userContext'
 import Constants from 'Constants'
-import { fetcher, throwBadResponse, getCookieValue, myerror} from './utils'
+import { log, fetcher, throwBadResponse, getCookieValue, myerror} from './utils'
 
 interface LoginInfo {
     username: string,
@@ -91,50 +91,6 @@ class UserContext extends React.Component<Props, UserState> {
         })
     }
 
-    login = (info: LoginInfo) => {
-        const url = Constants.auth_url + '/login-password'
-        const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(info)
-        }
-
-        let res = fetcher(url, requestOptions)
-            .then(throwBadResponse)
-
-        res
-        .then(data=>{
-            this._onLogin(data)
-        })
-        .catch(()=>{
-            this._onFailure()
-        })
-
-        return res
-    }
-
-    loginWithGoogle = (token: string) => {
-        const url = Constants.auth_url + '/login-google'
-        const requestOptions = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({'token': token})
-        }
-
-        let res = fetcher(url, requestOptions)
-            .then(throwBadResponse)
-
-        res
-        .then(data=>{
-            this._onLogin(data)
-        })
-        .catch(()=>{
-            this._onFailure()
-        })
-
-        return res
-    }
-
     private refresh = () => {
         const url = Constants.auth_url + '/refresh'
         let options = {
@@ -152,36 +108,80 @@ class UserContext extends React.Component<Props, UserState> {
         return fetch(url, options)
     }
 
-    public logout = () => {
-        const url = Constants.auth_url + '/logout'
-        const requestOptions = {
-            method: 'POST'
-        }
-
-        let p = fetch(url, requestOptions)
-            .then(throwBadResponse)
-        
-        p.then(()=>{
-            localStorage.removeItem('user')
-            this.setState({
-                logged: false,
-                username: null,
-                loginTime: null
+    contextMethods = {
+        login: (info: LoginInfo) => {
+            const url = Constants.auth_url + '/login-password'
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(info)
+            }
+    
+            let res = fetcher(url, requestOptions)
+                .then(throwBadResponse)
+    
+            res
+            .then(data=>{
+                this._onLogin(data)
             })
-        }).catch(error=>{
-            myerror('Error in logging out', error)
-        })
+            .catch(()=>{
+                this._onFailure()
+            })
+    
+            return res
+        },
 
-        return p
+        loginWithGoogle: (token: string) => {
+            const url = Constants.auth_url + '/login-google'
+            const requestOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({'token': token})
+            }
+    
+            let res = fetcher(url, requestOptions)
+                .then(throwBadResponse)
+    
+            res
+            .then(data=>{
+                this._onLogin(data)
+            })
+            .catch(()=>{
+                this._onFailure()
+            })
+    
+            return res
+        },
+
+        logout: () => {
+            const url = Constants.auth_url + '/logout'
+            const requestOptions = {
+                method: 'POST'
+            }
+    
+            let p = fetch(url, requestOptions)
+                .then(throwBadResponse)
+            
+            p.then(()=>{
+                localStorage.removeItem('user')
+                this.setState({
+                    logged: false,
+                    username: null,
+                    loginTime: null
+                })
+            }).catch(error=>{
+                myerror('Error in logging out', error)
+            })
+    
+            return p
+        }
     }
-
+   
     render() {
         return <userContext.Provider value={{
             ...this.state, 
-            login: this.login,
-            logout: this.logout,
-            ready: this.refreshPromise
-            }}>
+            ...this.contextMethods,
+            ready: this.refreshPromise}}>
             {this.props.children}
         </userContext.Provider>
     }
