@@ -12,7 +12,8 @@ import {
 } from "react-router-dom"
 import Constants from 'Constants'
 import Hit from './hit'
-import { fetcher, getUrlQueryParam, myerror, throwBadResponse, ErrorPage} from '../utils'
+import { fetcher, getUrlQueryParam, myerror, throwBadResponse} from '../utils'
+import { ErrorPage } from "../jsx_utils"
 import {HitInstanceType} from '@covfee-types/hit'
 import { EditableTaskFields, TaskResponse, TaskType } from '@covfee-types/task'
 

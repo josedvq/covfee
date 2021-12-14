@@ -1,7 +1,15 @@
+interface BaseInputSpec {
+    /**
+     * Range of the continuous values
+     * @default [0,1]
+     */
+    bounds?: [number, number]
+}
+
 /**
- * @title continuous-mousemove
+ * @title binary
  */
-export interface BinaryInputSpec {
+ export interface BinaryInputSpec {
     /**
      * @default "binary"
      */
@@ -21,7 +29,7 @@ export interface BinaryInputSpec {
 /**
  * @title continuous-mousemove
  */
-export interface ContinuousMousemoveInputSpec {
+export interface ContinuousMousemoveInputSpec extends BaseInputSpec {
     /**
      * @default "continuous-mousemove"
      */
@@ -29,31 +37,9 @@ export interface ContinuousMousemoveInputSpec {
 }
 
 /**
- * @title continuous-keyboard
- */
-export interface ContinuousKeyboardInputSpec {
-    /**
-     * @default "continuous-keyboard"
-     */
-    mode: "continuous-keyboard",
-    controls?: {
-        /**
-         * Increase intensity
-         * @default "s"
-         */
-        up?: string,
-        /**
-         * Decrease intensity
-         * @default "a"
-         */
-        down?: string
-    }
-}
-
-/**
  * @title gravity-keyboard
  */
-export interface GravityKeyboardInputSpec {
+ export interface GravityKeyboardInputSpec extends BaseInputSpec {
     /**
      * @default "gravity-keyboard"
      */
@@ -77,4 +63,53 @@ export interface GravityKeyboardInputSpec {
     }
 }
 
-export type Intensity1DInputSpec = BinaryInputSpec | ContinuousMousemoveInputSpec | ContinuousKeyboardInputSpec | GravityKeyboardInputSpec
+
+interface ContinuousValueControls {
+    /**
+     * Increase intensity
+     * @default "s"
+     */
+     up?: string,
+     /**
+      * Decrease intensity
+      * @default "a"
+      */
+     down?: string
+}
+
+
+
+
+
+/**
+ * @title continuous-keyboard
+ */
+export interface ContinuousKeyboardInputSpec extends BaseInputSpec{
+    /**
+     * @default "continuous-keyboard"
+     */
+    mode: "continuous-keyboard",
+    controls?: ContinuousValueControls
+}
+
+
+/**
+ * @title ranktrace
+ */
+ export interface RankTraceInputSpec extends BaseInputSpec {
+    /**
+     * @default "ranktrace"
+     */
+    mode: "ranktrace",
+    controls?: ContinuousValueControls,
+    /**
+     * Range of the continuous values
+     * @default null
+     */
+    bounds?: [number, number]
+}
+
+
+
+
+export type Intensity1DInputSpec = RankTraceInputSpec | BinaryInputSpec | ContinuousMousemoveInputSpec | ContinuousKeyboardInputSpec | GravityKeyboardInputSpec

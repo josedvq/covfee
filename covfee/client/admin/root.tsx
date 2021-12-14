@@ -29,30 +29,18 @@ class Root extends React.Component {
     render() {
         return <Router>
             <UserContext>
-                <Layout>
-                    <AdminHeader/>
-                    <Layout>
-                        <Switch>
-                            <Route path="/hits/:hitId">
-                                <AdminHIT />
-                            </Route>
-                            <Route path="/projects/:projectId">
-                                <AdminProject />
-                            </Route>
-                            <Route path="/login">
-                                <LoginPage/>
-                            </Route>
-                            <Route path="/">
-                                <AdminProject />
-                            </Route>
-                        </Switch>
-                    </Layout>
-                    <Footer>
-                        <Text style={{ float: 'right' }}>
-                            <a href="https://github.com/josedvq/covfee">covfee</a>
-                        </Text>
-                    </Footer>
-                </Layout>
+                <Switch>
+                    <Route path="/projects/:projectId">
+                        <AdminProject />
+                    </Route>
+                    <Route path="/login">
+                        <LoginPage/>
+                    </Route>
+                    <Route path="/">
+                        <AdminProject />
+                    </Route>
+                </Switch>
+                
             </UserContext>
         </Router>
     }

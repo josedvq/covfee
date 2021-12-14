@@ -105,19 +105,20 @@ export default class Continuous1DTask extends CovfeeContinuousTask<Props, State>
 
     // recreate annotation (replay mode) until the given frame
     replayUntil = (time: number) => {
+        this.props.buffer.seek(time)
         // const data: number[] = this.props.buffer.read(time)
         // if(!data) return
-        let data, logs
-        [data, logs] = this.props.buffer.read(time)
+        // let data, logs
+        // [data, logs] = this.props.buffer.read(time)
 
-        if(data)
-            this.setIntensity(data[1])
+        // if(data)
+        //     this.setIntensity(data[1])
 
-        if(logs) {
-            logs.forEach(log => {
-                this.replayAction(log[2])
-            })
-        }
+        // if(logs) {
+        //     logs.forEach(log => {
+        //         this.replayAction(log[2])
+        //     })
+        // }
     }
 
     replayAction = (action: Array<any>) => {
@@ -142,23 +143,23 @@ export default class Continuous1DTask extends CovfeeContinuousTask<Props, State>
 
     render() {
         return <>
-            <Row>
-                <Col span={20}>
-                    {this.props.renderPlayer({
-                        type: 'HTML5Player',
-                        media: this.props.spec.media,
-                        countdown: this.props.spec.showCountdown
-                     })}
-                </Col>
-                <Col span={4}>
-                    <OneDIntensity
-                        buttons={this.props.buttons}
-                        setIntensity={this.setIntensity}
-                        getIntensity={()=>{return this.intensity}}
-                        input={this.props.spec.intensityInput}
-                        visualizationModeOn={!!this.props.response}/>
-                </Col>
-            </Row>
+            <div style={{height: 'calc(100% - 200px)'}}>
+                {this.props.renderPlayer({
+                    type: 'HTML5Player',
+                    media: this.props.spec.media,
+                    countdown: this.props.spec.showCountdown
+                    })}
+            </div>
+            <div style={{height: '200px'}}>
+                <OneDIntensity
+                    paused={this.props.player.paused}
+                    buttons={this.props.buttons}
+                    buffer={this.props.buffer}
+                    setIntensity={this.setIntensity}
+                    getIntensity={()=>{return this.intensity}}
+                    input={this.props.spec.intensityInput}
+                    visualizationModeOn={!!this.props.response}/>
+            </div>
         </>
     }
 

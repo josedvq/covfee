@@ -6,7 +6,7 @@ import { CovfeeContinuousPlayer, ContinuousPlayerProps } from './base'
 import {PlayerBar} from './videoplayer_bar'
 import {CountdownTimer} from './utils/countdown'
 
-import { urlReplacer} from '../utils'
+import {log, urlReplacer} from '../utils'
 
 export interface Props extends ContinuousPlayerProps, HTML5PlayerOptions {
     /**
@@ -76,6 +76,7 @@ export class HTML5Player extends CovfeeContinuousPlayer<Props, State> {
 
         const activeVideoTag = this.videoTags[this.active_idx].current
         activeVideoTag.addEventListener('loadeddata', (e: Event) => {
+            log.debug('loadeddata')
             this.setState({duration: activeVideoTag.duration})
             this.props.onLoad(activeVideoTag.duration)
             this.setActiveVideo(0)
@@ -255,9 +256,9 @@ export class HTML5Player extends CovfeeContinuousPlayer<Props, State> {
 
     renderSingleview = () => {
         if (this.props.media.type !== 'video') return
-        return <div className='html5player' style={{position: 'relative', backgroundColor: 'black'}}>
+        return <div className='html5player' style={{height: '100%', position: 'relative', backgroundColor: 'black'}}>
             {this.renderBar()}
-            <video style={{width: '100%', maxHeight: 'calc(80vh)'}} 
+            <video style={{display: 'block', height: '100%', maxWidth: '100%', 'margin': '0 auto'}} 
                 ref={this.videoTags[0]} 
                 src={urlReplacer(this.props.media.url)} 
                 crossOrigin="Anonymous" 

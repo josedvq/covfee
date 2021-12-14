@@ -10,10 +10,17 @@ interface LoginInfo {
 
 interface Props {}
 
-interface UserState {
-    logged: boolean,
+export interface UserState {
+    logged: boolean
     username?: string
+    roles?: string[]
     loginTime?: number
+}
+
+export interface UserContextMethods {
+    login: (info: LoginInfo) => Promise<any>
+    loginWithGoogle: (token: string) => Promise<any>
+    logout: () => Promise<void>
 }
 
 class UserContext extends React.Component<Props, UserState> {
@@ -24,8 +31,8 @@ class UserContext extends React.Component<Props, UserState> {
         loginTime: null
     }
 
-    refreshPromise: Promise<Response>
-    timeoutId: number
+    refreshPromise: Promise<Response | void>
+    timeoutId: any
 
     constructor(props: Props) {
         super(props)
@@ -34,16 +41,10 @@ class UserContext extends React.Component<Props, UserState> {
             this.state = {
                 username: ls.username,
                 loginTime: ls.loginTime,
-                logged: true
+                logged: true,
+                roles: ls.roles
             }
         }
-    }
-
-    scheduleRefresh = (minutes: number = 10) => {
-        this.timeoutId = setTimeout(()=>{
-            this.refresh()
-            this.scheduleRefresh(10)
-        }, 1000 * 60 * minutes) // 10 minutes
     }
 
     componentDidMount() {
@@ -58,6 +59,7 @@ class UserContext extends React.Component<Props, UserState> {
                     this.state = {
                         username: null,
                         loginTime: null,
+                        roles: null,
                         logged: false
                     }
                     localStorage.removeItem('user')
@@ -75,25 +77,11 @@ class UserContext extends React.Component<Props, UserState> {
         }
     }
 
-    _onLogin = (userData) => {
-        const newState = {
-            logged: true,
-            username: data.username,
-            loginTime: Date.now()
-        }
-        this.setState(newState)
-        localStorage.setItem('user', JSON.stringify(newState));
-    }
-
-    _onFailure = () => {
-        this.setState({
-            logged: false
-        })
-    }
-
+    // Refreshes the auth token
     private refresh = () => {
+        log.info('refreshing auth token')
         const url = Constants.auth_url + '/refresh'
-        let options = {
+        let options: RequestInit = {
             method: 'POST'
         }
 
@@ -108,7 +96,35 @@ class UserContext extends React.Component<Props, UserState> {
         return fetch(url, options)
     }
 
-    contextMethods = {
+    scheduleRefresh = (minutes: number = 10) => {
+        this.timeoutId = setTimeout(()=>{
+            this.refresh()
+            this.scheduleRefresh(10)
+        }, 1000 * 60 * minutes) // 10 minutes
+    }
+
+    
+
+    _onLogin = (data) => {
+        const newState = {
+            logged: true,
+            username: data.username,
+            roles: data.roles,
+            loginTime: Date.now()
+        }
+        this.setState(newState)
+        localStorage.setItem('user', JSON.stringify(newState));
+    }
+
+    _onFailure = () => {
+        this.setState({
+            logged: false
+        })
+    }
+
+    
+
+    contextMethods: UserContextMethods = {
         login: (info: LoginInfo) => {
             const url = Constants.auth_url + '/login-password'
             const requestOptions = {
@@ -168,6 +184,7 @@ class UserContext extends React.Component<Props, UserState> {
                 this.setState({
                     logged: false,
                     username: null,
+                    roles: null,
                     loginTime: null
                 })
             }).catch(error=>{
@@ -181,8 +198,7 @@ class UserContext extends React.Component<Props, UserState> {
     render() {
         return <userContext.Provider value={{
             ...this.state, 
-            ...this.contextMethods,
-            ready: this.refreshPromise}}>
+            ...this.contextMethods}}>
             {this.props.children}
         </userContext.Provider>
     }

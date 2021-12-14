@@ -19,6 +19,7 @@ import { CopyOutlined, EditOutlined, IdcardFilled, LoadingOutlined, RightOutline
 import download from 'downloadjs'
 import Modal from 'antd/lib/modal/Modal'
 import { HitEditorForm } from './hit_editor'
+import AdminLayout from './layout'
 
 class InstanceListAsync extends React.Component {
     state = {
@@ -35,6 +36,7 @@ class InstanceListAsync extends React.Component {
     }
     
     componentDidMount() {
+        
         // fetch projects
         const url = this.url + '?' + new URLSearchParams({
             with_instances: '1',
@@ -313,7 +315,7 @@ class AdminProject extends React.Component<Props, State> {
     }
 
     render() {
-        switch (this.state.status) {
+        switch(this.state.status) {
             case 'loading':
                 return <div className={'site-layout-content'}>
                     <LoadingOutlined />
@@ -359,4 +361,12 @@ class AdminProject extends React.Component<Props, State> {
     }
 }
 
-export default AdminProject
+class AdminProjectLoader extends React.Component {
+    render() {
+        return <AdminLayout>
+            <AdminProject/>
+        </AdminLayout>
+    }
+}
+
+export default AdminProjectLoader

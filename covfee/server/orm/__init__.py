@@ -62,16 +62,21 @@ def load_config(app, mode):
     if mode == 'dev':
         app.config['BUNDLE_URL'] = app.config['DEV_BUNDLE_URL']
 
+def set_frontend_config():
     # create the frontend config object:
     app.config['FRONTEND_CONFIG'] = {
         # frontend only has two environments: production and development
-        'env': 'production' if mode in ['local', 'deploy'] else 'development',
+        'env': 'production' if app.config['COVFEE_ENV'] in ['local', 'deploy'] else 'development',
         'socketio_enabled': app.config['SOCKETIO_ENABLED'],
         'google_client_id': app.config['GOOGLE_CLIENT_ID'],
         'www_url': app.config['PROJECT_WWW_URL'],
         'app_url': app.config['APP_URL'],
-        'admin_url': app.config['ADMIN_URL'],
         'base_url': app.config['BASE_URL'],
         'api_url': app.config['API_URL'],
         'auth_url': app.config['AUTH_URL'],
+        'admin': {
+            'unsafe_mode_on': app.config['UNSAFE_MODE_ON'],
+            'home_url': app.config['ADMIN_URL'],
+            'login_url': app.config['LOGIN_URL']
+        }
     }

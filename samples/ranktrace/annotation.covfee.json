@@ -1,0 +1,27 @@
+{
+    "id": "1d_annot",
+    "name": "Continuous annot sample",
+    "email": "example@example.com",
+    "hits": [
+        {
+            "id": "1d_annot",
+            "name": "1D annotation sample",
+            "extra": {"content":"sdfjhsdkfhlsdf", "type": "raw"},
+            "repeat": 2,
+            "tasks": [
+                {
+                    "type": "Continuous1DTask",
+                    "name": "Sample",
+                    "media": {
+                        "type": "video",
+                        "url": "$$www$$/video1.mp4",
+                        "fps": 25
+                    },
+                    "intensityInput": {
+                        "mode": "ranktrace"
+                    }
+                }
+            ]
+        }
+    ]
+}

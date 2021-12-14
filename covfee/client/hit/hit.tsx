@@ -414,7 +414,7 @@ export class Hit extends React.Component<Props, State> {
                             <Col span={24}>{hitExtra}</Col>                    
                         </Row>
                     </Collapsible>}
-                <Row>
+                <Row style={{height: '100%'}}>
                     
                     {this.props.interface.showProgress &&
                     <div style={{margin: '5px 15px'}}>

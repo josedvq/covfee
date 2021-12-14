@@ -6,15 +6,19 @@ import {
 } from './buffer'
 import { fetcher } from '../utils'
 import { Packer} from './packer'
+import { log } from '../utils'
+import hitSlice from 'hit/hitSlice'
 
 type DataSample = number[]
 type DataRecord = number[]
 interface Chunk {
     chunk_index: number
-    idxs: Uint32Array
-    data: Float64Array
-    logs: Array<LogRecord>
-    buff: ArrayBuffer
+    idxs: Uint32Array       // stores the data sample indices
+    data: Float64Array      // stores the data itself (incl timestamp)
+    logs: Array<LogRecord>  // array of logs associated to this chunk
+    dirty: boolean          // chunk is modified and not persisted to server
+    inQueue: boolean        // chunk is inQueue for submission to the server
+    lastHit: number         // a timestamp for the last time the chunk was hit (written to)
 }
 
 /**
@@ -27,32 +31,47 @@ interface Chunk {
  */
 type OnErrorCallback = (arg0: string) => void
 export class BinaryDataCaptureBuffer implements AnnotationBuffer {
-    chunkByteLength: number
-    dataBuffer = Array<Chunk>()
+    chunkDataByteLength: number
+    chunkIdxsByteLength: number
+    chunks = Array<Chunk>()
     outBuffer = Array<Chunk>()
 
+    dataArrayBuff: ArrayBuffer
+    idxsArrayBuff: ArrayBuffer
+    dataArray: Float64Array
+    idxsArray: Uint32Array
+
     // props
-    outBufferErrorLength = 10
+    length: number                  // total number of data points in the buffer (normally = # video frames)
+    lengthErrorThreshold = 10
     chunkLength: number
+    numChunks: number
     fps: number
-    sampleLength: number
-    recordLength: number
+    /**
+     * Size of the record (excl mediatime)
+     */
+    recordDataSize: number
+    /**
+     * Size of the record (incl mediatime and timestamp)
+     */
+    recordSize: number
     url: string
+    persistInterval: number
+    lastHitThreshold: number
     disabled: boolean
-    eager: boolean
     writeTimestamp: boolean
     onError: OnErrorCallback
 
     // state
-    tailptr = 0
-    logptr = 0   // points to a log within the chunk when reading
+    /**
+     * index of the curr sample, for sequential reading / writing
+     */
+    head: number
     receivedData = false
     // counts the total number of data and log samples
     // one-based bc zero is used for null.
     cntr = 1 
-    chunkIndex = 0
 
-    isDataReady = false
     isDataPromisePending = false
     loadDataPromise: Promise<void>
 
@@ -60,57 +79,109 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
     awaitClearPromise:Promise<unknown> = null
     fetch_fn: (arg0: any, arg1: any) => Promise<any> = getFetchWithTimeout(3000)
 
-    constructor(disabled = false, sampleLength = 1, chunkLength = 200, 
-                fps=60, url = '', onError: OnErrorCallback = () => { }, 
-                eager=true, outBufferErrorLength=5, writeTimestamp=true) {
+    interval: any
+
+    /**
+     * @param url API endpoint for submitting chunks
+     * @param disabled the buffer will behave as mock and not submit data to the server.
+     * @param recordDataSize number of elements in each record (excluding auto timestamp).
+     * @param writeTimestamp If true, a timestamp is added to each record. Timestamp is added by calling Date.now() when data() is called.
+     * @param onError Called when the output queue is full.
+     * @param chunkLength length of each data chunk in samples / frames. Data are sent to the server in packets of size chunkLength.
+     * @param persistInterval Interval to check for dirty chunks and submit them to the server
+     * @param lastHitThreshold Minimum time (seconds) since last hit before a dirty chunk can be enqueued.
+     * @param lengthErrorThreshold Max number of permitted dirty chunks in the output queue. If the queue size goes over this value, onError is called.
+     */
+    constructor(url = '', disabled = false, recordDataSize = 1, writeTimestamp=true, 
+                onError: OnErrorCallback = () => {}, persistInterval = 60, lastHitThreshold = 1, lengthErrorThreshold=5) {
+
+        this.url = url
+        this.head = 0
+        this.disabled = disabled
+        this.recordDataSize = recordDataSize
+        this.recordSize = 1 + (writeTimestamp ? 1 : 0) + this.recordDataSize
+        
+        this.persistInterval = persistInterval
+        this.lastHitThreshold = lastHitThreshold
+        this.lengthErrorThreshold = lengthErrorThreshold
+        this.onError = onError
+        this.writeTimestamp = writeTimestamp
+        
+        if (disabled) this.fetch_fn = dummyFetch
+
+        // enqueue dirty chunks every persistInterval seconds
+        this.interval = setInterval(this._enqueueDirtyChunks, persistInterval * 1000)
+        log.debug(`buffer constructed with recordDataSize=${this.recordDataSize}, lastHitThreshold=${this.lastHitThreshold}, lengthErrorThreshold=${this.lengthErrorThreshold}`)
+    }
+    /**
+    * @param length length of the data in samples / frames.
+    * @param fps fps of the media. Used to convert mediatime to sample / frame number
+    */
+    make = (length: number, fps=60, chunkLength = 200) => {
+        this.length = length
         this.chunkLength = chunkLength
         this.fps = fps
-        this.sampleLength = sampleLength
-        this.recordLength = sampleLength + 1 + (writeTimestamp ? 1 : 0)
-        this.outBufferErrorLength = outBufferErrorLength
-        this.chunkByteLength = this.chunkLength * (4 + 8 * (this.recordLength))
-        this.url = url
-        this.disabled = disabled
-        this.eager = eager
-        this.writeTimestamp = writeTimestamp
-        if (disabled) this.fetch_fn = dummyFetch
-        this.onError = onError
+
+        this.numChunks = Math.ceil(length / chunkLength)
+
+        this.chunkDataByteLength = this.chunkLength * 8 * this.recordSize
+        this.chunkIdxsByteLength = this.chunkLength * 4
+
+        this.dataArrayBuff = new ArrayBuffer(this.numChunks * this.chunkDataByteLength)
+        this.dataArray = new Float64Array(this.dataArrayBuff, 0, Math.floor(this.dataArrayBuff.byteLength / 8))
+        this.idxsArrayBuff = new ArrayBuffer(this.numChunks * this.chunkIdxsByteLength)
+        this.idxsArray = new Uint32Array(this.idxsArrayBuff, 0, Math.floor(this.idxsArrayBuff.byteLength) / 4)
+
+        this._createChunks()
+
+        log.debug(`buffer.make called with length=${this.length}(${this.numChunks} x ${this.chunkLength}), fps=${fps} recordSize=${this.recordSize}(1+${(this.writeTimestamp?'1':'0')}+${this.recordDataSize})`)
+    }
+
+    destroy = () => {
+        clearInterval(this.interval)
     }
 
     reset = () => {
-        this.tailptr = 0
-        this.logptr = 0
         this.receivedData = false
-        this.chunkIndex = 0
     }
 
-    _createChunkFromArrayBuffer = (arrayBuff: ArrayBuffer, logs: Array<LogRecord> = null) => {
-        const chunk: Chunk = {
-            chunk_index: this.chunkIndex++,
-            idxs: new Uint32Array(arrayBuff, 0, this.chunkLength),
-            data: new Float64Array(arrayBuff, this.chunkLength * 4, this.chunkLength * (this.recordLength)),
-            logs: logs ? logs : Array<LogRecord>(),
-            buff: arrayBuff
+    _createChunks = () => {
+        log.debug('_createChunks')
+        for(let i = 0; i < this.numChunks; i++) {
+            const chunk: Chunk = {
+                chunk_index: i,
+                idxs: new Uint32Array(this.idxsArrayBuff, i * this.chunkIdxsByteLength, Math.floor(this.chunkIdxsByteLength / 4)),
+                data: new Float64Array(this.dataArrayBuff, i * this.chunkDataByteLength, Math.floor(this.chunkDataByteLength / 8)),
+                logs: Array<LogRecord>(),
+                dirty: false,
+                inQueue: false,
+                lastHit: Date.now(),
+            }
+            this.chunks.push(chunk)
         }
-        this.dataBuffer.push(chunk)
+        
     }
 
-    _createChunk = () => {
-        const arrayBuff = new ArrayBuffer(this.chunkByteLength)
-        this._createChunkFromArrayBuffer(arrayBuff)
+    // load a chunk from an array buffer. Used to load chunks received from server.
+    // array buffer has structure
+    // | idxs [4*chunkLength] | data[8*recordLength*chunkLength] |
+    _loadChunk = (index: number, arrayBuff: ArrayBuffer, logs: Array<LogRecord> = null) => {
+        this.chunks[index].idxs.set(new Uint32Array(arrayBuff, 0, Math.floor(this.chunkIdxsByteLength / 4)))
+        this.chunks[index].data.set(new Float64Array(arrayBuff, this.chunkIdxsByteLength, Math.floor(this.chunkDataByteLength / 8)))
     }
 
     loadChunks = (arr: ArrayBuffer) => {
         if (arr.byteLength === 0) 
             throw new Error('Provided ArrayBuffer is empty')
         
-        this.reset()
         const packer = new Packer()
         const chunks = packer.unpackChunkList(arr).chunks
 
         for(let i = 0; i < chunks.length; i++) {
-            this._createChunkFromArrayBuffer(chunks[i].data.buffer, chunks[i].logs)
+            this._loadChunk(i, chunks[i].data.buffer, chunks[i].logs)
         }
+
+        this.reset()
     }
 
     _load = async () => {
@@ -129,7 +200,6 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         this.isDataPromisePending = true
         this.loadDataPromise = fetcher(url, options)
             .then(async (res) => {
-                this.isDataReady = true
                 const arr = await res.arrayBuffer()
                 this.loadChunks(arr)
             }).catch(err => {
@@ -139,23 +209,52 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         return this.loadDataPromise
     }
 
-    createChunksUntil = (until: number) => {
-        while(this.dataBuffer.length <= until) {
-            this._createChunk()
+    _getChunkNum = (frameNum: number) => {
+        return Math.floor(frameNum / this.chunkLength)
+    }
+
+    _write = (mediatime: number, record: number[]) => {
+        const frameNum = Math.round(mediatime * this.fps)
+        // write into data buffer
+        const ini = frameNum * this.recordSize
+        let i = 0
+        for (; i < this.recordSize; i++) {
+            this.dataArray[ini + i] = record[i]
+        }
+        this.idxsArray[frameNum] = this.cntr++
+
+        const chunkNum = this._getChunkNum(frameNum)
+        this.chunks[chunkNum].dirty = true
+        this.chunks[chunkNum].lastHit = Date.now()
+        this.head = frameNum
+    }
+
+    makeIterator = (itemIndex: number, start: number, end: number) => {
+        let index = start
+        return {
+            next: () => {
+                let result
+                if(index < end) {
+                    result = {value: [index, this.dataArray[index * this.recordSize + 1 + (this.writeTimestamp ? 1 : 0) + itemIndex]], done: false}
+                    index += 1
+                    return result
+                }
+                return {value: [], done: true}
+            }
         }
     }
 
-    mediatimeToChunkSample = (mediatime: number) => {
-        // calculate sample and chunk numbers
-        const frameNum = Math.round(mediatime * this.fps)
-        const chunkNum = Math.floor(frameNum / this.chunkLength)
-        const sampleNum = frameNum % this.chunkLength
-
-        return [chunkNum, sampleNum]
+    isOutBufferFull = () => {
+        return this.outBuffer.length > this.lengthErrorThreshold
     }
 
-    isOutBufferFull = () => {
-        return this.outBuffer.length > this.outBufferErrorLength
+    /**
+     * Move the head to this meadiatime in seconds
+     * @param mediatime in seconds
+     */
+    seek = (mediatime: number) => {
+        const frameNum = Math.round(mediatime * this.fps)
+        this.head = frameNum
     }
 
     /**
@@ -167,6 +266,9 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         if(this.disabled) return
         this.receivedData = true
 
+        if(data.length !== this.recordDataSize)
+            throw new Error('invalid record size provided to data().')
+
         let record
         if(this.writeTimestamp) {
            record = [mediatime, Date.now(), ...data] 
@@ -174,72 +276,84 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
             record = [mediatime, ...data] 
         }
 
-        const [chunkNum, sampleNum] = this.mediatimeToChunkSample(mediatime)
-        this.createChunksUntil(chunkNum)
+        this._write(mediatime, record)
+    }
 
-        // write into data buffer
-        const ini = sampleNum * this.recordLength
-        let i = 0
-        for (; i < this.recordLength; i++) {
-            this.dataBuffer[chunkNum].data[ini + i] = record[i]
-        }
-        this.dataBuffer[chunkNum].idxs[sampleNum] = this.cntr++
-
-        // advance tail if necessary
-        if(chunkNum - this.tailptr > (this.eager ? 1 : 5))
-            this.advanceTail()
-    } 
-
-    read = (mediatime: number) => {
-        const [chunkNum, sampleNum] = this.mediatimeToChunkSample(mediatime)
-        if(this.dataBuffer[chunkNum] === undefined || 
-            this.dataBuffer[chunkNum].idxs[sampleNum] === undefined)
+    readFrame = (frameNum: number) => {
+        if(this.dataArray[frameNum] === undefined)
             return [null, null] as [number[], LogRecord[]]
 
-        let res, logs = []
-        if (this.dataBuffer[chunkNum].idxs[sampleNum] === 0) res = null
+        let res = []
+        if (this.idxsArray[frameNum] === 0) res = null
         else {
             res = []
-            const ini = sampleNum * this.recordLength + (this.writeTimestamp ? 1 : 0)
-            for (let i = 0; i < this.recordLength; i++) {
-                res.push(this.dataBuffer[chunkNum].data[ini+i])
+            const ini = frameNum * this.recordSize
+            for (let i = 0; i < this.recordSize; i++) {
+                res.push(this.dataArray[ini+i])
             }
         }
 
-        while (this.logptr < this.dataBuffer[chunkNum].logs.length
-              && this.dataBuffer[chunkNum].logs[this.logptr][1] < mediatime) {
-            logs.push(this.dataBuffer[chunkNum].logs[this.logptr])
-            this.logptr += 1
-        }
+        let logs: LogRecord[] = []
 
         return [res, logs] as [number[], LogRecord[]]
     }
 
+    read = (mediatime: number) => {
+        const frameNum = Math.round(mediatime * this.fps)
+        return this.readFrame(frameNum)
+    }
 
     log = (mediatime: number, data: LogSample) => {
         this.receivedData = true
 
-        const [chunkNum, _] = this.mediatimeToChunkSample(mediatime)
-        this.createChunksUntil(chunkNum)
+        const frameNum = Math.round(mediatime * this.fps)
+        const chunkNum = this._getChunkNum(frameNum)
+
+        log.info(`logging ${JSON.stringify(data)} for frameNum = ${frameNum}, chunkNum = ${chunkNum}`)
 
         const record: LogRecord = [this.cntr++, mediatime, data]
-        this.dataBuffer[chunkNum].logs.push(record)
+        this.chunks[chunkNum].logs.push(record)
+
+        this.chunks[chunkNum].dirty = true
+        this.chunks[chunkNum].lastHit = Date.now()
+        
     }
 
     /**
-     * Advances the tailptr (chunk-level pointer) by one chunk
-     * Moves the just-completed chunk into the output buffer.
-     * Does not output to server.
-     * @returns void
+     * Ran regularly to check for dirty chunks
      */
-    advanceTail = () => {
-        this.outBuffer.push(this.dataBuffer[this.tailptr])
-        this.tailptr++
+    _enqueueDirtyChunks = () => {
+        log.debug(`_enqueueDirtyChunks, buffer length=${this.outBuffer.length}`)
+        if (this.isOutBufferFull()) {
+            this.onError(`Output buffer full (length=${this.outBuffer.length}). Data may be lost.`)
+        }
+
+        this.chunks.forEach((chunk, index)=>{
+            if(chunk.dirty && !chunk.inQueue && chunk.lastHit < Date.now() - 1000*this.lastHitThreshold) {
+                log.debug(`enqueing chunk ${chunk.chunk_index}`)
+                this.outBuffer.push(chunk)
+                chunk.inQueue = true
+            }
+        })
 
         this.awaitClear()
-        if (this.isOutBufferFull()) {
-            this.onError('Output buffer full. Data may be lost.')
-        }
+    }
+
+    /**
+     * Move all the remaining chunks into the outBuffer, then wait for it to clear
+     * @returns promise that is resolved 
+     */
+     flush = async (timeout=8000) => {
+        if (!this.receivedData) return Promise.resolve()
+
+        this.chunks.forEach(chunk=>{
+            if(chunk.dirty && !chunk.inQueue) {
+                this.outBuffer.push(chunk)
+                chunk.inQueue = true
+            }
+        })
+
+        return this.awaitClear(timeout)
     }
 
     /**
@@ -247,8 +361,12 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
      * @returns promise from fetch
      */
     submitChunk = async () => {
+        log.debug('submitChunk')
         const chunk = this.outBuffer[0]
-        const packet = new Packer().pack(chunk.buff, chunk.logs, this.chunkLength, this.recordLength)
+        const packet = new Packer().pack(
+            this.dataArrayBuff, chunk.chunk_index * this.chunkDataByteLength, this.chunkDataByteLength,
+            this.idxsArrayBuff, chunk.chunk_index * this.chunkIdxsByteLength, this.chunkIdxsByteLength,
+            chunk.logs, this.chunkLength, this.recordSize)
         const requestOptions = {
             method: 'POST',
             body: packet,
@@ -259,6 +377,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
             length: this.chunkLength.toString()
         })
 
+        log.debug(`submitting chunk ${chunk.chunk_index}`)
         return this.fetch_fn(url, requestOptions).then(async (response: Response) => {
             const data = await response.json()
             // check for error response
@@ -272,18 +391,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         })
     }
 
-    /**
-     * Move all the remaining chunks into the outBuffer, then wait for it to clear
-     * @returns promise that is resolved 
-     */
-    flush = async (timeout=8000) => {
-        if (!this.receivedData) return Promise.resolve()
-        while(this.tailptr !== this.dataBuffer.length) {
-            this.advanceTail()
-        }
-
-        return this.awaitClear(timeout)
-    }
+    
     
     /**
      * Makes a race between
@@ -292,7 +400,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
      * @param timeout 
      * @returns promise
      */
-    awaitClear = async (timeout = 4000) => {
+    awaitClear = async (timeout = 0) => {
         // avoid multiple unresolved awaitClear promises
         if (this.awaitClearPending) return this.awaitClearPromise
 

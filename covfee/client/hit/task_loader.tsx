@@ -37,7 +37,7 @@ export interface VideoPlayerContext {
 interface State {
     /**
      * Lifecycle states of the loader
-     * loading: responses and / or media are being loaded.
+     * loading: responses are being loaded.
      * loaded: (continuous/timed only) responses are loaded. overlay is shown if
      *      - continuous task response is closed (new response is necessary)
      *      - timed task is not started or is finished
@@ -84,6 +84,7 @@ interface State {
         visible: boolean
     }
     player: {
+        duration: number
         loaded: boolean
         paused: boolean
         muted: boolean
@@ -179,13 +180,18 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
     taskElement: CovfeeTask<any, any>
     taskInstructionsElem: HTMLDivElement
 
-    mountPromise: CancelablePromise<any>
+
+    loadPromise: CancelablePromise<any>
 
     buffer: AnnotationBuffer
     parentBuffer: AnnotationBuffer
     endTaskResult: any = null
     // endTaskBuffer: AnnotationBuffer = null
     listeners: {[key: string]: ((...args: any[]) => void)[] } = {}
+
+    _playerLoaded: Promise<any>
+    _playerLoadedResolve: Function
+    _playerLoadedReject: Function
     
     state: State = {
         status: 'loading',
@@ -193,6 +199,7 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         replayMode: false,
         taskKey: 0,
         player: {
+            duration: null,
             loaded: false,
             paused: true,
             muted: false
@@ -217,8 +224,15 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         //     this.state.player.speed = 1
         //     this.state.player.speedEnabled = true
         // }
-        // if(this.isContinuousTask())
-        //     this.createBuffers()
+        if(this.isContinuous) {
+            this.buffer = new BinaryDataCaptureBuffer(
+                this.props.task.url,
+                this.props.previewMode || this.response === null,
+                this.taskConstructor.taskInfo.bufferDataLen,   // sample length
+                true,
+                this.handleBufferError)
+        }
+        // this._playerLoaded = 
     }
 
     getTaskRenderAs = () => {
@@ -235,7 +249,9 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         }
     }
 
-    isContinuousTask = () => (this.state.renderAs.type == 'continuous-task')
+    get isContinuous() {
+        return (this.state.renderAs.type == 'continuous-task')
+    }
 
     isMaxSubmissionsReached = () => {
         return (this.props.task.maxSubmissions && this.props.task.num_submissions >= this.props.task.maxSubmissions)
@@ -243,24 +259,35 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
 
     componentDidMount = () => {
         // read the taks and parent responses.
-        this.mountPromise = makeCancelablePromise(Promise.all([
+        this.loadPromise = makeCancelablePromise(Promise.all([
             this.props.fetchTaskResponse(this.props.task).then((response: TaskResponse) => {
                 this.response = response
             }),
             this.props.parent && this.props.fetchTaskResponse(this.props.parent).then((response: TaskResponse) => {
                 this.parentResponse = response
+            }),
+            this.isContinuous && new Promise((resolve, reject) => {
+                this._playerLoadedResolve = resolve
+                this._playerLoadedReject = reject
+            }).then((mediaDuration: any)=> {
+                this.setState({player: {...this.state.player, duration: mediaDuration}})
             })
         ]))
         
-        this.mountPromise.promise.then(_ => {
-            if(this.response && this.response.submitted) {
-                // task already submitted
-                this.setState({
-                    status: 'loaded'
-                })
-            } else {
-                this.loadTask(true)
-            }
+        this.loadPromise.promise.then(_ => {
+            
+            this.loadTask(this.response && this.response.submitted)
+            // if(this.isContinuous) {
+            //     this.buffer.make()
+            // }
+            // if(this.response && this.response.submitted) {
+            //     // task already submitted
+            //     this.setState({
+            //         status: 'loaded'
+            //     })
+            // } else {
+            //     this.loadTask(true)
+            // }
         })
     }
 
@@ -300,22 +327,23 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
     // }
 
     componentWillUnmount() {
-        this.mountPromise.promise.catch(()=>{})
-        this.mountPromise.cancel()
+        this.loadPromise.promise.catch(()=>{})
+        this.loadPromise.cancel()
     }
 
 
-    loadTask = (annot = true) => {
+    loadTask = (replay = false) => {
         this.setState({
-            replayMode: !annot
+            replayMode: replay
         })
 
         // this.props.setState({status: 'ready', loading: true})
-        if(this.isContinuousTask()) {
-            log.info('creating buffers')
-            this.createBuffers()
-            if(!annot) {
-                this.loadBuffers().finally(()=>{
+        if(this.isContinuous) {
+            const fps = (this.props.task as any).spec.media.fps || 60
+            const bufferLength = Math.ceil(this.state.player.duration * fps)
+            this.buffer.make(bufferLength, fps)
+            if(replay) {
+                this.loadBuffers().then(()=>{
                     this.setState({
                         status: 'ready',
                         taskKey: this.state.taskKey + 1
@@ -333,16 +361,6 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
                 taskKey: this.state.taskKey + 1
             })
         }
-    }
-
-    createBuffers = () => {        
-        this.buffer = new BinaryDataCaptureBuffer(
-            this.props.previewMode || this.response === null,
-            this.taskConstructor.taskInfo.bufferDataLen,   // sample length
-            200, //chunk length
-            (this.props.task as any).spec.media.fps || 60,
-            this.response ? this.response.url : null,
-            this.handleBufferError)
     }
 
     loadBuffers = () => {
@@ -667,6 +685,11 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
     }
 
     handlePlayerLoad = (duration: number, fps?: number) => {
+        log.debug(`handlePlayerLoad called, duration=${duration}`)
+        this._playerLoadedResolve(duration)
+        // this.setState({player: {...this.state.player, 'duration': duration}}, ()=>{
+        //     this._playerLoadedResolve()
+        // })
         this.dispatchPlayerEvent('load', duration, fps)
     }
 
@@ -716,11 +739,9 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
             
             {this.renderErrorModal()}
             <div ref={e=>{this.taskInstructionsElem = e}}></div>
-            <div style={{width: '100%', position: 'relative'}}>
+            <div style={{width: '100%', height: '100%', position: 'relative'}}>
                 {this.renderOverlay()}
                 {(()=>{
-                    if(this.state.status == 'loading') return null
-
                     let commonProps: CommonTaskProps = {
                         spec: this.props.task.spec,
                         response: (this.state.renderAs.type == 'continuous-task' && !this.state.replayMode) ? null : this.response,
