@@ -275,7 +275,7 @@ class TaskResponse(db.Model):
             chunk_length = chunk['chunkLength']
 
             if len(data) % chunk_length != 0:
-                raise Exception('Chunk byte length is not.')
+                raise Exception('Chunk byte length is invalid.')
             bytes_per_record = len(data) // chunk_length
 
             if (bytes_per_record - 4) % 8 != 0:

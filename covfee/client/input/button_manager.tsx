@@ -27,6 +27,15 @@ interface ButtonEventOptions {
      */
     allowCustom: boolean
 }
+
+export interface ButtonManagerClient {
+    addListener: (id: string, defaultKey: string, description: string) => any,
+    removeListener: (id: string) => void,
+    applyMap: (buttonMap: { [key: string]: string }) => void,
+    getStatus: (listener: string) => boolean,
+    renderInfo: () => React.ReactElement
+}
+
 class ButtonEventManagerContext extends React.Component {
 
     listeners: ButtonEventSpec = {}
@@ -128,17 +137,17 @@ class ButtonEventManagerContext extends React.Component {
     }
 
 
-    getContext = () => {
+    getClient = () => {
         return {
             addListener: this.addListener,
             removeListener: this.removeListener,
             applyMap: this.applyMap,
             getStatus: this.getStatus,
             renderInfo: this.renderInfo
-        }
+        } as ButtonManagerClient
     }
 
-    getDummyContext = () => {
+    getDummyClient = () => {
         return {
             addListener: () => {
                 // method chaining to add events
@@ -151,9 +160,9 @@ class ButtonEventManagerContext extends React.Component {
             },
             removeListener: () => {},
             applyMap: () => {},
-            getStatus: () => {},
+            getStatus: () => false,
             renderInfo: () => {return null as any}
-        }
+        } as ButtonManagerClient
     }
 
     renderInfo = () => {
@@ -173,8 +182,8 @@ class ButtonEventManagerContext extends React.Component {
 
     render() {
         return <buttonManagerContext.Provider value={{
-                    getContext: this.getContext,
-                    getDummyContext: this.getDummyContext,
+                    getContext: this.getClient,
+                    getDummyContext: this.getDummyClient,
                     renderInfo: this.renderInfo}}>
             {this.props.children}
         </buttonManagerContext.Provider>

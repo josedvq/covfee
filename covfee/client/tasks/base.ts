@@ -1,6 +1,7 @@
 import React from 'react';
 import { AnnotationBuffer } from '../buffers/buffer'
 import { VideoPlayerContext } from 'hit/continuous_task_player';
+import { ButtonManagerClient } from 'input/button_manager';
 
 export abstract class CovfeeTask<T extends BasicTaskProps, S> extends React.Component<T, S> {
     static taskType = 'component'
@@ -45,7 +46,7 @@ export interface CommonTaskProps {
     /**
      * Interface to the buttons manager
      */
-    buttons: any
+    buttons: ButtonManagerClient
 
     /**
      * Called to get access to shared (synced) state and shared state setter

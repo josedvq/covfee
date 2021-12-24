@@ -6,6 +6,7 @@ import {
 } from 'antd'
 const { Title } = Typography
 import { OneDIntensity } from '../input/1d_intensity'
+import { OneDTrace } from '../input/1d_trace'
 import { TaskType} from '@covfee-types/task'
 import {  ContinuousTaskProps, CovfeeContinuousTask } from './base'
 import { Continuous1DTaskSpec} from '@covfee-types/tasks/continuous_1d'
@@ -30,7 +31,7 @@ export default class Continuous1DTask extends CovfeeContinuousTask<Props, State>
 
     reverseCountTimerId: number = null
     frameUpdateTimerId: number = null
- 
+    index: number = 0
 
     constructor(props: Props) {
         super(props)
@@ -106,19 +107,18 @@ export default class Continuous1DTask extends CovfeeContinuousTask<Props, State>
     // recreate annotation (replay mode) until the given frame
     replayUntil = (time: number) => {
         this.props.buffer.seek(time)
-        // const data: number[] = this.props.buffer.read(time)
-        // if(!data) return
-        // let data, logs
-        // [data, logs] = this.props.buffer.read(time)
+        let data, logs
+        [data, logs] = this.props.buffer.readHead()
 
-        // if(data)
-        //     this.setIntensity(data[1])
 
-        // if(logs) {
-        //     logs.forEach(log => {
-        //         this.replayAction(log[2])
-        //     })
-        // }
+        if(data)
+            this.setIntensity(data[2])
+
+        if(logs) {
+            logs.forEach(log => {
+                this.replayAction(log[2])
+            })
+        }
     }
 
     replayAction = (action: Array<any>) => {
@@ -151,16 +151,17 @@ export default class Continuous1DTask extends CovfeeContinuousTask<Props, State>
                     })}
             </div>
             <div style={{height: '200px'}}>
-                <OneDIntensity
+                <OneDTrace
                     paused={this.props.player.paused}
                     buttons={this.props.buttons}
                     buffer={this.props.buffer}
                     setIntensity={this.setIntensity}
                     getIntensity={()=>{return this.intensity}}
                     input={this.props.spec.intensityInput}
-                    visualizationModeOn={!!this.props.response}/>
+                    replay={!!this.props.response}/>
             </div>
         </>
+        
     }
 
     instructions = () => {

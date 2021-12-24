@@ -48,7 +48,7 @@ interface State {
      * ended: (continuous only) player called onEnd
      * submitted: task has been submitted
      */
-    status: 'loading' | 'loaded' | 'ready' | 'ended' | 'submitted'
+    status: 'loading' | 'mounted' | 'ready' | 'ended' | 'submitted'
     renderAs: {
         type: 'continuous-task' | 'default'
         timed: boolean
@@ -226,7 +226,7 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         // }
         if(this.isContinuous) {
             this.buffer = new BinaryDataCaptureBuffer(
-                this.props.task.url,
+                null,
                 this.props.previewMode || this.response === null,
                 this.taskConstructor.taskInfo.bufferDataLen,   // sample length
                 true,
@@ -262,6 +262,7 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         this.loadPromise = makeCancelablePromise(Promise.all([
             this.props.fetchTaskResponse(this.props.task).then((response: TaskResponse) => {
                 this.response = response
+                this.buffer.url = response.url
             }),
             this.props.parent && this.props.fetchTaskResponse(this.props.parent).then((response: TaskResponse) => {
                 this.parentResponse = response
@@ -276,18 +277,14 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         
         this.loadPromise.promise.then(_ => {
             
-            this.loadTask(this.response && this.response.submitted)
-            // if(this.isContinuous) {
-            //     this.buffer.make()
-            // }
-            // if(this.response && this.response.submitted) {
-            //     // task already submitted
-            //     this.setState({
-            //         status: 'loaded'
-            //     })
-            // } else {
-            //     this.loadTask(true)
-            // }
+            if(this.isContinuous && this.response && this.response.submitted) {
+                // task already submitted
+                this.setState({
+                    status: 'mounted'
+                })
+            } else {
+                this.loadTask()
+            }
         })
     }
 
@@ -370,7 +367,7 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         ])
     }
 
-    loadTaskForReplay = () => { this.loadTask(false) }
+    loadTaskForReplay = () => { this.loadTask(true) }
 
     clearAndReloadTask = () => {
         const url = this.props.task.url +'/make_response?' + new URLSearchParams({
@@ -576,6 +573,29 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         }
     }
 
+    renderOverlay = () => {
+        switch(this.state.status) {
+            case 'mounted':
+                if(this.props.task.num_submissions > 0 && this.state.renderAs.type == 'continuous-task')
+                    return <TaskOverlay visible={true} {...this.getOverlaySubmittedTask()}/>
+                if (this.props.task.timer)
+                    return <TaskOverlay visible={true} {...this.getOverlayInitTimedTask()}/>
+                break
+            case 'ended':
+                if(this.state.replayMode)
+                    return <TaskOverlay visible={true} {...this.getOverlayAfterReplayOrStop()}/>
+                else
+                    return <TaskOverlay visible={true} {...this.getOverlayNonSubmittedTask()}/>
+                
+            case 'submitted':
+                if(this.state.renderAs.type == 'continuous-task')
+                    return <TaskOverlay visible={true} {...this.getOverlaySubmittedTask()}/>
+                break
+            default:
+                return null
+        }
+    }
+
     createTaskRef = (element: CovfeeTask<any,any>) => {
         if(!this.taskInstructionsElem) return
         this.taskElement = element
@@ -621,28 +641,7 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         </Popover>
     }
 
-    renderOverlay = () => {
-        switch(this.state.status) {
-            case 'loaded':
-                if(this.props.task.num_submissions > 0 && this.state.renderAs.type == 'continuous-task')
-                    return <TaskOverlay visible={true} {...this.getOverlaySubmittedTask()}/>
-                if (this.props.task.timer)
-                    return <TaskOverlay visible={true} {...this.getOverlayInitTimedTask()}/>
-                break
-            case 'ended':
-                if(this.state.replayMode)
-                    return <TaskOverlay visible={true} {...this.getOverlayAfterReplayOrStop()}/>
-                else
-                    return <TaskOverlay visible={true} {...this.getOverlayNonSubmittedTask()}/>
-                
-            case 'submitted':
-                if(this.state.renderAs.type == 'continuous-task')
-                    return <TaskOverlay visible={true} {...this.getOverlaySubmittedTask()}/>
-                break
-            default:
-                return null
-        }
-    }
+    
 
     /**
      * Player access
@@ -735,6 +734,7 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
     }
 
     render() {
+        log.debug(`task_loader render() with status=${this.state.status} renderAs.type = "${this.state.renderAs.type}", replayMode=${this.state.replayMode}`)
         return <>
             
             {this.renderErrorModal()}
@@ -744,7 +744,7 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
                 {(()=>{
                     let commonProps: CommonTaskProps = {
                         spec: this.props.task.spec,
-                        response: (this.state.renderAs.type == 'continuous-task' && !this.state.replayMode) ? null : this.response,
+                        response: (this.isContinuous && !this.state.replayMode) ? null : this.response,
                         buffer: this.buffer,
                         buttons: this.context.getContext(),
                         getSharedState: this.getSharedState

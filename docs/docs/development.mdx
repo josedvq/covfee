@@ -2,15 +2,15 @@
 title: Development install
 ---
 
-This guide explains how to install covfee for development. This is for usage patterns not supported by the normal install, like modifying the backend or making changes to the frontend that go beyond a custom task. A good understanding of Javascript is recommended.
+This guide explains how to install covfee for development. This type of install is recommended for modifying covfee's Javascript code, including the implementation of custom tasks, covfee documentation, or the Pyton backend. A good understanding of Javascript and/or Python is recommended.
 
 ## Setup
 
-The development environment makes use of a webpack development server for a more comfortable experience, including hot-reloading. This guide will get you to run covfee in development mode for one of the sample projects:
+Covfee's frontend is built using webpack, which has a convenient hot-reloading development server. The Flask server used for the backend also supports reloading on changes. This guide will get you to run backend and frontend development servers:
 
-1. Install version 12.x of [node.js](https://nodejs.org/en/download/). Make sure that the `npm` command is available in your terminal.
+1. Install the latest version of [node.js](https://nodejs.org/en/download/). Make sure that the `npm` command is available in your terminal.
 
-2. Clone this repository and install the python packege with pip, in editable mode. This allows that the changes to the source code immediately affect all the local installations of the package.
+2. Install the covfee Python package in editable mode:
 
 ```
 git clone git@github.com:josedvq/covfee.git
@@ -18,23 +18,47 @@ cd covfee
 python3 -m pip install -e .
 ```
 
-3. Create an app database. We will use one of the samples for now:
+The `covfee` command should now be available in the terminal. Type `covfee --help` to make sure.
 
-cd samples/basic
-mkcovfee json --fpath basic.covfee.json
-
-4. Fire up webpack:
+3. Install Javascript dependencies:
 ```
-webpack_fb
-```
-In development mode, webpack serves the front-end code of covfee. That will include the Javascript code of your custom task. Webpack is configured for hot reloading meaning the results will refresh in your browser whenever you make changes to the code. Javascript errors may appear in this terminal or in the browser.
-
-5. In another terminal, start the flask server in dev mode:
-```
-covfee-dev
+npm install lerna --user
+npx lerna bootstrap -- --legacy-peer-deps
 ```
 
-You can now open the HIT link as explained in the main [README](../README.md)
+4. Generate schemata (for validation) and build webpack bundles:
 
-And that's it. The next section explains how to code a custom task in Javascript.
+```
+covfee-dev schemata
+covfee-dev build
+```
 
+5. Move to a covfee project folder including at least one `.covfee.json` file (see samples folder) and make it with covfee:
+
+```
+cd my-covfee-project
+covfee make . --no-launch
+```
+
+6. Start the webpack server from the same folder:
+```
+covfee webpack
+```
+In development mode, webpack serves the front-end code of covfee. That will include the Javascript code of your custom task.
+
+7. In another terminal, at the same folder, start the flask server in dev mode:
+```
+covfee start --dev
+```
+
+You should now be able to access the admin panel and open the covfee HITs. Any changes made to Python or Javascript code should be immediately hot-reloaded.
+
+## Schemata updates
+
+The covfee schemata file created previously (`covfee-dev schemata`) is used by `covfee make` for validating covfee specifications. Therefore, if you make changes to covfee's Typescript interfaces in the *shared* folder during development (by, for, example, adding a new task specification), the schemata file must be re-generated for `covfee make` to pick up the changes and validate your new interfaces correctly:
+
+```
+covfee-dev schemata
+```
+
+The command may also need to be called when switching branches if the Typescript specification differs between branches.

@@ -95,7 +95,6 @@ class AdminLayout extends React.Component<LayoutProps> {
     }
 
     render() {
-        console.log(Constants)
         return <Layout>
             <AdminHeader {...this.props.header} userContext={this.context}/>
             <Layout>
@@ -107,7 +106,6 @@ class AdminLayout extends React.Component<LayoutProps> {
                         return this.renderContentForbidden('not_logged')
             
                     if(this.props.loggedRequired && this.props.rolesRequired) {
-                        console.log(this.context)
                         const isAllowed = this.props.rolesRequired.filter(value => this.context.roles.includes(value)).length > 0
                         if(!isAllowed)
                             return this.renderContentForbidden('roles')

@@ -303,6 +303,10 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         return this.readFrame(frameNum)
     }
 
+    readHead = () => {
+        return this.readFrame(this.head)
+    }
+
     log = (mediatime: number, data: LogSample) => {
         this.receivedData = true
 

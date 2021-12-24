@@ -27,8 +27,8 @@ export class Packer {
         const buff3 = Buffer.from(arr)
 
         const header = new Uint32Array(4)
-        header[0] = buff1.byteLength
-        header[1] = buff2.byteLength
+        header[0] = buff1.byteLength + buff2.byteLength
+        header[1] = buff3.byteLength
         header[2] = chunkLength
         header[3] = recordLength
         const buff0 = Buffer.from(header.buffer)

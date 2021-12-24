@@ -1,4 +1,3 @@
-
 import { Continuous1DTaskSpec, Continuous1DTaskBaseSpec } from "./tasks/continuous_1d"
 import { ContinuousKeypointTaskSpec, ContinuousKeypointTaskBaseSpec } from "./tasks/continuous_keypoint"
 import { InstructionsTaskSpec, InstructionsTaskBaseSpec } from "./tasks/instructions"

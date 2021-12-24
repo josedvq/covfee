@@ -2,9 +2,10 @@ import * as React from 'react'
 import styled from 'styled-components'
 import { myerror } from '../utils'
 import { 
-    Intensity1DInputSpec,
+    Trace1DInputSpec,
     RankTraceInputSpec
 } from '@covfee-types/input/1d_trace'
+import { ButtonManagerClient } from './button_manager';
 
 interface Props {
     /**
@@ -22,13 +23,13 @@ interface Props {
     /**
      * Indicates how the intensity is input
      */
-    input: Intensity1DInputSpec
+    input: Trace1DInputSpec
     /**
      * Turns on visualization where the UI is fully controlled by the parent.
      * The component will read its data via getIntensity()
      */
     replay?: boolean
-    buttons: any
+    buttons: ButtonManagerClient
     buffer: any
     graphUpdatePeriod?: number
 }
@@ -72,12 +73,12 @@ function clamp(number, min, max) {
 }
 
 
-export class OneDIntensity extends React.Component<Props> {
+export class OneDTrace extends React.Component<Props> {
 
     static defaultProps = {
         graphUpdatePeriod: 100
     }
-    inputProps: Intensity1DInputSpec
+    inputProps: Trace1DInputSpec
 
     // animation variables
     intensity: number = 0
@@ -90,8 +91,6 @@ export class OneDIntensity extends React.Component<Props> {
     context: CanvasRenderingContext2D
     container: HTMLDivElement
     indicator: HTMLDivElement
-    observer: ResizeObserver = null
-    containerHeight: number = 0
 
     trace: number[] = []
 
@@ -100,27 +99,21 @@ export class OneDIntensity extends React.Component<Props> {
     maxTrace = 5
     minTrace = -5
 
+    // gtrace variables
+    annotationMod = 1
+    mod = 0
+
     constructor(props: Props) {
         super(props)
-        // this.inputProps = this.applyInputPropDefaults()
     }
 
     componentDidMount() {
-        // update the height of the container
-        this.observer = new ResizeObserver((entries: any) => {
-            this.containerHeight = entries[0].contentRect.height - 20
-        })
-        this.observer.observe(this.container)
-        
-        if(!this.props.replay)
-            this.startInput()
+        this.startInput()
         this.animationId = requestAnimationFrame(this.animateFn)
     }
 
     componentWillUnmount() {
-        // this.props.buttons.removeEvents()
-        document.removeEventListener('mousemove', this.mousemove, false)
-        this.observer.disconnect()
+        this.stopInput()
         cancelAnimationFrame(this.animationId)
     }
 
@@ -135,7 +128,8 @@ export class OneDIntensity extends React.Component<Props> {
     get animateFn() {
         return {
             'ranktrace': this.animateRankTrace,
-            'ranktrace-new': this.animateRankTraceNew
+            'ranktrace-new': this.animateRankTraceNew,
+            'gtrace': this.animateGtrace
         }[this.props.input.mode]
     }
 
@@ -144,15 +138,15 @@ export class OneDIntensity extends React.Component<Props> {
             return this.props.input.bounds
         if(this.props.input.mode == 'ranktrace') 
             return [-Infinity, Infinity]
+        if(this.props.input.mode == 'gtrace')
+            return [-100, 100]
         return [0.0, 1.0]
     }
 
     get step() {
-        if(['ranktrace'].includes(this.props.input.mode))
-            return 1
-        else {
-            return 0.05
-        }
+        if(this.props.input.mode == 'gtrace')
+            return this.annotationMod
+        return 1
     }
 
     get controls() {
@@ -163,39 +157,6 @@ export class OneDIntensity extends React.Component<Props> {
         }
     }
 
-    // applyInputPropDefaults() {
-    //     if(this.props.input.mode == 'gravity-keyboard')
-    //         return {
-    //             jump_speed: 0.1,
-    //             acceleration_constant: 0.0025,
-    //             ...this.props.input,
-    //             controls: {
-    //                 up: 'a',
-    //                 ...(this.props.input.controls ? this.props.input.controls : {})
-    //             }
-    //         }
-    //     if (this.props.input.mode == 'continuous-keyboard')
-    //         return {
-    //             ...this.props.input,
-    //             controls: {
-    //                 up: 's',
-    //                 down: 'a',
-    //                 ...(this.props.input.controls ? this.props.input.controls : {})
-    //             }
-    //         }
-
-    //     if (this.props.input.mode == 'ranktrace')
-    //         return {
-    //             ...this.props.input,
-    //             controls: {
-    //                 up: 's',
-    //                 down: 'a',
-    //                 ...(this.props.input.controls ? this.props.input.controls : {})
-    //             }
-    //         }
-    //     return this.props.input
-    // }
-
     requestUpdate = (intensity: number) => {
         if(isNaN(intensity)) return
         this.intensity = Math.max(this.bounds[0], Math.min(this.bounds[1], intensity))
@@ -204,19 +165,7 @@ export class OneDIntensity extends React.Component<Props> {
        
     }
 
-    mousemove = (e: MouseEvent) => {
-        const rect = this.container.getBoundingClientRect()
-        const unboundedIntensity = (rect.bottom - e.clientY) / this.containerHeight
-        this.intensity = Math.max(0.0, Math.min(1.0, unboundedIntensity))
-    }
-
-    // addBinaryKeyboardEvents = () => {
-    //     const controls = (this.inputProps as BinaryInputSpec).controls
-    //     this.props.buttons.addListener('up', 'q', 'Activate')
-    //     if (controls) this.props.buttons.applyMap(controls)
-    // }
-
-    addContinuousKeyboardEvents = () => {
+    startInput = () => {
         this.props.buttons.addListener('up', 'ArrowUp', 'Increase')
             .addEvent('keydown', () => {
                 this.requestUpdate(this.intensity + this.step)
@@ -230,32 +179,11 @@ export class OneDIntensity extends React.Component<Props> {
         this.props.buttons.applyMap(this.controls)
     }
 
-    // addGravityKeyboardEvents = () => {
-    //     this.props.buttons.addListener('up', 'a', 'Increase')
-    //         .addEvent('keydown', () => {
-    //             this.intensity = 1
-    //             this.speed = 0//this.props.input.jump_speed
-    //         })
-        
-    //     const controls = (this.inputProps as GravityKeyboardInputSpec).controls
-    //     if (controls) this.props.buttons.applyMap(controls)
-    // }
-
-    startInput = () => {
-        // if (this.inputProps.mode == 'binary') {
-        //     this.addBinaryKeyboardEvents()
-        // }
-        if (this.props.input.mode == 'continuous-mousemove') {
-            document.addEventListener('mousemove', this.mousemove, false)
-        } else if (['continuous-keyboard', 'ranktrace'].includes(this.props.input.mode)) {
-            this.addContinuousKeyboardEvents()
-        } else {
-            myerror('Unrecognized input mode.')
-        } 
-        // else if (this.inputProps.mode == 'gravity-keyboard') {
-        //     this.addGravityKeyboardEvents()
-        // }        
+    stopInput = () => {
+        this.props.buttons.removeListener('up')
+        this.props.buttons.removeListener('down')
     }
+    
 
     read = () => {
         return this.intensity
@@ -286,13 +214,15 @@ export class OneDIntensity extends React.Component<Props> {
             if(data)
                 this.requestUpdate(data[2])
         } else {
+            
             this.props.setIntensity(this.intensity)
         }
+
+        
 
         const context = this.context,
               canvas = this.canvas,
               trace = this.trace
-        
 
         context.clearRect(0, 0, canvas.width, canvas.height)
         context.fillStyle = '#2d2d2d'
@@ -468,13 +398,13 @@ export class OneDIntensity extends React.Component<Props> {
         //     storedValue = annotatorValue;
         // }
     
-        // if (keyPress) {
-        //     annotationMod = annotationMod + (Math.pow(2, mod)-1);
-        //     mod += 0.01;
-        // } else {
-        //     annotationMod = 1;
-        //     mod = 0;
-        // }
+        if (this.props.buttons.getStatus('up') || this.props.buttons.getStatus('down')) {
+            this.annotationMod = this.annotationMod + (Math.pow(2, this.mod)-1);
+            this.mod += 0.01;
+        } else {
+            this.annotationMod = 1;
+            this.mod = 0;
+        }
     
         // Draws previous annotator cursor positions
         // for (var j = trace.length -1; j >= 0 ; j--) {
@@ -533,49 +463,8 @@ export class OneDIntensity extends React.Component<Props> {
         context.stroke();
     }
 
-    updateIndicators = (intensity: number) => {
-        if(this.container === null || this.indicator === null) return
-         
-        if (['binary'].includes(this.inputProps.mode)) {
-            // mode uses no indicator
-            this.container.style.backgroundColor = intensity ? 'green' : 'black'
-        } else {
-            // move the indicator
-            const position = Math.round(intensity * this.containerHeight)
-            this.indicator.style.bottom = position.toString() + 'px'
-        }
-    }
-
-    
-    // animate = (timestamp: number) => {
-    //     if(this.props.visualizationModeOn) {
-    //         this.intensity = this.props.getIntensity()
-    //     }
-    //     else {
-    //         if (this.inputProps.mode == 'binary') 
-    //             this.intensity = this.props.buttons.getStatus('up') ? 1 : 0
-    //         if (this.inputProps.mode == 'continuous-mousemove')
-    //             { } //pass  
-    //         if (this.inputProps.mode == 'continuous-keyboard')
-    //             { } //pass
-    //         if (this.inputProps.mode == 'gravity-keyboard') {
-    //             let delta_time = 1
-    //             // TODO: implement delta_time calculation
-    //             this.intensity = Math.max(0, Math.min(1, this.intensity + this.speed * delta_time))
-    //             this.speed = this.speed - this.inputProps.acceleration_constant * delta_time
-    //         }
-    //         this.props.setIntensity(this.intensity)
-    //     }
-
-    //     this.updateIndicators(this.intensity)
-    //     this.animationId = requestAnimationFrame(this.animate)
-    // }
-
     render() {
-        return <Container ref={e=>{this.container = e}} className='gui-vertical'>
-            {/* {!['binary'].includes(this.inputProps.mode) &&
-            <div ref={e=>{this.indicator = e}} className='gui-indicator' style={{bottom: 0}}></div>
-            } */}
+        return <Container>
             <Canvas ref={e=>{this.canvas = e; if(e) this.context=e.getContext('2d')}} width={810} height={150} />
         </Container>
     }

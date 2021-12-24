@@ -11,7 +11,7 @@
             "tasks": [
                 {
                     "type": "Continuous1DTask",
-                    "name": "Sample",
+                    "name": "ranktrace",
                     "media": {
                         "type": "video",
                         "url": "$$www$$/video1.mp4",
@@ -19,6 +19,30 @@
                     },
                     "intensityInput": {
                         "mode": "ranktrace"
+                    }
+                },
+                {
+                    "type": "Continuous1DTask",
+                    "name": "ranktrace-new",
+                    "media": {
+                        "type": "video",
+                        "url": "$$www$$/video1.mp4",
+                        "fps": 25
+                    },
+                    "intensityInput": {
+                        "mode": "ranktrace-new"
+                    }
+                },
+                {
+                    "type": "Continuous1DTask",
+                    "name": "gtrace",
+                    "media": {
+                        "type": "video",
+                        "url": "$$www$$/video1.mp4",
+                        "fps": 25
+                    },
+                    "intensityInput": {
+                        "mode": "gtrace"
                     }
                 }
             ]
