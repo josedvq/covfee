@@ -72,6 +72,11 @@ export default class Continuous1DTask extends CovfeeContinuousTask<Props, State>
         this.props.buttons.removeListener('play-pause')
         this.props.buttons.removeListener('back2s')
         this.props.buttons.removeListener('back10s')
+
+        this.props.player.removeListeners('frame')
+        this.props.player.removeListeners('end')
+        this.props.player.removeListeners('vidswitch')
+
         if (this.frameUpdateTimerId) clearInterval(this.frameUpdateTimerId)
     }
 
@@ -141,7 +146,7 @@ export default class Continuous1DTask extends CovfeeContinuousTask<Props, State>
         return player
     }
 
-    render() {
+    renderTrace() {
         return <>
             <div style={{height: 'calc(100% - 200px)'}}>
                 {this.props.renderPlayer({
@@ -161,7 +166,38 @@ export default class Continuous1DTask extends CovfeeContinuousTask<Props, State>
                     replay={!!this.props.response}/>
             </div>
         </>
-        
+    }
+
+    renderLever() {
+        return <>
+            <Row>
+                <Col span={20}>
+                    {this.props.renderPlayer({
+                        type: 'HTML5Player',
+                        media: this.props.spec.media,
+                        countdown: this.props.spec.showCountdown
+                     })}
+                </Col>
+                <Col span={4}>
+                    <OneDIntensity
+                        paused={this.props.player.paused}
+                        buttons={this.props.buttons}
+                        buffer={this.props.buffer}
+                        setIntensity={this.setIntensity}
+                        getIntensity={()=>{return this.intensity}}
+                        input={this.props.spec.intensityInput}
+                        replay={!!this.props.response}/>
+                </Col>
+            </Row>
+        </>
+    }
+
+    render() {
+        if(['ranktrace', 'ranktrace-new', 'gtrace'].includes(this.props.spec.intensityInput.mode))
+            return this.renderTrace()
+        else if(['continuous-mousemove', 'continuous-keyboard'].includes(this.props.spec.intensityInput.mode))
+            return this.renderLever()
+        else return null
     }
 
     instructions = () => {

@@ -38,7 +38,7 @@ export interface Continuous1DTaskBaseSpec {
     /**
      * sets the type of intensity input
      */
-    intensityInput: Trace1DInputSpec
+    intensityInput: Trace1DInputSpec | Intensity1DInputSpec
 }
 
 /**

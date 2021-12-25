@@ -60,6 +60,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
     lastHitThreshold: number
     disabled: boolean
     writeTimestamp: boolean
+    fill: boolean
     onError: OnErrorCallback
 
     // state
@@ -86,13 +87,14 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
      * @param disabled the buffer will behave as mock and not submit data to the server.
      * @param recordDataSize number of elements in each record (excluding auto timestamp).
      * @param writeTimestamp If true, a timestamp is added to each record. Timestamp is added by calling Date.now() when data() is called.
+     * @param fill If true, the skipped frames/records are filled in by replicating a newly written record backwards until the previous record.
      * @param onError Called when the output queue is full.
      * @param chunkLength length of each data chunk in samples / frames. Data are sent to the server in packets of size chunkLength.
      * @param persistInterval Interval to check for dirty chunks and submit them to the server
      * @param lastHitThreshold Minimum time (seconds) since last hit before a dirty chunk can be enqueued.
      * @param lengthErrorThreshold Max number of permitted dirty chunks in the output queue. If the queue size goes over this value, onError is called.
      */
-    constructor(url = '', disabled = false, recordDataSize = 1, writeTimestamp=true, 
+    constructor(url = '', disabled = false, recordDataSize = 1, writeTimestamp=true, fill=true,
                 onError: OnErrorCallback = () => {}, persistInterval = 60, lastHitThreshold = 1, lengthErrorThreshold=5) {
 
         this.url = url
@@ -106,6 +108,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         this.lengthErrorThreshold = lengthErrorThreshold
         this.onError = onError
         this.writeTimestamp = writeTimestamp
+        this.fill = fill
         
         if (disabled) this.fetch_fn = dummyFetch
 
@@ -113,6 +116,11 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         this.interval = setInterval(this._enqueueDirtyChunks, persistInterval * 1000)
         log.debug(`buffer constructed with recordDataSize=${this.recordDataSize}, lastHitThreshold=${this.lastHitThreshold}, lengthErrorThreshold=${this.lengthErrorThreshold}`)
     }
+
+    get headMediatime() {
+        return this.head * this.fps
+    }
+
     /**
     * @param length length of the data in samples / frames.
     * @param fps fps of the media. Used to convert mediatime to sample / frame number
@@ -216,27 +224,56 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
     _write = (mediatime: number, record: number[]) => {
         const frameNum = Math.round(mediatime * this.fps)
         // write into data buffer
-        const ini = frameNum * this.recordSize
-        let i = 0
-        for (; i < this.recordSize; i++) {
-            this.dataArray[ini + i] = record[i]
+        let iniFrame, endFrame
+        if(this.fill) {
+            iniFrame = this.head
+            endFrame = frameNum
+            if(iniFrame > endFrame)
+                return log.warn(`Attempt to write non-sequentially with fill=true, head=${this.head}, frameNum=${frameNum}`)
+        } else {
+            iniFrame = frameNum
+            endFrame = frameNum
         }
-        this.idxsArray[frameNum] = this.cntr++
 
-        const chunkNum = this._getChunkNum(frameNum)
-        this.chunks[chunkNum].dirty = true
-        this.chunks[chunkNum].lastHit = Date.now()
+        for(let fn=iniFrame; fn <= endFrame; fn++) {
+            const ini = fn * this.recordSize
+            let i = 0
+            for (; i < this.recordSize; i++) {
+                this.dataArray[ini + i] = record[i]
+            }
+            this.idxsArray[fn] = this.cntr++
+
+            const chunkNum = this._getChunkNum(fn)
+            this.chunks[chunkNum].dirty = true
+            this.chunks[chunkNum].lastHit = Date.now()
+        }
         this.head = frameNum
     }
 
-    makeIterator = (itemIndex: number, start: number, end: number) => {
-        let index = start
+    makeIterator = (itemIndex: number, from: number, to: number, step=1) => {
+        let index = from
         return {
             next: () => {
                 let result
-                if(index < end) {
+                if(index < to) {
                     result = {value: [index, this.dataArray[index * this.recordSize + 1 + (this.writeTimestamp ? 1 : 0) + itemIndex]], done: false}
-                    index += 1
+                    index += step
+                    return result
+                }
+                return {value: [], done: true}
+            }
+        }
+    }
+
+    makeReverseIterator = (from: number, to: number, itemIndex: number, step=1) => {
+        let index = from
+        to = Math.max(0, to)
+        return {
+            next: () => {
+                let result
+                if(index > to) {
+                    result = {value: [index, this.dataArray[index * this.recordSize + 1 + (this.writeTimestamp ? 1 : 0) + itemIndex]], done: false}
+                    index -= step
                     return result
                 }
                 return {value: [], done: true}

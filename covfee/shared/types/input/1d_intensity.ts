@@ -93,23 +93,4 @@ export interface ContinuousKeyboardInputSpec extends BaseInputSpec{
 }
 
 
-/**
- * @title ranktrace
- */
- export interface RankTraceInputSpec extends BaseInputSpec {
-    /**
-     * @default "ranktrace"
-     */
-    mode: "ranktrace",
-    controls?: ContinuousValueControls,
-    /**
-     * Range of the continuous values
-     * @default null
-     */
-    bounds?: [number, number]
-}
-
-
-
-
-export type Intensity1DInputSpec = RankTraceInputSpec | BinaryInputSpec | ContinuousMousemoveInputSpec | ContinuousKeyboardInputSpec | GravityKeyboardInputSpec
+export type Intensity1DInputSpec = BinaryInputSpec | ContinuousMousemoveInputSpec | ContinuousKeyboardInputSpec | GravityKeyboardInputSpec

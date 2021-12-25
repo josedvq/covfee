@@ -16,8 +16,14 @@ class ValidatorService {
         console.log(`Waiting on ${addr}`)
         for await (const [buffer] of sock) {
           const msg = JSON.parse(buffer.toString('utf-8'))
-          const res = this.validator.validate_schema(msg.schema, msg.data)
-          await sock.send(JSON.stringify(res))
+          try {
+            const res = this.validator.validate_schema(msg.schema, msg.data)
+            res['jsError'] = false
+            await sock.send(JSON.stringify(res))
+          } catch(error) {
+              const res = {'jsError': true, 'stackTrace': error.stack}
+              await sock.send(JSON.stringify(res))
+          }
         }
     }
 }

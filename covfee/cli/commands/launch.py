@@ -15,7 +15,7 @@ from flask.cli import FlaskGroup, pass_script_info
 from covfee.server.start import create_app
 from ...covfee_folder import CovfeeFolder, ProjectExistsException
 from halo.halo import Halo
-from covfee.shared.validator.validation_errors import ValidationError
+from covfee.shared.validator.validation_errors import JavascriptError, ValidationError
 from covfee.shared.schemata import Schemata
 from covfee.cli.utils import NPMPackage
 from covfee import _make as covfee_make, start_deepstream
@@ -176,6 +176,8 @@ def make(force, deploy, safe, rms, no_browser, no_launch, file_or_folder):
             covfee_make(file_or_folder, force=force, rms=rms, stdout_enabled=True)
         except FileNotFoundError:
             pass
+        except JavascriptError as err:
+            return print('This is likely an issue with the Covfee app. Please contact the developers or post an issue with the following error message. \n' + err.js_stack_trace)
         except ValidationError as err:
             return err.print_friendly()
         except ProjectExistsException as err:

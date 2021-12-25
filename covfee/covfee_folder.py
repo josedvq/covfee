@@ -93,9 +93,6 @@ class CovfeeFolder:
 
                 try:
                     self.validate_project(project_spec, cf, with_spinner=with_spinner)
-                except ValidationError as e:
-                    spinner.fail(f'Error validating project \"{project_spec["name"]}\" in {cf}.\n')
-                    raise e
                 except Exception as e:
                     spinner.fail(f'Error validating project \"{project_spec["name"]}\" in {cf}.\n')
                     raise e

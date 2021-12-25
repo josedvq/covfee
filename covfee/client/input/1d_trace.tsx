@@ -9,7 +9,7 @@ import { ButtonManagerClient } from './button_manager';
 
 interface Props {
     /**
-     * Pauses the animation
+     * Recording / replay is paused
      */
     paused: boolean
     /**
@@ -34,7 +34,30 @@ interface Props {
     graphUpdatePeriod?: number
 }
 
-function bzCurve(ctx, points, f, t) {
+// Returns a number value clamped between a min and max value
+function clamp(number: number, min: number, max: number) {
+    return Math.max(min, Math.min(number, max));
+}
+
+
+function hsl2rgb(h: number, s: number, l:number) {
+    s = s/100;
+    l = l/100;
+    let a=s*Math.min(l,1-l);
+    let f= (n: number,k=(n+h/30)%12) => l - a*Math.max(Math.min(k-3,9-k,1),-1);                 
+    return [f(0)*255,f(8)*255,f(4)*255];
+}
+
+interface Point {
+    x: number,
+    y: number
+}
+
+function gradient(a: any, b:any) {
+    return (b.y-a.y)/(b.x-a.x);
+}
+
+function bzCurve(ctx: CanvasRenderingContext2D, points: Point[], f: number, t: number) {
     //f = 0, will be straight line
     //t suppose to be 1, but changing the value can control the smoothness too
     if (typeof(f) == 'undefined') f = 0.3;
@@ -50,7 +73,9 @@ function bzCurve(ctx, points, f, t) {
     var preP = points[0];
     for (var i = 1; i < points.length; i++) {
         var curP = points[i];
-        nexP = points[i + 1];
+        const nexP = points[i + 1];
+
+        let dx2, dy2
         if (nexP) {
             m = gradient(preP, nexP);
             dx2 = (nexP.x - curP.x) * -f;
@@ -65,11 +90,6 @@ function bzCurve(ctx, points, f, t) {
         preP = curP;
     }
     ctx.stroke();
-}
-
-// Returns a number value clamped between a min and max value
-function clamp(number, min, max) {
-    return Math.max(min, Math.min(number, max));
 }
 
 
@@ -94,7 +114,8 @@ export class OneDTrace extends React.Component<Props> {
 
     trace: number[] = []
 
-    nextGraphNode: number
+    // ranktrace-new variables
+    nextGraphNode = 0
     lastModifier = 0
     maxTrace = 5
     minTrace = -5
@@ -136,7 +157,7 @@ export class OneDTrace extends React.Component<Props> {
     get bounds() {
         if(this.props.input.bounds)
             return this.props.input.bounds
-        if(this.props.input.mode == 'ranktrace') 
+        if(['ranktrace', 'ranktrace-new'].includes(this.props.input.mode)) 
             return [-Infinity, Infinity]
         if(this.props.input.mode == 'gtrace')
             return [-100, 100]
@@ -214,7 +235,6 @@ export class OneDTrace extends React.Component<Props> {
             if(data)
                 this.requestUpdate(data[2])
         } else {
-            
             this.props.setIntensity(this.intensity)
         }
 
@@ -368,35 +388,6 @@ export class OneDTrace extends React.Component<Props> {
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.fillStyle = '#4d4d4d';
         context.fillRect(0, 0, canvas.width, canvas.height);
-
-
-        const length = this.props.buffer.head
-
-        if(length === 0) return
-        const iter = this.props.buffer.makeIterator(0, 0, length)
-
-        const normTrace = []
-        let res = iter.next()
-        while(!res.done) {
-            const [index, value] = res.value
-
-            if(index !== 0) {
-                
-            }
-            res = iter.next()
-        }
-    
-        // Clamp annotator value
-        // annotatorValue = clamp(annotatorValue, -100, 100);
-        // if ((currentTime > storedTime+1000) && !keyPress && storedValue != annotatorValue) {
-        //     trace.push({pos: xPos, 
-        //                 h: (annotatorValue + 100)/2,
-        //                 s: 85 * (Math.abs(annotatorValue)/100),
-        //                 l: 55 + (Math.abs(annotatorValue)/10), 
-        //                 t: Math.round(getCurrentTime() * 1000)});
-        //     storedTime = currentTime;
-        //     storedValue = annotatorValue;
-        // }
     
         if (this.props.buttons.getStatus('up') || this.props.buttons.getStatus('down')) {
             this.annotationMod = this.annotationMod + (Math.pow(2, this.mod)-1);
@@ -405,26 +396,39 @@ export class OneDTrace extends React.Component<Props> {
             this.annotationMod = 1;
             this.mod = 0;
         }
-    
-        // Draws previous annotator cursor positions
-        // for (var j = trace.length -1; j >= 0 ; j--) {
-        //     var drawTime = Math.round(getCurrentTime() * 1000);
-        //     var rgb = hsl2rgb(trace[j].h, trace[j].s, trace[j].l);
-        //     var alpha = 0;
-        //     if (drawTime - trace[j].t < 100) {
-        //         alpha = (drawTime - trace[j].t)/100;
-        //     } else {
-        //         alpha = clamp(0.9 - ((drawTime - trace[j].t - 3000)/3000), 0, 1);
-        //     }
-        //     context.strokeStyle = 'rgba('+ rgb[0] +','+ rgb[1] +','+ rgb[2] +','+alpha+')';
-        //     context.lineWidth = 4;
-        //     context.beginPath();
-        //     context.arc(canvas.width/2 + trace[j].pos, canvas.height/2, 30*alpha, 0, 2 * Math.PI, false);
-        //     context.stroke();
-        //     if (drawTime - trace[j].t > 5000){
-        //         trace.splice(j, 1);
-        //     }
-        // }
+
+        const length = this.props.buffer.head
+        // iterate with 1s step
+        var drawTime = this.props.buffer.headMediatime
+
+        // iterate over values in recerse with 1s step, for 5 second
+        const iter = this.props.buffer.makeReverseIterator(length-1, length - Math.round(5*this.props.buffer.fps), 0, this.props.buffer.fps)
+        
+        let res = iter.next()
+        while(!res.done) {
+            const [index, value] = res.value
+
+            let h = (value + 100)/2,
+                s = 85 * (Math.abs(value)/100),
+                l = 55 + (Math.abs(value)/10),
+                t = index * this.props.buffer.fps,
+                pos = (value/100)*((canvas.width/2)-40)
+
+            var rgb = hsl2rgb(h,s,l);
+            var alpha = 0;
+            if (drawTime -t < 100) {
+                alpha = (drawTime - t)/100;
+            } else {
+                alpha = clamp(0.9 - ((drawTime - t - 3000)/3000), 0, 1);
+            }
+            context.strokeStyle = 'rgba('+ rgb[0] +','+ rgb[1] +','+ rgb[2] +','+alpha+')';
+            context.lineWidth = 4;
+            context.beginPath();
+            context.arc(canvas.width/2 + pos, canvas.height/2, 30*alpha, 0, 2 * Math.PI, false);
+            context.stroke();
+            
+            res = iter.next()
+        }
     
         // Current annotation cursor
         const hue = (this.intensity + 100)/2;

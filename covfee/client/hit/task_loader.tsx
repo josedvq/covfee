@@ -230,6 +230,7 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
                 this.props.previewMode || this.response === null,
                 this.taskConstructor.taskInfo.bufferDataLen,   // sample length
                 true,
+                true,
                 this.handleBufferError)
         }
         // this._playerLoaded = 

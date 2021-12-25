@@ -3,6 +3,9 @@ import collections
 from colorama import init, Fore
 init()
 
+class JavascriptError(Exception):
+    pass
+
 class ValidationError(Exception):
     '''Tracks and reports JSON schema validation errors.'''
 
