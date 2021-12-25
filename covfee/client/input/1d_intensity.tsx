@@ -2,6 +2,7 @@ import * as React from 'react'
 import { myerror } from '../utils'
 import { BinaryInputSpec, ContinuousKeyboardInputSpec, GravityKeyboardInputSpec, Intensity1DInputSpec} from '@covfee-types/input/1d_intensity'
 import { ButtonManagerClient } from './button_manager'
+import styled from 'styled-components'
 
 interface Props {
     /**
@@ -186,10 +187,25 @@ export class OneDIntensity extends React.Component<Props> {
     }
 
     render() {
-        return <div ref={e=>{this.container = e}} className='gui-vertical'>
+        return <Container ref={e=>{this.container = e}}>
             {!['binary'].includes(this.props.input.mode) &&
-            <div ref={e=>{this.indicator = e}} className='gui-indicator' style={{bottom: 0}}></div>
+            <Indicator ref={e=>{this.indicator = e}} style={{bottom: 0}}/>
             }
-        </div>
+        </Container>
     }
 }
+
+const Container = styled.div`
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    border: 5px solid #202020;
+`
+
+const Indicator = styled.div`
+    position: absolute;
+    width: 100%;
+    height: 20px;
+    background-color: green;
+`

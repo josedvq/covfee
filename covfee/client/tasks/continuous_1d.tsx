@@ -170,32 +170,30 @@ export default class Continuous1DTask extends CovfeeContinuousTask<Props, State>
 
     renderLever() {
         return <>
-            <Row>
-                <Col span={20}>
-                    {this.props.renderPlayer({
-                        type: 'HTML5Player',
-                        media: this.props.spec.media,
-                        countdown: this.props.spec.showCountdown
-                     })}
-                </Col>
-                <Col span={4}>
-                    <OneDIntensity
-                        paused={this.props.player.paused}
-                        buttons={this.props.buttons}
-                        buffer={this.props.buffer}
-                        setIntensity={this.setIntensity}
-                        getIntensity={()=>{return this.intensity}}
-                        input={this.props.spec.intensityInput}
-                        replay={!!this.props.response}/>
-                </Col>
-            </Row>
+            <div style={{float: 'left',width: '80%', height: '100%'}}>
+                {this.props.renderPlayer({
+                    type: 'HTML5Player',
+                    media: this.props.spec.media,
+                    countdown: this.props.spec.showCountdown
+                    })}
+            </div>
+            <div style={{width: '20%', height: '100%', marginLeft: '80%'}}>
+                <OneDIntensity
+                    paused={this.props.player.paused}
+                    buttons={this.props.buttons}
+                    buffer={this.props.buffer}
+                    setIntensity={this.setIntensity}
+                    getIntensity={()=>{return this.intensity}}
+                    input={this.props.spec.intensityInput}
+                    replay={!!this.props.response}/>
+            </div>
         </>
     }
 
     render() {
         if(['ranktrace', 'ranktrace-new', 'gtrace'].includes(this.props.spec.intensityInput.mode))
             return this.renderTrace()
-        else if(['continuous-mousemove', 'continuous-keyboard'].includes(this.props.spec.intensityInput.mode))
+        else if(['continuous-mousemove', 'continuous-keyboard', 'gravity-keyboard', 'binary'].includes(this.props.spec.intensityInput.mode))
             return this.renderLever()
         else return null
     }
