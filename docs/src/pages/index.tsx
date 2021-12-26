@@ -9,45 +9,59 @@ import Logo from '../../static/img/logo.svg'
 
 const features = [
   {
-    title: 'Easy to Use',
-    imageUrl: 'img/undraw_docusaurus_mountain.svg',
+    title: 'Annotate affect, actions and keypoints',
+    imageUrl: 'img/keypoints.png',
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Use covfee's continuous annotation techniques  for affect (Ranktrace, Gtrace) action localization (via keyboard press) and keyboard (via mouse cursor with automatic speed adjustment). 
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
-    imageUrl: 'img/undraw_docusaurus_tree.svg',
+    title: 'Script your annotation flow',
+    imageUrl: 'img/spec.png',
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Use your favorite programming language to generate a covfee specification file, containing the details of your HITs, no matter how complex.
       </>
     ),
   },
   {
-    title: 'Powered by React',
-    imageUrl: 'img/undraw_docusaurus_react.svg',
+    title: 'Qualification tasks and consent forms',
+    imageUrl: 'img/consent.png',
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Add consent forms and qualification tasks to your HITs.
       </>
     ),
   },
+  {
+    title: 'Made for crowd-sourcing',
+    imageUrl: 'img/admin.png',
+    description: (
+      <>
+        Easily get batch URLs from Covfee's admin panel, track and download annotations in bulk.
+      </>
+    ),
+  },
+  {
+    title: 'Modern and extensible',
+    imageUrl: 'img/lifecycle.png',
+    description: (
+      <>
+        Implement your annotation techniques by subclassing a Typescript class and using Covfee's helper classes, with only a basic knowledge of Javascript.
+      </>
+    ),
+  }
 ];
 
 const authors = [
   {
-    title: 'Easy to Use',
-    imageUrl: 'img/undraw_docusaurus_mountain.svg',
+    title: 'Jose Vargas Quiros',
+    imageUrl: 'https://www.gravatar.com/avatar/3220d6c4eeb0c3a64f2c727306997aca?s=200',
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Jose is on a mission to reduce the time and effort necessary to obtain high-quality human behavior annotations and datasets.
       </>
     ),
   }
@@ -56,10 +70,25 @@ const authors = [
 function Feature({imageUrl, title, description}) {
   const imgUrl = useBaseUrl(imageUrl);
   return (
-    <div className={clsx('col col--4', styles.feature)}>
+    <div className={clsx(styles.feature)}>
       {imgUrl && (
         <div className="text--center">
           <img className={styles.featureImage} src={imgUrl} alt={title} />
+        </div>
+      )}
+      <h3>{title}</h3>
+      <p>{description}</p>
+    </div>
+  );
+}
+
+function Author({imageUrl, title, description}) {
+  const imgUrl = useBaseUrl(imageUrl);
+  return (
+    <div className={clsx(styles.author)}>
+      {imgUrl && (
+        <div className="text--center">
+          <img className={styles.authorImage} src={imgUrl} alt={title} />
         </div>
       )}
       <h3>{title}</h3>
@@ -78,7 +107,7 @@ export default function Home() {
       <header className={clsx('hero hero--primary', styles.heroBanner)}>
         <div className="container">
           <Logo className={styles.logo}/>
-          <h1 className={clsx("hero__title", styles.title)} >{siteConfig.title}</h1>
+          <h1 className={clsx("hero__title", styles.title)} ><span style={{color: 'white'}}>covfee:</span> continuous video feedback tool</h1>
           <p className="hero__subtitle">{siteConfig.tagline}</p>
           
           <div className={styles.buttons}>
@@ -96,25 +125,19 @@ export default function Home() {
       </header>
       <main>
         {features && features.length > 0 && (
-          <section className={styles.features}>
-            <div className="container">
-              <div className="row">
-                {features.map((props, idx) => (
-                  <Feature key={idx} {...props} />
-                ))}
-              </div>
-            </div>
-          </section>
+          <div class="container">
+            <section className={styles.features}>
+                  {features.map((props, idx) => (
+                    <Feature key={idx} {...props} />
+                  ))}
+            </section>
+          </div>
         )}
         {authors && authors.length > 0 && (
           <section className={styles.authors}>
-            <div className="container">
-              <div className="row">
                 {authors.map((props, idx) => (
-                  <Feature key={idx} {...props} />
+                  <Author key={idx} {...props} />
                 ))}
-              </div>
-            </div>
           </section>
         )}
       </main>

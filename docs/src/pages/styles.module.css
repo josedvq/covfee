@@ -26,8 +26,8 @@ div[class^=announcementBar_] {
 
 .logo {
   float: right;
-  width: 160px;
-  height: 160px;
+  width: 140px;
+  height: 140px;
 }
 
 @media screen and (max-width: 966px) {
@@ -44,20 +44,64 @@ div[class^=announcementBar_] {
 
 .authors {
   display: flex;
-  align-items: center;
+  flex-flow: row wrap;
+  justify-content: space-around;
+  align-items: flex-start;
   padding: 2rem 0;
   width: 100%;
   background-color: #f5f6f7;
 }
 
+
+
 .features {
   display: flex;
-  align-items: center;
+  flex-flow: row wrap;
+  justify-content: space-around;
+  align-items: flex-start;
   padding: 2rem 0;
   width: 100%;
+  
+}
+
+.feature, .author {
+  flex: 0 0 calc(33%-20px);
+  margin: 10px;
+  max-width: 350px;
+  /* width: 200px; */
+  text-align: center;
+}
+
+@media screen and (max-width: 992px) {
+  .feature, .author {
+    flex: 0 0 100%;
+    max-width: none;
+  }
 }
 
 .featureImage {
-  height: 200px;
-  width: 200px;
+  max-width: 250px;
+  margin: 15px 0;
+  width: calc(100%-20px);
+  max-height: 128px;
+  transform: translateZ(0);
+  image-rendering: high-quality;
+}
+
+.authorImage {
+  height: 120px;
+  width: 120px;
+  margin: 10px;
+  border: 3px solid white;
+  border-radius: 100px;
+}
+
+.getStarted {
+  background-color: #52c41a;
+  color: white !important;
+  margin: 0 10px;
+}
+
+.getStarted:hover {
+  background-color: #237804;
 }
