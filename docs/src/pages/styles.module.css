@@ -68,7 +68,6 @@ div[class^=announcementBar_] {
   flex: 0 0 calc(33%-20px);
   margin: 10px;
   max-width: 350px;
-  /* width: 200px; */
   text-align: center;
 }
 
