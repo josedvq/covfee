@@ -33,8 +33,8 @@ export class MarkdownLoader extends React.Component<Props, State> {
         } else {
 
             const myHeaders = new Headers()
-            myHeaders.append('pragma', 'no-cache')
-            myHeaders.append('cache-control', 'no-cache')
+            // myHeaders.append('pragma', 'no-cache')
+            // myHeaders.append('cache-control', 'no-cache')
 
             var myInit = {
                 method: 'GET',

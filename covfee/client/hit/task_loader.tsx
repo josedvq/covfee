@@ -259,11 +259,13 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
     }
 
     componentDidMount = () => {
+        log.debug(`task_loader componentDidMount() with status=${this.state.status} renderAs.type = "${this.state.renderAs.type}", replayMode=${this.state.replayMode}`)
         // read the taks and parent responses.
         this.loadPromise = makeCancelablePromise(Promise.all([
             this.props.fetchTaskResponse(this.props.task).then((response: TaskResponse) => {
                 this.response = response
-                this.buffer.url = response.url
+                if(this.buffer)
+                    this.buffer.url = response.url
             }),
             this.props.parent && this.props.fetchTaskResponse(this.props.parent).then((response: TaskResponse) => {
                 this.parentResponse = response
@@ -284,7 +286,11 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
                     status: 'mounted'
                 })
             } else {
-                this.loadTask()
+                if(this.isContinuous) {
+                    this.loadContinuousBuffers().then(()=>{this.setState({status: 'ready'})})
+                } else {
+                    this.setState({status: 'ready'})
+                }
             }
         })
     }
@@ -329,32 +335,40 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         this.loadPromise.cancel()
     }
 
+    loadContinuousBuffers = (replay = false) => {
+        const fps = (this.props.task as any).spec.media.fps || 60
+        const bufferLength = Math.ceil(this.state.player.duration * fps)
+        this.buffer.make(bufferLength, fps)
+        if(replay) {
+            return this.loadBuffers()
+            // this.loadBuffers().then(()=>{
+            //     this.setState({
+            //         status: 'ready',
+            //         taskKey: this.state.taskKey + 1
+            //     })
+            // })
+        } else {
+            return Promise.resolve()
+            // this.setState({
+            //     status: 'ready',
+            //     taskKey: this.state.taskKey + 1
+            // })
+        }
+    }
 
-    loadTask = (replay = false) => {
-        this.setState({
-            replayMode: replay
-        })
 
-        // this.props.setState({status: 'ready', loading: true})
+    reloadTask = (replay = false) => {
         if(this.isContinuous) {
-            const fps = (this.props.task as any).spec.media.fps || 60
-            const bufferLength = Math.ceil(this.state.player.duration * fps)
-            this.buffer.make(bufferLength, fps)
-            if(replay) {
-                this.loadBuffers().then(()=>{
-                    this.setState({
-                        status: 'ready',
-                        taskKey: this.state.taskKey + 1
-                    })
-                })
-            } else {
+            this.loadContinuousBuffers().then(()=>{
                 this.setState({
+                    replayMode: replay,
                     status: 'ready',
                     taskKey: this.state.taskKey + 1
                 })
-            }
+            })
         } else {
             this.setState({
+                replayMode: replay,
                 status: 'ready',
                 taskKey: this.state.taskKey + 1
             })
@@ -368,7 +382,7 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         ])
     }
 
-    loadTaskForReplay = () => { this.loadTask(true) }
+    loadTaskForReplay = () => { this.reloadTask(true) }
 
     clearAndReloadTask = () => {
         const url = this.props.task.url +'/make_response?' + new URLSearchParams({
@@ -382,7 +396,7 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
             .then(throwBadResponse)
             .then(response => {
                 this.response = response
-                this.loadTask(true)
+                this.reloadTask(true)
             }).catch(error => {
                 myerror('Error making task response.', error)
             })

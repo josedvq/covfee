@@ -35,7 +35,7 @@ const antd_components: {[key: string]: any} = {
     'Input': Input,
     'Input.TextArea': Input.TextArea,
     // 'Input.Password': Input.Password,
-    // 'InputNumber': InputNumber,
+    'InputNumber': InputNumber,
     'Radio.Group': Radio.Group,
     'Rate': Rate,
     'Select': Select,

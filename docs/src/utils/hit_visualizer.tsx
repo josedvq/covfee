@@ -22,9 +22,6 @@ export class HITVisualizer extends React.Component<HITVisualizerProps, HITVisual
         super(props)
     }
 
-    componentDidMount() {
-    }
-
     render() {
         // add id to each task
         let hitProps = JSON.parse(JSON.stringify(this.props.hit))
@@ -35,12 +32,14 @@ export class HITVisualizer extends React.Component<HITVisualizerProps, HITVisual
             }
             return task
         })
-        return <BrowserOnly fallback={<div>The fallback content to display on prerendering</div>}>
-            {()=>{
-                const HashRouter = require('react-router-dom').HashRouter
+        // return <BrowserOnly fallback={<div>The fallback content to display on prerendering</div>}>
+            
+        return <>
+            {(()=>{
+                const StaticRouter = require('react-router-dom').StaticRouter
                 const Hit = require('covfee-client/hit/hit').default
 
-                return <HashRouter>
+                return <StaticRouter>
                     <div style={{position: 'relative', width: '100%', height: this.props.height+'px', border: '1px solid #969696'}}>
                         <Hit
                             {...hitProps}
@@ -52,8 +51,8 @@ export class HITVisualizer extends React.Component<HITVisualizerProps, HITVisual
                             fetchTaskResponse={()=>Promise.resolve({})}
                             onSubmit={() => { }} />
                     </div>
-                </HashRouter>
-            }}
-        </BrowserOnly>
+                </StaticRouter>
+            })()}</>
+        // </BrowserOnly>
     }
 }

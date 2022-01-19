@@ -71,13 +71,12 @@ export class OneDIntensity extends React.Component<Props> {
         cancelAnimationFrame(this.animationId)
     }
 
-    componentDidUpdate(prevProps: Props) {
-        
-        cancelAnimationFrame(this.animationId)
-        this.setState(this.state, ()=>{
-            this.animationId = requestAnimationFrame(this.animateFn)
-        })
-    }
+    // componentDidUpdate(prevProps: Props) {
+    //     cancelAnimationFrame(this.animationId)
+    //     this.setState(this.state, ()=>{
+    //         this.animationId = requestAnimationFrame(this.animateFn)
+    //     })
+    // }
 
     get controls() {
         if(this.props.input.mode == 'continuous-mousemove') return null

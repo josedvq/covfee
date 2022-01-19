@@ -8,18 +8,17 @@ class Validator {
     }
 
     validate_schema(schemaName, data) {
-        console.log('before1')
         const validate_fn = this.ajv.getSchema(`#/definitions/${schemaName}`)
         if(validate_fn === undefined) {
             throw Error(`Unable to find schema ${schemaName}`)
         }
-        console.log('before2')
         const valid = validate_fn(data)
-        console.log('after')
-        return {valid: valid, errors: valid ? [] : validate_fn.errors.map(e=>{ return {
+        return {valid: valid, errors: valid ? [] : validate_fn.errors.map(e=>{ 
+            console.log(e)
+        return {
             ...e, 
             'friendlyMessage': this.get_friendly_error_message(e),
-            'friendlyPath': this.get_python_datapath(e.dataPath)
+            'friendlyPath': this.get_python_datapath(e.instancePath)
         }})}
     }
 
@@ -36,7 +35,13 @@ class Validator {
     }
 
     get_python_datapath = (path) => {
-        return path
+        const parts = path.substring(1).split('/')
+        const keys = parts.map(e => {
+            if(!isNaN(e))
+                return '['+e+']'
+            else
+                return `["${e}"]`})
+        return keys.join('')
     }
 }
 

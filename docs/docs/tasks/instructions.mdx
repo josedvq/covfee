@@ -77,14 +77,15 @@ export const playgroundTasks2 = [
             "type": "InstructionsTask",
             "content": {
                 "type": "link",
-                "url": "https://gist.githubusercontent.com/benbalter/3914310/raw/f757a33411082da23f0ad4a124b45fcdacc1b43f/Example--text.txt"
+                "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@nonseq-buffer/samples/basic/www/consent.md"
             },
             "form": {
                 "fields": [
                     {
-                        "prompt": "I agree with the provided instructions.",
+                        "name": "agree",
+                        "label": "I agree with the provided instructions.",
                         "input": {
-                            "type": "Checkbox"
+                            "inputType": "Checkbox"
                         }
                     }
                 ]

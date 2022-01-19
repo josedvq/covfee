@@ -43,7 +43,11 @@ export default class ContinuousKeypointTask extends CovfeeContinuousTask<Props, 
 
     constructor(props: Props) {
         super(props)
-        const opticalFlowEnabled = localStorage.getItem('opticalFlowEnabled')
+        let opticalFlowEnabled = null
+        if(typeof localStorage !== 'undefined') {
+            opticalFlowEnabled = localStorage.getItem('opticalFlowEnabled')
+        }
+
         if(opticalFlowEnabled !== null) {
             this.state.opticalFlowEnabled = (opticalFlowEnabled == '1')
         }
@@ -150,7 +154,9 @@ export default class ContinuousKeypointTask extends CovfeeContinuousTask<Props, 
         this.setState({
             opticalFlowEnabled: value
         }, () => { 
-            localStorage.setItem('opticalFlowEnabled', value ? '1' : '0')
+            // if(localStorage) {
+            //     localStorage.setItem('opticalFlowEnabled', value ? '1' : '0')
+            // }
         })
     }
 

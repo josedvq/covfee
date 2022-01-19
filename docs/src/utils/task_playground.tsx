@@ -63,6 +63,10 @@ export class TaskPlayground extends React.Component<Props, State> {
         this.validator = new Validator(schemata)
     }
 
+    componentDidMount(): void {
+        this.handleFormChange(this.state.currSpec)
+    }
+
     handleUpdatePreview: React.MouseEventHandler<HTMLDivElement> = (e) => {
         e.currentTarget.blur()
         // validate using the schemata
@@ -150,7 +154,7 @@ export class TaskPlayground extends React.Component<Props, State> {
                     {this.state.valid ? 
                         <Button type="link" size={'middle'} onClick={this.handleUpdatePreview}>update preview<ArrowUpOutlined /></Button>:
                         <Popover placement="bottomLeft" content={<div style={{maxWidth: '400px'}}>{this.state.error}</div>}>
-                            <Button type="primary" size={'middle'} onClick={this.handleUpdatePreview} danger>JSON errors</Button>
+                            <Button type="primary" size={'middle'} onClick={this.handleUpdatePreview} danger>Errors</Button>
                         </Popover>
                     }
                     

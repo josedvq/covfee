@@ -50,6 +50,9 @@ class ButtonEventManagerContext extends React.Component {
 
     constructor(props: any) {
         super(props)
+    }
+
+    componentDidMount(): void {
         addEventListener("keydown", this.keydown, false)
         addEventListener("keyup", this.keyup, false)
     }

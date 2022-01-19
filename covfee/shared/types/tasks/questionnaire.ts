@@ -207,6 +207,25 @@ export interface InputFieldSpec { // TODO: extend with more properties from inpu
 }
 
 /**
+* Props for the antd input number field
+* @title input-number
+*/
+export interface InputNumberSpec { // TODO: extend with more properties from inputHTML
+    /**
+     * @default "InputNumber"
+     */
+    inputType: 'InputNumber',
+    size?: 'small' | 'middle' | 'large'
+    controls?: boolean,
+    decimalSeparator?: string,
+    defaultValue?: number,
+    max?: number,
+    min?: number,
+    step?: number,
+    precision?: number
+}
+
+/**
 * Props for the antd textarea field
 * @title textarea
 */
@@ -318,7 +337,7 @@ export interface SliderSpec
 }
 
 
-export type InputSpec = SwitchSpec | SelectSpec | RateSpec | CheckboxGroupSpec | InputFieldSpec | TextareaSpec | RadioSpec | SliderSpec
+export type InputSpec = SwitchSpec | SelectSpec | RateSpec | CheckboxGroupSpec | InputFieldSpec | InputNumberSpec | TextareaSpec | RadioSpec | SliderSpec
 
 export interface FieldSpec<T> {
     /**

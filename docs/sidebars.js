@@ -3,7 +3,6 @@ module.exports = {
     'overview',
     'installation',
     'getting_started',
-    'hit_options',
     'deployment',
     {
       type: 'category',

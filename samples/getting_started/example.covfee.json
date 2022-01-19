@@ -1,0 +1,88 @@
+{
+    "name": "My Covfee Project",
+    "email": "example@example.com",
+    "hits": [
+      {
+        "tasks": [
+            {
+                "name": "Demographics",
+                "type": "QuestionnaireTask",
+                "form": {
+                  "fields": [
+                    {
+                      "name": "age",
+                      "label": "Your age:",
+                      "input": {
+                        "inputType": "InputNumber"
+                      }
+                    },
+                    {
+                      "name": "sex",
+                      "label": "Your sex:",
+                      "input": {
+                        "inputType": "Select",
+                        "options": [
+                          {"label": "Male", "value": "m"},
+                          {"label": "Female", "value": "f"}
+                        ]
+                      }
+                    },
+                    {
+                      "name": "nationality",
+                      "label": "Your nationality:",
+                      "input": {
+                        "inputType": "Input"
+                      }
+                    }
+                  ]
+                }
+              },
+
+              {
+                "name": "Instructions",
+                "type": "InstructionsTask",
+                "content": {
+                  "type": "link",
+                  "url": "$$wwww$$/instructions.md"
+                }
+              },
+
+              {
+                "name": "Arousal annotation",
+                "type": "Continuous1DTask",
+                "media": {
+                  "type": "video",
+                  "url": "$$www$$/person_reading.mp4"
+                },
+                "intensityInput": {
+                  "mode": "ranktrace"
+                }
+              },
+
+              {
+                "name": "Feedback",
+                "type": "QuestionnaireTask",
+                "form": {
+                  "fields": [
+                      {
+                          "name": "rating",
+                          "label": "How would you rate your experience in completing this experiment?",
+                          "required": true,
+                          "input": {
+                              "inputType": "Rate",
+                              "half": true
+                          }
+                      },{
+                          "name": "feedback",
+                          "label": "Do you have any comments that can help us improve the experience?",
+                          "input": {
+                              "inputType": "Input.TextArea"
+                          }
+                      }
+                  ]
+                }
+              }
+        ]
+      }
+    ]
+  }

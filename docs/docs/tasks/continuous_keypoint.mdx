@@ -41,20 +41,10 @@ export const playgroundTasks = [
             "type": "ContinuousKeypointTask",
             "media": {
                 "type": "video",
-                "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/keypoint_annotation/media/sample_mp4_10s.mp4",
-                "res": [
-                    320,
-                    240
-                ],
-                "flow_url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/keypoint_annotation/media/sample_mp4_flow_10s.mp4",
-                "flow_res": [
-                    320,
-                    240
-                ],
+                resolution: [1280, 720],
+                "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@nonseq-buffer/samples/keypoints/www/sign_combined.mp4",
+                "hasFlow": true,
                 "fps": 59.94,
-                "mute": true,
-                "autoplay": true,
-                "gallery_url": "imgs/collage1.png"
             }
         }
     }
@@ -64,10 +54,11 @@ export const playgroundTasks = [
 
 ## Optical flow computation
 
+
 :::caution
 Optical flow can be extremely unreliable for videos with high noise (eg. low lighting conditions). Input videos might need to be denoised before optical flow pre-computation. We had good results with ffmpeg's (hqdn3d)[https://ffmpeg.org/ffmpeg-filters.html#hqdn3d-1]:
 
 ```
-fmpeg -i input.mp4 -vf hqdn3d=luma_tmp=20 -vcodec libx264 -tune film output.mp4 -y
+ffmpeg -i input.mp4 -vf hqdn3d=luma_tmp=20 -vcodec libx264 -tune film output.mp4 -y
 ```
 :::

@@ -36,13 +36,15 @@ class UserContext extends React.Component<Props, UserState> {
 
     constructor(props: Props) {
         super(props)
-        const ls = JSON.parse(localStorage.getItem('user'))
-        if (ls != null) {
-            this.state = {
-                username: ls.username,
-                loginTime: ls.loginTime,
-                logged: true,
-                roles: ls.roles
+        if(localStorage) {
+            const ls = JSON.parse(localStorage.getItem('user'))
+            if (ls != null) {
+                this.state = {
+                    username: ls.username,
+                    loginTime: ls.loginTime,
+                    logged: true,
+                    roles: ls.roles
+                }
             }
         }
     }

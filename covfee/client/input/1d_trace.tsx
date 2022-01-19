@@ -130,7 +130,7 @@ export class OneDTrace extends React.Component<Props> {
 
     componentDidMount() {
         this.startInput()
-        this.animationId = requestAnimationFrame(this.animateFn)
+        // this.animationId = requestAnimationFrame(this.animateFn)
     }
 
     componentWillUnmount() {
