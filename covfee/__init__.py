@@ -60,3 +60,5 @@ def start_deepstream():
                 'Working directory is not a valid covfee project folder.')
                 
         covfee_folder.start_deepstream()
+from . import _version
+__version__ = _version.get_versions()['version']

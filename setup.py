@@ -1,3 +1,4 @@
+import versioneer
 from setuptools import find_packages, setup
 
 with open("README.md", "r") as fh:
@@ -5,7 +6,8 @@ with open("README.md", "r") as fh:
 
 setup(
     name='covfee',
-    version='0.0.18',
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     author="Jose Vargas",
     author_email="josedvq@gmail.com",
     description="Continuous video feedback tool",

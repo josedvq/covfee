@@ -7,3 +7,5 @@ include covfee/server/templates/*.html
 recursive-include covfee/client/bundles *
 
 global-exclude package-lock.json .DS_Store
+include versioneer.py
+include covfee/_version.py
