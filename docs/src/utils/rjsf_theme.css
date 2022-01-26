@@ -1,0 +1,16 @@
+form.rjsf input[type=text], form.rjsf input[type=number] {
+    display: inline;
+    width: auto;
+    height: auto;
+    padding: 0 0.4em 0 0.4em;
+    border: 1px solid black;
+    border-radius: 0;
+}
+form.rjsf select {
+    display: inline;
+    width: auto;
+    height: auto;
+    padding: 0 0.4em 0 0.4em;
+    border: 1px solid black;
+    border-radius: 0;
+}

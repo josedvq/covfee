@@ -1,8 +1,11 @@
 {
+    "id": "getting_started",
     "name": "My Covfee Project",
     "email": "example@example.com",
     "hits": [
       {
+        "id": "hit1",
+        "name": "HIT1",
         "tasks": [
             {
                 "name": "Demographics",

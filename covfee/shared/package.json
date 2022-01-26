@@ -4,8 +4,9 @@
     "main": "index.ts",
     "dependencies": {
         "@josedvq/ajv": "^8.0.0",
-        "zeromq": "^6.0.0-beta.6",
+        "lodash": "^4.17.21",
+        "typescript-json-schema": "^0.50.0",
         "yargs": "^16.2.0",
-        "typescript-json-schema": "^0.50.0" 
+        "zeromq": "^6.0.0-beta.6"
     }
 }
