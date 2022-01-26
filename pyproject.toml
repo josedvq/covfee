@@ -1,6 +1,8 @@
 [build-system]
 requires = [
     "setuptools>=42",
-    "wheel"
+    "wheel",
+# https://github.com/python-versioneer/python-versioneer/issues/192
+    "versioneer-518"
 ]
 build-backend = "setuptools.build_meta"
