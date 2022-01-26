@@ -4,6 +4,7 @@ import sys
 import subprocess
 import random
 import traceback
+import platform
 
 from flask import current_app as app
 from halo import Halo
@@ -137,18 +138,31 @@ class CovfeeFolder:
         bundle_path = os.path.join(app.config['PROJECT_WWW_PATH'], 'main.js')
         if os.path.exists(bundle_path):
             os.remove(bundle_path)
-        os.symlink(
-            master_bundle_path,
-            bundle_path
-        )
+        # windows requires admin rights for symlinking -> fall back to copying
+        if(platform.system == 'Windows'):
+            shutil.copyfile(
+                master_bundle_path,
+                bundle_path
+            )
+        else:
+            os.symlink(
+                master_bundle_path,
+                bundle_path
+            )
 
         admin_bundle_path = os.path.join(app.config['PROJECT_WWW_PATH'], 'admin.js')
         if os.path.exists(admin_bundle_path):
             os.remove(admin_bundle_path)
-        os.symlink(
-            os.path.join(app.config['MASTER_BUNDLE_PATH'], 'admin.js'),
-            admin_bundle_path
-        )
+        if(platform.system == 'Windows'):
+            shutil.copyfile(
+                os.path.join(app.config['MASTER_BUNDLE_PATH'], 'admin.js'),
+                admin_bundle_path
+            )
+        else:
+            os.symlink(
+                os.path.join(app.config['MASTER_BUNDLE_PATH'], 'admin.js'),
+                admin_bundle_path
+            )
 
     def launch_webpack(self, host=None):
         cwd = os.getcwd()

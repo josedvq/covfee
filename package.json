@@ -12,5 +12,8 @@
     },
     "dependencies": {
         "lerna": "^4.0.0"
+    },
+    "scripts": {
+        "ppp": "rm -r dist/ && covfee-dev schemata && covfee-dev build && python setup.py sdist && twine upload dist/*"
     }
 }
