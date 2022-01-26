@@ -139,7 +139,7 @@ class CovfeeFolder:
         if os.path.exists(bundle_path):
             os.remove(bundle_path)
         # windows requires admin rights for symlinking -> fall back to copying
-        if(platform.system == 'Windows'):
+        if(platform.system() == 'Windows'):
             shutil.copyfile(
                 master_bundle_path,
                 bundle_path
@@ -153,7 +153,7 @@ class CovfeeFolder:
         admin_bundle_path = os.path.join(app.config['PROJECT_WWW_PATH'], 'admin.js')
         if os.path.exists(admin_bundle_path):
             os.remove(admin_bundle_path)
-        if(platform.system == 'Windows'):
+        if(platform.system() == 'Windows'):
             shutil.copyfile(
                 os.path.join(app.config['MASTER_BUNDLE_PATH'], 'admin.js'),
                 admin_bundle_path
