@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='covfee',
-    version='0.0.15',
+    version='0.0.18',
     author="Jose Vargas",
     author_email="josedvq@gmail.com",
     description="Continuous video feedback tool",

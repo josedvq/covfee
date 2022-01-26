@@ -138,22 +138,22 @@ def open_covfee():
         covfee_folder.launch_in_browser()
 
 
-def install_npm_packages_if_not_installed():
+def install_npm_packages(force=False):
     server_path = app.config['COVFEE_SERVER_PATH']
     npm_package = NPMPackage(server_path)
-    if not npm_package.is_installed():
+    if force or not npm_package.is_installed():
         npm_package.install()
 
     shared_path = app.config['COVFEE_SHARED_PATH']
     npm_package = NPMPackage(shared_path)
-    if not npm_package.is_installed():
+    if force or not npm_package.is_installed():
         npm_package.install()
 
 @covfee_cli.command()
 def installjs():
     _, app = create_app('local')
     with app.app_context():
-        install_npm_packages_if_not_installed()
+        install_npm_packages(force=True)
 
 @covfee_cli.command()
 @click.option("--force", is_flag=True, help="Specify to overwrite existing databases.")
@@ -170,7 +170,7 @@ def make(force, deploy, safe, rms, no_browser, no_launch, file_or_folder):
     socketio, app = create_app(mode)
 
     with app.app_context():
-        install_npm_packages_if_not_installed()
+        install_npm_packages()
 
         try:
             covfee_make(file_or_folder, force=force, rms=rms, stdout_enabled=True)

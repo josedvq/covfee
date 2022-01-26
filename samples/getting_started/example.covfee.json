@@ -73,7 +73,7 @@
                           "required": true,
                           "input": {
                               "inputType": "Rate",
-                              "half": true
+                              "allowHalf": true
                           }
                       },{
                           "name": "feedback",
