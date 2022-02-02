@@ -37,7 +37,10 @@ You make use of covfee by first creating a JSON file specifying your HITs. First
       "name": "HIT1",
       "tasks": [
         ...
-      ]
+      ],
+      "interface": {
+        "type": "timeline"
+      }
     }
   ]
 }
@@ -97,7 +100,7 @@ Next we will specify the instructions task. Covfee's `InstructionTask` supports 
   "type": "InstructionsTask",
   "content": {
     "type": "link",
-    "url": "$$wwww$$/instructions.md"
+    "url": "$$www$$/instructions.md"
   }
 }
 ```

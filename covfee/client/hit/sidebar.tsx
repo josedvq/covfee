@@ -224,7 +224,7 @@ export class TaskSection extends React.Component<TaskSectionProps> {
                 status={this.props.status}
                 active={this.props.active}
                 editable={false}
-                expandable={!!this.props.children}
+                expandable={this.props.children && this.props.children.length > 0}
                 onClickActivate={()=>{this.props.onClickActivate(null)}}
                 onClickExpand={this.toggleExpand}/>
             

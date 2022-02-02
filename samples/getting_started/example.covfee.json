@@ -46,7 +46,7 @@
                 "type": "InstructionsTask",
                 "content": {
                   "type": "link",
-                  "url": "$$wwww$$/instructions.md"
+                  "url": "$$www$$/instructions.md"
                 }
               },
 
@@ -85,7 +85,10 @@
                   ]
                 }
               }
-        ]
+        ],
+        "interface": {
+          "type": "timeline"
+        }
       }
     ]
   }

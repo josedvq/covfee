@@ -37,10 +37,11 @@ export interface VideoPlayerContext {
 interface State {
     /**
      * Lifecycle states of the loader
-     * loading: responses are being loaded.
-     * loaded: (continuous/timed only) responses are loaded. overlay is shown if
+     * loading: responses / state are being loaded.
+     * loaded: (continuous/timed only) responses / state are loaded. overlay is shown if
      *      - continuous task response is closed (new response is necessary)
      *      - timed task is not started or is finished
+     * player-loading (continuous only): continuous player is being loaded
      * ready: task is ready to be played / completed. shown when:
      *      - timed task is underway
      *      - continuous task response is open
@@ -48,7 +49,7 @@ interface State {
      * ended: (continuous only) player called onEnd
      * submitted: task has been submitted
      */
-    status: 'loading' | 'mounted' | 'ready' | 'ended' | 'submitted'
+    status: 'loading' | 'loaded' | 'player-loading' | 'ready' | 'ended' | 'submitted'
     renderAs: {
         type: 'continuous-task' | 'default'
         timed: boolean
@@ -233,7 +234,10 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
                 true,
                 this.handleBufferError)
         }
-        // this._playerLoaded = 
+        this._playerLoaded = new Promise((resolve, reject) => {
+            this._playerLoadedResolve = resolve
+            this._playerLoadedReject = reject
+        })
     }
 
     getTaskRenderAs = () => {
@@ -269,29 +273,33 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
             }),
             this.props.parent && this.props.fetchTaskResponse(this.props.parent).then((response: TaskResponse) => {
                 this.parentResponse = response
-            }),
-            this.isContinuous && new Promise((resolve, reject) => {
-                this._playerLoadedResolve = resolve
-                this._playerLoadedReject = reject
-            }).then((mediaDuration: any)=> {
-                this.setState({player: {...this.state.player, duration: mediaDuration}})
             })
         ]))
         
         this.loadPromise.promise.then(_ => {
-            
-            if(this.isContinuous && this.response && this.response.submitted) {
-                // task already submitted
-                this.setState({
-                    status: 'mounted'
+
+            if(this.isContinuous) {
+                this.setState({status: 'player-loading'})
+
+                // wait for the player to load
+                this._playerLoaded.then((mediaDuration: any)=> {
+                    if(this.response && this.response.submitted) {
+                        this.setState({
+                            status: 'loaded'
+                        })
+                    } else {
+                        // load the buffers
+                        this.setState({player: {...this.state.player, duration: mediaDuration}}, ()=>{
+                            this.loadContinuousBuffers().then(()=>{this.setState({status: 'ready'})})
+                        })
+                    }
+                    
                 })
+                
             } else {
-                if(this.isContinuous) {
-                    this.loadContinuousBuffers().then(()=>{this.setState({status: 'ready'})})
-                } else {
-                    this.setState({status: 'ready'})
-                }
+                this.setState({status: 'ready'})
             }
+
         })
     }
 
@@ -341,18 +349,8 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         this.buffer.make(bufferLength, fps)
         if(replay) {
             return this.loadBuffers()
-            // this.loadBuffers().then(()=>{
-            //     this.setState({
-            //         status: 'ready',
-            //         taskKey: this.state.taskKey + 1
-            //     })
-            // })
         } else {
             return Promise.resolve()
-            // this.setState({
-            //     status: 'ready',
-            //     taskKey: this.state.taskKey + 1
-            // })
         }
     }
 
@@ -590,7 +588,7 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
 
     renderOverlay = () => {
         switch(this.state.status) {
-            case 'mounted':
+            case 'loaded':
                 if(this.props.task.num_submissions > 0 && this.state.renderAs.type == 'continuous-task')
                     return <TaskOverlay visible={true} {...this.getOverlaySubmittedTask()}/>
                 if (this.props.task.timer)
@@ -750,6 +748,9 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
 
     render() {
         log.debug(`task_loader render() with status=${this.state.status} renderAs.type = "${this.state.renderAs.type}", replayMode=${this.state.replayMode}`)
+
+        if(this.state.status == 'loading') return <>nothing</>
+        
         return <>
             
             {this.renderErrorModal()}
