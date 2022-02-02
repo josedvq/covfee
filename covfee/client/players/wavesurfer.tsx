@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
     Button
 } from 'antd'
-import WaveSurfer from 'wavesurfer.js'
+// import WaveSurfer from 'wavesurfer.js'
 import { WavesurferPlayerMedia } from '@covfee-types/players/wavesurfer'
 import { ContinuousPlayerProps, CovfeeContinuousPlayer } from './base'
 
@@ -41,6 +41,8 @@ export class WaveSurferPlayer extends CovfeeContinuousPlayer<Props, State> {
     isControlled = false
     prevPaused: boolean
 
+    loadedWavesurfer = false
+
     get paused() {
         if(this.isControlled) {
             return this.props.paused
@@ -60,32 +62,33 @@ export class WaveSurferPlayer extends CovfeeContinuousPlayer<Props, State> {
     }
 
     componentDidMount() {
-        this.player = WaveSurfer.create({
-            container: this.container.current,
-            waveColor: 'violet',
-            progressColor: 'purple',
-            interact: false,
-            ...this.props.waveSurferOptions
+        import('wavesurfer.js').then(ws => {
+            const WaveSurfer = ws.default
+            this.player = WaveSurfer.create({
+                container: this.container.current,
+                waveColor: 'violet',
+                progressColor: 'purple',
+                interact: false,
+                ...this.props.waveSurferOptions
+            })
+
+            this.player.load(this.props.media.url)
+        
+            this.player.on('ended', ()=>{this.props.onEnd})
+
+            this.loadedWavesurfer = true
         })
 
         this.checkIfControlled()
-
-        this.player.load(this.props.media.url)
-        
-        this.player.on('ended', ()=>{this.props.onEnd})
     }
 
     componentDidUpdate(prevProps: Props) {
+        if(!this.loadedWavesurfer) return
         if(this.paused !== this.prevPaused) {
             if(this.paused) this.player.pause()
             else this.player.play()
         }
         this.prevPaused = this.paused
-        // Typical usage (don't forget to compare props):
-        // if (this.props.paused !== prevProps.paused) {
-        //     if(this.props.paused) this.player.pause()
-        //     else this.player.play()
-        // }
         this.checkIfControlled()
     }
 

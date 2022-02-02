@@ -32,7 +32,6 @@ export class HITVisualizer extends React.Component<HITVisualizerProps, HITVisual
             }
             return task
         })
-        // return <BrowserOnly fallback={<div>The fallback content to display on prerendering</div>}>
             
         return <>
             {(()=>{
@@ -53,6 +52,5 @@ export class HITVisualizer extends React.Component<HITVisualizerProps, HITVisual
                     </div>
                 </StaticRouter>
             })()}</>
-        // </BrowserOnly>
     }
 }
