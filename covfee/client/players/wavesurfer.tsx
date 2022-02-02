@@ -22,10 +22,12 @@ export interface Props extends ContinuousPlayerProps {
 }
 
 interface State {
+    paused: boolean
 }
 
 export class WaveSurferPlayer extends CovfeeContinuousPlayer<Props, State> {
     state: State = {
+        paused: true
     }
 
     player: WaveSurfer
@@ -33,6 +35,28 @@ export class WaveSurferPlayer extends CovfeeContinuousPlayer<Props, State> {
 
     static defaultProps = {
         playPauseButton: true
+    }
+
+    _setPaused = (arg0: boolean) => {}
+    isControlled = false
+    prevPaused: boolean
+
+    get paused() {
+        if(this.isControlled) {
+            return this.props.paused
+        } else {
+            return this.state.paused
+        }
+    }
+
+    checkIfControlled() {
+        if(this.props.paused === undefined) {
+            this.isControlled = false
+            this._setPaused = v => {this.setState({paused: v})}
+        } else {
+            this.isControlled = true
+            this._setPaused = this.props.setPaused
+        }
     }
 
     componentDidMount() {
@@ -44,29 +68,33 @@ export class WaveSurferPlayer extends CovfeeContinuousPlayer<Props, State> {
             ...this.props.waveSurferOptions
         })
 
+        this.checkIfControlled()
+
         this.player.load(this.props.media.url)
         
         this.player.on('ended', ()=>{this.props.onEnd})
     }
 
     componentDidUpdate(prevProps: Props) {
-        // Typical usage (don't forget to compare props):
-        if (this.props.paused !== prevProps.paused) {
-            if(this.props.paused) this.player.pause()
+        if(this.paused !== this.prevPaused) {
+            if(this.paused) this.player.pause()
             else this.player.play()
         }
+        this.prevPaused = this.paused
+        // Typical usage (don't forget to compare props):
+        // if (this.props.paused !== prevProps.paused) {
+        //     if(this.props.paused) this.player.pause()
+        //     else this.player.play()
+        // }
+        this.checkIfControlled()
     }
 
     play = () => {
-        this.props.setPaused(false)
-    }
-
-    pause = () => {
-        this.player.pause()
+        this._setPaused(false)
     }
 
     playPause = () => {
-        this.props.setPaused(!this.props.paused)
+        this._setPaused(!this.paused)
     }
 
     currentTime = (time: number) => {
@@ -76,7 +104,7 @@ export class WaveSurferPlayer extends CovfeeContinuousPlayer<Props, State> {
 
     render() {
         const button = <Button onClick={this.playPause} type="primary">
-            {this.props.paused ? 'Play': 'Pause'}
+            {this.paused ? 'Play': 'Pause'}
         </Button>
         return <div style={{margin: '2em'}}>
             <div ref={this.container}></div>

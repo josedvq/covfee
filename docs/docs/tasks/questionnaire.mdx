@@ -40,20 +40,27 @@ export const playgroundTasks = [
             "name": "Audio annotation example",
             "type": "QuestionnaireTask",
             "media": {
-                "type": "video",
-                "url": "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4",
-                "mute": true,
-                "autoplay": true,
-                "controls": false
+                "type": "audio",
+                "url": "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_480_1_5MG.mp4"
             },
             "instructions": "These are the form instructions",
             "form": {
                 "fields": [{
                     "name": "laughter",
-                    "label": "Does the voice in the audio laugh?",
+                    "label": "Which of the following describe the audio sample? You may select multiple:",
                     "input": {
-                        "inputType": "Radio.Group",
-                        "options": ["yes", "no"]
+                        "inputType": "Select",
+                        "mode": "multiple",
+                        "options": [
+                            {"label": "Happy", "value": "happy"},
+                            {"label": "Anxious/sad", "value": "sad"},
+                            {"label": "Energetic", "value": "energ"},
+                            {"label": "Calm", "value": "calm"},
+                            {"label": "Agressive", "value": "aggr"},
+                            {"label": "Spicy", "value": "spicy"},
+                            {"label": "Spiritual", "value": "spiritual"},
+                            {"label": "Gentle", "value": "gentle"}
+                        ]
                     }
                 }]
             },

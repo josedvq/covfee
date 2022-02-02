@@ -5,7 +5,7 @@ import {
     Alert
 } from 'antd'
 import VideojsPlayer from '../players/videojs'
-// import WaveSurferPlayer from '../players/wavesurfer'
+import WaveSurferPlayer from '../players/wavesurfer'
 import {Form} from '../input/form'
 import { BasicTaskProps, CovfeeTask } from './base'
 import { QuestionnaireTaskSpec } from '@covfee-types/tasks/questionnaire'
@@ -86,10 +86,10 @@ export class QuestionnaireTask extends CovfeeTask<Props, State> {
                                return <VideojsPlayer 
                                             {...this.props.spec.media} 
                                             onEnded={this.handleMediaEnded} />
-                            // case 'audio':
-                            //     return <WaveSurferPlayer 
-                            //                 {...this.props.spec.media} 
-                            //                 onEnded={this.handleMediaEnded}/>
+                            case 'audio':
+                                return <WaveSurferPlayer 
+                                            media={this.props.spec.media}
+                                            onEnded={this.handleMediaEnded}/>
                             default:
                                 return <p>Unrecognized media type.</p>
                         }

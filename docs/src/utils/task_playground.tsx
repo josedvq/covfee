@@ -140,8 +140,8 @@ export class TaskPlayground extends React.Component<Props, State> {
             currTask: idx,
             currKey: this.state.currKey + 1,
             currSpec: this.state.specs[idx],
-        }, ()=>{ this.handleFormChange(this.state.currSpec) })
-        
+            currSpecString: JSON.stringify(this.state.specs[idx], null, 2),
+        }, ()=>{ this.updateValidation() })
     }
 
     toggleEditor = () => {
@@ -217,7 +217,6 @@ export class TaskPlayground extends React.Component<Props, State> {
                     if(this.state.editor === 'rjsf') {
                         const currSchema = this.validator.get_deref_schema(this.props.tasks[0].schema) 
                         delete currSchema.properties['children']
-                        console.log(currSchema)
                         currSchema['$schema'] = schemata['$schema']
                         // currSchema['definitions'] = schemata['definitions']
                         return <ThemedForm 
