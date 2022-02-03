@@ -42,7 +42,7 @@ module.exports = {
     announcementBar: {
       id: 'support_us',
       content:
-        '⭐ If you like covfee, give it a star on GitHub!',
+        '<a href="https://github.com/josedvq/covfee">⭐ If you like covfee, give it a star on GitHub!</a>',
       backgroundColor: '#fafbfc',
       textColor: '#091E42',
       isCloseable: true,
@@ -61,7 +61,7 @@ module.exports = {
           position: 'left',
         },
         {
-          href: 'https://github.com/facebook/docusaurus',
+          href: 'https://github.com/josedvq/covfee',
           label: 'GitHub',
           position: 'right',
         },

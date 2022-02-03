@@ -3,10 +3,11 @@ module.exports = {
     'overview',
     'installation',
     'getting_started',
+    'output',
     'deployment',
     {
       type: 'category',
-      label: 'Playground',
+      label: 'Tasks',
       collapsed: false,
       items: [
         'tasks/instructions',
@@ -22,9 +23,6 @@ module.exports = {
       items: [
         'development',
         'custom_task'
-        // 'questionnaire',
-        // 'continuous_1d',
-        // 'continuous_keypoint'
       ],
     },
   ],

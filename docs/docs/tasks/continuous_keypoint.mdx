@@ -28,7 +28,40 @@ $$
 r = C_u * max(r_{min}, min(r_{max}, r_i))
 $$
 
-The rate $r$ (equivalently, the delay until the next frame) is adjusted on every frame. This can only be implemented efficiently online if the flow computation is done offline and only the local averaging is calculated in the user's machine. For this, Covfee makes use of a pre-computed optical flow video, which is processed in the browser making use of a Javascript version of OpenCV.js.
+The rate $r$ (equivalently, the delay until the next frame) is adjusted on every frame. This can only be implemented efficiently online if the flow computation is done offline and only the local averaging is calculated in the user's machine. For this, Covfee makes use of a pre-computed optical flow video.
+
+
+
+## Optical flow pre-computation
+
+For automatic speed adjustment, this task requies expects input videos to contain the original video and its corresponding optical flow video stacked side by side. An input video to the task looks like the following:
+
+<video style={{width:'100%'}} src="https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/keypoints/www/sign_combined.mp4"/>
+
+Covfee uses the right side of the video for optical flow computation and only displays the left side to the user. An easy way to create the stacked video is:
+
+1. Use [this script](https://github.com/josedvq/covfee/blob/master/samples/keypoints/utils/flow.py) to extract the optical flow of your video into a new mp4 file:
+
+```
+python flow.py --video /path/to/video.mp4 --flow /path/to/flow.mp4 --width VIDEO_WIDTH
+```
+
+Replace `VIDEO_WIDTH` with the pixel width of your input video (`video.mp4` in this case).
+
+2. Stack the videos horizontally. You can use FFMPEG for this: 
+```
+ffmpeg -i /path/to/video.mp4 -i /path/to/flow.mp4 -filter_complex hstack video_combined.mp4
+```
+
+The output file `video_combined.mp4` can be used as input for a keypoint task.
+
+:::caution
+Optical flow can be extremely unreliable for videos with high noise (eg. low lighting conditions). Input videos might need to be denoised before optical flow pre-computation. We had good results with ffmpeg's [hqdn3d](https://ffmpeg.org/ffmpeg-filters.html#hqdn3d-1):
+
+```
+ffmpeg -i input.mp4 -vf hqdn3d=luma_tmp=20 -vcodec libx264 -tune film output.mp4 -y
+```
+:::
 
 ## Playground
 
@@ -52,13 +85,3 @@ export const playgroundTasks = [
 
 <TaskPlayground tasks={playgroundTasks} />
 
-## Optical flow computation
-
-
-:::caution
-Optical flow can be extremely unreliable for videos with high noise (eg. low lighting conditions). Input videos might need to be denoised before optical flow pre-computation. We had good results with ffmpeg's (hqdn3d)[https://ffmpeg.org/ffmpeg-filters.html#hqdn3d-1]:
-
-```
-ffmpeg -i input.mp4 -vf hqdn3d=luma_tmp=20 -vcodec libx264 -tune film output.mp4 -y
-```
-:::
