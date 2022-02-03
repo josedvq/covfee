@@ -144,13 +144,13 @@ Next, we will add the continuous task in which subjects must annotate a one dime
 }
 ```
 
-Here again we want to provide a local video to covfee by placing it in the `www` folder. You can [download this video](https://cdn.jsdelivr.net/gh/josedvq/covfee@nonseq-buffer/samples/keypoints/www/person_reading.mp4) to use as a sample. 
+Here again we want to provide a local video to covfee by placing it in the `www` folder. You can [download this video](https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/keypoints/www/person_reading.mp4) to use as a sample. 
 
 Alternatively, you can provide the URL of a publicly hosted video like:
 
 ```
       ...
-      "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@nonseq-buffer/samples/keypoints/www/person_reading.mp4"
+      "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/keypoints/www/person_reading.mp4"
       ...
 ```
 
@@ -185,7 +185,7 @@ Finally, we will ask annotators to give their feedback about the annotation proc
 ```
 
 :::info
-By now your covfee specification (`example.covfee.json` file) should contain four tasks whithin its `tasks` section and look exactly [like this file](https://github.com/josedvq/covfee/blob/nonseq-buffer/samples/getting_started/example.covfee.json). Your project folder should look like this:
+By now your covfee specification (`example.covfee.json` file) should contain four tasks whithin its `tasks` section and look exactly [like this file](https://github.com/josedvq/covfee/blob/master/samples/getting_started/example.covfee.json). Your project folder should look like this:
 
 ```
 myproject
@@ -206,7 +206,7 @@ cd myproject
 covfee make .
 ```
 
-`covfee make` will read all the `.covfee.json` files in the folder, initialize a database for covfee, run covfee, and launch a browser where you can access the admin panel. You should now see your web browser open and take you to covfee's admin panel.
+`covfee make .` will read all the `.covfee.json` files in the folder, initialize a database for covfee, run covfee, and launch a browser where you can access the admin panel. You should now see your web browser open and take you to covfee's admin panel.
 
 ## 3. Annotate!
 
