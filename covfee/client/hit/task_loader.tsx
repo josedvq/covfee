@@ -754,9 +754,10 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         return <>
             
             {this.renderErrorModal()}
+            {this.renderOverlay()}
             <div ref={e=>{this.taskInstructionsElem = e}}></div>
             <div style={{width: '100%', height: '100%', position: 'relative'}}>
-                {this.renderOverlay()}
+                
                 {(()=>{
                     let commonProps: CommonTaskProps = {
                         spec: this.props.task.spec,

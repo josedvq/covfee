@@ -463,6 +463,7 @@ const SidebarContainer = styled.div<any>`
 `
 
 const ContentContainer = styled.div<any>`
+    position: absolute;
     display: inline-block;
     vertical-align: top;
     height: ${props => (Math.floor(props.height) - 46 + 'px;')}

@@ -546,9 +546,6 @@ class AnyOfField extends React.Component {
   
       let option = getMatchingOption(formData, options, rootSchema);
 
-      console.log(formData)
-      console.log(options)
-      console.log(option)
       if (option !== 0) {
         return option;
       }

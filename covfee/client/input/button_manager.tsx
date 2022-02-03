@@ -8,7 +8,7 @@ type ButtonEventHandler = (arg0: KeyboardEvent) => void
 interface ButtonEventSpec {
     [key: string]: {    // event name
         /**
-         * keyboard key to be used as event trigger
+         * default key to be used as event trigger
          */
         defaultKey: string
         /**
@@ -29,9 +29,9 @@ interface ButtonEventOptions {
 }
 
 export interface ButtonManagerClient {
-    addListener: (id: string, defaultKey: string, description: string) => any,
+    addListener: (id: string, description: string) => any,
     removeListener: (id: string) => void,
-    applyMap: (buttonMap: { [key: string]: string }) => void,
+    applyMap: (defaultMap: { [key: string]: string }, userMap: { [key: string]: string }) => void,
     getStatus: (listener: string) => boolean,
     renderInfo: () => React.ReactElement
 }
@@ -99,13 +99,12 @@ class ButtonEventManagerContext extends React.Component {
             this.listeners[id].events['keyup'].forEach(fn => { fn(e) })
     }
 
-    addListener = (id: string, defaultKey: string, description: string) => {
+    addListener = (id: string, description: string) => {
         this.listeners[id] = {
-            defaultKey: defaultKey,
+            defaultKey: null,
             description: description,
             events: {}
         }
-        this.keysToListeners[defaultKey] = id
 
         // method chaining to add events
         const self = this
@@ -124,14 +123,19 @@ class ButtonEventManagerContext extends React.Component {
         log.info(`removing listener ${id}`)
         if(!(id in this.listeners)) return log.warn(`listener ${id} not found.`)
         const key = this.listeners[id]['defaultKey']
-        delete this.keysToListeners[key]
+        if(key in this.keysToListeners)
+            delete this.keysToListeners[key]
         delete this.listeners[id]
     }
 
-    applyMap = (buttonMap: { [key: string]: string }) => {
-        for (const [id, key] of Object.entries(buttonMap)) {
-            if (key in this.keysToListeners)
+    applyMap = (defaultMap: { [key: string]: string }, userMap: { [key: string]: string } = {}) => {
+        for (let [id, key] of Object.entries(defaultMap)) {
+            if(id in userMap)
+                key = userMap[id]
+            if(id in this.listeners) {
+                this.listeners[id].defaultKey = key
                 this.keysToListeners[key] = id
+            }
         }
     }
 

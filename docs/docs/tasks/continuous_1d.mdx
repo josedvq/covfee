@@ -9,14 +9,33 @@ This component was designed to capture the continuous annotation of a single one
 export const playgroundTasks = [
     {
         'schema': 'Continuous1DTaskSpec',
+        'label': 'Binary action annotation',
+        'spec': {
+            "name": "Continuous annotation example",
+            "type": "Continuous1DTask",
+            "media": {
+                "type": "video",
+                "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/intensity/www/video1.mp4"
+            },
+            "instructions": "Play the video using the space bar and hold the \"Activate\" key down when the person in the video is gesturing. The start and end of your keypress will be recorded.",
+            "instructionsType": "popped",
+            "intensityInput": {
+                "mode": "binary",
+                "controls": {
+                    "up": "a"
+                }
+            }
+        }
+    },
+    {
+        'schema': 'Continuous1DTaskSpec',
         'label': 'Keyboard-controlled',
         'spec': {
             "name": "Continuous annotation example",
             "type": "Continuous1DTask",
             "media": {
                 "type": "video",
-                "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/continuous_annotation/www/sample.mp4",
-                "mute": true,
+                "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/intensity/www/video1.mp4"
             },
             "intensityInput": {
                 "mode": "gravity-keyboard",

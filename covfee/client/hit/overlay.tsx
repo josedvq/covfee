@@ -42,7 +42,7 @@ const TaskOverlayDiv = styled.div`
     position: absolute;
     padding: 1em 0;
     width: 50%;
-    top: calc(35vh);
+    top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     background-color: rgba(0, 0, 0, .7);

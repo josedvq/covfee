@@ -187,17 +187,20 @@ export class OneDTrace extends React.Component<Props> {
     }
 
     startInput = () => {
-        this.props.buttons.addListener('up', 'ArrowUp', 'Increase')
+        this.props.buttons.addListener('up', 'Increase')
             .addEvent('keydown', () => {
                 this.requestUpdate(this.intensity + this.step)
             })
 
-        this.props.buttons.addListener('down', 'ArrowDown', 'Decrease')
+        this.props.buttons.addListener('down', 'Decrease')
             .addEvent('keydown', () => {
                 this.requestUpdate(this.intensity - this.step)
             })
             
-        this.props.buttons.applyMap(this.controls)
+        this.props.buttons.applyMap({
+            'up': 'ArrowUp',
+            'down': 'ArrowDown'
+        },this.controls)
     }
 
     stopInput = () => {

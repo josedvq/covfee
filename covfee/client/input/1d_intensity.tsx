@@ -81,11 +81,7 @@ export class OneDIntensity extends React.Component<Props> {
     get controls() {
         if(this.props.input.mode == 'continuous-mousemove') return null
 
-        return {
-            up: 's',
-            down: 'a',
-            ...(this.props.input.controls ? this.props.input.controls : {})
-        }
+        return this.props.input.controls ? this.props.input.controls : {}
     }
 
     mousemove = (e: MouseEvent) => {
@@ -95,8 +91,10 @@ export class OneDIntensity extends React.Component<Props> {
     }
 
     startBinaryKeyboard = () => {
-        this.props.buttons.addListener('up', 'q', 'Activate')
-        this.props.buttons.applyMap(this.controls)
+        this.props.buttons.addListener('up', 'Activate')
+        this.props.buttons.applyMap({
+            'up': 'q'
+        }, this.controls)
     }
 
     startMousemove = () => {
@@ -104,27 +102,32 @@ export class OneDIntensity extends React.Component<Props> {
     }
 
     startContinuousKeyboard = () => {
-        this.props.buttons.addListener('up', 'ArrowUp', 'Increase')
+        this.props.buttons.addListener('up', 'Increase')
             .addEvent('keydown', () => {
                 this.intensity = Math.min(1.0, this.intensity + 0.05)
             })
 
-        this.props.buttons.addListener('down', 'ArrowDown', 'Decrease')
+        this.props.buttons.addListener('down', 'Decrease')
             .addEvent('keydown', () => {
                 this.intensity = Math.max(0, this.intensity - 0.05)
             })
             
-        this.props.buttons.applyMap(this.controls)
+        this.props.buttons.applyMap({
+            'up': 'ArrowUp',
+            'down': 'ArrowDown'
+        },this.controls)
     }
 
     startGravityKeyboard = () => {
-        this.props.buttons.addListener('up', 'a', 'Increase')
+        this.props.buttons.addListener('up', 'Increase')
             .addEvent('keydown', () => {
                 this.intensity = 1
                 this.speed = 0//this.props.input.jump_speed
             })
         
-        this.props.buttons.applyMap(this.controls)
+        this.props.buttons.applyMap({
+            'up': 'a'
+        },this.controls)
     }
 
     startInput = () => {

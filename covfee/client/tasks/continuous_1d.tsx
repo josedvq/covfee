@@ -37,8 +37,12 @@ export default class Continuous1DTask extends CovfeeContinuousTask<Props, State>
         super(props)
     }
 
+    get controls() {
+        return this.props.spec.controls ? this.props.spec.controls : {}
+    }
+
     componentDidMount() {
-        this.props.buttons.addListener('play-pause', ' ', 'Play/pause the video and data capture.')
+        this.props.buttons.addListener('play-pause', 'Play/pause the video and data capture.')
             .addEvent('keydown', (e: Event) => {
                 if (this.props.player.paused) this.props.buffer.log(this.props.player.currentTime() as number, ['play'])
                 else this.props.buffer.log(this.props.player.currentTime() as number, ['pause'])
@@ -58,9 +62,9 @@ export default class Continuous1DTask extends CovfeeContinuousTask<Props, State>
         //     })
             
         // update default keyboard keys with props
-        if (this.props.spec.controls) {
-            this.props.buttons.applyMap(this.props.spec.controls)
-        }
+        this.props.buttons.applyMap({
+            'play-pause': ' '
+        }, this.controls)
 
         // start listening to the player
         this.props.player.addListener('frame', this.handleFrame)

@@ -6,7 +6,6 @@
         {
             "id": "1d_annot",
             "name": "1D annotation sample",
-            "extra": {"content":"sdfjhsdkfhlsdf", "type": "raw"},
             "repeat": 2,
             "tasks": [
                 {
