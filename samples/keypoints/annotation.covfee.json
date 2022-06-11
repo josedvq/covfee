@@ -6,38 +6,19 @@
         {
             "id": "1d_annot",
             "name": "1D annotation sample",
-            "extra": {
-                "type": "raw",
-                "content": "These are HIT-level instructions or auxiliary information for annotators."
-            },
             "repeat": 2,
             "tasks": [
                 {
-                    "type": "ContinuousKeypointTask",
+                    "type": "ContinuousKeypoint",
                     "name": "Head",
                     "media": {
                         "type": "video",
                         "url": "$$www$$/sign.mp4",
+                        "resolution": [1920, 1080],
                         "fps": 25
-                    },
-                    "children": [
-                        {
-                            "type": "Continuous1DTask",
-                            "required": true,
-                            "name": "Speaking",
-                            "intensityInput": {
-                                "mode": "continuous-mousemove"
-                            }
-                        }
-                    ]
+                    }
                 }
-            ],
-            "interface": {
-                "type": "annotation",
-                "showSubmitButton": true,
-                "userTasks": {
-                }
-            }
+            ]
         }
     ]
 }

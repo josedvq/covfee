@@ -6,6 +6,8 @@ with open("README.md", "r") as fh:
 
 setup(
     name='covfee',
+    # using versioneer for versioning using git tags
+    # https://github.com/python-versioneer/python-versioneer/blob/master/INSTALL.md
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     author="Jose Vargas",
