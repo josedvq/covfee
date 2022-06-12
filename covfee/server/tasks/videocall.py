@@ -4,7 +4,6 @@ import signal
 import subprocess
 
 from flask import current_app as app
-from ..orm import db
 
 from .base import BaseCovfeeTask
 from ..utils.agora.rtc_token_builder import RtcTokenBuilder, Role_Attendee
@@ -41,7 +40,7 @@ class VideocallTask(BaseCovfeeTask):
         p = subprocess.Popen(cmd)
         print(' '.join(cmd))
         self.response.extra['recorder_pid'] = p.pid
-        db.session.commit()
+        app.session.commit()
         # os.system(f'kill -s 10 {p.pid}')
         os.kill(p.pid, 10)
 
@@ -52,5 +51,5 @@ class VideocallTask(BaseCovfeeTask):
         if 'recorder_pid' in self.response.extra:
             os.kill(self.response.extra['recorder_pid'], 12)
             del self.response.extra['recorder_pid']
-            db.session.commit()
+            app.session.commit()
 

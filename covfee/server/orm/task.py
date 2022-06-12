@@ -8,15 +8,18 @@ from typing import Any, Tuple
 import numpy as np
 from flask import current_app as app
 from sqlalchemy.orm import backref
+from sqlalchemy import (Column, Integer, JSON, ForeignKey, LargeBinary,
+    DateTime, Boolean)
+from sqlalchemy.orm import relationship
 
-from .db import db
+from .base import Base
 from .. import tasks
 from ..tasks.base import BaseCovfeeTask
 from ..utils.packer import Packer
 pytype = type
 
 
-class TaskSpec(db.Model):
+class TaskSpec(Base):
     """ Represents a task specification.
         Task specifications include the user-provided params (spec) for the task. It can be divided into:
             - Task-specific specification (spec), defined on the task's Typescript interface.
@@ -24,23 +27,23 @@ class TaskSpec(db.Model):
             - Task children (children), recursively defined (points to the same table).
      """
     __tablename__ = 'taskspecs'
-    id = db.Column(db.Integer, primary_key=True)
-    parent_id = db.Column(db.Integer, db.ForeignKey('taskspecs.id'))
+    id = Column(Integer, primary_key=True)
+    parent_id = Column(Integer, ForeignKey('taskspecs.id'))
     # backref parent
 
-    children = db.relationship("TaskSpec", backref=backref('parent', remote_side=[id]),
+    children = relationship("TaskSpec", backref=backref('parent', remote_side=[id]),
                                cascade="all, delete")
-    tasks = db.relationship("Task", backref="spec", cascade="all, delete")
+    tasks = relationship("Task", backref="spec", cascade="all, delete")
 
-    required = db.Column(db.Boolean)
-    prerequisite = db.Column(db.Boolean)
-    order = db.Column(db.Integer)
-    editable = db.Column(db.Boolean)
-    spec = db.Column(db.JSON)
-    config = db.Column(db.JSON)
+    required = Column(Boolean)
+    prerequisite = Column(Boolean)
+    order = Column(Integer)
+    editable = Column(Boolean)
+    spec = Column(JSON)
+    config = Column(JSON)
 
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __init__(self, maxSubmissions=0, autoSubmit=False, timer=None,
                  editable=False, required=False, prerequisite=False, shared=False, **spec):
@@ -84,28 +87,28 @@ class TaskSpec(db.Model):
         return spec_dict
 
 
-class Task(db.Model):
+class Task(Base):
     """ A Task is an instantiation of a TaskSpec, associated to a HitInstance.
         It represents a task to be solved within a hit instance.
     """
     __tablename__ = 'tasks'
 
-    id = db.Column(db.Integer, primary_key=True)
-    parent_id = db.Column(db.Integer, db.ForeignKey('tasks.id'))
+    id = Column(Integer, primary_key=True)
+    parent_id = Column(Integer, ForeignKey('tasks.id'))
     # backref parent
-    hitinstance_id = db.Column(db.LargeBinary, db.ForeignKey('hitinstances.id'))
+    hitinstance_id = Column(LargeBinary, ForeignKey('hitinstances.id'))
     # backref hitinstance
-    taskspec_id = db.Column(db.Integer, db.ForeignKey('taskspecs.id'))
+    taskspec_id = Column(Integer, ForeignKey('taskspecs.id'))
     # backref spec
 
-    responses = db.relationship("TaskResponse", backref='task', cascade="all, delete-orphan")
-    children = db.relationship("Task", backref=backref('parent', remote_side=[id]),
+    responses = relationship("TaskResponse", backref='task', cascade="all, delete-orphan")
+    children = relationship("Task", backref=backref('parent', remote_side=[id]),
                                cascade="all, delete-orphan")
 
     # response status
-    has_unsubmitted_response = db.Column(db.Boolean)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    has_unsubmitted_response = Column(Boolean)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __init__(self):
         self.has_unsubmitted_response = False
@@ -178,29 +181,26 @@ class Task(db.Model):
             yield from child.stream_download(z, base_path, csv)
 
 
-class TaskResponse(db.Model):
+class TaskResponse(Base):
     """ Represents a task's response """
     __tablename__ = 'taskresponses'
 
-    id = db.Column(db.Integer, primary_key=True)
-    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'))
+    id = Column(Integer, primary_key=True)
+    task_id = Column(Integer, ForeignKey('tasks.id'))
     # backref task
 
-    chunks = db.relationship("Chunk", backref='taskresponse',
-                             order_by="Chunk.index", cascade="all, delete-orphan", lazy="dynamic")
+    state = Column(JSON) # holds the shared state of the task
 
-    state = db.Column(db.JSON) # holds the shared state of the task
+    submitted = Column(Boolean)
+    valid = Column(Boolean)
+    data = Column(JSON)
 
-    submitted = db.Column(db.Boolean)
-    valid = db.Column(db.Boolean)
-    data = db.Column(db.JSON)
-
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
-    submitted_at = db.Column(db.DateTime)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
+    submitted_at = Column(DateTime)
 
     # can be used to store server state (eg. state of recording)
-    extra = db.Column(db.JSON)
+    extra = Column(JSON)
 
     def __init__(self):
         self.submitted = False
@@ -328,39 +328,4 @@ class TaskResponse(db.Model):
 
         return res
 
-# represents a chunk of task response (for continuous responses)
-class Chunk(db.Model):
-    """ Represents a chunk of or partial task response"""
-    __tablename__ = 'chunks'
 
-    # (taskresponse, index) must be unique
-    index = db.Column(db.Integer, primary_key=True)
-    taskresponse_id = db.Column(db.Integer, db.ForeignKey(
-        'taskresponses.id'), primary_key=True)
-    # ini_time = db.Column(db.Float, index=True)
-    # end_time = db.Column(db.Float, index=True)
-
-    data = db.Column(db.LargeBinary)
-    length = db.Column(db.Integer)   # number of samples in data
-    log_data = db.Column(db.JSON, nullable=True)
-
-    def __init__(self, index, data, length, log_data=None):
-        self.index = index
-        self.update(data, length, log_data)
-
-    def update(self, data, length, log_data=None):
-        self.data = data
-        self.length = length
-        self.log_data = log_data
-        # self.ini_time = data[0][0]
-        # self.end_time = data[-1][0]
-
-    def as_dict(self):
-        chunk_dict = {c.name: getattr(
-            self, c.name) for c in self.__table__.columns}
-        return chunk_dict
-
-    def unpack(self):
-        packer = Packer()
-        parsed = packer.parseChunk(self.data)
-        return parsed

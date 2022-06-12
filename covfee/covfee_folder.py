@@ -6,11 +6,10 @@ import random
 import traceback
 import platform
 
-from flask import current_app as app
+from sqlalchemy import create_engine
 from halo import Halo
 from colorama import init as colorama_init, Fore
 
-from covfee.server.orm import db
 from covfee.server.orm.user import User, password_hash
 from covfee.cli.utils import working_directory
 from pathlib import Path
@@ -18,6 +17,7 @@ from covfee.shared.validator.ajv_validator import AjvValidator
 from covfee.shared.validator.validation_errors import ValidationError
 import json
 from covfee.server.orm.project import Project
+from covfee.server.orm.base import Base
 from shutil import which
 colorama_init()
 
@@ -27,7 +27,8 @@ def cli_create_tables():
     Creates all the tables defined in the ORM
     '''
     with Halo(text='Creating tables', spinner='dots') as spinner:
-        db.create_all()
+        engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+        Base.metadata.create_all(engine)
         spinner.succeed('Created database tables.')
 
 

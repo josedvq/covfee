@@ -2,10 +2,10 @@ from io import BytesIO
 
 import zipstream
 from flask import request, jsonify, Blueprint, send_file, make_response, Response,\
-     stream_with_context, redirect
+     stream_with_context, redirect, current_app as app
 from sqlalchemy.orm.attributes import flag_modified
 
-from ..orm import db, Project, HIT, HITInstance, Task, TaskResponse, Chunk
+from ..orm import Project, HIT, HITInstance, Task, TaskResponse
 from .auth import admin_required
 from covfee.server.orm.task import TaskSpec
 api = Blueprint('api', __name__)
@@ -29,7 +29,7 @@ def projects():
         [type]: list of project objects
     """
     with_hits = request.args.get('with_hits', False)
-    res = db.session.query(Project).all()
+    res = app.session.query(Project).all()
     if res is None:
         return jsonify([])
     else:
@@ -47,7 +47,7 @@ def project(pid):
     """
     with_hits = request.args.get('with_hits', False)
     with_instances = request.args.get('with_instances', False)
-    res = db.session.query(Project).get(bytes.fromhex(pid))
+    res = app.session.query(Project).get(bytes.fromhex(pid))
     return jsonify_or_404(res, with_hits=with_hits, with_instances=with_instances, with_config=True)
 
 
@@ -64,7 +64,7 @@ def project_csv(pid):
     Returns:
         [type]: CSV file with a hit instance per line
     """
-    project = db.session.query(Project).get(bytes.fromhex(pid))
+    project = app.session.query(Project).get(bytes.fromhex(pid))
     if project is None:
         return {'msg': 'not found'}, 404
     else:
@@ -90,7 +90,7 @@ def project_download(pid):
     """
     is_csv = bool(request.args.get('csv', False))
 
-    project = db.session.query(Project).get(bytes.fromhex(pid))
+    project = app.session.query(Project).get(bytes.fromhex(pid))
     if project is None:
         return {'msg': 'not found'}, 404
 
@@ -116,7 +116,7 @@ def hit(hid):
     """
     with_instances = request.args.get('with_instances', False)
     with_instance_tasks = request.args.get('with_instance_tasks', False)
-    res = db.session.query(HIT).get(bytes.fromhex(hid))
+    res = app.session.query(HIT).get(bytes.fromhex(hid))
     return jsonify_or_404(res,
                           with_instances=with_instances,
                           with_instance_tasks=with_instance_tasks)
@@ -126,12 +126,12 @@ def hit(hid):
 def hit_edit(hid):
     """ Edits the hit configuration using the received config.
     """
-    hit = db.session.query(HIT).get(bytes.fromhex(hid))
+    hit = app.session.query(HIT).get(bytes.fromhex(hid))
     if hit is None:
         return jsonify({'msg': 'invalid hit'}), 400
 
     hit.update(request.json)
-    db.session.commit()
+    app.session.commit()
     return jsonify_or_404(hit, with_instances=False, with_config=True)
 
 # INSTANCES
@@ -141,7 +141,7 @@ def hit_edit(hid):
 def instance(iid):
     with_tasks = request.args.get('with_tasks', True)
     with_response_info = request.args.get('with_response_info', True)
-    res = db.session.query(HITInstance).get(bytes.fromhex(iid))
+    res = app.session.query(HITInstance).get(bytes.fromhex(iid))
     return jsonify_or_404(res, with_tasks=with_tasks, 
                           with_response_info=with_response_info)
 
@@ -155,7 +155,7 @@ def instance_preview(iid):
 # submit a hit (when finished)
 @api.route('/instances/<iid>/submit', methods=['POST'])
 def instance_submit(iid):
-    instance = db.session.query(HITInstance).get(bytes.fromhex(iid))
+    instance = app.session.query(HITInstance).get(bytes.fromhex(iid))
     if instance is None:
         return jsonify({'msg': 'invalid instance'}), 400
     is_submitted, err = instance.submit()
@@ -163,7 +163,7 @@ def instance_submit(iid):
     if not is_submitted:
         return jsonify({'msg': err}), 400
 
-    db.session.commit()
+    app.session.commit()
     return jsonify(instance.as_dict(with_tasks=False))
 
 
@@ -178,14 +178,14 @@ def instance_add(hid):
         json: the added instance object
     """
     num_instances = request.args.get('num_instances', 1)
-    hit = db.session.query(HIT).get(bytes.fromhex(hid))
+    hit = app.session.query(HIT).get(bytes.fromhex(hid))
     if hit is None:
         return jsonify({'msg': 'not found'}), 404
 
     for i in range(0, num_instances):
         hit.instantiate()
 
-    db.session.commit()
+    app.session.commit()
     with_instances = request.args.get('with_instances', True)
     with_instance_tasks = request.args.get('with_instance_tasks', False)
 
@@ -201,7 +201,7 @@ def instance_add_and_redirect(hid):
     Args:
         hid (str): HIT ID
     """
-    hit = db.session.query(HIT).get(bytes.fromhex(hid))
+    hit = app.session.query(HIT).get(bytes.fromhex(hid))
     if hit is None:
         return jsonify({'msg': 'not found'}), 404
 
@@ -210,7 +210,7 @@ def instance_add_and_redirect(hid):
         return jsonify({'msg': 'unable to add instance.'}), 400
     instance.set_extra(request.args)
 
-    db.session.commit()
+    app.session.commit()
     return redirect(instance.get_url(), 302)
 
 
@@ -228,7 +228,7 @@ def instance_download(iid):
     """
     is_csv = request.args.get('csv', False)
 
-    instance = db.session.query(HITInstance).get(bytes.fromhex(iid))
+    instance = app.session.query(HITInstance).get(bytes.fromhex(iid))
     if instance is None:
         return jsonify({'msg': 'not found'}), 404
 
@@ -248,21 +248,21 @@ def instance_download(iid):
 # create a task attached to an instance
 @api.route('/instances/<iid>/tasks/add', methods=['POST'])
 def task_add_to_instance(iid):
-    instance = db.session.query(HITInstance).get(bytes.fromhex(iid))
+    instance = app.session.query(HITInstance).get(bytes.fromhex(iid))
     if instance is None:
         return jsonify({'msg': 'invalid instance'}), 400
 
     task_spec = TaskSpec(**request.json, editable=True)
     task = task_spec.instantiate()
     instance.tasks.append(task)
-    db.session.commit()
+    app.session.commit()
     return jsonify(task.as_dict())
 
 
 # edit an existing task
 @api.route('/tasks/<kid>/edit', methods=['POST'])
 def task_edit(kid):
-    task = db.session.query(Task).get(int(kid))
+    task = app.session.query(Task).get(int(kid))
     if task is None:
         return jsonify({'msg': 'invalid task'}), 400
     spec = task.spec
@@ -270,20 +270,20 @@ def task_edit(kid):
         return jsonify(msg='Task cannot be user-edited.'), 403
     spec.spec['name'] = request.json['name']
     flag_modified(spec, 'spec')
-    db.session.commit()
+    app.session.commit()
     return jsonify(task.as_dict())
 
 
 # delete an existing task
 @api.route('/tasks/<kid>/delete')
 def task_delete(kid):
-    task = db.session.query(Task).get(int(kid))
+    task = app.session.query(Task).get(int(kid))
     if task is None:
         return jsonify({'msg': 'invalid task'}), 400
     if not task.editable:
         return jsonify(msg='Task cannot be user-deleted.'), 403
-    db.session.delete(task)
-    db.session.commit()
+    app.session.delete(task)
+    app.session.commit()
     return jsonify({'success': True}), 200
 
 
@@ -291,7 +291,7 @@ def task_delete(kid):
 def response(kid):
     ''' Will return the last response for a task
     '''
-    task = db.session.query(Task).get(int(kid))
+    task = app.session.query(Task).get(int(kid))
     if task is None:
         return jsonify({'msg': 'invalid task'}), 400
 
@@ -314,7 +314,7 @@ def response(kid):
 def make_response(kid):
     submit = bool(request.args.get('submit', False))
 
-    task = db.session.query(Task).get(int(kid))
+    task = app.session.query(Task).get(int(kid))
     if task is None:
         return jsonify({'msg': 'invalid task'}), 400
 
@@ -323,55 +323,17 @@ def make_response(kid):
         response.update(request.json)
     if submit:
         response.submit()
-    db.session.commit()
+    app.session.commit()
     return jsonify(response.as_dict())
 
 
 # record a response to a task
 @api.route('/responses/<rid>/submit', methods=['POST'])
 def response_submit(rid):
-    response = db.session.query(TaskResponse).get(int(rid))
+    response = app.session.query(TaskResponse).get(int(rid))
     if response is None:
         return jsonify({'msg': 'invalid response'}), 400
 
     res = response.submit(request.json)    
-    db.session.commit()
+    app.session.commit()
     return jsonify(res)
-
-@api.route('/responses/<rid>/chunks', methods=['GET'])
-def query_chunks(rid):
-    response = db.session.query(TaskResponse).get(int(rid))
-    if response is None:
-        return jsonify({'msg': 'invalid response'}), 400
-
-    chunk_bytes = response.pack_chunks()
-    return send_file(BytesIO(chunk_bytes), mimetype='application/octet-stream'), 200
-
-# receive a chunk of a response, for continuous responses
-@api.route('/responses/<rid>/chunk', methods=['POST'])
-def response_chunk(rid):
-    sent_index = int(request.args.get('index'))
-    length = int(request.args.get('length'))
-
-    response = db.session.query(TaskResponse).get(int(rid))
-    if response is None:
-        return jsonify({'msg': 'invalid response'}), 400
-    if response.submitted:
-        return jsonify({'msg': 'response is already submitted'}), 400
-
-    # if there is a previous chunk with the same index, overwrite it
-    if response.chunks.count() > 0:
-        chunk = next((chunk for chunk in response.chunks if chunk.index == sent_index), None)
-        if chunk is not None:
-            chunk.update(data=request.get_data(), length=length)
-
-            db.session.commit()
-            return jsonify({'success': True}), 201
-
-    # no previous chunk with the same index -> append the chunk
-    chunk = Chunk(index=sent_index, length=length, data=request.get_data())
-    response.chunks.append(chunk)
-    db.session.add(response)
-    db.session.commit()
-    return jsonify({'success': True}), 201
-

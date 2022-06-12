@@ -3,49 +3,53 @@ import hmac
 import hashlib
 import datetime
 import random
+from hashlib import sha256
 
 from flask import current_app as app
 from werkzeug.datastructures import MultiDict
+from sqlalchemy import (Column, Integer, LargeBinary, JSON, ForeignKey, 
+    Table, UniqueConstraint, String, DateTime, Boolean)
+from sqlalchemy.orm import relationship
 
-from .db import db
-from hashlib import sha256
-from covfee.server.orm.task import TaskSpec
+from .base import Base
+from .task import TaskSpec
 
-hits_taskspecs = db.Table(
+hits_taskspecs = Table(
     'hits_taskspecs',
-    db.Column('hit_id', db.Integer, db.ForeignKey('hits.id'), primary_key=True),
-    db.Column('taskspec_id', db.Integer, db.ForeignKey('taskspecs.id'), primary_key=True))
+    Base.metadata,
+    Column('hit_id', ForeignKey('hits.id'), primary_key=True),
+    Column('taskspec_id', ForeignKey('taskspecs.id'), primary_key=True))
 
 
-class HIT(db.Model):
+class HIT(Base):
     ''' Represents a set of tasks to be completed by one subject, ie. a HIT 
         - A HIT belongs to a project and has a list of Task specifications.
         - A HIT is abstract and must be instantiated into a HIT instance to be solved by a user. 
     '''
     __tablename__ = 'hits'
     __table_args__ = (
-        db.UniqueConstraint('project_id', 'name'),
+        UniqueConstraint('project_id', 'name'),
     )
 
-    id = db.Column(db.LargeBinary, primary_key=True)
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'))
+    id = Column(LargeBinary, primary_key=True)
+    project_id = Column(Integer, ForeignKey('projects.id'))
     # backref projec
 
-    instances = db.relationship(
+    instances = relationship(
         "HITInstance", backref='hit', cascade="all, delete")
-    taskspecs = db.relationship(
+    taskspecs = relationship(
         "TaskSpec", secondary=hits_taskspecs, backref='hits', cascade="all, delete")
 
-    # shared_tasks = db.relationship(
+    # shared_tasks = relationship(
     #     "Task", backref='hit', cascade="all, delete")
 
-    name = db.Column(db.String)
-    extra = db.Column(db.JSON)
-    interface = db.Column(db.JSON)
-    config = db.Column(db.JSON)
+    name = Column(String)
+    extra = Column(JSON)
+    interface = Column(JSON)
+    config = Column(JSON)
 
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __init__(self, id, project_id, name, interface={}, extra=None, tasks=[], config={}, **kwargs):
         self.id = sha256(f'{id}_{project_id}_{app.config["COVFEE_SECRET_KEY"]}'.encode()).digest()
@@ -172,7 +176,7 @@ class HIT(db.Model):
         return f'{app.config["API_URL"]}/hits/{self.id.hex():s}/instances/add_and_redirect'
 
 
-class HITInstance(db.Model):
+class HITInstance(Base):
     ''' Represents an instance of a HIT, to be solved by one user
         - one HIT instance maps to one URL that can be sent to a participant to access and solve the HIT.
         - a HIT instance is specified by the abstract HIT it is an instance of.
@@ -181,19 +185,19 @@ class HITInstance(db.Model):
     '''
     __tablename__ = 'hitinstances'
 
-    id = db.Column(db.LargeBinary, primary_key=True)
+    id = Column(LargeBinary, primary_key=True)
     # id used for visualization
-    preview_id = db.Column(db.LargeBinary, unique=True)
-    hit_id = db.Column(db.LargeBinary, db.ForeignKey('hits.id'))
+    preview_id = Column(LargeBinary, unique=True)
+    hit_id = Column(LargeBinary, ForeignKey('hits.id'))
     # backref hit
 
-    tasks = db.relationship("Task", backref='hitinstance', cascade="all, delete")
-    submitted = db.Column(db.Boolean)
-    queryParams = db.Column(db.JSON)
+    tasks = relationship("Task", backref='hitinstance', cascade="all, delete")
+    submitted = Column(Boolean)
+    queryParams = Column(JSON)
 
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
-    submitted_at = db.Column(db.DateTime)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
+    submitted_at = Column(DateTime)
 
     def __init__(self, id, taskspecs=[], submitted=False):
         self.id = id

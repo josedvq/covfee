@@ -1,20 +1,32 @@
 import os
 import json
+from tkinter import SE
 
 from flask import current_app as app
 from flask import Flask, Blueprint, render_template, send_from_directory
+from flask.config import Config
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_socketio import SocketIO
+from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy import create_engine
 
-from .orm import db, load_config
+from .orm import load_config
 from .rest_api import api, auth, admin_required, add_claims_to_access_token, user_identity_lookup, \
     user_loader_callback
 
+def create_config(mode):
+    return load_config(mode=mode)
+
+def create_session():
+    engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    Session = scoped_session(sessionmaker(bind=engine))
+
 def create_app(mode):
     app = Flask(__name__, static_folder=None)
-    load_config(app, mode=mode)
-    db.init_app(app)
+    app.config = create_config()
+    app.session = create_session()
+    
     socketio = SocketIO()
     socketio.init_app(app)
 
@@ -31,8 +43,8 @@ def create_app(mode):
     @app.teardown_request
     def teardown_request(exception):
         if exception:
-            db.session.rollback()
-        db.session.remove()
+            app.session.rollback()
+        app.session.remove()
     
     return socketio, app
 

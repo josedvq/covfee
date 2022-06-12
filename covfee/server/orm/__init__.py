@@ -1,54 +1,56 @@
 import os
 from urllib.parse import urlparse
 
-from .db import db
+from flask.config import Config
+
 from .hit import *
 from .project import *
 from .task import *
 from .user import *
 
 
-def load_config(app, mode):
-    app.config['COVFEE_ENV'] = mode
+def load_config(mode):
+    config = Config()
+    config['COVFEE_ENV'] = mode
     # load the base configuration object
-    app.config.from_object('covfee.server.config')
+    config.from_object('covfee.server.config')
 
     # update with the custom project config files
     if mode == 'local':
-        app.config.from_pyfile(os.path.join(
+        config.from_pyfile(os.path.join(
             os.getcwd(), 'covfee.local.config.py'), silent=True)
     elif mode == 'dev':
-        app.config.from_pyfile(os.path.join(
+        config.from_pyfile(os.path.join(
             os.getcwd(), 'covfee.development.config.py'), silent=True)
     elif mode == 'deploy':
-        app.config.from_pyfile(os.path.join(
+        config.from_pyfile(os.path.join(
             os.getcwd(), 'covfee.deployment.config.py'), silent=True)
     else:
         raise Exception(f'Unrecognized application mode {mode}.')
 
     # check if SSL enabled
-    app.config['SSL_ENABLED'] = ('SSL_KEY_FILE' in app.config and 'SSL_CERT_FILE' in app.config)
+    config['SSL_ENABLED'] = ('SSL_KEY_FILE' in config and 'SSL_CERT_FILE' in config)
 
     # apply extended config
-    app_path = urlparse(app.config['BASE_URL']).path
+    app_path = urlparse(config['BASE_URL']).path
     if app_path == '':
         app_path = '/'
 
-    app.config.update(
+    config.update(
         # copy over secret key
-        JWT_SECRET_KEY=app.config['COVFEE_SECRET_KEY'],
+        JWT_SECRET_KEY=config['COVFEE_SECRET_KEY'],
 
         # create sqlalchemy database uri
-        SQLALCHEMY_DATABASE_URI=f'sqlite:///{app.config["DATABASE_PATH"]}',
+        SQLALCHEMY_DATABASE_URI=f'sqlite:///{config["DATABASE_PATH"]}',
 
         # create derived URLs
-        PROJECT_WWW_URL=app.config.get('PROJECT_WWW_URL', app.config['BASE_URL'] + '/www'),
-        BUNDLE_URL=app.config.get('BUNDLE_URL', app.config['BASE_URL'] + '/www'),
-        APP_URL=app.config['BASE_URL'] + '/#',
-        ADMIN_URL=app.config['BASE_URL'] + '/admin#',
-        LOGIN_URL=app.config['BASE_URL'] + '/admin#login',
-        API_URL=app.config['BASE_URL'] + '/api',
-        AUTH_URL=app.config['BASE_URL'] + '/auth',
+        PROJECT_WWW_URL=config.get('PROJECT_WWW_URL', config['BASE_URL'] + '/www'),
+        BUNDLE_URL=config.get('BUNDLE_URL', config['BASE_URL'] + '/www'),
+        APP_URL=config['BASE_URL'] + '/#',
+        ADMIN_URL=config['BASE_URL'] + '/admin#',
+        LOGIN_URL=config['BASE_URL'] + '/admin#login',
+        API_URL=config['BASE_URL'] + '/api',
+        AUTH_URL=config['BASE_URL'] + '/auth',
         # Set the cookie paths, so that you are only sending your access token
         # cookie to the access endpoints, and only sending your refresh token
         # to the refresh endpoint. Technically this is optional, but it is in
@@ -60,23 +62,25 @@ def load_config(app, mode):
 
     # point to webpack-dev-server bundles in dev mode
     if mode == 'dev':
-        app.config['BUNDLE_URL'] = app.config['DEV_BUNDLE_URL']
+        config['BUNDLE_URL'] = config['DEV_BUNDLE_URL']
 
-def set_frontend_config():
+    return config
+
+def set_frontend_config(config):
     # create the frontend config object:
-    app.config['FRONTEND_CONFIG'] = {
+    config['FRONTEND_CONFIG'] = {
         # frontend only has two environments: production and development
-        'env': 'production' if app.config['COVFEE_ENV'] in ['local', 'deploy'] else 'development',
-        'socketio_enabled': app.config['SOCKETIO_ENABLED'],
-        'google_client_id': app.config['GOOGLE_CLIENT_ID'],
-        'www_url': app.config['PROJECT_WWW_URL'],
-        'app_url': app.config['APP_URL'],
-        'base_url': app.config['BASE_URL'],
-        'api_url': app.config['API_URL'],
-        'auth_url': app.config['AUTH_URL'],
+        'env': 'production' if config['COVFEE_ENV'] in ['local', 'deploy'] else 'development',
+        'socketio_enabled': config['SOCKETIO_ENABLED'],
+        'google_client_id': config['GOOGLE_CLIENT_ID'],
+        'www_url': config['PROJECT_WWW_URL'],
+        'app_url': config['APP_URL'],
+        'base_url': config['BASE_URL'],
+        'api_url': config['API_URL'],
+        'auth_url': config['AUTH_URL'],
         'admin': {
-            'unsafe_mode_on': app.config['UNSAFE_MODE_ON'],
-            'home_url': app.config['ADMIN_URL'],
-            'login_url': app.config['LOGIN_URL']
+            'unsafe_mode_on': config['UNSAFE_MODE_ON'],
+            'home_url': config['ADMIN_URL'],
+            'login_url': config['LOGIN_URL']
         }
     }

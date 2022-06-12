@@ -1,20 +1,24 @@
-from .db import db
 from hashlib import pbkdf2_hmac
 
 from flask import current_app as app
+from sqlalchemy import (Column, Integer, JSON, String,
+    ForeignKey)
+from sqlalchemy.orm import relationship
+
+from .base import Base
 
 def password_hash(password: str):
     return pbkdf2_hmac('sha256', password.encode(), app.config['JWT_SECRET_KEY'].encode(), 10000)
 
-class User(db.Model):
+class User(Base):
     """ Represents a covfee user """
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String) # note username is non-unique
-    roles = db.Column(db.JSON)
+    id = Column(Integer, primary_key=True)
+    username = Column(String) # note username is non-unique
+    roles = Column(JSON)
 
-    providers = db.relationship("AuthProvider", backref="user", cascade="all, delete")
+    providers = relationship("AuthProvider", backref="user", cascade="all, delete")
 
     def __init__(self, username: str, roles: list = ['user', 'admin']):
         self.username = username
@@ -23,14 +27,14 @@ class User(db.Model):
     def add_provider(self, *args, **kwargs):
         self.providers.append(AuthProvider(*args, **kwargs))
 
-class AuthProvider(db.Model):
+class AuthProvider(Base):
     __tablename__ = 'auth_providers'
 
-    provider_id = db.Column(db.String, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    provider_id = Column(String, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
 
     # holds provider specific information like the password for password provider
-    extra = db.Column(db.JSON)
+    extra = Column(JSON)
 
     def __init__(self, provider_id: str, user_id: str, extra=None):
         self.provider_id = provider_id

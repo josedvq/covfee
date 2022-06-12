@@ -6,22 +6,23 @@ import json
 
 import pandas as pd
 from flask import current_app as app
+from sqlalchemy import (Column, LargeBinary, String, DateTime)
+from sqlalchemy.orm import relationship
 
-from .db import db
 from .hit import HIT
+from .base import Base
 
-
-class Project(db.Model):
+class Project(Base):
     """ Represents a set of HITs which make up an experiment or annotation project """
     __tablename__ = 'projects'
 
-    id = db.Column(db.LargeBinary, primary_key=True)
-    name = db.Column(db.String)
-    email = db.Column(db.String)
-    hits = db.relationship("HIT", backref="project", cascade="all, delete-orphan")
+    id = Column(LargeBinary, primary_key=True)
+    name = Column(String)
+    email = Column(String)
+    hits = relationship("HIT", backref="project", cascade="all, delete-orphan")
 
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __init__(self, id, name, email, hits, **kwargs):
         hashstr = Project.get_hashtr(id)

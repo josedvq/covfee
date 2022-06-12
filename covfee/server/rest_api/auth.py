@@ -13,7 +13,7 @@ from flask_jwt_extended import (
     get_jwt_identity, get_jwt_claims, verify_jwt_in_request
 )
 
-from ..orm import db, User, AuthProvider, password_hash
+from ..orm import User, AuthProvider, password_hash
 
 # AUTHENTICATION
 # Using the user_claims_loader, we can specify a method that will be
@@ -45,7 +45,7 @@ def admin_required(fn):
 
 
 def user_loader_callback(identity):
-    return db.session.query(User).get(identity)
+    return app.session.query(User).get(identity)
     # return User.query.filter_by(username=identity).first()
 
 # Create a function that will be called whenever create_access_token
@@ -136,8 +136,8 @@ def login_google():
         # create the new user
         user = User(userid, roles=['user'])
         user.add_provider('google', userid)
-        db.session.add(user)
-        db.session.commit()
+        app.session.add(user)
+        app.session.commit()
         return login_user(user)
     else:
         return login_user(provider.user)
@@ -187,9 +187,9 @@ def logout():
 @admin_required
 def user_delete(uid):
     # Get the new user
-    user = db.session.query(User).get(bytes.fromhex(uid))
+    user = app.session.query(User).get(bytes.fromhex(uid))
     if user is None:
         return jsonify({'msg': 'invalid user'}), 400
-    db.session.delete(user)
-    db.session.commit()
+    app.session.delete(user)
+    app.session.commit()
     return jsonify({'success': True}), 200
