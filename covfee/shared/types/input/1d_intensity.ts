@@ -93,4 +93,7 @@ export interface ContinuousKeyboardInputSpec extends BaseInputSpec{
 }
 
 
-export type Intensity1DInputSpec = BinaryInputSpec | ContinuousMousemoveInputSpec | ContinuousKeyboardInputSpec | GravityKeyboardInputSpec
+export type Intensity1DInputSpec = BinaryInputSpec | 
+                                   ContinuousMousemoveInputSpec | 
+                                   ContinuousKeyboardInputSpec | 
+                                   GravityKeyboardInputSpec

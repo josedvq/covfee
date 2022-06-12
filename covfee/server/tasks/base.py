@@ -53,7 +53,12 @@ class BaseCovfeeTask:
         Does not affect the data in the database.
 
         Args:
-            data (bytes): Binary, aggregated data.
+            data (np.ndarray): Continuous data aggregated into a single array
+                with shape (num_samples, sample_size)
+                - num_samples depends on the video duration and the specified
+                sampling rate
+                - sample_size is the size of each annotated record (eg. 1 for Continuous1D,
+                2 for ContinuousKeypoint)
         """
         if data is None:
             return None
