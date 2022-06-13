@@ -61,10 +61,6 @@ export interface CommonTaskSpec {
      */
     autoSubmit?: boolean
     /**
-     * children tasks
-     */
-    children?: Array<ChildTaskSpec>
-    /**
      * Instructions to be displayed before the form
      */
     instructions?: string
@@ -85,8 +81,6 @@ export interface CommonContinuousTaskSpec extends CommonTaskSpec { }
  */
 
 export type TaskSpec =  Continuous1DTaskSpec | ContinuousKeypointTaskSpec | InstructionsTaskSpec | QuestionnaireTaskSpec | VideocallTaskSpec
-export type ChildTaskSpec = DistributiveOmit<TaskSpec, 'media' | 'children'>
-export type BaseTaskSpec = Continuous1DTaskBaseSpec | ContinuousKeypointTaskBaseSpec | InstructionsTaskBaseSpec | QuestionnaireTaskBaseSpec | VideocallTaskBaseSpec
 
 export interface TaskResponse {
     id: number,
@@ -100,12 +94,7 @@ export interface TaskResponse {
     chunkData?: object,
     state: any
 }
-export interface TaskType extends Omit<CommonTaskSpec, 'children'> {
-    children: Array<TaskType>
-    /**
-     * Unique ID of the task
-     */
-    id: number
+export interface TaskType extends CommonTaskSpec {
     /**
      * URL to task api endpoint
      */
@@ -134,17 +123,6 @@ export interface TaskType extends Omit<CommonTaskSpec, 'children'> {
      * Task-specific props to be fed to the task
      */
     taskSpecific?: any
-}
-
-export interface EditableTaskFields {
-    /**
-     * Display name of the task
-     */
-    name: string,
-    /**
-     * Task specification as provided by the user
-     */
-    spec: BaseTaskSpec,
 }
 
 

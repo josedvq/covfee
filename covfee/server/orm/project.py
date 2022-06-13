@@ -9,17 +9,18 @@ from flask import current_app as app
 from sqlalchemy import (Column, LargeBinary, String, DateTime)
 from sqlalchemy.orm import relationship
 
-from .hit import HIT
+from .hit import HitSpec
 from .base import Base
 
 class Project(Base):
-    """ Represents a set of HITs which make up an experiment or annotation project """
+    """ Represents a set of HIT specifications, and their instantiations,
+    which make up an experiment or annotation project """
     __tablename__ = 'projects'
 
     id = Column(LargeBinary, primary_key=True)
     name = Column(String)
     email = Column(String)
-    hits = relationship("HIT", backref="project", cascade="all, delete-orphan")
+    hit_specs = relationship("HitSpec", backref="project", cascade="all, delete-orphan")
 
     created_at = Column(DateTime, default=datetime.datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)
@@ -32,7 +33,7 @@ class Project(Base):
 
         hashstr = Project.get_hashtr(id)
         for hit_dict in hits:
-            hit = HIT(**hit_dict, project_id=id)
+            hit = HitSpec(**hit_dict, project_id=id)
             self.hits.append(hit)
 
             repeats = hit_dict.get('repeat', 1)

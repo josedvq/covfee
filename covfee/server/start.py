@@ -18,14 +18,14 @@ from .rest_api import api, auth, admin_required, add_claims_to_access_token, use
 def create_config(mode):
     return load_config(mode=mode)
 
-def create_session():
-    engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
-    Session = scoped_session(sessionmaker(bind=engine))
+def create_session(config):
+    engine = create_engine(config['SQLALCHEMY_DATABASE_URI'])
+    return scoped_session(sessionmaker(bind=engine))
 
 def create_app(mode):
     app = Flask(__name__, static_folder=None)
-    app.config = create_config()
-    app.session = create_session()
+    app.config.update(create_config(mode))
+    app.session = create_session(app.config)
     
     socketio = SocketIO()
     socketio.init_app(app)

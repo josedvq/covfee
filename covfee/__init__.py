@@ -8,6 +8,11 @@ from covfee.shared.schemata import Schemata
 from covfee.shared.validator.validation_errors import ValidationError
 from .covfee_folder import CovfeeFolder
 
+from .build.task import Task
+from .build.subject import Subject
+from .build.project import Project
+from .build.utils import Sequential
+
 def _make(file_or_folder, force=False, rms=False, stdout_enabled=True):
     
     project_folder = CovfeeFolder(os.getcwd())

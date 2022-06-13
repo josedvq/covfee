@@ -24,7 +24,7 @@ class VideocallTask(BaseCovfeeTask):
     def on_first_join(self):
         ''' Starts the recording script
         '''
-        recording_dir = os.path.join(app.config["PROJECT_WWW_PATH"], self.task.hitinstance.id.hex(), f'{self.task.id}_{str(self.response.id)}')
+        recording_dir = os.path.join(app.config["PROJECT_WWW_PATH"], self.task.hit.id.hex(), f'{self.task.id}_{str(self.response.id)}')
         if not os.path.exists(recording_dir):
             os.makedirs(recording_dir)
 

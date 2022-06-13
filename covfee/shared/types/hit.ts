@@ -77,7 +77,7 @@ export interface HitSpec {
     /**
      * list of tasks in the HIT
      */
-    tasks: TaskListObject
+    tasks: TaskSpec
     /**
      * number of copies or instances of the HIT
      */

@@ -3,7 +3,6 @@ import sys
 import json
 import subprocess
 
-from flask import current_app as app
 from .validation_errors import JavascriptError, ValidationError
 import zmq
 context = zmq.Context()
@@ -16,7 +15,9 @@ class AjvValidator:
         self.socket.setsockopt(zmq.RCVTIMEO, 1000)
         # bind to a random port in loopback iface
         port = self.socket.bind_to_random_port("tcp://127.0.0.1")
-        validator_path = os.path.join(app.config['COVFEE_SHARED_PATH'], 'validator', 'validator_service.js')
+
+        curr_folder = os.path.dirname(os.path.abspath(__file__))
+        validator_path = os.path.join(curr_folder, 'validator_service.js')
 
         # start the nodejs validation server in the same interface
         self.process = subprocess.Popen(["node", '--trace-warnings', validator_path, "serve", str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -71,3 +72,6 @@ class AjvValidator:
 
     def validate_project(self, project_spec):
         self.schema_validate('ProjectSpec', project_spec)
+
+    def validate_task(self, task_name, task_spec):
+        self.schema_validate(task_name, task_spec)

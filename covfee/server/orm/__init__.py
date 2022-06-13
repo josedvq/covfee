@@ -10,7 +10,7 @@ from .user import *
 
 
 def load_config(mode):
-    config = Config()
+    config = Config(root_path='')
     config['COVFEE_ENV'] = mode
     # load the base configuration object
     config.from_object('covfee.server.config')

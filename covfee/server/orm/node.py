@@ -14,53 +14,32 @@ from sqlalchemy.orm import relationship
 from .base import Base
 from .task import TaskSpec
 
-class HitSpec(Base):
-    ''' Represents a set of tasks to be completed by one subject, ie. a HIT 
-        - A HIT belongs to a project and has a list of Task specifications.
-        - A HIT is abstract and must be instantiated into a HIT instance to be solved by a user. 
+hits_taskspecs = Table(
+    'journeyspecs_taskspecs',
+    Base.metadata,
+    Column('journeyspec_id', ForeignKey('journeyspecs.id'), primary_key=True),
+    Column('taskspec_id', ForeignKey('taskspecs.id'), primary_key=True))
+
+class JourneySpec(Base):
+    ''' Represents a jorney (sequence of task specs) through a HIT spec
     '''
-    __tablename__ = 'hit_specs'
-    __table_args__ = (
-        UniqueConstraint('project_id', 'name'),
-    )
+    __tablename__ = 'journeyspecs'
 
-    id = Column(LargeBinary, primary_key=True)
-    project_id = Column(Integer, ForeignKey('projects.id'))
-    # backref projec
+    id = Column(Integer, primary_key=True)
 
-    instances = relationship(
-        "Hit", backref='spec', cascade="all, delete")
-    # taskspecs = relationship(
-    #     "TaskSpec", secondary=hits_taskspecs, backref='hits', cascade="all, delete")
-    journey_specs = relationship(
-        "Journey", backref='hit_spec', cascade="all, delete")
-
-    # shared_tasks = relationship(
-    #     "Task", backref='hit', cascade="all, delete")
+    task_specs = relationship(
+        "TaskSpec", secondary=hits_taskspecs, backref='hits', cascade="all, delete")
+    journeys = relationship(
+        "Journey", backref='journey_spec', cascade="all, delete")
 
     name = Column(String)
-    extra = Column(JSON)
-    interface = Column(JSON)
-    config = Column(JSON)
 
     created_at = Column(DateTime, default=datetime.datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
-    def __init__(self, id, project_id, name, interface={}, extra=None, tasks=[], config={}, **kwargs):
-        self.id = sha256(f'{id}_{project_id}_{app.config["COVFEE_SECRET_KEY"]}'.encode()).digest()
+    def __init__(self, name, task_specs=[], **kwargs):
         self.name = name
-
-        self.interface = interface
-
-        if extra is not None:
-            if 'url' in extra and extra['url'][:4] != 'http':
-                extra['url'] = os.path.join(app.config['PROJECT_WWW_URL'], extra['url'])
-        self.extra = extra
-
-        self.config = config
-        self.config['maxInstances'] = self.config.get('maxInstances', 100)
-
-        self.set_task_specs(tasks)
+        self.task_specs = task_specs
 
     def update(self, params):
         self.config = {**self.config, **params['config']}
@@ -268,4 +247,3 @@ class Hit(Base):
     def stream_download(self, z, base_path, csv=False):
         for i, task in enumerate(self.tasks):
             yield from task.stream_download(z, base_path, i, csv)
-

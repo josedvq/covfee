@@ -88,7 +88,7 @@ class TaskSpec(Base):
 
 
 class Task(Base):
-    """ A Task is an instantiation of a TaskSpec, associated to a HitInstance.
+    """ A Task is an instantiation of a TaskSpec, associated to a Hit.
         It represents a task to be solved within a hit instance.
     """
     __tablename__ = 'tasks'
@@ -96,8 +96,8 @@ class Task(Base):
     id = Column(Integer, primary_key=True)
     parent_id = Column(Integer, ForeignKey('tasks.id'))
     # backref parent
-    hitinstance_id = Column(LargeBinary, ForeignKey('hitinstances.id'))
-    # backref hitinstance
+    hit_id = Column(LargeBinary, ForeignKey('hits.id'))
+    # backref hit
     taskspec_id = Column(Integer, ForeignKey('taskspecs.id'))
     # backref spec
 
@@ -123,8 +123,8 @@ class Task(Base):
         # merge task and spec dicts
         task_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns
                      if c not in ['responses']}
-        if task_dict['hitinstance_id']:   # child tasks may have no hitinstance_id
-            task_dict['hitinstance_id'] = task_dict['hitinstance_id'].hex()
+        if task_dict['hit_id']:   # child tasks may have no hit id
+            task_dict['hit_id'] = task_dict['hit_id'].hex()
         spec_dict = self.spec.as_dict()
 
         task_dict = {**spec_dict, **task_dict}

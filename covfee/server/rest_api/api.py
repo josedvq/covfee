@@ -5,7 +5,7 @@ from flask import request, jsonify, Blueprint, send_file, make_response, Respons
      stream_with_context, redirect, current_app as app
 from sqlalchemy.orm.attributes import flag_modified
 
-from ..orm import Project, HIT, HITInstance, Task, TaskResponse
+from ..orm import Project, HitSpec, Hit, Task, TaskResponse
 from .auth import admin_required
 from covfee.server.orm.task import TaskSpec
 api = Blueprint('api', __name__)
@@ -116,7 +116,7 @@ def hit(hid):
     """
     with_instances = request.args.get('with_instances', False)
     with_instance_tasks = request.args.get('with_instance_tasks', False)
-    res = app.session.query(HIT).get(bytes.fromhex(hid))
+    res = app.session.query(HitSpec).get(bytes.fromhex(hid))
     return jsonify_or_404(res,
                           with_instances=with_instances,
                           with_instance_tasks=with_instance_tasks)
@@ -126,7 +126,7 @@ def hit(hid):
 def hit_edit(hid):
     """ Edits the hit configuration using the received config.
     """
-    hit = app.session.query(HIT).get(bytes.fromhex(hid))
+    hit = app.session.query(HitSpec).get(bytes.fromhex(hid))
     if hit is None:
         return jsonify({'msg': 'invalid hit'}), 400
 
@@ -141,21 +141,21 @@ def hit_edit(hid):
 def instance(iid):
     with_tasks = request.args.get('with_tasks', True)
     with_response_info = request.args.get('with_response_info', True)
-    res = app.session.query(HITInstance).get(bytes.fromhex(iid))
+    res = app.session.query(Hit).get(bytes.fromhex(iid))
     return jsonify_or_404(res, with_tasks=with_tasks, 
                           with_response_info=with_response_info)
 
 
 @api.route('/instance-previews/<iid>')
 def instance_preview(iid):
-    res = HITInstance.query.filter_by(preview_id=bytes.fromhex(iid)).first()
+    res = Hit.query.filter_by(preview_id=bytes.fromhex(iid)).first()
     return jsonify_or_404(res, with_tasks=True, with_response_info=False)
 
 
 # submit a hit (when finished)
 @api.route('/instances/<iid>/submit', methods=['POST'])
 def instance_submit(iid):
-    instance = app.session.query(HITInstance).get(bytes.fromhex(iid))
+    instance = app.session.query(Hit).get(bytes.fromhex(iid))
     if instance is None:
         return jsonify({'msg': 'invalid instance'}), 400
     is_submitted, err = instance.submit()
@@ -178,7 +178,7 @@ def instance_add(hid):
         json: the added instance object
     """
     num_instances = request.args.get('num_instances', 1)
-    hit = app.session.query(HIT).get(bytes.fromhex(hid))
+    hit = app.session.query(HitSpec).get(bytes.fromhex(hid))
     if hit is None:
         return jsonify({'msg': 'not found'}), 404
 
@@ -201,7 +201,7 @@ def instance_add_and_redirect(hid):
     Args:
         hid (str): HIT ID
     """
-    hit = app.session.query(HIT).get(bytes.fromhex(hid))
+    hit = app.session.query(HitSpec).get(bytes.fromhex(hid))
     if hit is None:
         return jsonify({'msg': 'not found'}), 404
 
@@ -228,7 +228,7 @@ def instance_download(iid):
     """
     is_csv = request.args.get('csv', False)
 
-    instance = app.session.query(HITInstance).get(bytes.fromhex(iid))
+    instance = app.session.query(Hit).get(bytes.fromhex(iid))
     if instance is None:
         return jsonify({'msg': 'not found'}), 404
 
@@ -248,7 +248,7 @@ def instance_download(iid):
 # create a task attached to an instance
 @api.route('/instances/<iid>/tasks/add', methods=['POST'])
 def task_add_to_instance(iid):
-    instance = app.session.query(HITInstance).get(bytes.fromhex(iid))
+    instance = app.session.query(Hit).get(bytes.fromhex(iid))
     if instance is None:
         return jsonify({'msg': 'invalid instance'}), 400
 
