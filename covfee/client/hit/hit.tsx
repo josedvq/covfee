@@ -314,7 +314,12 @@ export class Hit extends React.Component<Props, State> {
                 this.showCompletionInfo()
             })
             .catch(err=>{
-                myerror('Error submitting HIT. Please try again or contact the organizers.', err)
+                if(err.message.includes('required tasks')) {
+                    myerror(err.message + ' Please make sure all tasks are marked green before submitting.', err)
+                } else{
+                    myerror('Error submitting HIT. Please try again or contact the organizers.', err)
+                }
+                
             })
     }
 
@@ -392,7 +397,7 @@ export class Hit extends React.Component<Props, State> {
         const hitExtra = this.getHitExtra()
 
         return <ButtonEventManagerContext>
-            <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark" style={{position: 'sticky', top: 0, width: '100%', zIndex: 10000}}>
+            <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark" style={{position: 'sticky', top: 0, width: '100%', zIndex: 1000}}>
                 <Menu.Item key="logo" disabled>
                     <CovfeeMenuItem/>
                 </Menu.Item>

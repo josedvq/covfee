@@ -33,7 +33,7 @@ class AdminHeader extends React.Component<HeaderProps> {
     }
 
     render() {
-        return <Menu mode="horizontal" theme="dark" style={{position: 'sticky', top: 0, width: '100%', zIndex: 10000}}>
+        return <Menu mode="horizontal" theme="dark" style={{position: 'sticky', top: 0, width: '100%', zIndex: 1000}}>
             <Menu.Item key="1" disabled>
                 <CovfeeMenuItem/>
             </Menu.Item>

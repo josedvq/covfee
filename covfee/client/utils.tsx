@@ -37,7 +37,7 @@ export function myerror(msg: string, error?: any) {
     } else {
         if(error) {
             log.error(error)
-            message.error(error.stack, 0)
+            message.error(msg + error.stack, 0)
         }
     }
 }
