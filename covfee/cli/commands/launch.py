@@ -20,7 +20,6 @@ from covfee.shared.schemata import Schemata
 from covfee.cli.utils import NPMPackage
 from covfee import _make as covfee_make, start_deepstream
 from covfee.server.rtstore import rtstore
-from covfee.server.orm import set_frontend_config
 
 colorama_init()
 
@@ -42,8 +41,6 @@ def start_covfee(socketio, app, mode='local', host='localhost'):
     if app.config['RTSTORE_ENABLED']:
         # run the realtime store service
         rtstore.run()
-
-    set_frontend_config()
 
     if mode == 'local':
         socketio.run(app, host=host, port=5000, **ssl_options)

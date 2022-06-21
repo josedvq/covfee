@@ -7,7 +7,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_socketio import SocketIO
 
-from .orm import db, load_config
+from .orm import db, load_config, get_frontend_config
 from .rest_api import api, auth, admin_required, add_claims_to_access_token, user_identity_lookup, \
     user_loader_callback
 
@@ -36,7 +36,6 @@ def create_app(mode):
     
     return socketio, app
 
-
 # APP ROUTES
 frontend = Blueprint('frontend', __name__,
                      template_folder=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'templates'))
@@ -46,16 +45,16 @@ frontend = Blueprint('frontend', __name__,
 @frontend.route('/')
 def main():
     return render_template('app.html',
-                           constants=json.dumps(app.config['FRONTEND_CONFIG']),
-                           bundle_url=app.config['BUNDLE_URL'])
+                    constants=json.dumps(get_frontend_config(app.config)),
+                    bundle_url=app.config['BUNDLE_URL'])
 
 
 # admin interface
 @frontend.route('/admin')
 def admin():
     return render_template('admin.html',
-                           constants=json.dumps(app.config['FRONTEND_CONFIG']),
-                           bundle_url=app.config['BUNDLE_URL'])
+                    constants=json.dumps(get_frontend_config(app.config)),
+                    bundle_url=app.config['BUNDLE_URL'])
 
 
 # project www server
