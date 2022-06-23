@@ -129,6 +129,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         this.length = length
         this.chunkLength = chunkLength
         this.fps = fps
+        this.head = 0
 
         this.numChunks = Math.ceil(length / chunkLength)
 
@@ -155,6 +156,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
 
     _createChunks = () => {
         log.debug('_createChunks')
+        this.chunks = Array<Chunk>()
         for(let i = 0; i < this.numChunks; i++) {
             const chunk: Chunk = {
                 chunk_index: i,
@@ -247,7 +249,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
             this.chunks[chunkNum].dirty = true
             this.chunks[chunkNum].lastHit = Date.now()
         }
-        this.head = frameNum
+        this.head = frameNum+1
     }
 
     makeIterator = (itemIndex: number, from: number, to: number, step=1) => {
@@ -317,8 +319,9 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
     }
 
     readFrame = (frameNum: number) => {
-        if(this.dataArray[frameNum] === undefined)
+        if(this.idxsArray[frameNum] === undefined) {
             return [null, null] as [number[], LogRecord[]]
+        }
 
         let res = []
         if (this.idxsArray[frameNum] === 0) res = null
@@ -345,6 +348,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
     }
 
     log = (mediatime: number, data: LogSample) => {
+        if(this.disabled) return
         this.receivedData = true
 
         const frameNum = Math.round(mediatime * this.fps)

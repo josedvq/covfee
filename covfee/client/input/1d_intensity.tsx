@@ -41,7 +41,6 @@ export class OneDIntensity extends React.Component<Props> {
     intensity: number = 0
     speed: number = 0
 
-    animateFn: (time: number) => void
     animationId: number
     container: HTMLDivElement
     indicator: HTMLDivElement
@@ -50,7 +49,6 @@ export class OneDIntensity extends React.Component<Props> {
 
     constructor(props: Props) {
         super(props)
-        this.animateFn = this.getAnimateFn(props.input.mode)
     }
 
     componentDidMount() {
@@ -61,7 +59,6 @@ export class OneDIntensity extends React.Component<Props> {
         this.observer.observe(this.container)
         
         this.startInput()
-        this.animationId = requestAnimationFrame(this.animateFn)
     }
 
     componentWillUnmount() {
@@ -69,6 +66,15 @@ export class OneDIntensity extends React.Component<Props> {
         this.stopInput()
         this.observer.disconnect()
         cancelAnimationFrame(this.animationId)
+    }
+
+    componentDidUpdate(prevProps: Readonly<Props>): void {
+        if(this.props.paused) {
+            cancelAnimationFrame(this.animationId)
+        } else {
+            this.animateFn()
+            // this.animationId = requestAnimationFrame(this.animateFn)
+        }
     }
 
     // componentDidUpdate(prevProps: Props) {
@@ -147,17 +153,28 @@ export class OneDIntensity extends React.Component<Props> {
         return this.intensity
     }
 
-    getAnimateFn = (mode: string) => {
+    get animateFn() {
         return {
             'binary': () => {
                 this.animationId = requestAnimationFrame(this.animateFn)
 
-                this.intensity = this.props.buttons.getStatus('up') ? 1 : 0
-                this.props.setIntensity(this.intensity)
+                if(this.props.replay) 
+                    this.intensity = this.props.getIntensity()
+                else {
+                    this.intensity = this.props.buttons.getStatus('up') ? 1 : 0
+                    this.props.setIntensity(this.intensity)
+                }
                 this.container.style.backgroundColor = this.intensity ? 'green' : 'black'
             },
             'continuous-mousemove': () => {
                 this.animationId = requestAnimationFrame(this.animateFn)
+
+                if(this.props.replay) 
+                    this.intensity = this.props.getIntensity()
+                else {
+                    this.intensity = this.props.buttons.getStatus('up') ? 1 : 0
+                    this.props.setIntensity(this.intensity)
+                }
 
                 this.props.setIntensity(this.intensity)
 
@@ -167,6 +184,13 @@ export class OneDIntensity extends React.Component<Props> {
             'continuous-keyboard': () => {
                 this.animationId = requestAnimationFrame(this.animateFn)
 
+                if(this.props.replay) 
+                    this.intensity = this.props.getIntensity()
+                else {
+                    this.intensity = this.props.buttons.getStatus('up') ? 1 : 0
+                    this.props.setIntensity(this.intensity)
+                }
+
                 this.props.setIntensity(this.intensity)
 
                 const position = Math.round(this.intensity * this.containerHeight)
@@ -174,6 +198,13 @@ export class OneDIntensity extends React.Component<Props> {
             },
             'gravity-keyboard': () => {
                 this.animationId = requestAnimationFrame(this.animateFn)
+
+                if(this.props.replay) 
+                    this.intensity = this.props.getIntensity()
+                else {
+                    this.intensity = this.props.buttons.getStatus('up') ? 1 : 0
+                    this.props.setIntensity(this.intensity)
+                }
 
                 let delta_time = 1
                 // TODO: implement delta_time calculation
@@ -185,7 +216,7 @@ export class OneDIntensity extends React.Component<Props> {
                 const position = Math.round(this.intensity * this.containerHeight)
                 this.indicator.style.bottom = position.toString() + 'px'
             }
-        }[mode]
+        }[this.props.input.mode]
     }
 
     render() {

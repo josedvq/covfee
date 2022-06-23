@@ -44,8 +44,10 @@ export default class Continuous1DTask extends CovfeeContinuousTask<Props, State>
     componentDidMount() {
         this.props.buttons.addListener('play-pause', 'Play/pause the video and data capture.')
             .addEvent('keydown', (e: Event) => {
-                if (this.props.player.paused) this.props.buffer.log(this.props.player.currentTime() as number, ['play'])
-                else this.props.buffer.log(this.props.player.currentTime() as number, ['pause'])
+                if(!this.props.response) {
+                    if (this.props.player.paused) this.props.buffer.log(this.props.player.currentTime() as number, ['play'])
+                    else this.props.buffer.log(this.props.player.currentTime() as number, ['pause'])
+                }
                 this.props.player.togglePlayPause()
             })
             
@@ -118,7 +120,6 @@ export default class Continuous1DTask extends CovfeeContinuousTask<Props, State>
         this.props.buffer.seek(time)
         let data, logs
         [data, logs] = this.props.buffer.readHead()
-
 
         if(data)
             this.setIntensity(data[2])
