@@ -44,6 +44,11 @@ export interface AnnotationBuffer {
      */
     receivedData: boolean
     /**
+     * Move the head of the buffer to position
+     * @param timestamp 
+     */
+    seek(timestamp: number): void
+    /**
      * Pushes a timestamped data sample into the buffer
      * A data sample is meant to be a valid rating provided by the subject in a continuous task 
      * @param timestamp 
