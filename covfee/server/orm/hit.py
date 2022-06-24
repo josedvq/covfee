@@ -47,7 +47,12 @@ class HIT(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.datetime.now)
     updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
 
-    def __init__(self, id, project_id, name, interface={}, extra=None, tasks=[], config={}, **kwargs):
+    def __init__(self, id, project_id, name, tasks, interface=None, extra=None, config=None, **kwargs):
+        if interface is None:
+            interface = {}
+        if config is None:
+            config = {}
+
         self.id = sha256(f'{id}_{project_id}_{app.config["COVFEE_SECRET_KEY"]}'.encode()).digest()
         self.name = name
 
