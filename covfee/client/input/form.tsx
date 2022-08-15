@@ -107,7 +107,7 @@ export class Form extends React.Component<Props> {
                     const initialValue = field.input.defaultValue !== undefined ? field.input.defaultValue : 
                                         field.input.defaultChecked !== undefined ? field.input.defaultChecked : 
                                         null
-                    this.initialValues[field.name] = initialValue
+                    this.initialValues[field.name] = undefined
                 })
             }
         }
