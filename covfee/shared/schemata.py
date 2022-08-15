@@ -110,9 +110,10 @@ class Schemata:
 
         # look for a const property with a default value
         def get_default_const_property(node):
-            for k, n in node['properties'].items():
-                if 'default' in n and 'enum' in n and len(n['enum']) == 1 and n['default'] == n['enum'][0]:
-                    return k
+            if 'properties' in node:
+                for k, n in node['properties'].items():
+                    if 'default' in n and 'enum' in n and len(n['enum']) == 1 and n['default'] == n['enum'][0]:
+                        return k
 
             return False
 

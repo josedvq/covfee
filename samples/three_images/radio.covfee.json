@@ -5,6 +5,9 @@
     "hits": [{
         "id": "sample_hit",
         "name": "Sample Questionnaire",
+        "interface": {
+            "type": "timeline"
+        },
         "tasks": [
             {
                 "name": "Instructions",
@@ -29,21 +32,19 @@
                         "name": "laughter",
                         "label": "Based on the words in the word bubbles ...",
                         "input": {
-                            "inputType": "Slider",
-                            "min": 1,
-                            "max": 7,
-                            "defaultValue": 4,
-                            "marks": {
-                              "1": "A is clearly more similar to B (than to C)",
-                              "2": "A is clearly more similar to B (than to C)",
-                              "3": "A is clearly more similar to B (than to C)",
-                              "4": "A is clearly more similar to B (than to C)",
-                              "5": "A is clearly more similar to B (than to C)",
-                              "6": "A is clearly more similar to B (than to C)",
-                              "7": "A is clearly more similar to B (than to C)"
-                            },
-                            "dots": true,
-                            "included": false
+                            "inputType": "Radio.Group",
+                            "optionType": "button",
+                            "buttonStyle": "solid",
+                            "size": "small",
+                            "options": [
+                              {"value": "0", "label": "A is clearly more similar to B (than to C)"},
+                              {"value": "1", "label": "A is clearly more similar to B (than to C)"},
+                              {"value": "2", "label": "A is clearly more similar to B (than to C)"},
+                              {"value": "3", "label": "A is clearly more similar to B (than to C)"},
+                              {"value": "4", "label": "A is clearly more similar to B (than to C)"},
+                              {"value": "5", "label": "A is clearly more similar to B (than to C)"},
+                              {"value": "6", "label": "A is clearly more similar to B (than to C)"}
+                            ]
                         }
                     }]
                 }

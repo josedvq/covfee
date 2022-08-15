@@ -1,0 +1,10 @@
+.ant-radio-group-small {
+    display: flex !important;
+}
+
+.ant-radio-group-small .ant-radio-button-wrapper {
+    margin: 3px;
+    text-align: center;
+    font-size: 12px;
+    height: auto;
+}

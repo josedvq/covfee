@@ -8,6 +8,7 @@ import { BasicTaskProps, CovfeeTask } from './base'
 import { ThreeImagesTaskSpec } from '@covfee-types/tasks/three_images'
 import { TaskType } from '@covfee-types/task'
 import {log, urlReplacer} from '../utils'
+import './styles/three_images.css'
 
 interface Props extends TaskType, BasicTaskProps {
     spec: ThreeImagesTaskSpec
@@ -59,21 +60,23 @@ export class ThreeImagesTask extends CovfeeTask<Props, State> {
             }
             
             <Row gutter={16}>
-                <Col span={16}>
-                    <img src={{urlReplacer(this.props.spec.images[0])}}/>
-                    <img src={{urlReplacer(this.props.spec.images[1])}}/>
-                    <img src={{urlReplacer(this.props.spec.images[2])}}/>
+                <Col span={24}>
+                    <img src={urlReplacer(this.props.spec.images[0])}/>
+                    <img src={urlReplacer(this.props.spec.images[1])}/>
+                    <img src={urlReplacer(this.props.spec.images[2])}/>
                 </Col>
             </Row>
 
             <Row>
-                <Form {...this.props.spec.form}
-                    disabled={this.props.disabled} 
-                    values={this.state.form.values} 
-                    setValues={this.handleChange}
-                    withSubmitButton={true}
-                    renderSubmitButton={this.props.renderSubmitButton}
-                    onSubmit={this.handleSubmit}/>
+                <Col span={24}>
+                    <Form {...this.props.spec.form}
+                        disabled={this.props.disabled} 
+                        values={this.state.form.values} 
+                        setValues={this.handleChange}
+                        withSubmitButton={true}
+                        renderSubmitButton={this.props.renderSubmitButton}
+                        onSubmit={this.handleSubmit}/>
+                </Col>
             </Row>
         </>
     }

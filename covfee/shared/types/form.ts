@@ -265,7 +265,11 @@ export interface RadioSpec
      * @default "Radio.Group"
      */
     inputType: 'Radio.Group'
-    options: Array<string>
+    options: string[] | number[] | {
+        label: string,
+        value: string,
+        disabled?: boolean
+    }[]
     size?: 'small' | 'middle' | 'large'
     optionType?: "default" | "button"
     buttonStyle?: "outline" | "solid"

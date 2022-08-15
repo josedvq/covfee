@@ -85,7 +85,7 @@ export interface CommonContinuousTaskSpec extends CommonTaskSpec { }
  * One of the supported task specs
  */
 export type ChildTaskSpec = DistributiveOmit<TaskSpec, 'media' | 'children'>
-export type TaskSpec =  Continuous1DTaskSpec | ContinuousKeypointTaskSpec | InstructionsTaskSpec | QuestionnaireTaskSpec
+export type TaskSpec =  Continuous1DTaskSpec | ContinuousKeypointTaskSpec | InstructionsTaskSpec | QuestionnaireTaskSpec | ThreeImagesTaskSpec
 
 export interface TaskResponse {
     id: number,
