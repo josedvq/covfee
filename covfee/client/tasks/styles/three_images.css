@@ -8,3 +8,14 @@
     font-size: 12px;
     height: auto;
 }
+
+.bubble-cloud {
+    text-align: center;
+    flex: 1;
+}
+
+.bubble-cloud > img {
+    width: 100%;
+    max-width: 240px;
+    margin: 0 auto;
+}

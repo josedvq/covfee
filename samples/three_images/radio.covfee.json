@@ -19,7 +19,6 @@
             },
             {
                 "name": "Example 1",
-                "instructions": "just an example",
                 "type": "ThreeImagesTask",
                 "text": "sdfl;ks lkfsdj lk;fjsd jfksjdkfjs;dlk flk;sdj fdksld flkd",
                 "images": [
