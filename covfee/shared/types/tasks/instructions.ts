@@ -1,5 +1,5 @@
 import { CommonTaskSpec } from '../task'
-import {FormSpec, InputSpec} from './questionnaire'
+import {FormSpec, InputSpec} from '../form'
 import {MarkdownContentSpec} from './utils'
 
 /**
