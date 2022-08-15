@@ -84,8 +84,8 @@ export interface CommonContinuousTaskSpec extends CommonTaskSpec { }
 /**
  * One of the supported task specs
  */
-
-export type TaskSpec =  Continuous1DTaskSpec | ContinuousKeypointTaskSpec | InstructionsTaskSpec | QuestionnaireTaskSpec | VideocallTaskSpec | ThreeImagesTaskSpec
+export type ChildTaskSpec = DistributiveOmit<TaskSpec, 'media' | 'children'>
+export type TaskSpec =  Continuous1DTaskSpec | ContinuousKeypointTaskSpec | InstructionsTaskSpec | QuestionnaireTaskSpec
 
 export interface TaskResponse {
     id: number,
@@ -104,7 +104,7 @@ export interface TaskType extends Omit<CommonTaskSpec, 'children'> {
     /**
      * Unique ID of the task
      */
-    id: number
+    id: string
     /**
      * URL to task api endpoint
      */
@@ -143,7 +143,7 @@ export interface EditableTaskFields {
     /**
      * Task specification as provided by the user
      */
-    spec: BaseTaskSpec,
+    // spec: any,
 }
 
 
