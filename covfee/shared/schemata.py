@@ -151,14 +151,11 @@ class Schemata:
 
                 return node
 
-            if 'type' not in node:
-                raise 'type not found in node'
-
-            if node['type'] == 'object' and 'properties' in node and node['properties']:
+            if node.get('type') == 'object' and 'properties' in node and node['properties']:
                 node['properties'] = {
                     k: recursive_dfs(n) for k, n in node['properties'].items()}
 
-            if node['type'] == 'array' and node['items']:
+            if node.get('type') == 'array' and node['items']:
                 if type(node['items']) == dict:
                     node['items'] = recursive_dfs(node['items'])
                 else:

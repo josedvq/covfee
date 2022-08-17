@@ -27,6 +27,7 @@ setup(
         ]
     },
     install_requires=[
+        'requests == 2.*',
         'Flask == 1.*',
         'MarkupSafe==2.0.1',
         'flask_cors == 3.*',
