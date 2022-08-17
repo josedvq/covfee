@@ -1,26 +1,18 @@
-import os
-import hmac
-import hashlib
 import datetime
-import random
+import hmac
 
 from flask import current_app as app
-from werkzeug.datastructures import MultiDict
 
 from .db import db
 from hashlib import sha256
-from covfee.server.orm.task import TaskSpec
 
-class HITInstance(db.Model):
+class JourneyModel(db.Model):
     ''' Represents an instance of a HIT, to be solved by one user
-        - one HIT instance maps to one URL that can be sent to a participant to access and solve the HIT.
-        - a HIT instance is specified by the abstract HIT it is an instance of.
-        - a HIT instance is linked to a list of tasks (instantiated task specifications),
-        which hold the responses for the HIT
     '''
-    __tablename__ = 'hitinstances'
+    __tablename__ = 'journeys'
 
     id = db.Column(db.LargeBinary, primary_key=True)
+
     # id used for visualization
     preview_id = db.Column(db.LargeBinary, unique=True)
     hit_id = db.Column(db.LargeBinary, db.ForeignKey('hits.id'))
@@ -33,13 +25,11 @@ class HITInstance(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     submitted_at = db.Column(db.DateTime)
 
-    def __init__(self, id, taskspecs=[], submitted=False):
+    def __init__(self, id, tasks, submitted=False):
         self.id = id
+        self.tasks = tasks
         self.preview_id = sha256((id + 'preview'.encode())).digest()
         self.submitted = submitted
-
-        for spec in taskspecs:
-            self.tasks.append(spec.instantiate())
 
     def get_api_url(self):
         return f'{app.config["API_URL"]}/instances/{self.id.hex():s}'
