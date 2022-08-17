@@ -13,7 +13,7 @@ module.exports = env => {
         },
         resolve: {
             extensions: [".ts", ".tsx", ".jsx", ".js"],
-            modules: [path.resolve(__dirname, 'node_modules')],
+            modules: ['node_modules'],
             fallback: {
                 util: require.resolve("util")
             }
