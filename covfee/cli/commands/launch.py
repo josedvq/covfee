@@ -38,10 +38,6 @@ def start_covfee(socketio, app, mode='local', host='localhost'):
     else:
         ssl_options = {}
 
-    if app.config['RTSTORE_ENABLED']:
-        # run the realtime store service
-        rtstore.run()
-
     if mode == 'local':
         socketio.run(app, host=host, port=5000, **ssl_options)
     elif mode == 'dev':

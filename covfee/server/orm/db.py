@@ -1,5 +1,3 @@
-# from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import declarative_base
 
-# app = Flask(__name__, static_folder=None)
-db = SQLAlchemy()
+Base = declarative_base()

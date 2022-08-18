@@ -8,6 +8,15 @@ from covfee.shared.schemata import Schemata
 from covfee.shared.validator.validation_errors import ValidationError
 from .covfee_folder import CovfeeFolder
 
+# expose the building blocks
+from server.orm import (
+    Project as Project,
+    HITSpec as HIT,
+    JourneySpec as Journey,
+    TaskSpec as Task
+)
+
+
 def _make(file_or_folder, force=False, rms=False, stdout_enabled=True):
     
     project_folder = CovfeeFolder(os.getcwd())
@@ -50,15 +59,5 @@ def make(*args, **kwargs):
     with app.app_context():
         return _make(*args, **kwargs, stdout_enabled=False)
 
-def start_deepstream():
-    _, app = create_app('local')
-
-    with app.app_context():
-        covfee_folder = CovfeeFolder(os.getcwd())
-        if not covfee_folder.is_project():
-            raise Exception(
-                'Working directory is not a valid covfee project folder.')
-                
-        covfee_folder.start_deepstream()
 from . import _version
 __version__ = _version.get_versions()['version']

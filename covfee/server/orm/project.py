@@ -3,10 +3,17 @@ import json
 from typing import List
 
 import pandas as pd
+from sqlalchemy import (
+    Column, 
+    Integer)
+from sqlalchemy.orm import relationship
 
 from hit import HIT
 
 class Project:
+    __tablename__ = 'projects'
+    id = Column(Integer, primary_key=True)
+    hit_specs = relationship('HITSpec')
 
     def __init__(self, name = 'Sample', email = 'example@example.com', hits: List[HIT] = []):
         self.name = name

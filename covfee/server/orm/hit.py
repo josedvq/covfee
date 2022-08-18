@@ -1,17 +1,76 @@
-import os
 import hmac
 import hashlib
 import datetime
-import random
+from typing import List
+from hashlib import sha256
 
 from flask import current_app as app
 from werkzeug.datastructures import MultiDict
+from sqlalchemy import (
+    Integer,
+    Boolean,
+    Column, 
+    LargeBinary, 
+    DateTime, 
+    ForeignKey)
+from sqlalchemy.orm import relationship
 
-from .db import db
-from hashlib import sha256
-from covfee.server.orm.task import TaskSpec
+from db import Base
+from project import Project
+from journey import JourneySpec
 
-class HITInstance(db.Model):
+class HITSpec(Base):
+    __tablename__ = 'hitspecs'
+    id = Column(Integer, primary_key=True)
+    journey_specs = relationship('JourneySpec')
+    project_id = Column(Integer, ForeignKey("projects.id"))
+
+    instances = relationship('HITInstance')
+
+    def __init__(self, name = 'Sample', journeys: List[JourneySpec] = []):
+        self.name = name
+        self.journeys = journeys
+
+    @property
+    def name(self):
+        return self.__name
+
+    @name.setter
+    def name(self, val):
+        self.__name = val
+
+    @property
+    def journeys(self):
+        return self.__journeys
+
+    @journeys.setter
+    def journeys(self, val):
+        self.__journeys = val
+
+    def link(self):
+        ''' Links self object and its tree to database instances
+        '''
+        for journey in self.journeys:
+            journey.link()
+   
+    def launch(self):
+        project = Project()
+        project.hits = [self]
+        project.launch()
+
+    def __repr__(self):
+        pass
+
+    def get_api_url(self):
+        return f'{app.config["API_URL"]}/hits/{self.id.hex()}'
+
+    def get_generator_url(self):
+        ''' URL to the generator endpoint, which will instantiate the HIT and redirect the user to the new instance
+        For use in linking from crowdsourcing websites (eg. Prolific)
+        '''
+        return f'{app.config["API_URL"]}/hits/{self.id.hex():s}/instances/add_and_redirect'
+
+class HITInstance(Base):
     ''' Represents an instance of a HIT, to be solved by one user
         - one HIT instance maps to one URL that can be sent to a participant to access and solve the HIT.
         - a HIT instance is specified by the abstract HIT it is an instance of.
@@ -20,18 +79,18 @@ class HITInstance(db.Model):
     '''
     __tablename__ = 'hitinstances'
 
-    id = db.Column(db.LargeBinary, primary_key=True)
+    id = Column(LargeBinary, primary_key=True)
     # id used for visualization
-    preview_id = db.Column(db.LargeBinary, unique=True)
-    hit_id = db.Column(db.LargeBinary, db.ForeignKey('hits.id'))
+    preview_id = Column(LargeBinary, unique=True)
+    hitspec_id = Column(LargeBinary, ForeignKey('hitspecs.id'))
     # backref hit
 
-    tasks = db.relationship("Task", backref='hitinstance', cascade="all, delete")
-    submitted = db.Column(db.Boolean)
+    tasks = relationship("Task", backref='hitinstance', cascade="all, delete")
+    submitted = Column(Boolean)
 
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
-    submitted_at = db.Column(db.DateTime)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
+    submitted_at = Column(DateTime)
 
     def __init__(self, id, taskspecs=[], submitted=False):
         self.id = id

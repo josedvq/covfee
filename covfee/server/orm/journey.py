@@ -1,29 +1,78 @@
 import datetime
 import hmac
+import hashlib
+from typing import List
+from node import Node
+from hit import HITSpec
 
+from db import Base
+from sqlalchemy import (
+    Integer,
+    Boolean,
+    Column, 
+    LargeBinary, 
+    DateTime, 
+    ForeignKey)
+from sqlalchemy.orm import relationship
 from flask import current_app as app
 
 from .db import db
 from hashlib import sha256
 
-class JourneyModel(db.Model):
+class JourneySpec:
+    __tablename__ = 'journeyspecs'
+    id = Column(Integer, primary_key=True)
+    task_specs = relationship('TaskSpec')
+    hitspec_id = Column(Integer, ForeignKey("hitspecs.id"))
+
+    __nodes: List
+
+    def __init__(self, nodes: List):
+        self.nodes = nodes
+
+    @property
+    def nodes(self):
+        return self.__nodes
+
+    @nodes.setter
+    def nodes(self, val):
+        self.__nodes = val
+
+    def append(self, node: Node):
+        self.__nodes.append(node)
+
+    def link(self):
+        ''' Links self object and its tree to database instances
+        '''
+        for journey in self.journeys:
+            journey.link()
+
+    def launch(self):
+        hit = HITSpec()
+        hit.journeys = [self]
+        hit.launch()
+
+    def __repr__(self):
+        pass
+
+class JourneyInstance(Base):
     ''' Represents an instance of a HIT, to be solved by one user
     '''
     __tablename__ = 'journeys'
 
-    id = db.Column(db.LargeBinary, primary_key=True)
+    id = Column(LargeBinary, primary_key=True)
 
     # id used for visualization
-    preview_id = db.Column(db.LargeBinary, unique=True)
-    hit_id = db.Column(db.LargeBinary, db.ForeignKey('hits.id'))
+    preview_id = Column(LargeBinary, unique=True)
+    hit_id = Column(LargeBinary, ForeignKey('hits.id'))
     # backref hit
 
-    tasks = db.relationship("Task", backref='hitinstance', cascade="all, delete")
-    submitted = db.Column(db.Boolean)
+    tasks = relationship("Task", backref='hitinstance', cascade="all, delete")
+    submitted = Column(Boolean)
 
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
-    submitted_at = db.Column(db.DateTime)
+    created_at = Column(DateTime, default=datetime.datetime.now)
+    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
+    submitted_at = Column(DateTime)
 
     def __init__(self, id, tasks, submitted=False):
         self.id = id

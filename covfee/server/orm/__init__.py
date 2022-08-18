@@ -1,7 +1,6 @@
 import os
 from urllib.parse import urlparse
 
-from .db import db
 from .hit import *
 from .project import *
 from .task import *
