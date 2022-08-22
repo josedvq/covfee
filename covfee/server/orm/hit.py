@@ -1,31 +1,37 @@
+from __future__ import annotations
 import hmac
 import hashlib
 import datetime
-from typing import List
+from typing import List, TYPE_CHECKING
 from hashlib import sha256
 
 from flask import current_app as app
 from werkzeug.datastructures import MultiDict
 from sqlalchemy import (
     Integer,
-    Boolean,
     Column, 
     LargeBinary, 
     DateTime, 
     ForeignKey)
 from sqlalchemy.orm import relationship
 
-from db import Base
-from project import Project
-from journey import JourneySpec
+from ..db import Base
+from .project import Project
+if TYPE_CHECKING:
+    from .journey import JourneySpec
 
 class HITSpec(Base):
     __tablename__ = 'hitspecs'
     id = Column(Integer, primary_key=True)
-    journey_specs = relationship('JourneySpec')
-    project_id = Column(Integer, ForeignKey("projects.id"))
 
-    instances = relationship('HITInstance')
+    # spec relationship
+    journeyspecs = relationship('JourneySpec', back_populates='hitspec')
+
+    project_id = Column(Integer, ForeignKey("projects.id"))
+    project = relationship('Project', back_populates='hitspecs')
+    
+    # instance relationship
+    instances = relationship('HITInstance', back_populates='spec')    
 
     def __init__(self, name = 'Sample', journeys: List[JourneySpec] = []):
         self.name = name
@@ -80,14 +86,16 @@ class HITInstance(Base):
     __tablename__ = 'hitinstances'
 
     id = Column(LargeBinary, primary_key=True)
-    # id used for visualization
+
+    # spec relationship
+    hitspec_id = Column(Integer, ForeignKey('hitspecs.id'))
+    spec = relationship('HITSpec', back_populates='instances')
+
+    # instance relationships
+    journeys = relationship('JourneyInstance', back_populates='hit', cascade="all, delete")
+    
+    # other
     preview_id = Column(LargeBinary, unique=True)
-    hitspec_id = Column(LargeBinary, ForeignKey('hitspecs.id'))
-    # backref hit
-
-    tasks = relationship("Task", backref='hitinstance', cascade="all, delete")
-    submitted = Column(Boolean)
-
     created_at = Column(DateTime, default=datetime.datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)
     submitted_at = Column(DateTime)

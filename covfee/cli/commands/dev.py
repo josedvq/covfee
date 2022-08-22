@@ -8,7 +8,7 @@ import click
 from flask import current_app as app
 from halo.halo import Halo
 
-from covfee.server.start import create_app
+from covfee.server.app import create_app
 from covfee.cli.utils import working_directory
 from covfee.shared.schemata import Schemata
 

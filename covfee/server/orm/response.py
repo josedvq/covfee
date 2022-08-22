@@ -1,3 +1,4 @@
+from __future__ import annotations
 import datetime
 from typing import Tuple
 
@@ -11,7 +12,7 @@ from sqlalchemy import (
     ForeignKey)
 from sqlalchemy.orm import relationship
 
-from db import Base
+from covfee.server.db import Base
 from ..tasks.base import BaseCovfeeTask
 
 class Response(Base):
@@ -19,18 +20,16 @@ class Response(Base):
     __tablename__ = 'taskresponses'
 
     id = Column(Integer, primary_key=True)
-    task_id = Column(Integer, ForeignKey('tasks.id'))
-    # backref task
 
-    chunks = relationship("Chunk", backref='taskresponse',
-                             order_by="Chunk.index", cascade="all, delete-orphan", lazy="dynamic")
+    # instance relationships
+    node_id = Column(Integer, ForeignKey('nodeinstances.id'))
+    task = relationship("TaskInstance", back_populates='responses')
+    
 
     state = Column(JSON) # holds the shared state of the task
-
     submitted = Column(Boolean)
     valid = Column(Boolean)
     data = Column(JSON)
-
     created_at = Column(DateTime, default=datetime.datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)
     submitted_at = Column(DateTime)
@@ -65,11 +64,6 @@ class Response(Base):
 
     def get_json(self, with_chunk_data=True):
         task_object = self.get_task_object()
-        # if with_chunk_data:
-        #     chunk_data, chunk_logs = self.get_ndarray()
-        #     task_json = task_object.to_dict(self.data, chunk_data)
-        # else:
-        #     task_json = task_object.to_dict(self.data, None)
         return task_object.to_dict(with_chunk_data)
 
     def get_download_filename(self, task_index, response_index):
@@ -81,60 +75,6 @@ class Response(Base):
             if self.task.spec.spec.get('id', False):
                 return f'{task_index}_{self.task.spec.spec["id"]}_{response_index:d}'
             return f'{task_index}_{self.task.spec.spec["name"]}_{response_index:d}'
-
-    def pack_chunks(self):
-        chunks = self.chunks.order_by(Chunk.index.desc()).all()
-        chunk_bytes = len(chunks).to_bytes(4, sys.byteorder)
-        chunk_bytes += b''.join([chunk.data for chunk in chunks])
-        return chunk_bytes
-
-    def get_ndarray(self) -> Tuple[np.ndarray, Any]:
-        """This method takes care of aggregating a list of binary data chunks into a single numpy array.
-
-        Args:
-            data_chunks (list[bytes]): list of chunks as sent from the server. Size of the chunks may vary.
-
-        Returns:
-            np.ndarray: single numpy array with the aggregated data
-        """
-        if not self.chunks.count():
-            return None, None
-
-        chunks = [chunk.unpack() for chunk in self.chunks.all()]
-
-        idxs_chunks = list()
-        data_chunks = list()
-        logs_chunks = list()
-
-        for chunk in chunks:
-            data = chunk['data']
-            chunk_length = chunk['chunkLength']
-
-            if len(data) % chunk_length != 0:
-                raise Exception('Chunk byte length is invalid.')
-            bytes_per_record = len(data) // chunk_length
-
-            if (bytes_per_record - 4) % 8 != 0:
-                raise Exception(
-                    'Number of data bytes per record is not an 8-multiple.')
-            datapoints_per_record = (bytes_per_record - 4) // 8
-            idxs_chunks.append(np.frombuffer(
-                data,
-                dtype=np.uint32,
-                count=chunk_length,
-                offset=0).astype(np.float64).reshape(-1, 1))
-            data_chunks.append(np.frombuffer(
-                data,
-                dtype=np.float64,
-                count=chunk_length * datapoints_per_record,
-                offset=4 * chunk_length).reshape(-1, datapoints_per_record))
-            logs_chunks.append(chunk['logs'])
-
-        idxs = np.vstack(idxs_chunks)
-        data = np.vstack(data_chunks)
-        assert len(idxs) == len(data)
-
-        return np.hstack([idxs, data]), [l for chunk in logs_chunks for l in chunk]
 
     def validate(self):
         task_object = self.get_task_object()

@@ -10,15 +10,13 @@ from flask import current_app as app
 from halo import Halo
 from colorama import init as colorama_init, Fore
 
-from covfee.server.orm import db
 from covfee.server.orm.user import User, password_hash
 from covfee.cli.utils import working_directory
 from pathlib import Path
 from covfee.shared.validator.ajv_validator import AjvValidator
-from covfee.shared.validator.validation_errors import ValidationError
 import json
 from covfee.server.orm.project import Project
-from shutil import which
+
 colorama_init()
 
 
@@ -164,49 +162,7 @@ class CovfeeFolder:
                 admin_bundle_path
             )
 
-    def launch_webpack(self, host=None):
-        cwd = os.getcwd()
-        # run the dev server
-        with working_directory(app.config['COVFEE_CLIENT_PATH']):
-            os.system('npx webpack serve' +
-                      ' --env COVFEE_WD=' + cwd +
-                      ' --config ./webpack.dev.js' +
-                      ('' if host is None else ' --host ' + host))
-
-
-    def launch_in_browser(self, unsafe=False):
-        target_url = app.config["ADMIN_URL"] if unsafe else app.config["LOGIN_URL"]
-        if which('xdg-open') is not None:
-            os.system(f'xdg-open {target_url}')
-        elif sys.platform == 'darwin' and which('open') is not None:
-            os.system(f'open {target_url}')
-        else:
-            print(Fore.GREEN +
-                  f' * covfee is available at {target_url}')
-
-    def start_deepstream(self):
-        # compile the TS to Js
-        with working_directory(os.path.join(app.config['COVFEE_SERVER_PATH'], 'deepstream')):
-            
-            # generate a random password for deepstream
-            password = random.getrandbits(128).to_bytes(16, 'little').hex()
-            users_json = {   
-                "admin": {
-                    "password": password,
-                    "serverData": {
-                        "role": "superadmin"
-                    }
-                }
-            }
-            json.dump(users_json, open(os.path.join('..', 'conf', 'users.json'), 'w'))
-
-            os.system('npx tsc')
-            subprocess.Popen(['npx', 'deepstream', 'daemon'])
-            subprocess.Popen(['npx', 'pm2', 'start', 'server.js', '-i', '1', '--watch', '--', 
-                            'serve', password, 
-                            str(app.config['DS_SERVER_PORT']), 
-                            str(app.config['DS_CLIENT_PUB_PORT']), 
-                            str(app.config['DS_CLIENT_SUB_PORT'])])
+    
 
 
     def mkuser(self, username, password):

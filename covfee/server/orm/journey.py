@@ -1,11 +1,11 @@
+from __future__ import annotations
 import datetime
 import hmac
 import hashlib
-from typing import List
-from node import Node
-from hit import HITSpec
+from typing import List, TYPE_CHECKING
 
-from db import Base
+
+from ..db import Base
 from sqlalchemy import (
     Integer,
     Boolean,
@@ -16,18 +16,34 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from flask import current_app as app
 
-from .db import db
-from hashlib import sha256
+from .hit import HITSpec
+from .node import journeyspec_nodespec_table, journey_node_table
+if TYPE_CHECKING:
+    from .node import Node
 
-class JourneySpec:
+class JourneySpec(Base):
     __tablename__ = 'journeyspecs'
     id = Column(Integer, primary_key=True)
-    task_specs = relationship('TaskSpec')
-    hitspec_id = Column(Integer, ForeignKey("hitspecs.id"))
 
+    # spec relationships
+    # up
+    hitspec_id = Column(Integer, ForeignKey("hitspecs.id"))
+    hitspec = relationship('HITSpec', back_populates='journeyspecs')
+    
+    # down
+    nodespecs = relationship('NodeSpec', 
+        secondary=journeyspec_nodespec_table, 
+        back_populates='journeyspecs')
+
+    # instance relationships
+    journeys = relationship('JourneyInstance', back_populates='journeyspec')
+    
     __nodes: List
 
-    def __init__(self, nodes: List):
+    # other
+    preview_id = Column(LargeBinary, unique=True)
+
+    def __init__(self, nodes: List[Node] = []):
         self.nodes = nodes
 
     @property
@@ -58,16 +74,22 @@ class JourneySpec:
 class JourneyInstance(Base):
     ''' Represents an instance of a HIT, to be solved by one user
     '''
-    __tablename__ = 'journeys'
+    __tablename__ = 'journeyinstances'
 
     id = Column(LargeBinary, primary_key=True)
+    
+    # spec relationships
+    journeyspec_id = Column(Integer, ForeignKey('journeyspecs.id'))
+    journeyspec = relationship("JourneySpec", back_populates='journeys')
 
-    # id used for visualization
-    preview_id = Column(LargeBinary, unique=True)
-    hit_id = Column(LargeBinary, ForeignKey('hits.id'))
-    # backref hit
+    # instance relationships
+    hit_id = Column(Integer, ForeignKey('hitinstances.id'))
+    hit  = relationship("HITInstance", back_populates='journeys')
 
-    tasks = relationship("Task", backref='hitinstance', cascade="all, delete")
+    nodes = relationship("NodeInstance",
+        secondary=journey_node_table,
+        back_populates='journeys')
+    
     submitted = Column(Boolean)
 
     created_at = Column(DateTime, default=datetime.datetime.now)

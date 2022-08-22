@@ -1,6 +1,7 @@
+from __future__ import annotations
 import os
 import json
-from typing import List
+from typing import List, TYPE_CHECKING
 
 import pandas as pd
 from sqlalchemy import (
@@ -8,14 +9,18 @@ from sqlalchemy import (
     Integer)
 from sqlalchemy.orm import relationship
 
-from hit import HIT
+from ..db import Base
+from covfee.launcher import Launcher
 
-class Project:
+if TYPE_CHECKING:
+    from .hit import HITSpec
+
+class Project(Base):
     __tablename__ = 'projects'
     id = Column(Integer, primary_key=True)
-    hit_specs = relationship('HITSpec')
+    hitspecs = relationship('HITSpec', back_populates='project')
 
-    def __init__(self, name = 'Sample', email = 'example@example.com', hits: List[HIT] = []):
+    def __init__(self, name = 'Sample', email = 'example@example.com', hits: List[HITSpec] = []):
         self.name = name
         self.email = email
         self.hits = hits
@@ -51,7 +56,8 @@ class Project:
             hit.link()
 
     def launch(self):
-        pass
+        launcher = Launcher(self)
+        launcher.launch()
 
     def __repr__(self):
         pass

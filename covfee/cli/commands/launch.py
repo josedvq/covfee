@@ -12,7 +12,7 @@ from getpass import getpass
 from flask import current_app as app
 from flask.cli import FlaskGroup, pass_script_info
 
-from covfee.server.start import create_app
+from covfee.server.app import create_app
 from ...covfee_folder import CovfeeFolder, ProjectExistsException
 from halo.halo import Halo
 from covfee.shared.validator.validation_errors import JavascriptError, ValidationError
@@ -27,25 +27,6 @@ colorama_init()
 @click.group(name='covfee')
 def covfee_cli():
     pass
-
-def start_covfee(socketio, app, mode='local', host='localhost'):
-    if app.config['SSL_ENABLED']:
-        ssl_options = {
-            
-            'keyfile': app.config['SSL_KEY_FILE'],
-            'certfile': app.config['SSL_CERT_FILE']
-        }
-    else:
-        ssl_options = {}
-
-    if mode == 'local':
-        socketio.run(app, host=host, port=5000, **ssl_options)
-    elif mode == 'dev':
-        socketio.run(app, host=host, port=5000, debug=True, **ssl_options)
-    elif mode == 'deploy':
-        socketio.run(app, host=host, **ssl_options)
-    else:
-        raise f'unrecognized mode {mode}'
 
 @covfee_cli.command()
 @click.option("--host", default='localhost', help="Specify the IP address to serve webpack dev server. Use for testing in a local network.")

@@ -1,9 +1,10 @@
+from __future__ import annotations
 import datetime
 import json
 import os
 import sys
 from io import BytesIO
-from typing import Any, Tuple
+from typing import Any, Tuple, TYPE_CHECKING
 
 import numpy as np
 from flask import current_app as app
@@ -16,17 +17,17 @@ from sqlalchemy import (
     ForeignKey)
 from sqlalchemy.orm import backref, relationship
 
-from db import Base
-from node import Node
-from journey import JourneySpec
+from ..db import Base
 from .. import tasks
 from ..tasks.base import BaseCovfeeTask
 from ..utils.packer import Packer
 pytype = type
 
-class TaskSpec(Node):
-    __tablename__ = 'taskspecs'
-    id = Column(Integer, primary_key=True)
+from .node import NodeSpec, NodeInstance
+if TYPE_CHECKING:
+    from .journey import JourneySpec
+
+class TaskSpec(NodeSpec):
 
     def __init__(self, spec=None):
         super().__init__()
@@ -48,27 +49,13 @@ class TaskSpec(Node):
 
     def __call__(self, journey: JourneySpec):
         journey.append(self)
+        return journey
 
-class TaskInstance(Base):
-    """ A Task is an instantiation of a TaskSpec, associated to a HitInstance.
-        It represents a task to be solved within a hit instance.
-    """
-    __tablename__ = 'tasks'
+class TaskInstance(NodeInstance):
 
-    id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('tasks.id'))
-    # backref parent
-    hitinstance_id = Column(LargeBinary, ForeignKey('hitinstances.id'))
-    # backref hitinstance
-    taskspec_id = Column(Integer, ForeignKey('taskspecs.id'))
-    # backref spec
-
-    responses = relationship("TaskResponse", backref='task', cascade="all, delete-orphan")
-    children = relationship("Task", backref=backref('parent', remote_side=[id]),
-                               cascade="all, delete-orphan")
+    responses = relationship("Response", back_populates='task', cascade="all, delete-orphan")
 
     # response status
-    has_unsubmitted_response = Column(Boolean)
     created_at = Column(DateTime, default=datetime.datetime.now)
     updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 

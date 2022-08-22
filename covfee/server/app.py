@@ -1,38 +1,43 @@
 import os
 import json
 
-from flask import current_app as app
+from flask import current_app as app, _app_ctx_stack
 from flask import Flask, Blueprint, render_template, send_from_directory
-from flask_cors import CORS
+from sqlalchemy.orm import scoped_session
 from flask_jwt_extended import JWTManager
 from flask_socketio import SocketIO
+from flask_cors import CORS
 
-from .orm import db, load_config, get_frontend_config
-from .rest_api import api, auth, admin_required, add_claims_to_access_token, user_identity_lookup, \
-    user_loader_callback
+from .config import load_config, get_frontend_config
 
 def create_app(mode):
     app = Flask(__name__, static_folder=None)
     load_config(app, mode=mode)
-    db.init_app(app)
+
+    from .db import SessionLocal
+    app.session = scoped_session(SessionLocal, scopefunc=_app_ctx_stack.__ident_func__)
     socketio = SocketIO()
     socketio.init_app(app)
 
     app.register_blueprint(frontend, url_prefix='/')
+    from .rest_api import api, auth
     app.register_blueprint(api, url_prefix='/api')
     app.register_blueprint(auth, url_prefix='/auth')
+
+    
     CORS(app, resources={r"/*": {"origins": "*"}})
     jwt = JWTManager(app)
 
+    from .rest_api import add_claims_to_access_token, user_identity_lookup, user_loader_callback
     jwt.user_claims_loader(add_claims_to_access_token)
     jwt.user_identity_loader(user_identity_lookup)
     jwt.user_loader_callback_loader(user_loader_callback)
 
-    @app.teardown_request
-    def teardown_request(exception):
-        if exception:
-            db.session.rollback()
-        db.session.remove()
+    # @app.teardown_request
+    # def teardown_request(exception):
+    #     if exception:
+    #         db.session.rollback()
+    #     db.session.remove()
     
     return socketio, app
 
