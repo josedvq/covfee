@@ -51,7 +51,7 @@ frontend = Blueprint('frontend', __name__,
 def main():
     return render_template('app.html',
                     constants=json.dumps(get_frontend_config(app.config)),
-                    bundle_url=app.config['BUNDLE_URL'])
+                    bundle_url=app.config['BUNDLES_URL'])
 
 
 # admin interface
@@ -59,13 +59,18 @@ def main():
 def admin():
     return render_template('admin.html',
                     constants=json.dumps(get_frontend_config(app.config)),
-                    bundle_url=app.config['BUNDLE_URL'])
+                    bundle_url=app.config['BUNDLES_URL'])
 
 
 # project www server
 @frontend.route('/www/<path:filename>')
 def project_www_file(filename):
     return send_from_directory(app.config['PROJECT_WWW_PATH'], filename)
+
+@frontend.route('/bundles/<path:filename>')
+def bundles(filename):
+    print(app.config['MASTER_BUNDLE_PATH'])
+    return send_from_directory(app.config['MASTER_BUNDLE_PATH'], filename)
 
 
 @frontend.errorhandler(404)

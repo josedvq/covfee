@@ -96,7 +96,7 @@ def login_password():
     if username is None or password is None:
         return jsonify({"msg": "Bad username or password"}), 401
 
-    user = User.query.filter_by(username=username).first()
+    user = app.session.query(User).filter_by(username=username).first()
     if user is None:
         return jsonify({"msg": "Bad username or password"}), 401
 
@@ -161,7 +161,6 @@ def signup():
     user = User(username, roles=['user'])
     user.add_provider('password', username, {'password': password})
     return login_user(user)
-
 
 
 @auth.route('/refresh', methods=['POST'])

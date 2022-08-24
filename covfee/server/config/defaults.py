@@ -19,7 +19,7 @@ GOOGLE_CLIENT_ID = None
 SQLALCHEMY_ENGINE_OPTIONS = {'isolation_level': "READ UNCOMMITTED"}
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-COVFEE_BASE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
+COVFEE_BASE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
 COVFEE_CLI_PATH = os.path.join(COVFEE_BASE_PATH, 'cli')
 COVFEE_CLIENT_PATH = os.path.join(COVFEE_BASE_PATH, 'client')
 COVFEE_SERVER_PATH = os.path.join(COVFEE_BASE_PATH, 'server')
@@ -33,6 +33,12 @@ SCHEMATA_PATH = os.path.join(COVFEE_BASE_PATH, 'shared', 'schemata.json')
 JWT_TOKEN_LOCATION = ['cookies']
 JWT_COOKIE_CSRF_PROTECT = False
 
+# COVFEE RESOURCE PATHS
+MASTER_BUNDLE_PATH = os.path.join(COVFEE_BASE_PATH, 'client', 'bundles')
+BUNDLES_URL = os.path.join(BASE_URL, 'bundles')
+# dev mode setting
+DEV_BUNDLES_URL = 'http://localhost:8085'
+
 # PROJECT FOLDER PATHS
 
 # database
@@ -45,11 +51,10 @@ PROJECT_WWW_PATH = os.path.join(os.getcwd(), 'www')
 # enables the www server
 SERVE_WWW = True
 
-MASTER_BUNDLE_PATH = os.path.join(COVFEE_BASE_PATH, 'client', 'bundles')
+
 
 # for temporary (download) files
 TMP_PATH = os.path.join(os.getcwd(), 'tmp')
 
-# DEV MODE SETTINGS
-DEV_BUNDLE_URL = 'http://localhost:8085'
+
 

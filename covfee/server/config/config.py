@@ -36,7 +36,6 @@ def load_config(app, mode):
 
         # create derived URLs
         PROJECT_WWW_URL=app.config.get('PROJECT_WWW_URL', app.config['BASE_URL'] + '/www'),
-        BUNDLE_URL=app.config.get('BUNDLE_URL', app.config['BASE_URL'] + '/www'),
         APP_URL=app.config['BASE_URL'] + '/#',
         ADMIN_URL=app.config['BASE_URL'] + '/admin#',
         LOGIN_URL=app.config['BASE_URL'] + '/admin#login',
@@ -53,7 +52,7 @@ def load_config(app, mode):
 
     # point to webpack-dev-server bundles in dev mode
     if mode == 'dev':
-        app.config['BUNDLE_URL'] = app.config['DEV_BUNDLE_URL']
+        app.config['BUNDLES_URL'] = app.config['DEV_BUNDLES_URL']
 
 def get_frontend_config(config):
     # create the frontend config object:
