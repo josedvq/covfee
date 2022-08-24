@@ -6,7 +6,6 @@ from typing import List, TYPE_CHECKING
 from hashlib import sha256
 
 from flask import current_app as app
-from werkzeug.datastructures import MultiDict
 from sqlalchemy import (
     Integer,
     Column, 

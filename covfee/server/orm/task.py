@@ -53,7 +53,7 @@ class TaskSpec(NodeSpec):
 
 class TaskInstance(NodeInstance):
 
-    responses = relationship("Response", back_populates='task', cascade="all, delete-orphan")
+    responses = relationship("TaskResponse", back_populates='task', cascade="all, delete-orphan")
 
     # response status
     created_at = Column(DateTime, default=datetime.datetime.now)

@@ -29,15 +29,15 @@ class Launcher():
         socketio, app = create_app(mode)  
 
         with app.app_context():
-            covfee_folder = CovfeeFolder(os.getcwd())
-            if not covfee_folder.is_project():
-                return print(Fore.RED+'Working directory is not a valid covfee project folder. Did you run'
-                                    ' covfee maker in the current folder?')
+            # covfee_folder = CovfeeFolder(os.getcwd())
+            # if not covfee_folder.is_project():
+            #     return print(Fore.RED+'Working directory is not a valid covfee project folder. Did you run'
+            #                         ' covfee maker in the current folder?')
 
-            if not no_browser:
-                self.launch_browser(unsafe)
+            # if not no_browser:
+            #     self.launch_browser(unsafe)
 
-            app.config['UNSAFE_MODE_ON'] = unsafe
+            # app.config['UNSAFE_MODE_ON'] = unsafe
             self._start_server(socketio, app, mode)
 
     def _start_server(self, socketio, app, mode='local', host='localhost'):

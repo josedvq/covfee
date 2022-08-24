@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 def load_config(app, mode):
     app.config['COVFEE_ENV'] = mode
     # load the base configuration object
-    app.config.from_object('covfee.server.config')
+    app.config.from_object('covfee.server.config.defaults')
 
     # update with the custom project config files
     if mode == 'local':

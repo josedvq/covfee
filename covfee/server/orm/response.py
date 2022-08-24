@@ -15,7 +15,7 @@ from sqlalchemy.orm import relationship
 from covfee.server.db import Base
 from ..tasks.base import BaseCovfeeTask
 
-class Response(Base):
+class TaskResponse(Base):
     """ Represents a task's response """
     __tablename__ = 'taskresponses'
 
