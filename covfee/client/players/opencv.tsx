@@ -89,12 +89,16 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
 
     opencv_init = () => {
         const cv_init = () => {
+
             this.frame_flow = new cv.Mat(this.props.media.resolution[1], this.props.media.resolution[0]*2, cv.CV_8UC4)
 
+            
 
             this.myMean = new cv.Mat(1, 4, cv.CV_64F)
             this.myStddev = new cv.Mat(1, 4, cv.CV_64F)
             this.cap = new cv.VideoCapture(this.videoTag)
+            this.videoTag.height = this.videoTag.videoHeight
+            this.videoTag.width = this.videoTag.videoWidth
             if(!this.props.paused) this.play()
         }
 
@@ -185,6 +189,7 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
             ]
 
             // start processing.
+            // console.log
             this.cap.read(this.frame_flow)
             const x1 = Math.max(0, mouse[0] - this.props.L)
             const x2 = Math.min(mouse[0] + this.props.L, this.props.media.resolution[0])

@@ -57,42 +57,53 @@ export default class ContinuousKeypointTask extends CovfeeContinuousTask<Props, 
         log.info(`constructing task ${this.props.myKey}`)
     }
 
+    get controls() {
+        return this.props.spec.controls ? this.props.spec.controls : {}
+    }
+
     componentDidMount() {
         log.info(`mounting task ${this.props.myKey}`)
-        this.props.buttons.addListener('speedup', 'ArrowRight', 'Increase playback speed.')
+        this.props.buttons.addListener('speedup', 'Increase playback speed.')
             .addEvent('keydown', (e: Event) => {
                 this.speedup()
             })
 
-        this.props.buttons.addListener('speeddown', 'ArrowLeft', 'Decrease playback speed.')
+        this.props.buttons.addListener('speeddown', 'Decrease playback speed.')
             .addEvent('keydown', (e: Event) => {
                 this.speeddown()
             })
 
-        this.props.buttons.addListener('play', ' ', 'Toggle play/pause the video.')
+        this.props.buttons.addListener('play-pause', 'Toggle play/pause the video.')
             .addEvent('keydown', (e: Event) => {
                 this.props.player.togglePlayPause()
             })
 
-        this.props.buttons.addListener('back2s', 'x', 'Go back 2s.')
+        this.props.buttons.addListener('back2s', 'Go back 2s.')
             .addEvent('keydown', (e: Event) => {
                 this.back2s()
             })
 
-        this.props.buttons.addListener('back10s', 'c', 'Go back 10s.')
+        this.props.buttons.addListener('back10s', 'Go back 10s.')
             .addEvent('keydown', (e: Event) => {
                 this.back10s()
             })
 
-        this.props.buttons.addListener('occlusion', 'z', 'Toggle occlusion flag.')
+        this.props.buttons.addListener('occlusion', 'Toggle occlusion flag.')
             .addEvent('keydown', (e: Event) => {
                 this.toggleOcclusion()
             })
 
-        this.props.buttons.addListener('opticalflow', 'v', 'Toggle optical flow-based speed adjustment.')
+        this.props.buttons.addListener('opticalflow', 'Toggle optical flow-based speed adjustment.')
             .addEvent('keydown', (e: Event) => {
                 this.toggleOpticalFlow()
             })
+
+        // update default keyboard keys with props
+        this.props.buttons.applyMap({
+            'play-pause': ' ',
+            'speedup': 'RightArrow',
+            'speeddown': 'LeftArrow'
+        }, {})
 
         this.props.player.addListener('frame', this.handleFrame)
         this.props.player.addListener('end', this.handleVideoEnded)
