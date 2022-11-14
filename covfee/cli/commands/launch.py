@@ -18,7 +18,7 @@ from halo.halo import Halo
 from covfee.shared.validator.validation_errors import JavascriptError, ValidationError
 from covfee.shared.schemata import Schemata
 from covfee.cli.utils import NPMPackage
-from covfee import _make as covfee_make, start_deepstream
+from covfee.utils import covfee_make, start_deepstream
 from covfee.server.rtstore import rtstore
 
 colorama_init()
