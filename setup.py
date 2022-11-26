@@ -27,7 +27,7 @@ setup(
         ]
     },
     install_requires=[
-        'Flask == 1.*',
+        'Flask == 2.1.0',
         'werkzeug==2.0.3',
         'MarkupSafe==2.0.1',
         'flask_cors == 3.*',
@@ -35,7 +35,7 @@ setup(
         'flask-socketio == 5.*',
         'gunicorn == 20.*',
         'flask-jwt-extended == 3.*',
-        'click ==  7.*',
+        'click ==  8.*',
         'pandas == 1.*',
         'jsonschema == 3.*',
         'halo == 0.*',
