@@ -13,9 +13,9 @@
                     "name": "Head",
                     "media": {
                         "type": "video",
-                        "url": "$$www$$/cartoon.mp4",
+                        "url": "$$www$$/ami_combined.mp4",
                         "hasFlow": true,
-                        "resolution": [320, 240],
+                        "resolution": [352, 288],
                         "fps": 15
                     }
                 }
