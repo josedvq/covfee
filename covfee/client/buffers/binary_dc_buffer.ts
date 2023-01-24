@@ -98,7 +98,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
                 onError: OnErrorCallback = () => {}, persistInterval = 60, lastHitThreshold = 1, lengthErrorThreshold=5) {
 
         this.url = url
-        this.head = 0
+        this.head = -1
         this.disabled = disabled
         this.recordDataSize = recordDataSize
         this.recordSize = 1 + (writeTimestamp ? 1 : 0) + this.recordDataSize
@@ -129,7 +129,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         this.length = length
         this.chunkLength = chunkLength
         this.fps = fps
-        this.head = 0
+        this.head = -1
 
         this.numChunks = Math.ceil(length / chunkLength)
 
@@ -228,9 +228,9 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         // write into data buffer
         let iniFrame, endFrame
         if(this.fill) {
-            iniFrame = this.head
+            iniFrame = this.head + 1
             endFrame = frameNum
-            if(iniFrame > endFrame)
+            if(endFrame < this.head)
                 return log.warn(`Attempt to write non-sequentially with fill=true, head=${this.head}, frameNum=${frameNum}`)
         } else {
             iniFrame = frameNum
@@ -249,7 +249,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
             this.chunks[chunkNum].dirty = true
             this.chunks[chunkNum].lastHit = Date.now()
         }
-        this.head = frameNum+1
+        this.head = endFrame
     }
 
     makeIterator = (itemIndex: number, from: number, to: number, step=1) => {
@@ -306,7 +306,7 @@ export class BinaryDataCaptureBuffer implements AnnotationBuffer {
         this.receivedData = true
 
         if(data.length !== this.recordDataSize)
-            throw new Error('invalid record size provided to data().')
+            throw new Error(`invalid record size ${data.length} != ${this.recordDataSize} provided to data().`)
 
         let record
         if(this.writeTimestamp) {

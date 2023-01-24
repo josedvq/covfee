@@ -9,13 +9,14 @@
             "repeat": 2,
             "tasks": [
                 {
-                    "type": "ContinuousKeypoint",
+                    "type": "ContinuousKeypointTask",
                     "name": "Head",
                     "media": {
                         "type": "video",
-                        "url": "$$www$$/sign.mp4",
-                        "resolution": [1920, 1080],
-                        "fps": 25
+                        "url": "$$www$$/cartoon.mp4",
+                        "hasFlow": true,
+                        "resolution": [320, 240],
+                        "fps": 15
                     }
                 }
             ]
