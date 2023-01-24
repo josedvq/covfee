@@ -184,31 +184,6 @@ class CovfeeFolder:
             print(Fore.GREEN +
                   f' * covfee is available at {target_url}')
 
-    def start_deepstream(self):
-        # compile the TS to Js
-        with working_directory(os.path.join(app.config['COVFEE_SERVER_PATH'], 'deepstream')):
-            
-            # generate a random password for deepstream
-            password = random.getrandbits(128).to_bytes(16, 'little').hex()
-            users_json = {   
-                "admin": {
-                    "password": password,
-                    "serverData": {
-                        "role": "superadmin"
-                    }
-                }
-            }
-            json.dump(users_json, open(os.path.join('..', 'conf', 'users.json'), 'w'))
-
-            os.system('npx tsc')
-            subprocess.Popen(['npx', 'deepstream', 'daemon'])
-            subprocess.Popen(['npx', 'pm2', 'start', 'server.js', '-i', '1', '--watch', '--', 
-                            'serve', password, 
-                            str(app.config['DS_SERVER_PORT']), 
-                            str(app.config['DS_CLIENT_PUB_PORT']), 
-                            str(app.config['DS_CLIENT_SUB_PORT'])])
-
-
     def mkuser(self, username, password):
         user = User(username, ['admin'])
         user.add_provider('password', username, {'password': password_hash(password).hex()})

@@ -10,9 +10,6 @@ BASE_URL = 'http://localhost:5000'
 #  Security: Used as salt used for generating hash links and for json web tokens (JWT_SECRET_KEY)
 COVFEE_SECRET_KEY = 'CHANGE_ME'
 
-SOCKETIO_ENABLED = True
-RTSTORE_ENABLED = True
-
 GOOGLE_CLIENT_ID = None
 
 # sqlalchemy settings

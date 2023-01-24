@@ -50,13 +50,13 @@ def make(*args, **kwargs):
     with app.app_context():
         return covfee_make(*args, **kwargs, stdout_enabled=False)
 
-def start_deepstream():
-    _, app = create_app('local')
-
-    with app.app_context():
-        covfee_folder = CovfeeFolder(os.getcwd())
-        if not covfee_folder.is_project():
-            raise Exception(
-                'Working directory is not a valid covfee project folder.')
-                
-        covfee_folder.start_deepstream()
+def get_start_message(config, unsafe):
+    url = config["ADMIN_URL"] if unsafe else config["LOGIN_URL"]
+    msg = r'''
+                      __             
+  ___   ___  __   __ / _|  ___   ___ 
+ / __| / _ \ \ \ / /| |_  / _ \ / _ \
+| (__ | (_) | \ V / |  _||  __/|  __/
+ \___| \___/   \_/  |_|   \___| \___|'''
+    msg += f'\nURL: {url}'
+    return msg

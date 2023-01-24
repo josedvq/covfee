@@ -18,7 +18,7 @@ from halo.halo import Halo
 from covfee.shared.validator.validation_errors import JavascriptError, ValidationError
 from covfee.shared.schemata import Schemata
 from covfee.cli.utils import NPMPackage
-from covfee.utils import covfee_make, start_deepstream
+from covfee.utils import covfee_make, get_start_message
 from covfee.server.rtstore import rtstore
 
 colorama_init()
@@ -37,10 +37,6 @@ def start_covfee(socketio, app, mode='local', host='localhost'):
         }
     else:
         ssl_options = {}
-
-    if app.config['RTSTORE_ENABLED']:
-        # run the realtime store service
-        rtstore.run()
 
     if mode == 'local':
         socketio.run(app, host=host, port=5000, **ssl_options)
@@ -82,21 +78,13 @@ def build():
 
         covfee_folder.build()
 
-@covfee_cli.command(name="start-deepstream")
-def launch_deepstream():
-    """
-    Starts the daemon in charge of updating the true store (state).
-    Required for shared tasks.
-    """
-    start_deepstream()
-
 
 @covfee_cli.command()
 @click.option("--dev", is_flag=True, help="Run covfee in dev mode")
 @click.option("--deploy", is_flag=True, help="Run covfee in deployment mode")
-@click.option('--no-browser', is_flag=True, help='Disables launching of the web browser.')
+@click.option('--launch-browser', is_flag=True, help='Launches the web browser.')
 @click.option('--safe', is_flag=True, help='Enables login protection in local and dev mode (disabled by default).')
-def start(dev, deploy, no_browser, safe):
+def start(dev, deploy, launch_browser, safe):
     """
     Starts covfee in local mode by default. Use --deploy or --dev to start deployment (public) or development servers.
     """
@@ -114,11 +102,13 @@ def start(dev, deploy, no_browser, safe):
             return print(Fore.RED+'Working directory is not a valid covfee project folder. Did you run'
                                 ' covfee maker in the current folder?')
 
-        if not no_browser:
+        if launch_browser:
             covfee_folder.launch_in_browser(unsafe)
 
         app.config['UNSAFE_MODE_ON'] = unsafe
+        print(get_start_message(app.config, unsafe))
         start_covfee(socketio, app, mode)
+        
 
 
 @covfee_cli.command(name="open")
@@ -158,9 +148,9 @@ def installjs():
 @click.option("--safe", is_flag=True, help="Enable authentication in local mode.")
 @click.option("--rms", is_flag=True, help="Re-makes the schemata for validation.")
 @click.option("--no-launch", is_flag=True, help="Do not launch covfee, only make the DB")
-@click.option("--no-browser", is_flag=True, help="Do not launch in the browser")
+@click.option("--launch-browser", is_flag=True, help="Launch in the browser")
 @click.argument("file_or_folder")
-def make(force, deploy, safe, rms, no_browser, no_launch, file_or_folder):
+def make(force, deploy, safe, rms, launch_browser, no_launch, file_or_folder):
 
     mode = 'deploy' if deploy else 'local'
     unsafe = False if deploy else (not safe)
@@ -188,11 +178,12 @@ def make(force, deploy, safe, rms, no_browser, no_launch, file_or_folder):
         if no_launch: 
             return
 
-        if not no_browser:
+        if launch_browser:
             project_folder = CovfeeFolder(os.getcwd())
             project_folder.launch_in_browser(unsafe)
 
         app.config['UNSAFE_MODE_ON'] = unsafe
+        print(get_start_message(app.config, unsafe))
         start_covfee(socketio, app, 'local')
 
 @covfee_cli.command()

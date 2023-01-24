@@ -67,7 +67,6 @@ def get_frontend_config(config):
     return {
         # frontend only has two environments: production and development
         'env': 'production' if config['COVFEE_ENV'] in ['local', 'deploy'] else 'development',
-        'socketio_enabled': config['SOCKETIO_ENABLED'],
         'google_client_id': config['GOOGLE_CLIENT_ID'],
         'www_url': config['PROJECT_WWW_URL'],
         'app_url': config['APP_URL'],

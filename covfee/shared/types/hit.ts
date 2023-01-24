@@ -116,11 +116,6 @@ export type HitInstanceType = Omit<HitSpec, 'tasks'> & {
      */
     completionInfo?: completionInfo
     /**
-     * The token for connecting via deepstream
-     * This token is specific to the HIT instance and is verified in the server.
-     */
-    token: string
-    /**
      * Date of HIT creation
      */
     created_at: string
