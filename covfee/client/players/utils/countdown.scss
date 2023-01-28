@@ -26,11 +26,11 @@
   $num1Len: 72.1554946899414;
   $num2Len: 136.02162170410156;
   $num3Len: 144.4256591796875;
-  $numJoin1-2: 82.63925170898438;
-  $numJoin2-3: 42.81303787231445;
-  $numJoin3-0: 40;
+  $numJoin1to2: 82.63925170898438;
+  $numJoin2to3: 42.81303787231445;
+  $numJoin3to0: 40;
   
-  $totalLen: $num1Len + $num2Len + $num3Len + $numJoin1-2 + $numJoin2-3 + $numJoin3-0;
+  $totalLen: $num1Len + $num2Len + $num3Len + $numJoin1to2 + $numJoin2to3 + $numJoin3to0;
   
   .demo {
     position: absolute;
@@ -132,20 +132,20 @@
     10%, 33% {
       opacity: 1;
       stroke-dasharray: $num3Len, $totalLen;
-      stroke-dashoffset: -$numJoin3-0;
+      stroke-dashoffset: -$numJoin3to0;
     }
     43%, 64% {
       stroke-dasharray: $num2Len, $totalLen;
-      stroke-dashoffset: -$num3Len - $numJoin2-3 -$numJoin3-0;
+      stroke-dashoffset: -$num3Len - $numJoin2to3 - $numJoin3to0;
     }
     76% {
-      stroke-dasharray: $num1Len + math.div($numJoin1-2, 2), $totalLen;
-      stroke-dashoffset: -$num3Len - $numJoin2-3 - $num2Len - $numJoin1-2 -$numJoin3-0;
+      stroke-dasharray: $num1Len + math.div($numJoin1to2, 2), $totalLen;
+      stroke-dashoffset: -$num3Len - $numJoin2to3 - $num2Len - $numJoin1to2 - $numJoin3to0;
     }
     76%, 100% {
       opacity: 1;
       stroke-dasharray: $num1Len, $totalLen;
-      stroke-dashoffset: -$num3Len - $numJoin2-3 - $num2Len - $numJoin1-2 -$numJoin3-0;
+      stroke-dashoffset: -$num3Len - $numJoin2to3 - $num2Len - $numJoin1to2 - $numJoin3to0;
     }
   }
   

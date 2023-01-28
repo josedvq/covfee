@@ -9,13 +9,14 @@
             "repeat": 2,
             "tasks": [
                 {
-                    "type": "ContinuousKeypoint",
+                    "type": "ContinuousKeypointTask",
                     "name": "Head",
                     "media": {
                         "type": "video",
-                        "url": "$$www$$/sign.mp4",
-                        "resolution": [1920, 1080],
-                        "fps": 25
+                        "url": "$$www$$/ami_combined.mp4",
+                        "hasFlow": true,
+                        "resolution": [352, 288],
+                        "fps": 15
                     }
                 }
             ]

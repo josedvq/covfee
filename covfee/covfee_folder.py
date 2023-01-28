@@ -162,8 +162,25 @@ class CovfeeFolder:
                 admin_bundle_path
             )
 
-    
+    def launch_webpack(self, host=None):
+        cwd = os.getcwd()
+        # run the dev server
+        with working_directory(app.config['COVFEE_CLIENT_PATH']):
+            os.system('npx webpack serve' +
+                      ' --env COVFEE_WD=' + cwd +
+                      ' --config ./webpack.dev.js' +
+                      ('' if host is None else ' --host ' + host))
 
+
+    def launch_in_browser(self, unsafe=False):
+        target_url = app.config["ADMIN_URL"] if unsafe else app.config["LOGIN_URL"]
+        if which('xdg-open') is not None:
+            os.system(f'xdg-open {target_url}')
+        elif sys.platform == 'darwin' and which('open') is not None:
+            os.system(f'open {target_url}')
+        else:
+            print(Fore.GREEN +
+                  f' * covfee is available at {target_url}')
 
     def mkuser(self, username, password):
         user = User(username, ['admin'])

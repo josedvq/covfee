@@ -11,6 +11,7 @@ import { Button, Checkbox } from 'antd'
 
 import {CountdownTimer} from './utils/countdown'
 import { PlayerBar } from './videoplayer_bar'
+import { log } from '../utils'
 
 // video player using opencv to control playback speed
 interface Props extends ContinuousPlayerProps, OpencvFlowPlayerOptions {
@@ -41,10 +42,6 @@ interface State {
      * The duration of the video
      */
     duration: number
-    /**
-     * If true OF-based speed adjustment is on
-     */
-    opticalFlowEnabled: boolean
 }
 
 export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
@@ -67,7 +64,6 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
     state = {
         countdownActive: false,
         duration: 0,
-        opticalFlowEnabled: false
     }
 
     static defaultProps = {
@@ -83,7 +79,6 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
     constructor(props: Props) {
         super(props)
 
-        this.state.opticalFlowEnabled = !!props.media.hasFlow && props.opticalFlowEnabled
         this.rates = Array(props.T).fill(1.0)
     }
 
@@ -110,7 +105,7 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
         const self = this
         this.videoTag.addEventListener('loadedmetadata', function(e) {
             // init opencv
-            if(self.state.opticalFlowEnabled) {
+            if(self.props.opticalFlowEnabled) {
                 self.opencv_init()
             }
         }, false)
@@ -153,12 +148,7 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
 
         // enable OF if res props is present.
         if (this.props.opticalFlowEnabled !== prevProps.opticalFlowEnabled) {
-            this.setState({
-                opticalFlowEnabled: !!this.props.media.hasFlow && this.props.opticalFlowEnabled
-            }, () => {
-                if(this.state.opticalFlowEnabled)
-                this.opencv_init()
-            })
+            if(this.props.opticalFlowEnabled) this.opencv_init()
         }
     }
 
@@ -176,7 +166,7 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
 
     frameCallback = () => {
         let rate;
-        if(this.state.opticalFlowEnabled) {
+        if(this.props.opticalFlowEnabled) {
             const mouse_normalized = this.props.getMousePosition()
 
             const mouse = [
@@ -299,9 +289,9 @@ export class OpencvFlowPlayer extends CovfeeContinuousPlayer<Props, State> {
             
             <video 
                 ref={e=>{this.videoTag = e}}
-                width={1920}
-                height={540}
-                crossOrigin="Anonymous"
+                width={this.props.media.resolution[0]*2}
+                height={this.props.media.resolution[1]}
+                crossOrigin="anonymous"
                 style={{ display: 'none' }}
                 preload="auto"
                 disablePictureInPicture
