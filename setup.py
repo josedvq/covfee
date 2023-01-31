@@ -28,6 +28,7 @@ setup(
     },
     install_requires=[
         'Flask == 2.1.0',
+        'sqlalchemy == 1.4.*',
         'werkzeug==2.0.3',
         'MarkupSafe==2.0.1',
         'flask_cors == 3.*',
@@ -43,7 +44,8 @@ setup(
         'numpy == 1.*',
         'zipstream-new == 1.*',
         'construct == 2.*',
-        'google-auth == 2.*'
+        'google-auth == 2.*',
+        'requests == 2.*'
     ],
     python_requires='>=3.6'
 )
