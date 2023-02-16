@@ -28,7 +28,7 @@ setup(
     },
     install_requires=[
         'Flask == 2.1.0',
-        'werkzeug==2.0.3',
+        'werkzeug==2.2.3',
         'MarkupSafe==2.0.1',
         'flask_cors == 3.*',
         'Flask-SQLAlchemy == 2.*',
