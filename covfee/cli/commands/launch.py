@@ -13,7 +13,8 @@ from flask import current_app as app
 from flask.cli import FlaskGroup, pass_script_info
 
 from covfee.server.app import create_app
-from ...covfee_folder import CovfeeProject, ProjectExistsException
+from ...covfee_folder import CovfeeProject
+from covfee.launcher import ProjectExistsException
 from halo.halo import Halo
 from covfee.shared.validator.validation_errors import JavascriptError, ValidationError
 from covfee.shared.schemata import Schemata

@@ -21,7 +21,7 @@ def projects():
     if res is None:
         return jsonify([])
     else:
-        return jsonify([p.as_dict(with_hits=with_hits) for p in res])
+        return jsonify([p.to_dict(with_hits=with_hits) for p in res])
 
 
 # return one project
@@ -35,7 +35,7 @@ def project(pid):
     """
     with_hits = request.args.get('with_hits', False)
     with_instances = request.args.get('with_instances', False)
-    res = app.session.query(Project).get(bytes.fromhex(pid))
+    res = app.session.query(Project).get(pid)
     return jsonify_or_404(res, with_hits=with_hits, with_instances=with_instances, with_config=True)
 
 
@@ -52,7 +52,7 @@ def project_csv(pid):
     Returns:
         [type]: CSV file with a hit instance per line
     """
-    project = app.session.query(Project).get(bytes.fromhex(pid))
+    project = app.session.query(Project).get(pid)
     if project is None:
         return {'msg': 'not found'}, 404
     else:

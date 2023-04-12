@@ -66,7 +66,7 @@ def instance_submit(iid):
         return jsonify({'msg': err}), 400
 
     app.session.commit()
-    return jsonify(instance.as_dict(with_tasks=False))
+    return jsonify(instance.to_dict(with_tasks=False))
 
 
 @api.route('/hits/<hid>/instances/add')
@@ -155,4 +155,4 @@ def task_add_to_instance(iid):
     task = task_spec.instantiate()
     instance.tasks.append(task)
     app.session.commit()
-    return jsonify(task.as_dict())
+    return jsonify(task.to_dict())

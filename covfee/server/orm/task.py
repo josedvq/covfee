@@ -33,14 +33,6 @@ class TaskSpec(NodeSpec):
         super().__init__()
         self.spec = spec
 
-    @property
-    def spec(self):
-        return self.__spec
-
-    @spec.setter
-    def spec(self, val):
-        self.__spec = val
-
     def validate(str):
         pass
    
@@ -68,21 +60,21 @@ class TaskInstance(NodeInstance):
         task_object = task_class(task=self)
         return task_object
 
-    def as_dict(self):
+    def to_dict(self):
         # merge task and spec dicts
         task_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns
                      if c not in ['responses']}
         if task_dict['hitinstance_id']:   # child tasks may have no hitinstance_id
             task_dict['hitinstance_id'] = task_dict['hitinstance_id'].hex()
-        spec_dict = self.spec.as_dict()
+        spec_dict = self.spec.to_dict()
 
         task_dict = {**spec_dict, **task_dict}
 
-        task_dict['responses'] = [response.as_dict() for response in self.responses]
+        task_dict['responses'] = [response.to_dict() for response in self.responses]
         # task is valid if any response is valid
         task_dict['valid'] = self.has_valid_response()
         if self.children:
-            task_dict['children'] = [child.as_dict() for child in self.children]
+            task_dict['children'] = [child.to_dict() for child in self.children]
         else:
             task_dict['children'] = []
         task_dict['num_submissions'] = sum([1 if res.submitted else 0 for res in self.responses])

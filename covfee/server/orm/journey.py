@@ -46,17 +46,6 @@ class JourneySpec(Base):
     def __init__(self, nodes: List[Node] = []):
         self.nodes = nodes
 
-    @property
-    def nodes(self):
-        return self.__nodes
-
-    @nodes.setter
-    def nodes(self, val):
-        self.__nodes = val
-
-    def append(self, node: Node):
-        self.__nodes.append(node)
-
     def link(self):
         ''' Links self object and its tree to database instances
         '''
@@ -132,9 +121,9 @@ class JourneyInstance(Base):
             self.submitted_at = datetime.datetime.now()
             return True, None
 
-    def as_dict(self, with_tasks=False, with_response_info=False):
+    def to_dict(self, with_tasks=False, with_response_info=False):
         instance_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
-        hit_dict = self.hit.as_dict()
+        hit_dict = self.hit.to_dict()
 
         instance_dict['id'] = instance_dict['id'].hex()
         instance_dict['token'] = self.get_hmac()
@@ -149,9 +138,9 @@ class JourneyInstance(Base):
             prerequisites_completed = all([task.has_valid_response() for task in prerequisite_tasks])
             instance_dict['prerequisites_completed'] = prerequisites_completed
             if prerequisites_completed:
-                instance_dict['tasks'] = [task.as_dict() for task in self.tasks]
+                instance_dict['tasks'] = [task.to_dict() for task in self.tasks]
             else:
-                instance_dict['tasks'] = [task.as_dict() for task in prerequisite_tasks]
+                instance_dict['tasks'] = [task.to_dict() for task in prerequisite_tasks]
 
         if self.submitted:
             instance_dict['completionInfo'] = self.get_completion_info()

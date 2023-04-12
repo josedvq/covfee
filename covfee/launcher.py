@@ -7,12 +7,11 @@ from typing import Any, List
 from halo.halo import Halo
 from colorama import init as colorama_init, Fore
 
-from covfee.server.db import SessionLocal
+from covfee.server.db import SessionLocal, Base, engine
 from covfee.config import get_config
-from covfee.server.orm import Project
+import covfee.server.orm as orm
 from covfee.shared.validator.ajv_validator import AjvValidator
 from covfee.server.app import create_app
-# from .covfee_folder import CovfeeFolder
 from covfee.cli.utils import working_directory
 
 class ProjectExistsException(Exception):
@@ -26,10 +25,18 @@ class Launcher():
     3) launching covfee in 'local' or 'dev' mode
     '''
 
-    projects: List[Project]
+    # holds valid projects
+    projects: List['orm.Project']
 
-    def __init__(self, projects: List[Project]):
+    def __init__(self, projects: List['orm.Project'] = []):
         self.projects = projects
+
+    def start(self, mode='local'):
+        
+        Base.metadata.create_all(engine)
+        self.check_conficts()
+        self.commit()
+        self.launch('dev')
 
     def launch(self, mode='local', no_browser=False):
         """
@@ -59,8 +66,6 @@ class Launcher():
         else:
             ssl_options = {}
 
-        # TODO: validate spec before attaching to app
-        app.spec = self.projects
         if mode == 'local':
             socketio.run(app, host=host, port=5000, **ssl_options)
         elif mode == 'dev':
@@ -82,57 +87,47 @@ class Launcher():
             print(Fore.GREEN +
                   f' * covfee is available at {target_url}')
 
-    def validate_project(self, project_spec):
-        filter = AjvValidator()
-        filter.validate_project(project_spec)
-
-    def validate(self, with_spinner=False):
-        for project_spec in self.projects:
-            with Halo(text=f'Validating project {project_spec["name"]}',
-                      spinner='dots',
-                      enabled=with_spinner) as spinner:
-
-                try:
-                    self.validate_project(project_spec)
-                except Exception as e:
-                    spinner.fail(f'Error validating project \"{project_spec["name"]}\".\n')
-                    raise e
-                spinner.succeed(f'Project \"{project_spec["name"]}\" is valid.')
-
-    def commit(self, force=False, with_spinner=False):
+    def check_conficts(self, force=False, with_spinner=False):
         with SessionLocal() as session:
-            for project_spec, cf in self.projects:
+            for project in self.projects:
                 # delete existing project with the same id
-                with Halo(text=f'Looking for existing projects with id {project_spec["id"]}',
+                with Halo(text=f'Looking for existing projects with id {project.name}',
                         spinner='dots',
                         enabled=False) as spinner:
 
-                    projid = Project.get_id(project_spec['id'])
-                    existing_project = Project.query.filter_by(id=projid).first()
-                    if existing_project is not None:
-                        if force:
-                            
-                            session.delete(existing_project)
-                            session.commit()
-                            spinner.warn(
-                                f'Deleted existing project with conflicting ID {project_spec["id"]}')
-            
-                        else:
-                            msg = f'Project with ID {project_spec["id"]} already exists.'
-                            spinner.fail(msg)
-                            raise ProjectExistsException(msg)
-
-                # making
-                with Halo(text=f'Making project {project_spec["name"]} from file {cf}',
-                        spinner='dots',
-                        enabled=False) as spinner:
-                    project = Project(**project_spec)
-                    session.add(project)
-                    spinner.succeed(
-                        f'Project {project_spec["name"]} created successfully from file {cf}')
+                    orm.Project.session = session
+                    existing_project = orm.Project.from_name(project.name)
+                    project._conflicts = (existing_project is not None)
+                    if existing_project:
+                        return False
+            return True
+                    
+    def commit(self, force=False, with_spinner=False):
+        
+        with SessionLocal() as session:
+            for project in self.projects:
+                if project._conflicts:
+                    # there is a project with same id
+                    if force:
+                        orm.Project.session = session
+                        existing_project = orm.Project.from_name(project.name)
+                        session.delete(existing_project)
+                        session.commit()
+                        # spinner.warn(f'Deleted existing project with conflicting ID {project["id"]}')
+                    else:
+                        msg = f'Project with ID {project["id"]} already exists.'
+                        raise Exception(msg)
+                        # spinner.fail(msg)
+                        # raise ProjectExistsException(msg)
+                # with Halo(text=f'Making project {project["name"]}',
+                #         spinner='dots',
+                #         enabled=False) as spinner:
+                session.add(project)
+                # spinner.succeed(
+                #     f'Project {project["name"]} created successfully from file {cf}')
             session.commit()
 
-def launch_webpack(self, covfee_client_path, host=None):
+def launch_webpack(covfee_client_path, host=None):
     # run the dev server
     with working_directory(covfee_client_path):
         os.system('npx webpack serve' +

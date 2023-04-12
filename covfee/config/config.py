@@ -7,10 +7,10 @@ def load_config(app, mode: str):
     app.config.update(config)
 
 def get_config(mode: str) -> flask.Config:
-    config = flask.Config()
+    config = flask.Config('/')
     config['COVFEE_ENV'] = mode
     # load the base configuration object
-    config.from_object('covfee.server.config.defaults')
+    config.from_object('covfee.config.defaults')
 
     # update with the custom project config files
     if mode == 'local':
@@ -59,7 +59,7 @@ def get_config(mode: str) -> flask.Config:
     # point to webpack-dev-server bundles in dev mode
     if mode == 'dev':
         config['BUNDLES_URL'] = config['DEV_BUNDLES_URL']
-    
+    return config
 
 def get_frontend_config(config):
     # create the frontend config object:

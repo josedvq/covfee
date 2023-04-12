@@ -260,7 +260,7 @@ class AdminProject extends React.Component<Props, State> {
             currProject: value
         })
 
-        const url = Constants.api_url + '/projects/' + this.projects[value].id + '?' + new URLSearchParams({
+        const url = Constants.api_url + '/projects/' + this.projects[value].name + '?' + new URLSearchParams({
             with_hits: '1',
             with_instances: '1'
         })

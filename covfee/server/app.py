@@ -16,6 +16,8 @@ def create_app(mode):
 
     from .db import SessionLocal
     app.session = scoped_session(SessionLocal, scopefunc=_app_ctx_stack.__ident_func__)
+    from .orm import set_session
+    set_session(app.session)
     socketio = SocketIO()
     socketio.init_app(app)
 

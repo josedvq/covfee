@@ -5,7 +5,7 @@ from .. import tasks
 from ..tasks.base import BaseCovfeeTask
 from flask import current_app as app, session
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
-from covfee.server.orm.task import TaskResponse
+from covfee.server.orm import TaskResponse
 from covfee.server.socketio.redux_store import ReduxStoreClient
 
 socketio = SocketIO()

@@ -10,7 +10,7 @@ from flask import current_app as app
 from halo import Halo
 from colorama import init as colorama_init, Fore
 
-from covfee.server.db import metadata, engine
+
 from covfee.server.orm.user import User, password_hash
 from covfee.cli.utils import working_directory
 from pathlib import Path
@@ -26,7 +26,7 @@ def cli_create_tables():
     Creates all the tables defined in the ORM
     '''
     with Halo(text='Creating tables', spinner='dots') as spinner:
-        metadata.create_all(engine)
+        
         spinner.succeed('Created database tables.')
 
 
@@ -63,6 +63,22 @@ class CovfeeProject:
                 self.projects.append(project_spec)
                 spinner.succeed(f'Read covfee file {cf}.')
 
+    def validate_project(self, project_spec):
+        filter = AjvValidator()
+        filter.validate_project(project_spec)
+
+    def validate(self, with_spinner=False):
+        for project_spec in self.projects:
+            with Halo(text=f'Validating project {project_spec["name"]}',
+                      spinner='dots',
+                      enabled=with_spinner) as spinner:
+
+                try:
+                    self.validate_project(project_spec)
+                except Exception as e:
+                    spinner.fail(f'Error validating project \"{project_spec["name"]}\".\n')
+                    raise e
+                spinner.succeed(f'Project \"{project_spec["name"]}\" is valid.')
     # def is_project(self):
     #     return os.path.exists(app.config['DATABASE_PATH'])
 

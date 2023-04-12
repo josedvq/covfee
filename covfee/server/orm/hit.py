@@ -26,7 +26,7 @@ class HITSpec(Base):
     # spec relationship
     journeyspecs = relationship('JourneySpec', back_populates='hitspec')
 
-    project_id = Column(Integer, ForeignKey("projects.id"))
+    project_id = Column(Integer, ForeignKey("projects.name"))
     project = relationship('Project', back_populates='hitspecs')
     
     # instance relationship
@@ -36,22 +36,6 @@ class HITSpec(Base):
         self.name = name
         self.journeys = journeys
 
-    @property
-    def name(self):
-        return self.__name
-
-    @name.setter
-    def name(self, val):
-        self.__name = val
-
-    @property
-    def journeys(self):
-        return self.__journeys
-
-    @journeys.setter
-    def journeys(self, val):
-        self.__journeys = val
-
     def link(self):
         ''' Links self object and its tree to database instances
         '''
@@ -60,7 +44,7 @@ class HITSpec(Base):
    
     def launch(self):
         project = Project()
-        project.hits = [self]
+        project.hitspecs = [self]
         project.launch()
 
     def __repr__(self):
@@ -74,6 +58,26 @@ class HITSpec(Base):
         For use in linking from crowdsourcing websites (eg. Prolific)
         '''
         return f'{app.config["API_URL"]}/hits/{self.id.hex():s}/instances/add_and_redirect'
+    
+    def to_dict(self, with_project=True, with_instances=False, with_instance_tasks=False, with_config=False):
+        hit_dict = {c.name: getattr(self, c.name)
+                    for c in self.__table__.columns}
+        hit_dict['id'] = hit_dict['id'].hex()
+        hit_dict['api_url'] = self.get_api_url()
+        hit_dict['generator_url'] = self.get_generator_url()
+
+        if with_instances:
+            hit_dict['instances'] = [instance.as_dict(
+                with_tasks=with_instance_tasks) for instance in self.instances]
+
+        if with_project:
+            hit_dict['project'] = self.project.as_dict()
+        del hit_dict['project_id']
+
+        if not with_config:
+            del hit_dict['config']
+
+        return hit_dict
 
 class HITInstance(Base):
     ''' Represents an instance of a HIT, to be solved by one user
@@ -137,9 +141,9 @@ class HITInstance(Base):
             self.submitted_at = datetime.datetime.now()
             return True, None
 
-    def as_dict(self, with_tasks=False, with_response_info=False):
+    def to_dict(self, with_tasks=False, with_response_info=False):
         instance_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
-        hit_dict = self.hit.as_dict()
+        hit_dict = self.hit.to_dict()
 
         instance_dict['id'] = instance_dict['id'].hex()
         instance_dict['token'] = self.get_hmac()
@@ -154,9 +158,9 @@ class HITInstance(Base):
             prerequisites_completed = all([task.has_valid_response() for task in prerequisite_tasks])
             instance_dict['prerequisites_completed'] = prerequisites_completed
             if prerequisites_completed:
-                instance_dict['tasks'] = [task.as_dict() for task in self.tasks]
+                instance_dict['tasks'] = [task.to_dict() for task in self.tasks]
             else:
-                instance_dict['tasks'] = [task.as_dict() for task in prerequisite_tasks]
+                instance_dict['tasks'] = [task.to_dict() for task in prerequisite_tasks]
 
         if self.submitted:
             instance_dict['completionInfo'] = self.get_completion_info()

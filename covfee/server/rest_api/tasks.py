@@ -39,7 +39,7 @@ def response(kid):
     if len(responses) == 0:
         return jsonify(msg='No submitted responses found.'), 403
 
-    response_dict = responses[-1].as_dict()
+    response_dict = responses[-1].to_dict()
     return jsonify(response_dict)
 
 @api.route('/tasks/<kid>/make_response', methods=['POST'])
@@ -56,7 +56,7 @@ def make_response(kid):
     if submit:
         response.submit()
     app.session.commit()
-    return jsonify(response.as_dict())
+    return jsonify(response.to_dict())
 
 # record a response to a task
 @api.route('/responses/<rid>/submit', methods=['POST'])

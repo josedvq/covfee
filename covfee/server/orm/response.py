@@ -42,7 +42,7 @@ class TaskResponse(Base):
         self.valid = False
         self.extra = {}
 
-    def as_dict(self):
+    def to_dict(self):
         response_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
         response_dict = {**response_dict}
         response_dict['url'] = f'{app.config["API_URL"]}/responses/{response_dict["id"]}'
@@ -96,7 +96,7 @@ class TaskResponse(Base):
         res = {
             'status': 'success',
             'valid': self.valid,
-            'response': self.as_dict()
+            'response': self.to_dict()
         }
 
         if not self.valid:
