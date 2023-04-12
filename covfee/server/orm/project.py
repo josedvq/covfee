@@ -57,7 +57,7 @@ class Project(Base):
 
     def launch(self):
         launcher = Launcher(self)
-        launcher.launch()
+        launcher.launch(mode='dev')
 
     def __repr__(self):
         pass

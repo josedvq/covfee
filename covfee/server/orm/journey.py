@@ -99,7 +99,7 @@ class JourneyInstance(Base):
     def __init__(self, id, tasks, submitted=False):
         self.id = id
         self.tasks = tasks
-        self.preview_id = sha256((id + 'preview'.encode())).digest()
+        self.preview_id = hashlib.sha256((id + 'preview'.encode())).digest()
         self.submitted = submitted
 
     def get_api_url(self):
@@ -113,7 +113,7 @@ class JourneyInstance(Base):
 
     def get_completion_info(self):
         completion = {
-            'completionCode': self.hit.config.get('completionCode', sha256((self.id.hex() + app.config['COVFEE_SECRET_KEY']).encode()).digest().hex()[:12]),
+            'completionCode': self.hit.config.get('completionCode', hashlib.sha256((self.id.hex() + app.config['COVFEE_SECRET_KEY']).encode()).digest().hex()[:12]),
             'redirectName': self.hit.config.get('redirectName', None),
             'redirectUrl': self.hit.config.get('redirectUrl', None)
         }

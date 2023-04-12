@@ -8,7 +8,7 @@ from flask_jwt_extended import JWTManager
 from flask_socketio import SocketIO
 from flask_cors import CORS
 
-from .config import load_config, get_frontend_config
+from covfee.config import load_config, get_frontend_config
 
 def create_app(mode):
     app = Flask(__name__, static_folder=None)

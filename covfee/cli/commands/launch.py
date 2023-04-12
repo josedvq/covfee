@@ -13,13 +13,15 @@ from flask import current_app as app
 from flask.cli import FlaskGroup, pass_script_info
 
 from covfee.server.app import create_app
-from ...covfee_folder import CovfeeFolder, ProjectExistsException
+from ...covfee_folder import CovfeeProject, ProjectExistsException
 from halo.halo import Halo
 from covfee.shared.validator.validation_errors import JavascriptError, ValidationError
 from covfee.shared.schemata import Schemata
 from covfee.cli.utils import NPMPackage
 from covfee.utils import covfee_make, get_start_message
 from covfee.server.rtstore import rtstore
+from covfee.launcher import launch_webpack
+from covfee.config import get_config
 
 colorama_init()
 
@@ -53,15 +55,8 @@ def webpack(host):
     """
     Launches a webpack instance for use in dev mode
     """
-    _, app = create_app('dev')
-
-    with app.app_context():
-        covfee_folder = CovfeeFolder(os.getcwd())
-        if not covfee_folder.is_project():
-            return print(Fore.RED+'Working directory is not a valid covfee project folder. '
-                                'Did you run covfee-maker in the current folder?')
-
-        covfee_folder.launch_webpack(host=host)
+    config = get_config('dev')
+    launch_webpack(config['COVFEE_CLIENT_PATH'], host)
 
 @covfee_cli.command()
 def build():
@@ -71,7 +66,7 @@ def build():
     _, app = create_app('dev')
 
     with app.app_context():
-        covfee_folder = CovfeeFolder(os.getcwd())
+        covfee_folder = CovfeeProject(os.getcwd())
         if not covfee_folder.is_project():
             raise Exception(
                 'Working directory is not a valid covfee project folder.')
@@ -97,7 +92,7 @@ def start(dev, deploy, launch_browser, safe):
     socketio, app = create_app(mode)  
 
     with app.app_context():
-        covfee_folder = CovfeeFolder(os.getcwd())
+        covfee_folder = CovfeeProject(os.getcwd())
         if not covfee_folder.is_project():
             return print(Fore.RED+'Working directory is not a valid covfee project folder. Did you run'
                                 ' covfee maker in the current folder?')
@@ -119,7 +114,7 @@ def open_covfee():
     _, app = create_app('dev')
 
     with app.app_context():
-        covfee_folder = CovfeeFolder(os.getcwd())
+        covfee_folder = CovfeeProject(os.getcwd())
         if not covfee_folder.is_project():
             raise Exception('Working directory is not a valid covfee project folder.')
         covfee_folder.launch_in_browser()
@@ -179,7 +174,7 @@ def make(force, deploy, safe, rms, launch_browser, no_launch, file_or_folder):
             return
 
         if launch_browser:
-            project_folder = CovfeeFolder(os.getcwd())
+            project_folder = CovfeeProject(os.getcwd())
             project_folder.launch_in_browser(unsafe)
 
         app.config['UNSAFE_MODE_ON'] = unsafe
@@ -194,7 +189,7 @@ def mkuser():
     _, app = create_app('dev')
 
     with app.app_context():
-        project_folder = CovfeeFolder(os.getcwd())
+        project_folder = CovfeeProject(os.getcwd())
         if not project_folder.is_project():
             project_folder.init()
 

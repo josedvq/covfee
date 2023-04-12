@@ -1,7 +1,6 @@
 import hashlib
 import hmac
 
-from ..orm import db
 from .. import tasks
 from ..tasks.base import BaseCovfeeTask
 from flask import current_app as app, session
@@ -13,7 +12,7 @@ socketio = SocketIO()
 store = ReduxStoreClient()
 
 def get_task_object(responseId: int):
-    response = db.session.query(TaskResponse).get(responseId)
+    response = app.session.query(TaskResponse).get(responseId)
     if response is None:
         return None
     
