@@ -18,7 +18,7 @@ def hit(hid):
     """
     with_instances = request.args.get('with_instances', False)
     with_instance_tasks = request.args.get('with_instance_tasks', False)
-    res = app.session.query(HITSpec).get(bytes.fromhex(hid))
+    res = app.session.query(HITSpec).get(int(hid))
     return jsonify_or_404(res,
                           with_instances=with_instances,
                           with_instance_tasks=with_instance_tasks)
@@ -28,7 +28,7 @@ def hit(hid):
 def hit_edit(hid):
     """ Edits the hit configuration using the received config.
     """
-    hit = app.session.query(HITSpec).get(bytes.fromhex(hid))
+    hit = app.session.query(HITSpec).get(int(hid))
     if hit is None:
         return jsonify({'msg': 'invalid hit'}), 400
 

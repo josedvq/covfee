@@ -4,30 +4,31 @@ import json
 import os
 import sys
 from io import BytesIO
-from typing import Any, Tuple, TYPE_CHECKING
+from typing import Any, Dict, List, TYPE_CHECKING
 
 import numpy as np
 from flask import current_app as app
 from sqlalchemy import (
-    Boolean,
-    Integer,
-    Column, 
-    LargeBinary, 
-    DateTime, 
-    ForeignKey)
-from sqlalchemy.orm import backref, relationship
+    JSON)
+from sqlalchemy.orm import backref, relationship, Mapped
 
-from ..db import Base
+from .base import Base
+# import covfee.server.orm
+# from ..db import Base
 from .. import tasks
 from ..tasks.base import BaseCovfeeTask
 from ..utils.packer import Packer
 pytype = type
 
 from .node import NodeSpec, NodeInstance
-if TYPE_CHECKING:
-    from .journey import JourneySpec
 
 class TaskSpec(NodeSpec):
+
+    __mapper_args__ = {
+        "polymorphic_identity": "TaskSpec",
+    }
+
+    # spec: Mapped[Dict[str, Any]]
 
     def __init__(self, spec=None):
         super().__init__()
@@ -39,17 +40,19 @@ class TaskSpec(NodeSpec):
     def __repr__(self):
         pass
 
-    def __call__(self, journey: JourneySpec):
-        journey.append(self)
-        return journey
-
+    
 class TaskInstance(NodeInstance):
 
-    responses = relationship("TaskResponse", back_populates='task', cascade="all, delete-orphan")
+    __mapper_args__ = {
+        "polymorphic_identity": "TaskInstance",
+    }
+
+
+    responses: Mapped[List['TaskResponse']] = relationship("TaskResponse", back_populates='task', cascade="all, delete-orphan")
 
     # response status
-    created_at = Column(DateTime, default=datetime.datetime.now)
-    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
+    # created_at = Column(DateTime, default=datetime.datetime.now)
+    # updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __init__(self):
         self.has_unsubmitted_response = False
@@ -89,7 +92,7 @@ class TaskInstance(NodeInstance):
         return any([response.valid for response in self.responses])
 
     def add_response(self):
-        response = TaskResponse()
+        response = orm.TaskResponse()
         self.responses.append(response)
         return response
 

@@ -1,34 +1,30 @@
 from __future__ import annotations
 import datetime
 import hmac
+import random
+import secrets
 import hashlib
-from typing import List, TYPE_CHECKING
+from typing import List
+from typing_extensions import Annotated
 
-
-from ..db import Base
+# from ..db import Base
 from sqlalchemy import (
-    Integer,
-    Boolean,
-    Column, 
-    LargeBinary, 
-    DateTime, 
     ForeignKey)
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from flask import current_app as app
 
-from .hit import HITSpec
+from .base import Base
 from .node import journeyspec_nodespec_table, journey_node_table
-if TYPE_CHECKING:
-    from .node import Node
+
 
 class JourneySpec(Base):
     __tablename__ = 'journeyspecs'
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
 
     # spec relationships
     # up
-    hitspec_id = Column(Integer, ForeignKey("hitspecs.id"))
-    hitspec = relationship('HITSpec', back_populates='journeyspecs')
+    hitspec_id: Mapped[int] = mapped_column(ForeignKey('hitspecs.id'))
+    hitspec: Mapped['HITSpec'] = relationship(back_populates='journeyspecs')
     
     # down
     nodespecs = relationship('NodeSpec', 
@@ -36,26 +32,18 @@ class JourneySpec(Base):
         back_populates='journeyspecs')
 
     # instance relationships
-    journeys = relationship('JourneyInstance', back_populates='journeyspec')
+    journeys: Mapped[List['JourneyInstance']] = relationship(back_populates='journeyspec')
     
-    __nodes: List
-
-    # other
-    preview_id = Column(LargeBinary, unique=True)
-
-    def __init__(self, nodes: List[Node] = []):
+    def __init__(self, nodes: List['NodeSpec'] = []):
         self.nodes = nodes
 
-    def link(self):
-        ''' Links self object and its tree to database instances
-        '''
-        for journey in self.journeys:
-            journey.link()
+    def instantiate(self):
+        instance = JourneyInstance()
+        self.journeys.append(instance)
+        return instance
 
-    def launch(self):
-        hit = HITSpec()
-        hit.journeys = [self]
-        hit.launch()
+    def append(self, node: 'NodeSpec'):
+        self.nodespecs.append(node)
 
     def __repr__(self):
         pass
@@ -65,31 +53,30 @@ class JourneyInstance(Base):
     '''
     __tablename__ = 'journeyinstances'
 
-    id = Column(LargeBinary, primary_key=True)
+    id: Mapped[bytes] = mapped_column(primary_key=True)
     
-    # spec relationships
-    journeyspec_id = Column(Integer, ForeignKey('journeyspecs.id'))
+    # one JourneySpec -> many JourneyInstance
+    journeyspec_id: Mapped[int] = mapped_column(ForeignKey('journeyspecs.id'))
+    # journeyspec_id = Column(Integer, ForeignKey('journeyspecs.id'))
     journeyspec = relationship("JourneySpec", back_populates='journeys')
 
-    # instance relationships
-    hit_id = Column(Integer, ForeignKey('hitinstances.id'))
+    # one HitInstance -> many JourneyInstance
+    hit_id: Mapped[int] = mapped_column(ForeignKey('hitinstances.id'))
+    # hit_id = Column(Integer, ForeignKey('hitinstances.id'))
     hit  = relationship("HITInstance", back_populates='journeys')
 
-    nodes = relationship("NodeInstance",
-        secondary=journey_node_table,
-        back_populates='journeys')
+    nodes: Mapped[List['NodeInstance']] = relationship(secondary=journey_node_table, back_populates='journeys')
     
-    submitted = Column(Boolean)
+    # submitted = Mapped[bool]
 
-    created_at = Column(DateTime, default=datetime.datetime.now)
-    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
-    submitted_at = Column(DateTime)
+    # created_at = Column(DateTime, default=datetime.datetime.now)
+    # updated_at = Column(DateTime, onupdate=datetime.datetime.now)
+    # submitted_at = Column(DateTime)
 
-    def __init__(self, id, tasks, submitted=False):
-        self.id = id
-        self.tasks = tasks
-        self.preview_id = hashlib.sha256((id + 'preview'.encode())).digest()
-        self.submitted = submitted
+    def __init__(self):
+        self.id = secrets.token_bytes(32)
+        self.preview_id = hashlib.sha256((self.id + 'preview'.encode())).digest()
+        self.submitted = False
 
     def get_api_url(self):
         return f'{app.config["API_URL"]}/instances/{self.id.hex():s}'

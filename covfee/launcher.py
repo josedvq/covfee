@@ -7,7 +7,7 @@ from typing import Any, List
 from halo.halo import Halo
 from colorama import init as colorama_init, Fore
 
-from covfee.server.db import SessionLocal, Base, engine
+from covfee.server.db import SessionLocal, engine
 from covfee.config import get_config
 import covfee.server.orm as orm
 from covfee.shared.validator.ajv_validator import AjvValidator
@@ -33,7 +33,7 @@ class Launcher():
 
     def start(self, mode='local'):
         
-        Base.metadata.create_all(engine)
+        orm.Base.metadata.create_all(engine)
         self.check_conficts()
         self.commit()
         self.launch('dev')

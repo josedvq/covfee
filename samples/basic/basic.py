@@ -1,6 +1,7 @@
-from covfee import Task, Journey
+# from covfee import Task, HIT
+from covfee.server.orm import *
 
-task1 = Task(spec={
+task1 = TaskSpec(spec={
     "name": "Consent",
     "type": "InstructionsTask",
     "prerequisite": True,
@@ -36,7 +37,7 @@ task1 = Task(spec={
     }
 })
 
-task2 = Task(spec={
+task2 = TaskSpec(spec={
     "name": "Instructions",
     "type": "InstructionsTask",
     "prerequisite": True,
@@ -64,7 +65,8 @@ task2 = Task(spec={
     }
 })
 
-j1 = Journey()
+hit = HITSpec()
+j1 = hit.make_journey()
 j1 = task1(j1)
 j1 = task2(j1)
-j1.launch()
+hit.launch()

@@ -1,41 +1,35 @@
 from __future__ import annotations
 import datetime
-from typing import Tuple
+from typing import Dict, Any
 
 import numpy as np
-from sqlalchemy import (
-    Integer,
-    JSON,
-    Boolean,
-    Column, 
-    DateTime, 
-    ForeignKey)
-from sqlalchemy.orm import relationship
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
-from covfee.server.db import Base
+from .base import Base
 from ..tasks.base import BaseCovfeeTask
 
 class TaskResponse(Base):
     """ Represents a task's response """
     __tablename__ = 'taskresponses'
 
-    id = Column(Integer, primary_key=True)
+    id: Mapped[str] = mapped_column(primary_key=True)
 
     # instance relationships
-    node_id = Column(Integer, ForeignKey('nodeinstances.id'))
-    task = relationship("TaskInstance", back_populates='responses')
-    
+    node_id: Mapped[int] = mapped_column(ForeignKey('nodeinstances.id'))
+    task: Mapped['Task'] = relationship("TaskInstance", back_populates='responses')
+    # node_id = Column(Integer, ForeignKey('nodeinstances.id'))
 
-    state = Column(JSON) # holds the shared state of the task
-    submitted = Column(Boolean)
-    valid = Column(Boolean)
-    data = Column(JSON)
-    created_at = Column(DateTime, default=datetime.datetime.now)
-    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
-    submitted_at = Column(DateTime)
+    # state: Mapped[Dict[str, Any]] # holds the shared state of the task
+    submitted: Mapped[bool]
+    valid: Mapped[bool]
+    # data: Mapped[Dict[str, Any]]
+    # created_at = Column(DateTime, default=datetime.datetime.now)
+    # updated_at = Column(DateTime, onupdate=datetime.datetime.now)
+    # submitted_at = Column(DateTime)
 
     # can be used to store server state (eg. state of recording)
-    extra = Column(JSON)
+    # extra: Mapped[Dict[str, Any]]
 
     def __init__(self):
         self.submitted = False

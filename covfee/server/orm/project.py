@@ -1,27 +1,24 @@
 from __future__ import annotations
 import os
 import json
-from typing import List, TYPE_CHECKING
+from typing import List
 
 import pandas as pd
-from sqlalchemy import (
-    String,
-    Column, 
-    Integer)
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
-from ..db import Base
+# from ..db import Base
+from .base import Base
 import covfee.launcher as launcher
-
-if TYPE_CHECKING:
-    from .hit import HITSpec
 
 class Project(Base):
     __tablename__ = 'projects'
-    name = Column(String, primary_key=True)
-    hitspecs = relationship('HITSpec', back_populates='project')
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
 
-    def __init__(self, name = 'Sample', email = 'example@example.com', hitspecs: List[HITSpec] = []):
+    # one project -> many HitSpec
+    hitspecs: Mapped[List['HITSpec']] = relationship(back_populates='project')
+
+    def __init__(self, name = 'Sample', email = 'example@example.com', hitspecs: List['HITSpec'] = []):
         self.name = name
         self.email = email
         self.hitspecs = hitspecs
@@ -30,13 +27,9 @@ class Project(Base):
         self._conflicts = False
         self._filename = None
 
-    def link(self):
-        ''' Links self object and its tree to database instances
-        '''
-        for hit in self.hitspecs:
-            hit.link()
-
-    def launch(self):
+    def launch(self, num_instances = 1):
+        for spec in self.hitspecs:
+            spec.instantiate(num_instances)
         l = launcher.Launcher([self])
         l.start(mode='dev')
 

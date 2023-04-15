@@ -7,77 +7,84 @@ from hashlib import sha256
 
 from flask import current_app as app
 from sqlalchemy import (
-    Integer,
-    Column, 
-    LargeBinary, 
-    DateTime, 
-    ForeignKey)
-from sqlalchemy.orm import relationship
+    ForeignKey, UniqueConstraint)
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
-from ..db import Base
+# from ..db import Base
+# from .project import Project
+from .base import Base
+from .journey import JourneySpec, JourneyInstance
 from .project import Project
-if TYPE_CHECKING:
-    from .journey import JourneySpec
+from .node import NodeInstance
 
 class HITSpec(Base):
     __tablename__ = 'hitspecs'
-    id = Column(Integer, primary_key=True)
+    __table_args__ = (UniqueConstraint("project_id", "name"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+
+    project_id: Mapped[int] = mapped_column(ForeignKey('projects.id'))
+    # project_id = Column(Integer, ForeignKey("projects.name"))
+    project: Mapped['Project'] = relationship(back_populates='hitspecs')
 
     # spec relationship
-    journeyspecs = relationship('JourneySpec', back_populates='hitspec')
-
-    project_id = Column(Integer, ForeignKey("projects.name"))
-    project = relationship('Project', back_populates='hitspecs')
+    journeyspecs: Mapped[List['JourneySpec']] = relationship(back_populates='hitspec')
     
     # instance relationship
-    instances = relationship('HITInstance', back_populates='spec')    
+    instances: Mapped[List['HITInstance']] = relationship(back_populates='spec')    
 
-    def __init__(self, name = 'Sample', journeys: List[JourneySpec] = []):
+    def __init__(self, name = 'Sample', journeyspecs: List['JourneySpec'] = []):
+        # TODO: remove name column?
         self.name = name
-        self.journeys = journeys
+        self.journeyspecs = journeyspecs
 
-    def link(self):
-        ''' Links self object and its tree to database instances
-        '''
-        for journey in self.journeys:
-            journey.link()
+    def make_journey(self):
+        journeyspec = JourneySpec()
+        self.journeyspecs.append(journeyspec)
+        return journeyspec
+    
+    def instantiate(self, n=1):
+        for _ in range(n):
+            instance = HITInstance(
+                # (id, index)
+                id=sha256(f'{self.id}_{len(self.journeyspecs)}'.encode()).digest(),
+                journeyspecs=self.journeyspecs
+            )
+            self.instances.append(instance)
    
-    def launch(self):
-        project = Project()
-        project.hitspecs = [self]
-        project.launch()
-
-    def __repr__(self):
-        pass
-
+    def launch(self, num_instances=1):
+        if self.project is None:
+            self.project = Project()
+        self.project.launch(num_instances)
+    
     def get_api_url(self):
-        return f'{app.config["API_URL"]}/hits/{self.id.hex()}'
+        return f'{app.config["API_URL"]}/hits/{self.id}'
 
     def get_generator_url(self):
         ''' URL to the generator endpoint, which will instantiate the HIT and redirect the user to the new instance
         For use in linking from crowdsourcing websites (eg. Prolific)
         '''
-        return f'{app.config["API_URL"]}/hits/{self.id.hex():s}/instances/add_and_redirect'
+        return f'{app.config["API_URL"]}/hits/{self.id}/instances/add_and_redirect'
     
     def to_dict(self, with_project=True, with_instances=False, with_instance_tasks=False, with_config=False):
         hit_dict = {c.name: getattr(self, c.name)
                     for c in self.__table__.columns}
-        hit_dict['id'] = hit_dict['id'].hex()
         hit_dict['api_url'] = self.get_api_url()
         hit_dict['generator_url'] = self.get_generator_url()
 
         if with_instances:
-            hit_dict['instances'] = [instance.as_dict(
+            hit_dict['instances'] = [instance.to_dict(
                 with_tasks=with_instance_tasks) for instance in self.instances]
 
         if with_project:
-            hit_dict['project'] = self.project.as_dict()
+            hit_dict['project'] = self.project.to_dict()
         del hit_dict['project_id']
 
-        if not with_config:
-            del hit_dict['config']
-
         return hit_dict
+    
+    def __repr__(self):
+        pass
+
 
 class HITInstance(Base):
     ''' Represents an instance of a HIT, to be solved by one user
@@ -88,28 +95,39 @@ class HITInstance(Base):
     '''
     __tablename__ = 'hitinstances'
 
-    id = Column(LargeBinary, primary_key=True)
+    id: Mapped[bytes] = mapped_column(primary_key=True)
 
     # spec relationship
-    hitspec_id = Column(Integer, ForeignKey('hitspecs.id'))
-    spec = relationship('HITSpec', back_populates='instances')
+    hitspec_id: Mapped[int] = mapped_column(ForeignKey('hitspecs.id'))
+    spec: Mapped['HITSpec'] = relationship(back_populates='instances')
 
     # instance relationships
-    journeys = relationship('JourneyInstance', back_populates='hit', cascade="all, delete")
+    journeys: Mapped[List['JourneyInstance']] = relationship(back_populates='hit', cascade="all, delete")
     
     # other
-    preview_id = Column(LargeBinary, unique=True)
-    created_at = Column(DateTime, default=datetime.datetime.now)
-    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
-    submitted_at = Column(DateTime)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
+    updated_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
-    def __init__(self, id, taskspecs=[], submitted=False):
+    def __init__(self, id: bytes, journeyspecs: List['JourneySpec']=[]):
         self.id = id
         self.preview_id = sha256((id + 'preview'.encode())).digest()
-        self.submitted = submitted
+        self.submitted = False
 
-        for spec in taskspecs:
-            self.tasks.append(spec.instantiate())
+        # instantiate every node only once
+        nodespec_to_nodeinstance = dict()
+        for journeyspec in journeyspecs:
+            journey = journeyspec.instantiate()
+            journey.hit_id = self.id
+
+            for nodespec in journeyspec.nodespecs:
+                if nodespec.id in nodespec_to_nodeinstance:
+                    node_instance = nodespec_to_nodeinstance[nodespec.id]
+                else:
+                    node_instance = nodespec.instantiate()
+                    nodespec_to_nodeinstance[nodespec.id] = node_instance
+
+                journey.nodes.append(node_instance)
+            self.journeys.append(journey)
 
     def get_api_url(self):
         return f'{app.config["API_URL"]}/instances/{self.id.hex():s}'
@@ -143,24 +161,29 @@ class HITInstance(Base):
 
     def to_dict(self, with_tasks=False, with_response_info=False):
         instance_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
-        hit_dict = self.hit.to_dict()
+        spec_dict = self.spec.to_dict()
 
         instance_dict['id'] = instance_dict['id'].hex()
         instance_dict['token'] = self.get_hmac()
-        instance_dict['hit_id'] = instance_dict['hit_id'].hex()
-        instance_dict['preview_id'] = instance_dict['preview_id'].hex()
 
         # merge hit and instance dicts
-        instance_dict = {**hit_dict, **instance_dict}
+        instance_dict = {**spec_dict, **instance_dict}        
+        
+        # get the nodes
+        nodes = set([n for j in self.journeys for n in j.nodes])
+        instance_dict['nodes'] = [n.to_dict() for n in nodes]
 
-        if with_tasks:
-            prerequisite_tasks = [task for task in self.tasks if task.spec.prerequisite]
-            prerequisites_completed = all([task.has_valid_response() for task in prerequisite_tasks])
-            instance_dict['prerequisites_completed'] = prerequisites_completed
-            if prerequisites_completed:
-                instance_dict['tasks'] = [task.to_dict() for task in self.tasks]
-            else:
-                instance_dict['tasks'] = [task.to_dict() for task in prerequisite_tasks]
+        # get the journeys
+        instance_dict['journeys'] = [j.to_dict() for j in self.journeys]
+
+        # if with_tasks:
+            # prerequisite_tasks = [task for task in self.tasks if task.spec.prerequisite]
+            # prerequisites_completed = all([task.has_valid_response() for task in prerequisite_tasks])
+            # instance_dict['prerequisites_completed'] = prerequisites_completed
+            # if prerequisites_completed:
+            #     instance_dict['tasks'] = [task.to_dict() for task in self.tasks]
+            # else:
+            #     instance_dict['tasks'] = [task.to_dict() for task in prerequisite_tasks]
 
         if self.submitted:
             instance_dict['completionInfo'] = self.get_completion_info()

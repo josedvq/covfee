@@ -1,13 +1,14 @@
 from __future__ import annotations
+from typing import List
 
 from sqlalchemy import (
     Table,
-    Integer,
     Column,
     ForeignKey)
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
-from ..db import Base
+# from ..db import Base
+from .base import Base
 
 journeyspec_nodespec_table = Table(
     'journeyspec_nodespec',
@@ -26,32 +27,52 @@ journey_node_table = Table(
 class NodeSpec(Base):
     __tablename__ = 'nodespecs'
 
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    type: Mapped[str]
+
+    __mapper_args__ = {
+        "polymorphic_identity": "NodeSpec",
+        "polymorphic_on": "type",
+    }
 
     # spec relationships
-    journeyspecs = relationship('JourneySpec', 
+    journeyspecs: Mapped[List['JourneySpec']] = relationship(
         secondary=journeyspec_nodespec_table,
         back_populates='nodespecs')
 
     # instance relationships
-    nodes = relationship('NodeInstance', back_populates='spec')
+    nodes: Mapped[List['NodeInstance']] = relationship(back_populates='spec')
 
     def __init__(self):
         pass
 
+    def instantiate(self):
+        instance = NodeInstance()
+        self.nodes.append(instance)
+        return instance
+
+    def __call__(self, journey: 'JourneySpec'):
+        journey.append(self)
+        return journey
+
+
 class NodeInstance(Base):
     __tablename__ = 'nodeinstances'
 
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    type: Mapped[str]
+    # id = Column(Integer, primary_key=True)
+    __mapper_args__ = {
+        "polymorphic_identity": "NodeInstance",
+        "polymorphic_on": "type",
+    }
 
     # spec relationships
-    nodespec_id = Column(Integer, ForeignKey('nodespecs.id'))
-    spec = relationship('NodeSpec', back_populates='nodes')
+    nodespec_id: Mapped[int] = mapped_column(ForeignKey('nodespecs.id'))
+    spec: Mapped['NodeSpec'] = relationship(back_populates='nodes')
 
     # instance relationships
-    journeys = relationship('JourneyInstance', 
-        secondary=journey_node_table,
-        back_populates='nodes')
+    journeys: Mapped[List['JourneyInstance']] = relationship(secondary=journey_node_table, back_populates='nodes')
 
     def __init__(self):
         pass
