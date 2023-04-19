@@ -14,14 +14,14 @@
         "resolveJsonModule": true,
         "paths": {
             "Constants": ["../../docs/covfee_constants.json"],
-            "@covfee-types/*": ["../shared/types/*"],
+            "@covfee-spec/*": ["../shared/spec/*"],
             "@covfee-shared/*": ["../shared/*"],
             "@docs/*": ["../../docs/*"]
         }
     },
     "include": [
         "./**/*",
-        "../shared/types/**/*"
+        "../shared/spec/**/*"
     ],
     "exclude": [
         "node_modules",

@@ -14,8 +14,8 @@ import Constants from 'Constants'
 import Hit from './hit'
 import { fetcher, getUrlQueryParam, myerror, throwBadResponse} from '../utils'
 import { ErrorPage } from "../jsx_utils"
-import {HitInstanceType} from '@covfee-types/hit'
-import { EditableTaskFields, TaskResponse, TaskType } from '@covfee-types/task'
+import {HitInstanceType} from '@covfee-spec/hit'
+import { EditableTaskFields, TaskResponse, TaskType } from '@covfee-shared/spec/task'
 
 interface MatchParams {
     hitId: string
@@ -352,4 +352,4 @@ const HitContainer = styled.div`
 
 const HitLoaderWithRouter = withRouter(HitLoader)
 
-export { HitLoaderWithRouter}
+export { HitLoaderWithRouter }

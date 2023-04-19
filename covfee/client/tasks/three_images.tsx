@@ -5,8 +5,8 @@ import {
 } from 'antd'
 import {Form} from '../input/form'
 import { BasicTaskProps, CovfeeTask } from './base'
-import { ThreeImagesTaskSpec } from '@covfee-types/tasks/three_images'
-import { TaskType } from '@covfee-types/task'
+import { ThreeImagesTaskSpec } from '@covfee-shared/spec/tasks/three_images'
+import { TaskType } from '@covfee-shared/spec/task'
 import {log, urlReplacer} from '../utils'
 import './styles/three_images.css'
 

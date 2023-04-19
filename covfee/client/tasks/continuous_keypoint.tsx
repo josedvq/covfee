@@ -8,9 +8,9 @@ const { Title, Text } = Typography
 import MouseTracker from '../input/mouse_tracker'
 import MouseVisualizer from '../input/mouse_visualizer'
 import { ContinuousTaskProps, CovfeeContinuousTask } from './base'
-import { ContinuousKeypointTaskSpec} from '@covfee-types/tasks/continuous_keypoint'
-import { TaskType } from '@covfee-types/task';
-import { OpencvFlowPlayerMedia } from '@covfee-types/players/opencv';
+import { ContinuousKeypointTaskSpec} from '@covfee-shared/spec/tasks/continuous_keypoint'
+import { TaskType } from '@covfee-shared/spec/task';
+import { OpencvFlowPlayerMedia } from '@covfee-shared/spec/players/opencv';
 import { LoginOutlined } from '@ant-design/icons';
 
 interface Props extends TaskType, ContinuousTaskProps {

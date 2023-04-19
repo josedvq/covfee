@@ -34,6 +34,7 @@ class HITSpec(Base):
     instances: Mapped[List['HITInstance']] = relationship(back_populates='spec')    
 
     def __init__(self, name = 'Sample', journeyspecs: List['JourneySpec'] = []):
+        super().__init__()
         # TODO: remove name column?
         self.name = name
         self.journeyspecs = journeyspecs
@@ -66,7 +67,7 @@ class HITSpec(Base):
         '''
         return f'{app.config["API_URL"]}/hits/{self.id}/instances/add_and_redirect'
     
-    def to_dict(self, with_project=True, with_instances=False, with_instance_tasks=False, with_config=False):
+    def to_dict(self, with_instances=False, with_instance_nodes=False):
         hit_dict = {c.name: getattr(self, c.name)
                     for c in self.__table__.columns}
         hit_dict['api_url'] = self.get_api_url()
@@ -74,10 +75,9 @@ class HITSpec(Base):
 
         if with_instances:
             hit_dict['instances'] = [instance.to_dict(
-                with_tasks=with_instance_tasks) for instance in self.instances]
+                with_nodes=with_instance_nodes) for instance in self.instances]
 
-        if with_project:
-            hit_dict['project'] = self.project.to_dict()
+        hit_dict['project'] = self.project.to_dict(with_hits=False)
         del hit_dict['project_id']
 
         return hit_dict
@@ -109,6 +109,7 @@ class HITInstance(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
     def __init__(self, id: bytes, journeyspecs: List['JourneySpec']=[]):
+        super().__init__()
         self.id = id
         self.preview_id = sha256((id + 'preview'.encode())).digest()
         self.submitted = False
@@ -120,11 +121,11 @@ class HITInstance(Base):
             journey.hit_id = self.id
 
             for nodespec in journeyspec.nodespecs:
-                if nodespec.id in nodespec_to_nodeinstance:
-                    node_instance = nodespec_to_nodeinstance[nodespec.id]
+                if nodespec._unique_id in nodespec_to_nodeinstance:
+                    node_instance = nodespec_to_nodeinstance[nodespec._unique_id]
                 else:
                     node_instance = nodespec.instantiate()
-                    nodespec_to_nodeinstance[nodespec.id] = node_instance
+                    nodespec_to_nodeinstance[nodespec._unique_id] = node_instance
 
                 journey.nodes.append(node_instance)
             self.journeys.append(journey)
@@ -159,7 +160,7 @@ class HITInstance(Base):
             self.submitted_at = datetime.datetime.now()
             return True, None
 
-    def to_dict(self, with_tasks=False, with_response_info=False):
+    def to_dict(self, with_nodes=False):
         instance_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
         spec_dict = self.spec.to_dict()
 
@@ -169,12 +170,13 @@ class HITInstance(Base):
         # merge hit and instance dicts
         instance_dict = {**spec_dict, **instance_dict}        
         
-        # get the nodes
-        nodes = set([n for j in self.journeys for n in j.nodes])
-        instance_dict['nodes'] = [n.to_dict() for n in nodes]
+        if with_nodes:
+            # get the nodes
+            nodes = set([n for j in self.journeys for n in j.nodes])
+            instance_dict['nodes'] = [n.to_dict() for n in nodes]
 
-        # get the journeys
-        instance_dict['journeys'] = [j.to_dict() for j in self.journeys]
+            # get the journeys
+            instance_dict['journeys'] = [j.to_dict() for j in self.journeys]
 
         # if with_tasks:
             # prerequisite_tasks = [task for task in self.tasks if task.spec.prerequisite]
@@ -184,9 +186,6 @@ class HITInstance(Base):
             #     instance_dict['tasks'] = [task.to_dict() for task in self.tasks]
             # else:
             #     instance_dict['tasks'] = [task.to_dict() for task in prerequisite_tasks]
-
-        if self.submitted:
-            instance_dict['completionInfo'] = self.get_completion_info()
 
         return instance_dict
 

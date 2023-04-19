@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { myerror } from '../utils'
-import { BinaryInputSpec, ContinuousKeyboardInputSpec, GravityKeyboardInputSpec, Intensity1DInputSpec} from '@covfee-types/input/1d_intensity'
+import { BinaryInputSpec, ContinuousKeyboardInputSpec, GravityKeyboardInputSpec, Intensity1DInputSpec} from '@covfee-shared/spec/input/1d_intensity'
 import { ButtonManagerClient } from './button_manager'
 import styled from 'styled-components'
 

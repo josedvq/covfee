@@ -1,4 +1,5 @@
 import {TaskSpec, TaskType} from './task'
+import {JourneySpec} from './journey'
 import { MarkdownContentSpec } from './tasks/utils'
 
 export interface BaseInterface {
@@ -43,10 +44,10 @@ export interface Shuffler {
      * @default "shuffle"
      */
     type: 'shuffle',
-    tasks: TaskListObject[]
+    tasks: NodeSpec[]
 }
 
-type TaskListObject = (Shuffler | TaskSpec)[]
+type NodeSpec = (Shuffler | TaskSpec)[]
 
 export interface completionInfo {
     /**
@@ -77,7 +78,11 @@ export interface HitSpec {
     /**
      * list of tasks in the HIT
      */
-    tasks: TaskListObject
+    nodes: NodeSpec
+    /**
+     * list of journeys in the HIT
+     */
+    journeys: JourneySpec
     /**
      * number of copies or instances of the HIT
      */
@@ -101,30 +106,3 @@ export interface HitSpec {
 }
 
 
-// extends the specs with all the covfee-added fields
-export type HitInstanceType = Omit<HitSpec, 'tasks'> & {
-    /**
-     * list of tasks in the HIT
-     */
-    tasks: Array<TaskType>
-    /**
-     * True if the HIT was already submitted
-     */
-    submitted: boolean
-    /**
-     * Specifies the behavior when the HIT is submitted
-     */
-    completionInfo?: completionInfo
-    /**
-     * Date of HIT creation
-     */
-    created_at: string
-    /**
-     * Date the HIT was last updated
-     */
-    updated_at: string
-    /**
-     * Date the HIT instance was submitted
-     */
-    submitted_at: string
-}

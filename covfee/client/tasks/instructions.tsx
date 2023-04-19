@@ -3,10 +3,10 @@ import {
     Row,
     Col,
 } from 'antd'
-import { InstructionsTaskSpec } from '@covfee-types/tasks/instructions'
+import { InstructionsTaskSpec } from '@covfee-shared/spec/tasks/instructions'
 import { MarkdownLoader } from './utils/markdown_loader'
 import { BasicTaskProps, CovfeeTask } from './base'
-import { TaskType } from '@covfee-types/task'
+import { TaskType } from '@covfee-shared/spec/task'
 import { Form } from '../input/form'
 
 interface Props extends TaskType, BasicTaskProps {

@@ -11,18 +11,6 @@ from ..orm import TaskSpec, TaskInstance, TaskResponse
 
 # TASKS
 
-# delete an existing task
-@api.route('/tasks/<kid>/delete')
-def task_delete(kid):
-    task = app.session.query(TaskInstance).get(int(kid))
-    if task is None:
-        return jsonify({'msg': 'invalid task'}), 400
-    if not task.editable:
-        return jsonify(msg='Task cannot be user-deleted.'), 403
-    app.session.delete(task)
-    app.session.commit()
-    return jsonify({'success': True}), 200
-
 @api.route('/tasks/<kid>/response')
 def response(kid):
     ''' Will return the last response for a task
@@ -68,12 +56,3 @@ def response_submit(rid):
     res = response.submit(request.json)    
     app.session.commit()
     return jsonify(res)
-
-@api.route('/responses/<rid>/chunks', methods=['GET'])
-def query_chunks(rid):
-    response = app.session.query(TaskResponse).get(int(rid))
-    if response is None:
-        return jsonify({'msg': 'invalid response'}), 400
-
-    chunk_bytes = response.pack_chunks()
-    return send_file(BytesIO(chunk_bytes), mimetype='application/octet-stream'), 200

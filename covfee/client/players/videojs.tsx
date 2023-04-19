@@ -1,7 +1,7 @@
 import * as React from 'react'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css'
-import { VideojsPlayerMedia } from '@covfee-types/players/videojs'
+import { VideojsPlayerMedia } from '@covfee-shared/spec/players/videojs'
 import { urlReplacer } from '../utils'
 
 interface Props extends VideojsPlayerMedia {

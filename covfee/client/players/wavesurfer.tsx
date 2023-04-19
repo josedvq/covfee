@@ -3,7 +3,7 @@ import {
     Button
 } from 'antd'
 // import WaveSurfer from 'wavesurfer.js'
-import { WavesurferPlayerMedia } from '@covfee-types/players/wavesurfer'
+import { WavesurferPlayerMedia } from '@covfee-shared/spec/players/wavesurfer'
 import { ContinuousPlayerProps, CovfeeContinuousPlayer } from './base'
 
 export interface Props extends ContinuousPlayerProps {

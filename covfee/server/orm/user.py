@@ -23,6 +23,7 @@ class User(Base):
     providers: Mapped[List[AuthProvider]] = relationship("AuthProvider", backref="user", cascade="all, delete")
 
     def __init__(self, username: str, roles: list = ['user', 'admin']):
+        super().__init__()
         self.username = username
         self.roles = roles
 
@@ -41,6 +42,7 @@ class AuthProvider(Base):
     # extra: Mapped[Dict[str, Any]]
 
     def __init__(self, provider_id: str, user_id: str, extra=None):
+        super().__init__()
         self.provider_id = provider_id
         self.user_id = user_id
         self.extra = extra

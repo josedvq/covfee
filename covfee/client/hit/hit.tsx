@@ -27,8 +27,8 @@ import {CovfeeMenuItem} from '../gui'
 import {Sidebar, TaskEditCallback, TaskCreateCallback, TaskDeleteCallback} from './sidebar'
 import ButtonEventManagerContext from '../input/button_manager'
 
-import { AnnotationInterface, HitInstanceType } from '@covfee-types/hit'
-import { TaskResponse, TaskType } from '@covfee-types/task'
+import { AnnotationInterface, HitInstanceType } from '@covfee-spec/hit'
+import { TaskResponse, TaskType } from '@covfee-shared/spec/task'
 import { TaskLoader } from './task_loader'
 
 import './hit.scss'

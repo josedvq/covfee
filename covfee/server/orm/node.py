@@ -44,7 +44,7 @@ class NodeSpec(Base):
     nodes: Mapped[List['NodeInstance']] = relationship(back_populates='spec')
 
     def __init__(self):
-        pass
+        super().__init__()
 
     def instantiate(self):
         instance = NodeInstance()
@@ -75,4 +75,14 @@ class NodeInstance(Base):
     journeys: Mapped[List['JourneyInstance']] = relationship(secondary=journey_node_table, back_populates='nodes')
 
     def __init__(self):
-        pass
+        super().__init__()
+
+
+    def to_dict(self):
+        instance_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        spec_dict = self.spec.to_dict()
+
+        # merge spec and instance dicts
+        instance_dict = {**spec_dict, **instance_dict}
+
+        return instance_dict

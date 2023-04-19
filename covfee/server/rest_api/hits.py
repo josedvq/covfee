@@ -17,11 +17,11 @@ def hit(hid):
         hid (str): hit ID
     """
     with_instances = request.args.get('with_instances', False)
-    with_instance_tasks = request.args.get('with_instance_tasks', False)
+    with_instance_nodes = request.args.get('with_instance_nodes', False)
     res = app.session.query(HITSpec).get(int(hid))
     return jsonify_or_404(res,
                           with_instances=with_instances,
-                          with_instance_tasks=with_instance_tasks)
+                          with_instance_nodes=with_instance_nodes)
 
 @api.route('/hits/<hid>/edit', methods=['POST'])
 @admin_required
@@ -41,32 +41,16 @@ def hit_edit(hid):
 # return one HIT instance
 @api.route('/instances/<iid>')
 def instance(iid):
-    with_tasks = request.args.get('with_tasks', True)
+    with_nodes = request.args.get('with_nodes', True)
     with_response_info = request.args.get('with_response_info', True)
     res = app.session.query(HITInstance).get(bytes.fromhex(iid))
-    return jsonify_or_404(res, with_tasks=with_tasks, 
-                          with_response_info=with_response_info)
+    return jsonify_or_404(res, with_nodes=with_nodes)
 
 
-@api.route('/instance-previews/<iid>')
-def instance_preview(iid):
-    res = HITInstance.query.filter_by(preview_id=bytes.fromhex(iid)).first()
-    return jsonify_or_404(res, with_tasks=True, with_response_info=False)
-
-
-# submit a hit (when finished)
-@api.route('/instances/<iid>/submit', methods=['POST'])
-def instance_submit(iid):
-    instance = app.session.query(HITInstance).get(bytes.fromhex(iid))
-    if instance is None:
-        return jsonify({'msg': 'invalid instance'}), 400
-    is_submitted, err = instance.submit()
-
-    if not is_submitted:
-        return jsonify({'msg': err}), 400
-
-    app.session.commit()
-    return jsonify(instance.to_dict(with_tasks=False))
+# @api.route('/instance-previews/<iid>')
+# def instance_preview(iid):
+#     res = HITInstance.query.filter_by(preview_id=bytes.fromhex(iid)).first()
+#     return jsonify_or_404(res, with_tasks=True, with_response_info=False)
 
 
 @api.route('/hits/<hid>/instances/add')
@@ -143,16 +127,3 @@ def instance_download(iid):
     response = Response(stream_with_context(generator()), mimetype='application/zip')
     response.headers['Content-Disposition'] = 'attachment; filename={}'.format('results.zip')
     return response
-
-# create a task attached to an instance
-@api.route('/instances/<iid>/tasks/add', methods=['POST'])
-def task_add_to_instance(iid):
-    instance = app.session.query(HITInstance).get(bytes.fromhex(iid))
-    if instance is None:
-        return jsonify({'msg': 'invalid instance'}), 400
-
-    task_spec = TaskSpec(**request.json, editable=True)
-    task = task_spec.instantiate()
-    instance.tasks.append(task)
-    app.session.commit()
-    return jsonify(task.to_dict())

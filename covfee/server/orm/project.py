@@ -19,6 +19,7 @@ class Project(Base):
     hitspecs: Mapped[List['HITSpec']] = relationship(back_populates='project')
 
     def __init__(self, name = 'Sample', email = 'example@example.com', hitspecs: List['HITSpec'] = []):
+        super().__init__()
         self.name = name
         self.email = email
         self.hitspecs = hitspecs
@@ -75,9 +76,12 @@ class Project(Base):
                     os.path.join(base_path, instance.id.hex()), 
                     csv=csv)
                 
-    def to_dict(self, with_hits=False, with_instances=False, with_config=False):
+    def to_dict(self, with_hits=True, with_instances=False, with_instance_nodes=False):
         project_dict = {c.name: getattr(self, c.name)
                         for c in self.__table__.columns}
         if with_hits:
-            project_dict['hits'] = [hit.to_dict(with_instances=with_instances, with_config=with_config) for hit in self.hitspecs]
+            project_dict['hits'] = [
+                hit.to_dict(with_instances=with_instances, with_instance_nodes=with_instance_nodes) 
+                for hit in self.hitspecs
+            ]
         return project_dict

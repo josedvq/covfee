@@ -1,7 +1,7 @@
 import * as React from 'react'
 import './html5.css'
 
-import { HTML5PlayerMedia, HTML5PlayerOptions } from '@covfee-types/players/html5'
+import { HTML5PlayerMedia, HTML5PlayerOptions } from '@covfee-shared/spec/players/html5'
 import { CovfeeContinuousPlayer, ContinuousPlayerProps } from './base'
 import {PlayerBar} from './videoplayer_bar'
 import {CountdownTimer} from './utils/countdown'

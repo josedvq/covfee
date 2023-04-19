@@ -5,7 +5,7 @@ import {
     Alert
 } from 'antd'
 import ReactMarkdown from 'react-markdown/with-html'
-import { MarkdownContentSpec } from "@covfee-types/tasks/utils"
+import { MarkdownContentSpec } from "@covfee-shared/spec/tasks/utils"
 import Constants from 'Constants'
 import { fetcher } from '../../utils'
 

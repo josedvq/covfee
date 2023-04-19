@@ -8,7 +8,7 @@ import classNames from 'classnames'
 
 import { TaskEditorModal } from './task_editor'
 
-import { EditableTaskFields, TaskSpec, TaskType} from '@covfee-types/task'
+import { EditableTaskFields, TaskSpec, TaskType} from '@covfee-shared/spec/task'
 
 export type TaskEditCallback = (arg0: number, arg1: EditableTaskFields) => Promise<void>
 export type TaskCreateCallback = (arg0: number, arg1: EditableTaskFields) => Promise<void>

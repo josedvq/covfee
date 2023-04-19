@@ -17,11 +17,17 @@ def projects():
         [type]: list of project objects
     """
     with_hits = request.args.get('with_hits', False)
+    with_instances = request.args.get('with_instances', False)
+    with_instance_nodes = request.args.get('with_instance_nodes', False)
     res = app.session.query(Project).all()
     if res is None:
         return jsonify([])
     else:
-        return jsonify([p.to_dict(with_hits=with_hits) for p in res])
+        return jsonify([p.to_dict(
+            with_hits=with_hits,
+            with_instances=with_instances,
+            with_instance_nodes=with_instance_nodes
+        ) for p in res])
 
 
 # return one project
@@ -33,10 +39,10 @@ def project(pid):
     Args:
         pid (str): project ID
     """
-    with_hits = request.args.get('with_hits', False)
     with_instances = request.args.get('with_instances', False)
+    with_instance_nodes = request.args.get('with_instance_nodes', False)
     res = app.session.query(Project).get(pid)
-    return jsonify_or_404(res, with_hits=with_hits, with_instances=with_instances, with_config=True)
+    return jsonify_or_404(res, with_instances=with_instances, with_instance_nodes=with_instance_nodes)
 
 
 @api.route('/projects/<pid>/csv')

@@ -12,13 +12,11 @@ import {
 
 import { log, myerror, fetcher, throwBadResponse, makeCancelablePromise, CancelablePromise } from '../utils'
 import { getPlayerClass, getTask } from '../task_utils'
-import { TaskResponse, TaskSpec, TaskType } from '@covfee-types/task'
+import { TaskResponse, TaskSpec, TaskType } from '@covfee-shared/spec/task'
 import { TaskOverlay } from './overlay'
 import buttonManagerContext from '../input/button_manager_context'
 import { QuestionCircleOutlined } from '@ant-design/icons'
 import { CommonTaskProps, BasicTaskProps, ContinuousTaskProps, CovfeeTask } from 'tasks/base'
-import { BinaryDataCaptureBuffer } from '../buffers/binary_dc_buffer'
-import { AnnotationBuffer } from 'buffers/buffer';
 import { ContinuousPlayerProps, CovfeeContinuousPlayer } from 'players/base';
 
 export interface VideoPlayerContext {
@@ -180,10 +178,7 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
 
     loadPromise: CancelablePromise<any>
 
-    buffer: AnnotationBuffer
-    parentBuffer: AnnotationBuffer
     endTaskResult: any = null
-    // endTaskBuffer: AnnotationBuffer = null
     listeners: {[key: string]: ((...args: any[]) => void)[] } = {}
 
     _playerLoaded: Promise<any>
@@ -216,16 +211,6 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
 
         this.state.taskInfo = this.getTaskRenderAs()
         this.state.instructions.visible = (this.props.task.spec.instructionsType == 'popped')
-
-        if(this.isContinuous) {
-            this.buffer = new BinaryDataCaptureBuffer(
-                null,
-                this.props.previewMode,
-                this.taskConstructor.taskInfo.bufferDataLen,   // sample length
-                true,
-                true,
-                this.handleBufferError)
-        }
         
     }
 
@@ -257,7 +242,6 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
         this.loadPromise = makeCancelablePromise(Promise.all([
             this.props.fetchTaskResponse(this.props.task).then((response: TaskResponse) => {
                 this.response = response
-                if(this.buffer) this.buffer.url = response.url
             }),
             this.props.parent && this.props.fetchTaskResponse(this.props.parent).then((response: TaskResponse) => {
                 this.parentResponse = response
@@ -308,31 +292,12 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
             })
         }
     }
-    
-    makeContinuousBuffers = (duration: number, load = false) => {
-        const fps = (this.props.task as any).spec.media.fps || 60
-        const bufferLength = Math.ceil(duration * fps)
-        this.buffer.make(bufferLength, fps)
-        if(load) {
-            return this.loadBuffers()
-        } else {
-            return Promise.resolve()
-        }
-    }
 
     componentWillUnmount() {
         this.loadPromise.promise.catch(()=>{})
         this.loadPromise.cancel()
     }
     
-
-    loadBuffers = () => {
-        return Promise.all([
-            this.buffer ? this.buffer._load() : Promise.resolve(),
-            this.parentBuffer ? this.parentBuffer._load(): Promise.resolve()
-        ])
-    }
-
     loadTaskForReplay = () => { this.reloadTask(true) }
 
     clearAndReloadTask = () => {
@@ -347,7 +312,6 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
             .then(throwBadResponse)
             .then(response => {
                 this.response = response
-                if(this.buffer) this.buffer.url = response.url
                 this.reloadTask(false)
             }).catch(error => {
                 myerror('Error making task response.', error)
@@ -719,7 +683,6 @@ export class TaskLoader extends React.Component<Props & defaultProps, State> {
                     let commonProps: CommonTaskProps = {
                         spec: this.props.task.spec,
                         response: (this.isContinuous && !this.state.replayMode) ? null : this.response,
-                        buffer: this.buffer,
                         buttons: this.context.getContext(),
                         getSharedState: this.getSharedState
                     }

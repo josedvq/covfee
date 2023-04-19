@@ -1,7 +1,7 @@
-import { Intensity1DInputSpec } from 'types/input/1d_intensity'
+import { Intensity1DInputSpec } from 'spec/input/1d_intensity'
 import { CommonContinuousTaskSpec} from '../task'
 import { HTML5PlayerMedia} from '../players/html5'
-import { Trace1DInputSpec } from 'types/input/1d_trace'
+import { Trace1DInputSpec } from 'spec/input/1d_trace'
 
 /**
 * @TJS-additionalProperties false

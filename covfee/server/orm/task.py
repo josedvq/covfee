@@ -13,12 +13,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import backref, relationship, Mapped
 
 from .base import Base
-# import covfee.server.orm
-# from ..db import Base
+from .response import TaskResponse
 from .. import tasks
 from ..tasks.base import BaseCovfeeTask
 from ..utils.packer import Packer
-pytype = type
 
 from .node import NodeSpec, NodeInstance
 
@@ -28,11 +26,16 @@ class TaskSpec(NodeSpec):
         "polymorphic_identity": "TaskSpec",
     }
 
-    # spec: Mapped[Dict[str, Any]]
+    spec: Mapped[Dict[str, Any]]
 
     def __init__(self, spec=None):
         super().__init__()
         self.spec = spec
+
+    def instantiate(self):
+        instance = TaskInstance()
+        self.nodes.append(instance)
+        return instance
 
     def validate(str):
         pass
@@ -48,15 +51,27 @@ class TaskInstance(NodeInstance):
     }
 
 
-    responses: Mapped[List['TaskResponse']] = relationship("TaskResponse", back_populates='task', cascade="all, delete-orphan")
+    responses: Mapped[List['TaskResponse']] = relationship(back_populates='task', cascade="all, delete-orphan")
 
     # response status
     # created_at = Column(DateTime, default=datetime.datetime.now)
     # updated_at = Column(DateTime, onupdate=datetime.datetime.now)
 
     def __init__(self):
+        super().__init__()
         self.has_unsubmitted_response = False
         self.add_response() # add initial empty response
+
+    def __hash__(self):
+        if hasattr(self, 'id') and self.id is not None:
+            return self.id
+        else:
+            return self._unique_id
+        
+    def __eq__(self, other):
+        if not isinstance(other, NodeInstance):
+            return NotImplemented
+        return hash(self) == hash(other)
 
     def get_task_object(self):
         task_class = getattr(tasks, self.spec.spec['type'], BaseCovfeeTask)
@@ -67,20 +82,15 @@ class TaskInstance(NodeInstance):
         # merge task and spec dicts
         task_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns
                      if c not in ['responses']}
-        if task_dict['hitinstance_id']:   # child tasks may have no hitinstance_id
-            task_dict['hitinstance_id'] = task_dict['hitinstance_id'].hex()
         spec_dict = self.spec.to_dict()
 
         task_dict = {**spec_dict, **task_dict}
 
         task_dict['responses'] = [response.to_dict() for response in self.responses]
         # task is valid if any response is valid
-        task_dict['valid'] = self.has_valid_response()
-        if self.children:
-            task_dict['children'] = [child.to_dict() for child in self.children]
-        else:
-            task_dict['children'] = []
-        task_dict['num_submissions'] = sum([1 if res.submitted else 0 for res in self.responses])
+        # task_dict['valid'] = self.has_valid_response()
+
+        # task_dict['num_submissions'] = sum([1 if res.submitted else 0 for res in self.responses])
         task_dict['url'] = f'{app.config["API_URL"]}/tasks/{task_dict["id"]}'
 
         task_object = self.get_task_object()
@@ -92,7 +102,7 @@ class TaskInstance(NodeInstance):
         return any([response.valid for response in self.responses])
 
     def add_response(self):
-        response = orm.TaskResponse()
+        response = TaskResponse()
         self.responses.append(response)
         return response
 

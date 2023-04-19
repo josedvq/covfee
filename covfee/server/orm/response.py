@@ -3,6 +3,7 @@ import datetime
 from typing import Dict, Any
 
 import numpy as np
+from flask import current_app as app
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
@@ -13,11 +14,11 @@ class TaskResponse(Base):
     """ Represents a task's response """
     __tablename__ = 'taskresponses'
 
-    id: Mapped[str] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
 
     # instance relationships
     node_id: Mapped[int] = mapped_column(ForeignKey('nodeinstances.id'))
-    task: Mapped['Task'] = relationship("TaskInstance", back_populates='responses')
+    task: Mapped['TaskInstance'] = relationship(back_populates='responses')
     # node_id = Column(Integer, ForeignKey('nodeinstances.id'))
 
     # state: Mapped[Dict[str, Any]] # holds the shared state of the task
@@ -32,6 +33,7 @@ class TaskResponse(Base):
     # extra: Mapped[Dict[str, Any]]
 
     def __init__(self):
+        super().__init__()
         self.submitted = False
         self.valid = False
         self.extra = {}
@@ -40,7 +42,6 @@ class TaskResponse(Base):
         response_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
         response_dict = {**response_dict}
         response_dict['url'] = f'{app.config["API_URL"]}/responses/{response_dict["id"]}'
-        del response_dict['extra']
         
         return response_dict
 

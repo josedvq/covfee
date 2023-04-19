@@ -5,14 +5,6 @@ import { QuestionnaireTaskSpec } from "./tasks/questionnaire"
 import { VideocallTaskSpec } from "./tasks/videocall"
 import {ThreeImagesTaskSpec} from "./tasks/three_images"
 
-type DistributiveOmit<T, K extends keyof T> = T extends unknown
-    ? Omit<T, K>
-    : never;
-
-type DistributivePick<T, K extends keyof T> = T extends unknown
-    ? Pick<T, K>
-    : never;
-
 /**
 * @TJS-additionalProperties false
 */
@@ -62,10 +54,6 @@ export interface CommonTaskSpec {
      */
     autoSubmit?: boolean
     /**
-     * children tasks
-     */
-    children?: Array<ChildTaskSpec>
-    /**
      * Instructions to be displayed before the form
      */
     instructions?: string
@@ -84,66 +72,6 @@ export interface CommonContinuousTaskSpec extends CommonTaskSpec { }
 /**
  * One of the supported task specs
  */
-export type ChildTaskSpec = DistributiveOmit<TaskSpec, 'media' | 'children'>
 export type TaskSpec =  Continuous1DTaskSpec | ContinuousKeypointTaskSpec | InstructionsTaskSpec | QuestionnaireTaskSpec | ThreeImagesTaskSpec
-
-export interface TaskResponse {
-    id: number,
-    url: string,
-    task_id: number,
-    hitinstance_id: string,
-    index: number,
-    submitted: boolean,
-    data: object,
-    hasChunkData: boolean,
-    chunkData?: object,
-    state: any
-}
-export interface TaskType extends Omit<CommonTaskSpec, 'children'> {
-    children: Array<TaskType>
-    /**
-     * Unique ID of the task
-     */
-    id: string
-    /**
-     * URL to task api endpoint
-     */
-    url: string
-    /**
-     * Task specification as provided by the user
-     */
-    spec: TaskSpec
-    /**
-     * number of times the task has been submitted
-     */
-    num_submissions: number
-    /**
-     * Sent when the latest response to the task is unsubmitted (used for resuming)
-     */
-    has_unsubmitted_responses: boolean
-    /**
-     * True if the task is a user task (can be edited)
-     */
-    editable: boolean
-    /**
-     * True if the task has been successfully validated
-     */
-    valid: boolean
-    /**
-     * Task-specific props to be fed to the task
-     */
-    taskSpecific?: any
-}
-
-export interface EditableTaskFields {
-    /**
-     * Display name of the task
-     */
-    name: string,
-    /**
-     * Task specification as provided by the user
-     */
-    // spec: any,
-}
 
 

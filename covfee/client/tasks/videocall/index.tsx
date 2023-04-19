@@ -3,8 +3,8 @@ import { useState, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { BasicTaskProps, CovfeeTask } from '../base'
 
-import { VideocallTaskSpec } from '@covfee-types/tasks/videocall'
-import { TaskType } from '@covfee-types/task'
+import { VideocallTaskSpec } from '@covfee-shared/spec/tasks/videocall'
+import { TaskType } from '@covfee-shared/spec/task'
 
 import reducer, {incrementValue} from './videocallSlice'
 import AgoraRTC from 'agora-rtc-sdk-ng'

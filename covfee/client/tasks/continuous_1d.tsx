@@ -7,10 +7,10 @@ import {
 const { Title } = Typography
 import { OneDIntensity } from '../input/1d_intensity'
 import { OneDTrace } from '../input/1d_trace'
-import { TaskType} from '@covfee-types/task'
+import { TaskType} from '@covfee-shared/spec/task'
 import {  ContinuousTaskProps, CovfeeContinuousTask } from './base'
-import { Continuous1DTaskSpec} from '@covfee-types/tasks/continuous_1d'
-import { HTML5PlayerMedia } from '@covfee-types/players/html5';
+import { Continuous1DTaskSpec} from '@covfee-shared/spec/tasks/continuous_1d'
+import { HTML5PlayerMedia } from '@covfee-shared/spec/players/html5';
 
 interface Props extends TaskType, ContinuousTaskProps {
     spec: Continuous1DTaskSpec

@@ -8,8 +8,8 @@ import VideojsPlayer from '../players/videojs'
 import WaveSurferPlayer from '../players/wavesurfer'
 import {Form} from '../input/form'
 import { BasicTaskProps, CovfeeTask } from './base'
-import { QuestionnaireTaskSpec } from '@covfee-types/tasks/questionnaire'
-import { TaskType } from '@covfee-types/task'
+import { QuestionnaireTaskSpec } from '@covfee-shared/spec/tasks/questionnaire'
+import { TaskType } from '@covfee-shared/spec/task'
 
 interface Props extends TaskType, BasicTaskProps {
     spec: QuestionnaireTaskSpec

@@ -27,14 +27,15 @@ class JourneySpec(Base):
     hitspec: Mapped['HITSpec'] = relationship(back_populates='journeyspecs')
     
     # down
-    nodespecs = relationship('NodeSpec', 
+    nodespecs: Mapped[List['NodeSpec']] = relationship( 
         secondary=journeyspec_nodespec_table, 
         back_populates='journeyspecs')
 
     # instance relationships
-    journeys: Mapped[List['JourneyInstance']] = relationship(back_populates='journeyspec')
+    journeys: Mapped[List['JourneyInstance']] = relationship(back_populates='spec')
     
     def __init__(self, nodes: List['NodeSpec'] = []):
+        super().__init__()
         self.nodes = nodes
 
     def instantiate(self):
@@ -58,12 +59,12 @@ class JourneyInstance(Base):
     # one JourneySpec -> many JourneyInstance
     journeyspec_id: Mapped[int] = mapped_column(ForeignKey('journeyspecs.id'))
     # journeyspec_id = Column(Integer, ForeignKey('journeyspecs.id'))
-    journeyspec = relationship("JourneySpec", back_populates='journeys')
+    spec: Mapped['JourneySpec'] = relationship(back_populates='journeys')
 
     # one HitInstance -> many JourneyInstance
     hit_id: Mapped[int] = mapped_column(ForeignKey('hitinstances.id'))
     # hit_id = Column(Integer, ForeignKey('hitinstances.id'))
-    hit  = relationship("HITInstance", back_populates='journeys')
+    hit: Mapped['HITInstance']  = relationship(back_populates='journeys')
 
     nodes: Mapped[List['NodeInstance']] = relationship(secondary=journey_node_table, back_populates='journeys')
     
@@ -108,29 +109,24 @@ class JourneyInstance(Base):
             self.submitted_at = datetime.datetime.now()
             return True, None
 
-    def to_dict(self, with_tasks=False, with_response_info=False):
+    def to_dict(self, with_nodes=False, with_response_info=False):
         instance_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
-        hit_dict = self.hit.to_dict()
+        spec_dict = self.spec.to_dict()
 
         instance_dict['id'] = instance_dict['id'].hex()
-        instance_dict['token'] = self.get_hmac()
         instance_dict['hit_id'] = instance_dict['hit_id'].hex()
-        instance_dict['preview_id'] = instance_dict['preview_id'].hex()
+        instance_dict['token'] = self.get_hmac()
 
         # merge hit and instance dicts
-        instance_dict = {**hit_dict, **instance_dict}
+        instance_dict = {**spec_dict, **instance_dict}
 
-        if with_tasks:
-            prerequisite_tasks = [task for task in self.tasks if task.spec.prerequisite]
-            prerequisites_completed = all([task.has_valid_response() for task in prerequisite_tasks])
-            instance_dict['prerequisites_completed'] = prerequisites_completed
-            if prerequisites_completed:
-                instance_dict['tasks'] = [task.to_dict() for task in self.tasks]
-            else:
-                instance_dict['tasks'] = [task.to_dict() for task in prerequisite_tasks]
+        if with_nodes:
+            instance_dict['nodes'] = [n.to_dict() for n in self.nodes]
+        else:
+            instance_dict['nodes'] = [n.id for n in self.nodes]
 
-        if self.submitted:
-            instance_dict['completionInfo'] = self.get_completion_info()
+        # if self.submitted:
+        #     instance_dict['completionInfo'] = self.get_completion_info()
 
         return instance_dict
 

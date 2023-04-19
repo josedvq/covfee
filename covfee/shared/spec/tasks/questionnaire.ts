@@ -1,6 +1,6 @@
 import { CommonTaskSpec } from '../task'
 import { WavesurferPlayerMedia } from '../players/wavesurfer'
-import { VideojsPlayerMedia } from 'types/players/videojs'
+import { VideojsPlayerMedia } from 'spec/players/videojs'
 import {FormSpec, InputSpec} from '../form'
 
 /**

@@ -20,7 +20,7 @@
         "node_modules/@types/**/*.d.ts"
     ],
     "exclude": [
-        "types/*.ts",
+        "spec/*.ts",
         "node_modules",
         "dist"
     ],

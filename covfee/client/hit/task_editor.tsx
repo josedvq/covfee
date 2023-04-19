@@ -3,7 +3,7 @@ import { Button, Input, Modal, Select, Form, Typography, Alert } from 'antd'
 const { Option } = Select
 const { Text } = Typography
 
-import { EditableTaskFields, TaskSpec} from '@covfee-types/task'
+import { EditableTaskFields, TaskSpec} from '@covfee-shared/spec/task'
 
 interface Props {
     visible: boolean

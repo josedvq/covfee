@@ -23,7 +23,7 @@ import {
     Button
 } from 'antd'
 import { log } from '../utils'
-import { FieldSpec, FormSpec, InputSpec } from '@covfee-types/tasks/questionnaire'
+import { FieldSpec, FormSpec, InputSpec } from '@covfee-shared/spec/tasks/questionnaire'
 import { FormInstance } from 'antd/lib/form'
 import { StarOutlined, ThunderboltFilled } from '@ant-design/icons'
 

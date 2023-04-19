@@ -7,7 +7,7 @@ export interface ProjectSpec {
     /**
      * unique ID of the project
      */
-    id: string
+    id: number
     /**
      * name of the project, used to identify it in the covfee interface.
      */
