@@ -15,8 +15,7 @@ import {
     Link,
 } from "react-router-dom"
 
-import store from './store'
-import { HitLoaderWithRouter} from './hit/hit_loader'
+import { JourneyPageWithRouter} from './journey/journey'
 
 const { Header, Footer, Content, Sider } = Layout;
 
@@ -37,8 +36,8 @@ class Root extends React.Component {
                                 <Route path="/about">
                                     <About />
                                 </Route>
-                                <Route path="/hits/:hitId">
-                                    <HitLoaderWithRouter/>
+                                <Route path="/journeys/:journeyId">
+                                    <JourneyPageWithRouter/>
                                 </Route>
                             </Switch>
                         </Layout>

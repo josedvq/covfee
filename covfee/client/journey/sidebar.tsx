@@ -6,13 +6,7 @@ import {
 import { CaretDownOutlined, EditOutlined, EyeFilled, PlusCircleOutlined } from '@ant-design/icons'
 import classNames from 'classnames'
 
-import { TaskEditorModal } from './task_editor'
-
-import { EditableTaskFields, TaskSpec, TaskType} from '@covfee-shared/spec/task'
-
-export type TaskEditCallback = (arg0: number, arg1: EditableTaskFields) => Promise<void>
-export type TaskCreateCallback = (arg0: number, arg1: EditableTaskFields) => Promise<void>
-export type TaskDeleteCallback = (arg0: number) => Promise<void>
+import { TaskSpec, TaskType} from '@covfee-shared/spec/task'
 
 interface Props {
     /**
@@ -27,52 +21,13 @@ interface Props {
      * Called when the user changes the active task
      */
     onChangeActiveTask: (arg0: [number, number]) => void
-    /**
-     * Settings for the mode where the sidebar can be used to edit tasks
-     */
-    editMode?: {
-        /**
-         * Enable editing for editable tasks
-         */
-        enabled:boolean
-        /**
-         * Allow the creation of new tasks (shows the "new task" button)
-         */
-        allowNew:boolean
-        /**
-         * Called when a task is edited via the sidebar
-         */
-        onTaskEdit: TaskEditCallback
-        /**
-         * Called when a new task is created via the sidebar
-         */
-        onTaskCreate: TaskCreateCallback
-        /**
-         * Called when a task is deleted
-         */
-        onTaskDelete: TaskDeleteCallback
-        /**
-         * Spec of the types of tasks that can be created
-         */
-        presets: { [key: string]: TaskSpec }
-    }
 }
 interface State {
-    editTaskModal: {
-        taskId: [number, number]
-        visible: boolean
-        new: boolean
-    }
 }
 
 export class Sidebar extends React.Component<Props, State> {
 
     state: State = {
-        editTaskModal: {
-            taskId: [0,0],
-            visible: false,
-            new: false
-        }
     }
 
     taskElementRefs: TaskSection[] = []
@@ -90,66 +45,11 @@ export class Sidebar extends React.Component<Props, State> {
         }
     }
 
-    handleClickEdit = (taskId: [number, number]) => {
-        if (!this.props.editMode.enabled) return
-        this.setState({
-            editTaskModal: {
-                ...this.state.editTaskModal,
-                taskId: taskId,
-                visible: true,
-                new: false
-            }
-        })
-    }
-
-    handleClickAdd = (parentId: number) => {
-        if (!this.props.editMode.enabled) return
-        this.setState({
-            editTaskModal: {
-                ...this.state.editTaskModal,
-                taskId: [parentId, null],
-                visible: true,
-                new: true
-            }
-        })
-    }
-
-    handleEditTaskCancel = () => {
-        this.setState({
-            editTaskModal: {
-                ...this.state.editTaskModal,
-                visible: false,
-            }
-        })
-    }
+   
 
     render() {
         this.taskElementRefs = []
         return <SidebarContainer>
-            {this.props.editMode.enabled &&
-                ((()=>{
-                    let task
-                    if (!this.state.editTaskModal.new) {
-                        const taskId = this.state.editTaskModal.taskId
-                        task = taskId[1] ?
-                            this.props.tasks[taskId[0]].children[taskId[1]].spec :
-                            this.props.tasks[taskId[0]].spec
-                    } else task=null
-
-                    return <TaskEditorModal
-                        visible={this.state.editTaskModal.visible}
-                        new={this.state.editTaskModal.new}
-                        presets={this.props.editMode.presets}
-                        task={task}
-                        onSubmit={(task) => {
-                            return this.state.editTaskModal.new ?
-                                this.props.editMode.onTaskCreate(this.state.editTaskModal.taskId[0], task) :
-                                this.props.editMode.onTaskEdit(task.id, task)
-                        }}
-                        onClose={this.handleEditTaskCancel}
-                        onDelete={() => { return this.props.editMode.onTaskDelete(this.state.editTaskModal.taskIndex) }} />
-                })())   
-            }
             <SidebarHead>
                 {this.props.children}
             </SidebarHead>

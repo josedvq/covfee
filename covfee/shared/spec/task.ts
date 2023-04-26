@@ -4,6 +4,7 @@ import { InstructionsTaskSpec } from "./tasks/instructions"
 import { QuestionnaireTaskSpec } from "./tasks/questionnaire"
 import { VideocallTaskSpec } from "./tasks/videocall"
 import {ThreeImagesTaskSpec} from "./tasks/three_images"
+import { IncrementCounterTaskSpec } from "./tasks/increment_counter"
 
 /**
 * @TJS-additionalProperties false
@@ -72,6 +73,6 @@ export interface CommonContinuousTaskSpec extends CommonTaskSpec { }
 /**
  * One of the supported task specs
  */
-export type TaskSpec =  Continuous1DTaskSpec | ContinuousKeypointTaskSpec | InstructionsTaskSpec | QuestionnaireTaskSpec | ThreeImagesTaskSpec
+export type TaskSpec =  IncrementCounterTaskSpec | Continuous1DTaskSpec | ContinuousKeypointTaskSpec | InstructionsTaskSpec | QuestionnaireTaskSpec | ThreeImagesTaskSpec
 
 

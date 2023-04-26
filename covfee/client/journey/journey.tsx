@@ -12,11 +12,9 @@ import {
     Menu,
     Button, 
     Modal,
-    Collapse,
     Progress
 } from 'antd'
 import 'antd/dist/antd.css'
-const { Panel } = Collapse
 import Collapsible from 'react-collapsible'
 const { Text } = Typography
 
@@ -31,7 +29,7 @@ import { AnnotationInterface, HitInstanceType } from '@covfee-spec/hit'
 import { TaskResponse, TaskType } from '@covfee-shared/spec/task'
 import { TaskLoader } from './task_loader'
 
-import './hit.scss'
+import './journey.scss'
 
 interface MatchParams {
     hitId: string,
@@ -102,7 +100,7 @@ interface State {
 }
 
 
-export class Hit extends React.Component<Props, State> {
+export class JourneyPage extends React.Component<Props, State> {
     state: State = {
         taskIds: [],
         currTask: [null, null],
@@ -476,5 +474,5 @@ const ContentContainer = styled.div<any>`
     overflow: auto;
 `
 
-const HitWithRouter = withRouter(Hit)
-export default HitWithRouter
+const JourneyPageWithRouter = withRouter(JourneyPage)
+export {JourneyPageWithRouter}

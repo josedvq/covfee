@@ -1,6 +1,7 @@
 import { JourneyType } from 'types/journey';
-import { myerror, fetcher, myinfo } from '../utils'
+import { myerror, fetcher, myinfo, throwBadResponse } from '../utils'
 import download from 'downloadjs'
+import Constants from 'Constants'
 
 export class Journey {
 
@@ -34,4 +35,25 @@ export class Journey {
         }
     }
     
+}
+
+export const fetchJourney = (id: string) => {
+    const url = Constants.api_url + '/journeys/' + id + '?' + new URLSearchParams({
+        with_nodes: '1',
+    })
+
+    return fetcher(url)
+        .then(throwBadResponse)
+}
+
+export const submitJourney = (id: string) => {
+    const url = Constants.api_url + '/journeys/' + id + '/submit'
+    // submit HIT to get completion code
+    const requestOptions = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 'success': true })
+    }
+    return fetcher(url, requestOptions)
+        .then(throwBadResponse)
 }
