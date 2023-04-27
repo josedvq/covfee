@@ -3,6 +3,11 @@ import { MarkdownContentSpec } from './tasks/utils'
 
 export interface BaseInterface {
     /**
+     * show / hide sidebar
+     * @default true
+     */
+    showSidebar: boolean
+    /**
      * Display a bar indicating progress as fraction of completed tasks
      */
     showProgress?: boolean,
@@ -30,6 +35,7 @@ export interface TimelineInterface extends BaseInterface {
      * @default "timeline"
      */
     type: 'timeline'
+    
 }
 
 /**
@@ -107,6 +113,10 @@ export type HitInstanceType = Omit<HitSpec, 'tasks'> & {
      * list of tasks in the HIT
      */
     tasks: Array<TaskType>
+    /**
+     * Total number of tasks in the HIT
+     */
+    num_tasks: number
     /**
      * True if the HIT was already submitted
      */

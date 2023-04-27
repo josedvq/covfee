@@ -261,6 +261,7 @@ class HITInstance(db.Model):
             prerequisite_tasks = [task for task in self.tasks if task.spec.prerequisite]
             prerequisites_completed = all([task.has_valid_response() for task in prerequisite_tasks])
             instance_dict['prerequisites_completed'] = prerequisites_completed
+            instance_dict['num_tasks'] = len(self.tasks)
             if prerequisites_completed:
                 instance_dict['tasks'] = [task.as_dict() for task in self.tasks]
             else:

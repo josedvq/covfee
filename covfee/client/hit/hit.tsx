@@ -240,7 +240,7 @@ export class Hit extends React.Component<Props, State> {
 
     gotoNextTask = () => {
         // if done with tasks
-        if (this.state.currTask[0] === this.state.taskIds.length - 1 &&
+        if (this.state.currTask[0] === this.props.num_tasks - 1 &&
             (this.state.currTask[1] !== null ? this.state.currTask[1] === this.state.taskIds[this.state.currTask[0]][1].length - 1 : true)) {
             this.handleHitSubmit()
         } else {
@@ -407,12 +407,15 @@ export class Hit extends React.Component<Props, State> {
                 {hitExtra && 
                 <Menu.Item key="extra" icon={<PlusOutlined />}>Extra</Menu.Item>}
             </Menu>
-            <SidebarContainer height={this.props.height}>
-                {this.renderMenu()}
-            </SidebarContainer>
+
+            {this.props.interface.showSidebar &&
+                <SidebarContainer height={this.props.height}>
+                    {this.renderMenu()}
+                </SidebarContainer>
+            }
             
-            <ContentContainer height={this.props.height}>
-                
+            <ContentContainer height={this.props.height} showSidebar={this.props.interface.showSidebar}>
+                <ContentContainerInner>
                 {hitExtra &&
                     <Collapsible open={this.state.extraOpen}>
                         <Row>
@@ -450,6 +453,7 @@ export class Hit extends React.Component<Props, State> {
                         onClickNext={this.gotoNextTask}
                         onSubmit={this.handleTaskSubmitted}/>
                 </Row>
+                </ContentContainerInner>
             </ContentContainer>            
         </ButtonEventManagerContext>
     }
@@ -472,8 +476,13 @@ const ContentContainer = styled.div<any>`
     display: inline-block;
     vertical-align: top;
     height: ${props => (Math.floor(props.height) - 46 + 'px;')}
-    width: calc(100% - 25%);
+    width: ${props => (props.showSidebar ? '75%' : '100%')};
     overflow: auto;
+`
+
+const ContentContainerInner = styled.div<any>`
+    margin: 0 auto;
+    max-width: 1200px;
 `
 
 const HitWithRouter = withRouter(Hit)
