@@ -5,9 +5,13 @@ export interface NodeType {
      * Unique ID of the task
      */
     id: number
+    name: string
+    submitted:boolean
+    required: boolean
+    valid: boolean
 }
 
-export interface TaskResponse {
+export interface TaskResponseType {
     id: number,
     url: string,
     task_id: number,

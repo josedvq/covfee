@@ -2,36 +2,8 @@ import {TaskSpec, TaskType} from './task'
 import {JourneySpec} from './journey'
 import { MarkdownContentSpec } from './tasks/utils'
 
-export interface BaseInterface {
-    /**
-     * Display a bar indicating progress as fraction of completed tasks
-     */
-    showProgress?: boolean,
-    /**
-     * Show the button to submit the HIT
-     */
-    showSubmitButton?: boolean
-}
 
-export interface AnnotationInterface extends BaseInterface{
-    /**
-     * type of interface.
-     * @default "annotation"
-     */
-    type: 'annotation'
-    /**
-     * Allow the user to create tasks from the given map of id => task_spec
-     */
-    userTasks?: {[key: string]: TaskSpec}
-}
 
-export interface TimelineInterface extends BaseInterface {
-    /**
-     * type of interface.
-     * @default "timeline"
-     */
-    type: 'timeline'
-}
 
 /**
  * The Shuffler defines a block of tasks that will be shuffled internally by covfee when a new HIT instance is created.

@@ -22,21 +22,25 @@ import Constants from 'Constants'
 import { myerror } from '../utils'
 import { MarkdownLoader} from '../tasks/instructions'
 import {CovfeeMenuItem} from '../gui'
-import {Sidebar, TaskEditCallback, TaskCreateCallback, TaskDeleteCallback} from './sidebar'
+import {Sidebar } from './sidebar'
 import ButtonEventManagerContext from '../input/button_manager'
 
-import { AnnotationInterface, HitInstanceType } from '@covfee-spec/hit'
-import { TaskResponse, TaskType } from '@covfee-shared/spec/task'
-import { TaskLoader } from './task_loader'
+import {JourneyType} from '../types/journey'
+import { TaskResponseType, TaskType } from '../types/node'
+import { TaskLoader } from './node_loader'
 
 import './journey.scss'
+import { fetchJourney, useJourney } from '../models/Journey'
+import { useNode } from '../models/Node'
+import { useState } from 'react'
 
+// url parameters
 interface MatchParams {
-    hitId: string,
+    journeyId: string,
     taskId: string
 }
 
-type Props = HitInstanceType & RouteComponentProps<MatchParams> & {
+type Props = JourneyType & RouteComponentProps<MatchParams> & {
     /**
      * height of the container (used for adjusting sidebar height)
      */
@@ -51,11 +55,8 @@ type Props = HitInstanceType & RouteComponentProps<MatchParams> & {
     routingEnabled: boolean
 
     // ASYNC OPERATIONS
-    deleteTask: TaskDeleteCallback
-    editTask: TaskEditCallback
-    createTask: TaskCreateCallback
-    submitTaskResponse: (arg0: TaskResponse, arg1: any) => Promise<TaskResponse>
-    fetchTaskResponse: (arg0: TaskType) => Promise<TaskResponse>
+    submitTaskResponse: (arg0: TaskResponseType, arg1: any) => Promise<TaskResponseType>
+    fetchTaskResponse: (arg0: TaskType) => Promise<TaskResponseType>
     reloadHit: Function
     /**
      * Called when the Hit submit button is clicked
@@ -63,231 +64,62 @@ type Props = HitInstanceType & RouteComponentProps<MatchParams> & {
     onSubmit: () => Promise<any>
 }
 
-interface TaskState {
-    id: number
-    accessible: boolean
-}
+export const JourneyPage = (props: Props) => {
 
-interface State {
-    /**
-     * taskIds that are being displayed in the menu
-     * The first number is the parent number and points to this.props.tasks
-     * The second number is the child number and points to this.props.tasks
-     */
-    taskIds: [number, number[]][]
-    /**
-     * Index of the currently selected task in this.props.tasks
-     * The first number points to a parent task
-     * The second number, if not null, points to a child task within the parent
-     */
-    currTask: [number, number]
-    /**
-     * True if currTask is currently being loaded
-     */
-    loadingTask: boolean
-    /**
-     * Used to trigger remounting of tasks
-     */
-    currKey: number
-    /**
-     * State of "extra" collapsible with hit-level information
-     */
-    extraOpen: boolean
-    /**
-     * If true, prerequisites are completed
-     */
-    prerequisitesCompleted: boolean
-}
+    const {journey, setJourney} = useJourney(null);
+    const [currNode, setCurrNode] = useState(null);
+    
 
+    const [extraOpen, setExtraOpen] = useState(false)
+    const [loadingJourney, setLoadingJourney] = useState(true)
+    const [loadingNode, setLoadingNode] = useState(true)
+    const [currKey, setCurrKey] = useState(0)
 
-export class JourneyPage extends React.Component<Props, State> {
-    state: State = {
-        taskIds: [],
-        currTask: [null, null],
-        currKey: 0,
-        loadingTask: true,
-        extraOpen: false,
-        prerequisitesCompleted: false
-    }
+    React.useEffect(() => {
+        fetchJourney(props.match.params.journeyId).then(response => {
+            setJourney(response)
+            setLoadingJourney(false)
 
-    url: string
-    tasks: Array<TaskType>
-    taskKeys: Array<string>
-    instructionsFn: Function = null
-
-    replayIndex = 0
-
-    static defaultProps = {
-        interface: {
-            type: 'annotation',
-            userTasks: {},
-            showProgress: false,
-        }
-    }
-
-    constructor(props: Props) {
-        super(props)
-        // copy props into tasks
-        this.url = Constants.api_url + '/instances/' + this.props.id
-
-        // calculate the current task using the route and the HIT
-        const taskIds = this.makeTaskIds()
-        let parentTask = 0
-        if (props.match && props.match.params.taskId !== undefined) {
-            parentTask = Math.min(taskIds.length-1, parseInt(props.match.params.taskId))
-        }
-
-        // Initialize the hit state
-        this.state = {
-            ...this.state,
-            currTask: [parentTask, null],
-            taskIds: taskIds,
-            prerequisitesCompleted: this.prerequisitesCompleted()
-        }
-        
-        this.updateUrl(parentTask)
-    }
-
-    makeTaskIds = () => {
-        const taskIds = this.props.tasks.map((task, i) => {
-            return [i, task.children.map((c, j) => j)]
         })
+    }, [])
 
-        return taskIds as [number, number[]][]
+
+    const handleChangeActiveNode = (nodeIndex: number) => {
+        // instructionsFn = null
+        setCurrNode(nodeIndex)
+        setCurrKey(k => k+1)
+        updateUrl(nodeIndex)
     }
 
-    componentDidMount() {
-        // run fetches that update state
-        // this.handleChangeActiveTask(this.state.currTask)
-    }
-
-    componentDidUpdate(prevProps: Props) {
-        if(this.props.tasks != prevProps.tasks) {
-            this.setState({taskIds: this.makeTaskIds() })
-        }
-    }
-
-    getTask = (taskId: [number, number]) => {
-        const parentIdx = this.state.taskIds[taskId[0]][0]
-        if(taskId[1] == null) {
-            return this.props.tasks[parentIdx]
+    const gotoNextNode = () => {
+        // if done with nodes
+        if (currNode[0] === journey.nodes.length - 1) {
+            handleHitSubmit()
         } else {
-            const childIdx = this.state.taskIds[taskId[0]][1][taskId[1]]
-            return this.props.tasks[parentIdx].children[childIdx]
+            // go to next node
+            handleChangeActiveNode(currNode+1)
         }
     }
 
-    /**
-     * sequence for prevChild: null, 0, 1, 2, 3, null, null, 0, 1, 2, 3
-     *                         0     0, 0, 0, 0, 1,    2,    2, 2, 2, 2
-     * @param taskId 
-     * @returns 
-     */
-    getPrevTask = (taskId: [number, number]) => {
-        const parent = taskId[0]
-        const child = taskId[1] == null ? 0 : taskId[1] + 1
-
-        let prevParent, prevChild
-
-        if(child === 0) {
-            if(parent === 0) return [null, null] as [number, number]
-            prevParent = parent-1
-            prevChild = this.state.taskIds[prevParent][1].length
-        } else {
-            prevParent = parent
-            prevChild = child - 1
-        }
-        prevChild = prevChild ? prevChild - 1 : null
-        return [prevParent, prevChild] as [number, number]
+    const handleNodeSubmitted = () => {        
+        gotoNextNode()
     }
 
-    /**
-     * sequence for prevChild: -1  , 0, 1, 2, 3, -1  , -1  , 0, 1, 2, 3, -1
-     *                         0     0, 0, 0, 0, 1,    2,    2, 2, 2, 2, 3
-     * @param taskId 
-     * @returns 
-     */
-    getNextTask = (taskId: [number, number]) => {
-        const curr = this.getTask(taskId)
-        const parent = taskId[0]
-        const child  = taskId[1] == null ? 0 : taskId[1] + 1
-
-        let nextParent, nextChild
-
-        nextChild  = (child + 1) % (curr.children.length + 1)
-        nextParent = parent + Number(nextChild === 0)
-
-        nextChild  = nextChild ? nextChild - 1 : null
-
-        if(nextParent === this.state.taskIds.length) nextParent = null
-            
-        return [nextParent, nextChild] as [number, number]
-    }
-
-    handleChangeActiveTask = (taskPointer: [number, number]) => {
-        // IMPORTANT: order matters here
-        // buffer must be created before the render triggered by setState
-        this.replayIndex = 0
-        this.instructionsFn = null
-        this.setState({
-            currTask: taskPointer,
-            currKey: this.state.currKey + 1
-        })
-        this.updateUrl(taskPointer[0])
-    }
-
-    gotoNextTask = () => {
-        // if done with tasks
-        if (this.state.currTask[0] === this.state.taskIds.length - 1 &&
-            (this.state.currTask[1] !== null ? this.state.currTask[1] === this.state.taskIds[this.state.currTask[0]][1].length - 1 : true)) {
-            this.handleHitSubmit()
-        } else {
-            // go to next task
-            this.handleChangeActiveTask(this.getNextTask(this.state.currTask))
-        }
-    }
-
-    prerequisitesCompleted = () => {
-        let prerequisitesCompleted = true
-        this.props.tasks.forEach(t => {
-            if(t.prerequisite && !t.valid) prerequisitesCompleted = false 
-            t.children.forEach(c => {
-                if(t.prerequisite && !t.valid) prerequisitesCompleted = false 
-            })
-        })
-        return prerequisitesCompleted
-    }
-
-    handleTaskSubmitted = (source: ('task' | 'modal')) => {
-
-        const gotoNext = (this.props.interface.type == 'timeline') && (source == 'task')
-
-        const prerequisitesCompleted = this.prerequisitesCompleted()
-        if(!this.state.prerequisitesCompleted && prerequisitesCompleted) {
-            // prerequisites were just completed
-            return this.props.reloadHit(()=>{
-                if(gotoNext) this.gotoNextTask()
-            })
-        }
-        
-        if(gotoNext) this.gotoNextTask()
-    }
-
-    updateUrl = (taskIndex: number) => {
-        if(this.props.routingEnabled) {
-            window.history.pushState(null, null, '#' + generatePath(this.props.match.path, {
-                hitId: this.props.match.params.hitId,
-                taskId: taskIndex
+    const updateUrl = (nodeIndex: number) => {
+        if(props.routingEnabled) {
+            window.history.pushState(null, null, '#' + generatePath(props.match.path, {
+                hitId: props.match.params.journeyId,
+                nodeId: nodeIndex
             }))
         }
     }
 
-    handleMenuClick = (e: any) => {
-        if (e.key == 'extra') this.setState({extraOpen: !this.state.extraOpen})
+    const handleMenuClick = (e: any) => {
+        if (e.key == 'extra') setExtraOpen(v => !v)
     }
 
-    showCompletionInfo = () => {
-        const config = this.props.completionInfo
+    const showCompletionInfo = () => {
+        const config = journey.completionInfo
         return Modal.success({
             title: 'HIT submitted!',
             content: <>
@@ -306,10 +138,10 @@ export class JourneyPage extends React.Component<Props, State> {
         })
     }
 
-    handleHitSubmit = () => {
-        this.props.onSubmit()
+    const handleHitSubmit = () => {
+        props.onSubmit()
             .then(()=>{
-                this.showCompletionInfo()
+                showCompletionInfo()
             })
             .catch(err=>{
                 if(err.message.includes('required tasks')) {
@@ -323,138 +155,115 @@ export class JourneyPage extends React.Component<Props, State> {
 
     /**
      * True if the hit can be submitted:
-     * - all required tasks have a valid response
+     * - all required nodes have a valid response
      */
-    canSubmitHit = () => {
+    const canSubmitHit = () => {
         let canSubmit = true
-        this.props.tasks.forEach(task => {
-            if(task.required && !task.valid) canSubmit = false
+        journey.nodes.forEach(node => {
+            if(node.required && !node.valid) canSubmit = false
         })
         return canSubmit
     }
 
-    renderMenu = () => {
-        const tasks = this.state.taskIds.map(row => {
-            const parent = this.props.tasks[row[0]]
-            parent.children = row[1].map(childId => parent.children[childId])
-            return parent
-        })
+    const renderMenu = () => {
+        const nodes = journey.nodes
 
         return <>
             
             <Sidebar
-                tasks={tasks}
-                currTask={this.state.currTask}
-                onChangeActiveTask={this.handleChangeActiveTask}
-                editMode={{
-                    enabled: true,
-                    allowNew: ('userTasks' in this.props.interface && Object.entries(this.props.interface.userTasks).length > 0),
-                    presets: (this.props.interface as AnnotationInterface).userTasks,
-                    onTaskEdit: this.props.editTask,
-                    onTaskCreate: this.props.createTask,
-                    onTaskDelete: this.props.deleteTask,
-                }}>
-                {!this.props.submitted && this.props.interface.showSubmitButton &&
+                tasks={nodes}
+                currTask={currNode}
+                onChangeActiveTask={handleChangeActiveNode}>
+                {!journey.submitted && props.interface.showSubmitButton &&
                     <Button type="primary" 
                             style={{width: '100%', backgroundColor: '#5b8c00', borderColor: '#5b8c00'}} 
-                            onClick={this.handleHitSubmit}
-                            disabled={!this.canSubmitHit()}>Submit HIT</Button>
+                            onClick={handleHitSubmit}
+                            disabled={!canSubmitHit()}>Submit HIT</Button>
                 }
-                {this.props.submitted &&
-                    <Button type="primary" style={{width: '100%', backgroundColor: '#5b8c00', borderColor: '#5b8c00'}} onClick={this.showCompletionInfo}>Show completion code</Button>
+                {journey.submitted &&
+                    <Button type="primary" style={{width: '100%', backgroundColor: '#5b8c00', borderColor: '#5b8c00'}} onClick={showCompletionInfo}>Show completion code</Button>
                 }
             </Sidebar>
         </>
     }
 
-    getHitExtra = () => {
-        if (this.props.extra) return <MarkdownLoader content={this.props.extra} />
+    const getHitExtra = () => {
+        if (props.extra) return <MarkdownLoader content={props.extra} />
         else return false
     }
 
-    renderTaskSubmitButton = (extraProps: any) => {
+    const renderTaskSubmitButton = (extraProps: any) => {
         return <Button type="primary" htmlType="submit" {...extraProps}>
-            {this.props.interface.type == 'annotation' ? 'Submit' : 'Next'}
+            Submit
         </Button>
     }
 
-    renderTaskNextButton = (extraProps: any) => {
-        return <Button type="primary" onClick={this.gotoNextTask} {...extraProps}>
+    const renderTaskNextButton = (extraProps: any) => {
+        return <Button type="primary" onClick={gotoNextNode} {...extraProps}>
             Next
         </Button>
     }
 
     
 
-    render() {
-        const taskProps = this.getTask(this.state.currTask)
-        const parentProps = this.state.currTask[1] != null ? 
-                            this.getTask([this.state.currTask[0], null]) : 
-                            null
+    
+    const taskProps = journey.nodes[currNode]
+    const hitExtra = getHitExtra()
 
-        const hitExtra = this.getHitExtra()
-
-        return <ButtonEventManagerContext>
-            <Menu onClick={this.handleMenuClick} mode="horizontal" theme="dark" style={{position: 'sticky', top: 0, width: '100%', zIndex: 1000}}>
-                <Menu.Item key="logo" disabled>
-                    <CovfeeMenuItem/>
-                </Menu.Item>
-                <Menu.Item key="task" disabled>
-                    <Text strong style={{ color: 'white' }}>{taskProps.spec.name}</Text>
-                </Menu.Item>
-                {hitExtra && 
-                <Menu.Item key="extra" icon={<PlusOutlined />}>Extra</Menu.Item>}
-            </Menu>
-            <SidebarContainer height={this.props.height}>
-                {this.renderMenu()}
-            </SidebarContainer>
+    return <ButtonEventManagerContext>
+        <Menu onClick={handleMenuClick} mode="horizontal" theme="dark" style={{position: 'sticky', top: 0, width: '100%', zIndex: 1000}}>
+            <Menu.Item key="logo" disabled>
+                <CovfeeMenuItem/>
+            </Menu.Item>
+            <Menu.Item key="task" disabled>
+                <Text strong style={{ color: 'white' }}>{taskProps.name}</Text>
+            </Menu.Item>
+            {hitExtra && 
+            <Menu.Item key="extra" icon={<PlusOutlined />}>Extra</Menu.Item>}
+        </Menu>
+        <SidebarContainer height={props.height}>
+            {renderMenu()}
+        </SidebarContainer>
+        
+        <ContentContainer height={props.height}>
             
-            <ContentContainer height={this.props.height}>
+            {hitExtra &&
+                <Collapsible open={extraOpen}>
+                    <Row>
+                        <Col span={24}>{hitExtra}</Col>                    
+                    </Row>
+                </Collapsible>}
+            <Row style={{height: '100%'}}>
                 
-                {hitExtra &&
-                    <Collapsible open={this.state.extraOpen}>
-                        <Row>
-                            <Col span={24}>{hitExtra}</Col>                    
-                        </Row>
-                    </Collapsible>}
-                <Row style={{height: '100%'}}>
-                    
-                    {this.props.interface.showProgress &&
-                    <div style={{margin: '5px 15px'}}>
-                        {(()=>{
-                            const num_valid = Object.values(this.props.tasks).filter(t=>t.valid).length
-                            const num_steps = Object.values(this.props.tasks).length
-                            return <Progress
-                                percent={100 * num_valid / num_steps}
-                                // steps={Object.alues(this.props.tasks).length}
-                                format={p => {return num_valid + '/' + num_steps}}
-                                trailColor={'#c0c0c0'}/>
-                        })()}
-                    </div>}
-                    <TaskLoader
-                        key={this.state.currKey}
-                        task={taskProps}
-                        parent={parentProps}
-                        interfaceMode={this.props.interface.type}
-                        disabled={(taskProps.maxSubmissions ? (taskProps.num_submissions >= taskProps.maxSubmissions) : false) || (taskProps.prerequisite && taskProps.valid)}
-                        previewMode={this.props.previewMode}
-                        // render props
-                        renderTaskSubmitButton={this.renderTaskSubmitButton}
-                        renderTaskNextButton={this.renderTaskNextButton}
-                        // async operations
-                        fetchTaskResponse={this.props.fetchTaskResponse}
-                        submitTaskResponse={this.props.submitTaskResponse}
-                        // callbacks
-                        onClickNext={this.gotoNextTask}
-                        onSubmit={this.handleTaskSubmitted}/>
-                </Row>
-            </ContentContainer>            
-        </ButtonEventManagerContext>
-    }
+                {journey.interface.showProgress &&
+                <div style={{margin: '5px 15px'}}>
+                    {(()=>{
+                        const num_valid = journey.nodes.filter(t=>t.valid).length
+                        const num_steps = journey.nodes.length
+                        return <Progress
+                            percent={100 * num_valid / num_steps}
+                            format={p => {return num_valid + '/' + num_steps}}
+                            trailColor={'#c0c0c0'}/>
+                    })()}
+                </div>}
+                <TaskLoader
+                    key={currKey}
+                    task={taskProps}
+                    disabled={taskProps.submitted}
+                    previewMode={props.previewMode}
+                    // render props
+                    renderSubmitButton={renderTaskSubmitButton}
+                    renderNextButton={renderTaskNextButton}
+                    // async operations
+                    fetchTaskResponse={props.fetchTaskResponse}
+                    submitTaskResponse={props.submitTaskResponse}
+                    // callbacks
+                    onClickNext={gotoNextNode}
+                    onSubmit={handleNodeSubmitted}/>
+            </Row>
+        </ContentContainer>            
+    </ButtonEventManagerContext>
 }
-
-
-
 const SidebarContainer = styled.div<any>`
     position: sticky;
     display: inline-block;

@@ -13,8 +13,6 @@ export type HitType = Omit<HitSpec, 'nodes' | 'journeys'> & {
 export type HitInstanceType = Omit<HitSpec, 'nodes'> & {
     nodes: NodeType[]
     journeys: number[]
-    submitted: boolean
-    completionInfo?: any
     created_at: string
     updated_at: string
     submitted_at: string

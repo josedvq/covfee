@@ -74,6 +74,8 @@ class NodeInstance(Base):
     # instance relationships
     journeys: Mapped[List['JourneyInstance']] = relationship(secondary=journey_node_table, back_populates='nodes')
 
+    submitted: Mapped[bool]
+
     def __init__(self):
         super().__init__()
 

@@ -1,18 +1,20 @@
-import { JourneyType } from 'types/journey';
+import * as React from 'react'
+import { JourneyType } from '../types/journey';
 import { myerror, fetcher, myinfo, throwBadResponse } from '../utils'
 import download from 'downloadjs'
 import Constants from 'Constants'
 
-export class Journey {
+export const useJourney = (data: JourneyType) => {
 
-    spec: JourneyType;
+    const [journey, setJourney] = React.useState<JourneyType>(data);
     
-    constructor(spec: JourneyType) {
-      this.spec = spec;
+    const getApiUrl = () => {
+        const url = Constants.api_url + '/journeys/' + journey.id
+        return url
     }
 
-    getDownloadHandler = (url: string, csv: boolean) => {
-        const request_url = url + '/download' + (csv ? '?csv=1' : '')
+    const getDownloadHandler = (csv: boolean) => {
+        const request_url = getApiUrl() + '/download' + (csv ? '?csv=1' : '')
         return () => {
             fetcher(request_url).then(async (response: any) => {
                 if (!response.ok) {
@@ -35,6 +37,11 @@ export class Journey {
         }
     }
     
+    return {
+        journey,
+        setJourney,
+        getDownloadHandler
+    }
 }
 
 export const fetchJourney = (id: string) => {

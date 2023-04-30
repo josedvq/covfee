@@ -20,7 +20,7 @@ interface Props {
     /**
      * Called when the user changes the active task
      */
-    onChangeActiveTask: (arg0: [number, number]) => void
+    onChangeActiveTask: (arg0: number) => void
 }
 interface State {
 }

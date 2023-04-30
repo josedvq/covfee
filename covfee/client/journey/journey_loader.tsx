@@ -99,18 +99,7 @@ class JourneyLoader extends React.Component<Props, State> {
 
    
 
-    fetchTaskResponse = (task: TaskType) => {
-        const url = task.url +'/response?' + new URLSearchParams({
-        })
-        const p = fetcher(url)
-            .then(throwBadResponse)
-
-        p.catch(error => {
-            myerror('Error fetching task response.', error)
-        })
-
-        return p
-    }
+    
 
     render404() {
         return <ErrorPage/>
