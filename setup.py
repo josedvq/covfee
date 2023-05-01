@@ -27,7 +27,7 @@ setup(
         ]
     },
     install_requires=[
-        'Flask == 2.1.0',
+        'Flask == 2.3.2',
         'werkzeug==2.0.3',
         'MarkupSafe==2.0.1',
         'flask_cors == 3.*',
