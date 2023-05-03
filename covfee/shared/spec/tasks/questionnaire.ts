@@ -1,4 +1,4 @@
-import { CommonTaskSpec } from '../task'
+import { BaseTaskSpec } from '../task'
 import { WavesurferPlayerMedia } from '../players/wavesurfer'
 import { VideojsPlayerMedia } from 'spec/players/videojs'
 import {FormSpec, InputSpec} from '../form'
@@ -28,4 +28,4 @@ export interface QuestionnaireTaskBaseSpec {
 /**
 * @TJS-additionalProperties false
 */
-export interface QuestionnaireTaskSpec extends QuestionnaireTaskBaseSpec, CommonTaskSpec {}
+export interface QuestionnaireTaskSpec extends QuestionnaireTaskBaseSpec, BaseTaskSpec {}

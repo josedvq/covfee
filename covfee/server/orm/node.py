@@ -78,7 +78,7 @@ class NodeInstance(Base):
 
     def __init__(self):
         super().__init__()
-
+        self.submitted = False
 
     def to_dict(self):
         instance_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}

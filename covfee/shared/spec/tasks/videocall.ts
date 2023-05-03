@@ -1,4 +1,4 @@
-import { CommonTaskSpec } from '../task'
+import { BaseTaskSpec } from '../task'
 import { FormSpec, InputSpec } from './questionnaire'
 import {MarkdownContentSpec} from './utils'
 
@@ -35,4 +35,4 @@ export interface VideocallTaskBaseSpec {
 /**
 * @TJS-additionalProperties false
 */
-export interface VideocallTaskSpec extends VideocallTaskBaseSpec, CommonTaskSpec {}
+export interface VideocallTaskSpec extends VideocallTaskBaseSpec, BaseTaskSpec {}

@@ -23,33 +23,28 @@ function About() {
     return <h2>About</h2>;
 }
 
-class Root extends React.Component {
-    componentDidMount() {
-    }
-
-    render() {
-        return <Router>
-                <UserContext>
+const Root = () => {
+    return <Router>
+            <UserContext>
+                <Layout>
                     <Layout>
-                        <Layout>
-                            <Switch>
-                                <Route path="/about">
-                                    <About />
-                                </Route>
-                                <Route path="/journeys/:journeyId">
-                                    <JourneyPageWithRouter/>
-                                </Route>
-                            </Switch>
-                        </Layout>
-                        {/* <Footer>
-                            <Text style={{float: 'right'}}>
-                                Interface created with <a href="https://github.com/josedvq/covfee">covfee</a>
-                            </Text>
-                        </Footer> */}
+                        <Switch>
+                            <Route path="/about">
+                                <About />
+                            </Route>
+                            <Route path="/journeys/:journeyId/:nodeId?">
+                                <JourneyPageWithRouter/>
+                            </Route>
+                        </Switch>
                     </Layout>
-                </UserContext>
-        </Router>
-    }
+                    {/* <Footer>
+                        <Text style={{float: 'right'}}>
+                            Interface created with <a href="https://github.com/josedvq/covfee">covfee</a>
+                        </Text>
+                    </Footer> */}
+                </Layout>
+            </UserContext>
+    </Router>
 }
 
 export default Root

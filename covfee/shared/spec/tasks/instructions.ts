@@ -1,4 +1,4 @@
-import { CommonTaskSpec } from '../task'
+import { BaseTaskSpec } from '../task'
 import {FormSpec, InputSpec} from '../form'
 import {MarkdownContentSpec} from './utils'
 
@@ -23,4 +23,4 @@ export interface InstructionsTaskBaseSpec {
 /**
 * @TJS-additionalProperties false
 */
-export interface InstructionsTaskSpec extends InstructionsTaskBaseSpec, CommonTaskSpec {}
+export interface InstructionsTaskSpec extends InstructionsTaskBaseSpec, BaseTaskSpec {}

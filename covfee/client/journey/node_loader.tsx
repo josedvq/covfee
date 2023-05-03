@@ -15,6 +15,7 @@ import { QuestionCircleOutlined } from '@ant-design/icons'
 import { CovfeeTask } from 'tasks/base'
 import { useNode } from '../models/Node';
 import { NodeType } from '../types/node';
+import { AllPropsRequired } from '../types/utils';
 
 interface State {
     /**
@@ -91,20 +92,20 @@ interface Props {
 
 // type defaultProps = Required<Pick<Props, 'parent' | 'disabled' | 'previewMode' | 'interfaceMode' | 'renderTaskSubmitButton' | 'renderTaskNextButton' | 'fetchTaskResponse' | 'submitTaskResponse' | 'onSubmit' | 'onClickNext'>>
 
-export type AllPropsRequired<Object> = {
-    [Property in keyof Object]-?: Object[Property];
- };
+
 
 export const NodeLoader = (props: Props) => {
     const args: AllPropsRequired<Props> = {
         disabled: false,
         previewMode: false,
+        onSubmit: () => {},
+        onClickNext: () => {},
         ...props,
     }
 
     const [status, setStatus] = React.useState('loading')
     const [isLoading, setIsLoading] = React.useState(true)
-    const [instructionsVisible, setInstructionsVisible] = React.useState(args.node.spec.instructionsType == 'popped')
+    const [instructionsVisible, setInstructionsVisible] = React.useState(false)
     const [overlayVisible, setOverlayVisible] = React.useState(false)
 
     const {taskConstructor, taskReducer} = getTask(args.node.spec.type)
@@ -120,10 +121,16 @@ export const NodeLoader = (props: Props) => {
         return !props.node.submitted
     }
 
+    // const isTask = () => args.node.spec.nodeType == 'task'
+
     React.useEffect(() => {
         fetchResponse().then((response: TaskResponseType) => {
             setIsLoading(false)
         })
+
+        if(args.node.spec.nodeType == 'task') {
+            args.node.spec.instructionsType == 'popped'
+        }
     }, [])    
 
     const handleTaskSubmit = (taskResult: any) => {
@@ -216,9 +223,7 @@ export const NodeLoader = (props: Props) => {
         </Popover>
     }
 
-
-
-    if(status == 'loading') return <Spin/>
+    if(isLoading) return <Spin/>
     
     return <>
         
@@ -234,6 +239,8 @@ export const NodeLoader = (props: Props) => {
                     onSubmit: res => handleTaskSubmit(res),
                     renderSubmitButton: args.renderSubmitButton
                 }
+
+                console.log(taskConstructor)
 
                 const taskElement = React.createElement(taskConstructor, {
                     ref: (elem: any)=>{createTaskRef(elem)},

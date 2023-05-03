@@ -1,4 +1,4 @@
-import { CommonTaskSpec } from '../task'
+import { BaseTaskSpec } from '../task'
 import {FormSpec, InputSpec} from '../form'
 /**
 * @TJS-additionalProperties false
@@ -25,4 +25,4 @@ export interface ThreeImagesTaskBaseSpec {
 /**
 * @TJS-additionalProperties false
 */
-export interface ThreeImagesTaskSpec extends ThreeImagesTaskBaseSpec, CommonTaskSpec {}
+export interface ThreeImagesTaskSpec extends ThreeImagesTaskBaseSpec, BaseTaskSpec {}

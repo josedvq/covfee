@@ -4,7 +4,7 @@ import { fetcher, throwBadResponse } from '../utils';
 
 export function useNode(data: NodeType) {
     const [node, setNode] = React.useState(data);
-    const [response, setResponse] = React.useState(data);
+    const [response, setResponse] = React.useState(null);
 
     const fetchResponse = () => {
         const url = node.url +'/response?' + new URLSearchParams({

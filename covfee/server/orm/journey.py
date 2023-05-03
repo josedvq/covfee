@@ -4,11 +4,11 @@ import hmac
 import random
 import secrets
 import hashlib
-from typing import List
+from typing import List, Dict, Any
 from typing_extensions import Annotated
 
 # from ..db import Base
-from sqlalchemy import (
+from sqlalchemy import ( 
     ForeignKey)
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from flask import current_app as app
@@ -67,6 +67,7 @@ class JourneyInstance(Base):
     hit: Mapped['HITInstance']  = relationship(back_populates='journeys')
 
     nodes: Mapped[List['NodeInstance']] = relationship(secondary=journey_node_table, back_populates='journeys')
+    interface: Mapped[Dict[str, Any]] = mapped_column()
     
     # submitted = Mapped[bool]
 
@@ -78,6 +79,7 @@ class JourneyInstance(Base):
         self.id = secrets.token_bytes(32)
         self.preview_id = hashlib.sha256((self.id + 'preview'.encode())).digest()
         self.submitted = False
+        self.interface = {}
 
     def get_api_url(self):
         return f'{app.config["API_URL"]}/instances/{self.id.hex():s}'
@@ -127,6 +129,7 @@ class JourneyInstance(Base):
 
         # if self.submitted:
         #     instance_dict['completionInfo'] = self.get_completion_info()
+        # instance_dict['interface']
 
         return instance_dict
 

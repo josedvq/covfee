@@ -9,7 +9,7 @@ import { IncrementCounterTaskSpec } from "./tasks/increment_counter"
 /**
 * @TJS-additionalProperties false
 */
-export interface CommonTaskSpec {
+export interface BaseNodeSpec {
     /**
      * Name of the task. It is displayed in covfee (eg. "Video 3")
      */
@@ -18,6 +18,12 @@ export interface CommonTaskSpec {
      * ID of the task. Used (if provided) only to name the download (results) files
      */
     id?: string
+    
+    nodeType: 'task' | 'node'
+}
+
+export interface BaseTaskSpec extends BaseNodeSpec {
+    nodeType: 'task'
     /**
      * If true, this task must have a valid submission before the HIT can be submitted
      * @default True
@@ -29,11 +35,6 @@ export interface CommonTaskSpec {
      * @default False
      */
     prerequisite?: boolean
-    /**
-     * If true, the task is shared among all instances of the HIT
-     * Useful for group tasks requiring a single shared submission (symmetric)
-     */
-    shared?: boolean
     /**
      * Timing config
      */
@@ -66,13 +67,12 @@ export interface CommonTaskSpec {
 }
 
 /**
-* @TJS-additionalProperties false
-*/
-export interface CommonContinuousTaskSpec extends CommonTaskSpec { }
-
-/**
  * One of the supported task specs
  */
 export type TaskSpec =  IncrementCounterTaskSpec | Continuous1DTaskSpec | ContinuousKeypointTaskSpec | InstructionsTaskSpec | QuestionnaireTaskSpec | ThreeImagesTaskSpec
 
+interface NodeSpecTest extends BaseNodeSpec {
+    nodeType: 'node'
+}
 
+export type NodeSpec = TaskSpec | NodeSpecTest

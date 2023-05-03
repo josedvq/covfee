@@ -1,13 +1,19 @@
-import { CommonTaskSpec, TaskSpec } from "@covfee-spec/task"
+import { BaseTaskSpec, NodeSpec, TaskSpec } from "@covfee-spec/task"
 
 export interface NodeType {
     /**
-     * Unique ID of the task
+     * Unique ID of the node
      */
     id: number
-    name: string
+    /**
+     * URL to task api endpoint
+     */
+    url: string
+    /**
+     * Task specification as provided by the user
+     */
+    spec: NodeSpec
     submitted:boolean
-    required: boolean
     valid: boolean
 }
 
@@ -23,16 +29,9 @@ export interface TaskResponseType {
     chunkData?: object,
     state: any
 }
-export interface TaskType extends CommonTaskSpec {
+export interface TaskType extends BaseTaskSpec {
 
-    /**
-     * URL to task api endpoint
-     */
-    url: string
-    /**
-     * Task specification as provided by the user
-     */
-    spec: TaskSpec
+    
     /**
      * number of times the task has been submitted
      */

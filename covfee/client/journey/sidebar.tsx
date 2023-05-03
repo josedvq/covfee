@@ -1,22 +1,61 @@
 import * as React from 'react'
 import styled from 'styled-components'
-import {
-    Button, Input, 
-} from 'antd'
-import { CaretDownOutlined, EditOutlined, EyeFilled, PlusCircleOutlined } from '@ant-design/icons'
 import classNames from 'classnames'
 
-import { TaskSpec, TaskType} from '@covfee-shared/spec/task'
+import { NodeType} from '../types/node'
+
+interface NodeButtonSpec {
+    // index: number,
+    name: string,
+    active: boolean,
+    status: 'default' | 'active' | 'valid' | 'invalid' 
+}
+
+interface NodeButtonProps extends NodeButtonSpec {
+    innerRef: (el: HTMLDivElement) => void
+    onClickActivate: () => void
+    className?: object
+}
+
+type AllPropsRequired<Object> = {
+    [Property in keyof Object]-?: Object[Property];
+ };
+
+export const NodeButton: React.FunctionComponent<NodeButtonProps> = (props) => {
+    const args: AllPropsRequired<NodeButtonProps> = {
+        className: {},
+        ...props,
+    }
+
+    const containerRef = React.useRef<HTMLDivElement>()
+
+    const scrollIntoView = () => {
+        if(containerRef.current)
+            containerRef.current.scrollIntoView({behavior: 'smooth', block: 'center'})
+    }
+
+    return <SidebarButton 
+            ref = {props.innerRef}
+            className={classNames('btn', `btn-${args.status}`, 
+            {...args.className})} 
+            onClick={args.onClickActivate}>
+
+        <div className="btn-name">
+            {args.name}
+        </div>
+        
+    </SidebarButton>
+}
 
 interface Props {
     /**
      * Id of the task that is currently active
      */
-    currTask: [number, number],
+    currNode: number
     /**
      * List of tasks to display in the list
      */
-    tasks: Array<TaskType>
+    nodes: Array<NodeType>
     /**
      * Called when the user changes the active task
      */
@@ -25,161 +64,87 @@ interface Props {
 interface State {
 }
 
-export class Sidebar extends React.Component<Props, State> {
+export const Sidebar: React.FunctionComponent<Props> = (props) => {
 
-    state: State = {
-    }
+    const taskElementRefs = React.useRef<HTMLElement[]>([])
 
-    taskElementRefs: TaskSection[] = []
+    React.useEffect(() => {
+        if(taskElementRefs.current[props.currNode]) {
+            taskElementRefs.current[props.currNode].scrollIntoView({behavior: 'smooth', block: 'center'})
+        }
+    }, [props.currNode])
 
-    constructor(props: Props) {
-        super(props)
-    }
+    React.useEffect(() => {
+        taskElementRefs.current = taskElementRefs.current.slice(0, props.nodes.length);
+    }, [props.nodes])
+   
+    console.log(props)
 
-    componentDidUpdate(prevProps: Props) {
-        const curr = this.props.currTask
-        if(prevProps.currTask != curr) {
-            if(this.taskElementRefs[curr[0]]) {
-               this.taskElementRefs[curr[0]].scrollIntoView()
-            }
+    return <SidebarContainer>
+        <SidebarHead>
+            {props.children}
+        </SidebarHead>
+        
+        <SidebarScrollable>
+            {props.nodes.map((node, index) => 
+                <NodeButton 
+                    key={index}
+                    innerRef={el => taskElementRefs.current[index] = el}
+                    name={'jhkljdsf'}
+                    className={{"btn-parent": true}}
+                    status={props.currNode === index ? 'active' : 'default'}
+                    active={props.currNode === index}
+                    onClickActivate={()=>{node.onClickActivate(null)}}/>
+            )}
+        </SidebarScrollable>
+        
+    </SidebarContainer>
+}
+
+const SidebarButton = styled.nav`
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+    margin: 2px;
+    color: #363636;
+    clear: both;
+
+    > .btn-name {
+        width: calc(100% - 36px);
+        overflow-x: hidden;
+        display: block;
+        padding: 5px;
+
+        &:hover {
+            cursor: pointer;
         }
     }
 
-   
-
-    render() {
-        this.taskElementRefs = []
-        return <SidebarContainer>
-            <SidebarHead>
-                {this.props.children}
-            </SidebarHead>
-
-            {(this.props.editMode.enabled && this.props.editMode.allowNew) &&
-            <Button
-                type="primary"
-                className="sidebar-new"
-                block={true}
-                onClick={() => { this.handleClickAdd(null) }}
-                icon={<PlusCircleOutlined />}>
-                New Task
-                </Button>}
-            
-            <SidebarScrollable>
-                <ol className={'task-group'}>
-                    {this.props.tasks.map((task, index) => 
-                        <TaskSection
-                            key={task.id}
-                            ref={el=>{this.taskElementRefs[index] = el}}
-                            name={task.spec.name} 
-                            children={task.children ? task.children.map((child, idx) =>{
-                                return {
-                                    name: child.spec.name,
-                                    status: (index === this.props.currTask[0] && idx === this.props.currTask[1]) ? 'active' :
-                                        child.num_submissions == 0 ? 'default' :
-                                        child.valid ? 'valid' : 'invalid',
-                                    editable: true // TODO: fix
-                                }
-                            }) : []}
-                            status={(index == this.props.currTask[0] && this.props.currTask[1] == null) ? 'active' : 
-                                task.num_submissions == 0 ? 'default' : 
-                                task.valid ? 'valid' : 'invalid'}
-                            editable={task.editable}
-                            onClickActivate={(child_index) => { this.props.onChangeActiveTask([index, child_index])}}
-                            onClickEdit={(child_index) => { this.handleClickEdit([index, child_index])}}/>)}
-                    
-                </ol>
-            </SidebarScrollable>
-            
-        </SidebarContainer>
-    }
-}
-
-interface TaskButtonSpec {
-    // index: number,
-    name: string,
-    active: boolean,
-    editable: boolean,
-    status: 'default' | 'active' | 'valid' | 'invalid' 
-}
-interface TaskSectionProps extends TaskButtonSpec {
-    children: Array<TaskButtonSpec>
-    onClickEdit: (arg0: number) => void
-    onClickActivate: (arg0: number) => void
-}
-export class TaskSection extends React.Component<TaskSectionProps> {
-
-    liRef = React.createRef<HTMLLIElement>()
-
-    toggleExpand = () => {}
-
-    scrollIntoView = () => {
-        if(this.liRef.current)
-            this.liRef.current.scrollIntoView({behavior: 'smooth', block: 'center'})
+    > .btn-icon {
+        display: block;
+        float: right;
+        width: 20px;
+        height: 20px;
+        margin: 8px;
+        color:#d5d5d5;
     }
 
-    render() {
-        return <li className={classNames('task-li')} ref={this.liRef}>
-            <TaskButton name={this.props.name}
-                className={{"btn-parent": true}}
-                status={this.props.status}
-                active={this.props.active}
-                editable={false}
-                expandable={this.props.children && this.props.children.length > 0}
-                onClickActivate={()=>{this.props.onClickActivate(null)}}
-                onClickExpand={this.toggleExpand}/>
-            
-            {this.props.editable &&
-            <div className={classNames(['sidebar-group-editbtn', 'background'])} onClick={()=>{this.props.onClickEdit(null)}}>
-                <span>edit task</span>
-            </div>}
-            <ol className="sidebar-children">
-                {this.props.children.map((child, index)=>{
-                    return <li key={index}>
-                        <TaskButton
-                            name={child.name}
-                            className={{ "btn-child": true }}
-                            status={this.props.status}
-                            active={child.active}
-                            editable={false}
-                            expandable={false}
-                            onClickActivate={()=>{this.props.onClickActivate(index)}}
-                            onClickExpand={this.toggleExpand} />
-                    </li>
-                })}
-            </ol>
-        </li>
+    &.btn-default {
+        background-color: #fafafa;
     }
-}
 
-
-interface TaskButtonProps extends TaskButtonSpec {
-    onClickActivate: () => void
-    expandable?: boolean
-    onClickExpand?: () => void
-    onClickEdit?: () => void
-    className?: object
-}
-export class TaskButton extends React.Component<TaskButtonProps> {
-    static defaultProps = {
-        expandable: false
+    &.btn-active {
+        color: #fafafa;
+        background-color: #2c70de;
     }
-    render() {
-        return <div className={classNames('btn', `btn-${this.props.status}`, {
-                    ...this.props.className})} onClick={this.props.onClickActivate}>
 
-            <div className="btn-icon">
-                {this.props.editable &&
-                    <EditOutlined />}
-                {this.props.expandable &&
-                    <CaretDownOutlined />}
-            </div>
-            <div className="btn-name">
-                {this.props.name}
-            </div>
-            
-        </div>
+    &.btn-valid {
+        background-color: #b2cf23;
     }
-}
+
+    &.btn-invalid {
+        background-color: #cf6565;
+    }
+`
 
 /* Sidebar buttons */
 const SidebarContainer = styled.nav`
@@ -194,56 +159,9 @@ const SidebarContainer = styled.nav`
       margin: 2px;
     }
   
-    &-group {
-      &-editbtn {
-        font-size: 0.8em;
-        line-height: 14px;
-        color: #5c5252;
-        text-align: right;
-        text-transform: uppercase;
-  
-        &:hover {
-          cursor: pointer;
-        }
-      }
-  
-      &-editbtn.background {
-        position: relative;
-        z-index: 1;
-  
-        &:before {
-          border-top: 2px solid #dfdfdf;
-          content: "";
-          margin: 0 auto;
-          /* this centers the line to the full width specified */
-          position: absolute;
-          /* positioning must be absolute here, and relative positioning must be applied to the parent */
-          top: 50%;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          width: 95%;
-          z-index: -1;
-        }
-  
-        span {
-          /* to hide the lines from behind the text, you have to set the background color the same as the container */
-          background: #f0f2f5;
-          padding: 0 5px;
-        }
-      }
-  
-    }
-  
     &.bottom {
       margin-top: auto;
     }
-  
-    &.children {
-      list-style-type: none;
-      margin: 0;
-      padding-left: 25px;
-    }    
   }`
 
   const SidebarHead = styled.nav`
@@ -274,56 +192,4 @@ const SidebarContainer = styled.nav`
         border-radius: 6px;
         border: 2px solid #a6a6a6;
     }
-
-    > .task-group {
-        height: inherit;
-        list-style-type: none;
-        margin: 0;
-        padding: 0;
-  
-        > li > .btn {
-          border: 1px solid #d9d9d9;
-          border-radius: 2px;
-          margin: 2px;
-          color: #363636;
-          clear: both;
-      
-          > .btn-name {
-            width: calc(100% - 36px);
-            overflow-x: hidden;
-            display: block;
-            padding: 5px;
-      
-            &:hover {
-              cursor: pointer;
-            }
-          }
-      
-          > .btn-icon {
-            display: block;
-            float: right;
-            width: 20px;
-            height: 20px;
-            margin: 8px;
-            color:#d5d5d5;
-          }
-      
-          &.btn-default {
-            background-color: #fafafa;
-          }
-      
-          &.btn-active {
-            color: #fafafa;
-            background-color: #2c70de;
-          }
-  
-          &.btn-valid {
-            background-color: #b2cf23;
-          }
-  
-          &.btn-invalid {
-            background-color: #cf6565;
-          }
-        }
-      }
   `

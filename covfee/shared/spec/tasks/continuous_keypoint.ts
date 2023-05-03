@@ -1,5 +1,5 @@
 import { OpencvFlowPlayerMedia } from '../players/opencv';
-import { CommonContinuousTaskSpec } from '../task'
+import { BaseTaskSpec } from '../task'
 
 /**
 * @TJS-additionalProperties false
@@ -51,4 +51,4 @@ export interface ContinuousKeypointTaskBaseSpec {
 /**
 * @TJS-additionalProperties false
 */
-export interface ContinuousKeypointTaskSpec extends ContinuousKeypointTaskBaseSpec, CommonContinuousTaskSpec {}
+export interface ContinuousKeypointTaskSpec extends ContinuousKeypointTaskBaseSpec, BaseTaskSpec {}

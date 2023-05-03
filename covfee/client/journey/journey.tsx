@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { withRouter, generatePath, RouteComponentProps } from 'react-router'
 import {
     ArrowRightOutlined,
+    LoadingOutlined,
     PlusOutlined
 } from '@ant-design/icons'
 import {
@@ -14,6 +15,7 @@ import {
     Modal,
     Progress
 } from 'antd'
+import Title from 'antd/lib/typography/Title'
 import 'antd/dist/antd.css'
 import Collapsible from 'react-collapsible'
 const { Text } = Typography
@@ -27,44 +29,47 @@ import ButtonEventManagerContext from '../input/button_manager'
 
 import {JourneyType} from '../types/journey'
 import { TaskResponseType, TaskType } from '../types/node'
-import { TaskLoader } from './node_loader'
+import { NodeLoader } from './node_loader'
 
 import './journey.scss'
 import { fetchJourney, useJourney } from '../models/Journey'
-import { useNode } from '../models/Node'
 import { useState } from 'react'
+import { AllPropsRequired } from '../types/utils';
 
 // url parameters
 interface MatchParams {
     journeyId: string,
-    taskId: string
+    nodeId: string
 }
 
-type Props = JourneyType & RouteComponentProps<MatchParams> & {
-    /**
-     * height of the container (used for adjusting sidebar height)
-     */
-    height: number
+interface PropsWithoutRoute {
     /**
      * Enables preview mode where data submission is disabled.
      */
-    previewMode: boolean,
+    previewMode?: boolean,
     /**
      * Tells the annotation component to keep urls up to date
      */
-    routingEnabled: boolean
+    routingEnabled?: boolean
 
     // ASYNC OPERATIONS
-    submitTaskResponse: (arg0: TaskResponseType, arg1: any) => Promise<TaskResponseType>
-    fetchTaskResponse: (arg0: TaskType) => Promise<TaskResponseType>
-    reloadHit: Function
+    // submitTaskResponse: (arg0: TaskResponseType, arg1: any) => Promise<TaskResponseType>
+    // fetchTaskResponse: (arg0: TaskType) => Promise<TaskResponseType>
     /**
      * Called when the Hit submit button is clicked
      */
-    onSubmit: () => Promise<any>
+    onSubmit?: () => Promise<any>
 }
+type Props = RouteComponentProps<MatchParams> & PropsWithoutRoute
 
-export const JourneyPage = (props: Props) => {
+export const JourneyPage: React.FunctionComponent<Props> = (props) => {
+
+    const args: RouteComponentProps<MatchParams> & AllPropsRequired<PropsWithoutRoute> = {
+        routingEnabled: true,
+        previewMode: false,
+        onSubmit: () => null,
+        ...props,
+    }
 
     const {journey, setJourney} = useJourney(null);
     const [currNode, setCurrNode] = useState(null);
@@ -76,15 +81,24 @@ export const JourneyPage = (props: Props) => {
     const [currKey, setCurrKey] = useState(0)
 
     React.useEffect(() => {
-        fetchJourney(props.match.params.journeyId).then(response => {
+        console.log(args.match.params)
+        fetchJourney(args.match.params.journeyId).then(response => {
+            console.log(`loaded journey ${response.id}`)
             setJourney(response)
-            setLoadingJourney(false)
+            
 
+            if(args.match.params.nodeId !== undefined) {
+                changeActiveNode(parseInt(args.match.params.nodeId))
+            } else {
+                changeActiveNode(0)
+            }
+
+            setLoadingJourney(false)
         })
     }, [])
 
 
-    const handleChangeActiveNode = (nodeIndex: number) => {
+    const changeActiveNode = (nodeIndex: number) => {
         // instructionsFn = null
         setCurrNode(nodeIndex)
         setCurrKey(k => k+1)
@@ -97,7 +111,7 @@ export const JourneyPage = (props: Props) => {
             handleHitSubmit()
         } else {
             // go to next node
-            handleChangeActiveNode(currNode+1)
+            changeActiveNode(currNode+1)
         }
     }
 
@@ -106,9 +120,9 @@ export const JourneyPage = (props: Props) => {
     }
 
     const updateUrl = (nodeIndex: number) => {
-        if(props.routingEnabled) {
-            window.history.pushState(null, null, '#' + generatePath(props.match.path, {
-                hitId: props.match.params.journeyId,
+        if(args.routingEnabled) {
+            window.history.pushState(null, null, '#' + generatePath(args.match.path, {
+                journeyId: args.match.params.journeyId,
                 nodeId: nodeIndex
             }))
         }
@@ -139,7 +153,7 @@ export const JourneyPage = (props: Props) => {
     }
 
     const handleHitSubmit = () => {
-        props.onSubmit()
+        args.onSubmit()
             .then(()=>{
                 showCompletionInfo()
             })
@@ -165,30 +179,8 @@ export const JourneyPage = (props: Props) => {
         return canSubmit
     }
 
-    const renderMenu = () => {
-        const nodes = journey.nodes
-
-        return <>
-            
-            <Sidebar
-                tasks={nodes}
-                currTask={currNode}
-                onChangeActiveTask={handleChangeActiveNode}>
-                {!journey.submitted && props.interface.showSubmitButton &&
-                    <Button type="primary" 
-                            style={{width: '100%', backgroundColor: '#5b8c00', borderColor: '#5b8c00'}} 
-                            onClick={handleHitSubmit}
-                            disabled={!canSubmitHit()}>Submit HIT</Button>
-                }
-                {journey.submitted &&
-                    <Button type="primary" style={{width: '100%', backgroundColor: '#5b8c00', borderColor: '#5b8c00'}} onClick={showCompletionInfo}>Show completion code</Button>
-                }
-            </Sidebar>
-        </>
-    }
-
     const getHitExtra = () => {
-        if (props.extra) return <MarkdownLoader content={props.extra} />
+        if (args.extra) return <MarkdownLoader content={args.extra} />
         else return false
     }
 
@@ -204,10 +196,15 @@ export const JourneyPage = (props: Props) => {
         </Button>
     }
 
+    if(loadingJourney)
+        return <Modal title={<Title level={4}><LoadingOutlined /> Loading tasks</Title>} visible={true} footer={null} closable={false}>
+            Please give a second..
+        </Modal>
     
-
     
-    const taskProps = journey.nodes[currNode]
+    const nodeProps = journey.nodes[currNode]
+    console.log(currNode)
+    console.log(nodeProps)
     const hitExtra = getHitExtra()
 
     return <ButtonEventManagerContext>
@@ -216,16 +213,23 @@ export const JourneyPage = (props: Props) => {
                 <CovfeeMenuItem/>
             </Menu.Item>
             <Menu.Item key="task" disabled>
-                <Text strong style={{ color: 'white' }}>{taskProps.name}</Text>
+                <Text strong style={{ color: 'white' }}>{nodeProps.name}</Text>
             </Menu.Item>
             {hitExtra && 
             <Menu.Item key="extra" icon={<PlusOutlined />}>Extra</Menu.Item>}
         </Menu>
-        <SidebarContainer height={props.height}>
-            {renderMenu()}
+        <SidebarContainer height={window.innerHeight}>
+            <Sidebar
+                nodes={journey.nodes}
+                currNode={currNode}
+                onChangeActiveTask={changeActiveNode}>
+                {journey.submitted &&
+                    <Button type="primary" style={{width: '100%', backgroundColor: '#5b8c00', borderColor: '#5b8c00'}} onClick={showCompletionInfo}>Show completion code</Button>
+                }
+            </Sidebar>
         </SidebarContainer>
         
-        <ContentContainer height={props.height}>
+        <ContentContainer height={window.innerHeight}>
             
             {hitExtra &&
                 <Collapsible open={extraOpen}>
@@ -246,17 +250,14 @@ export const JourneyPage = (props: Props) => {
                             trailColor={'#c0c0c0'}/>
                     })()}
                 </div>}
-                <TaskLoader
+                <NodeLoader
                     key={currKey}
-                    task={taskProps}
-                    disabled={taskProps.submitted}
+                    node={nodeProps}
+                    disabled={nodeProps.submitted}
                     previewMode={props.previewMode}
                     // render props
                     renderSubmitButton={renderTaskSubmitButton}
                     renderNextButton={renderTaskNextButton}
-                    // async operations
-                    fetchTaskResponse={props.fetchTaskResponse}
-                    submitTaskResponse={props.submitTaskResponse}
                     // callbacks
                     onClickNext={gotoNextNode}
                     onSubmit={handleNodeSubmitted}/>
@@ -269,16 +270,18 @@ const SidebarContainer = styled.div<any>`
     display: inline-block;
     vertical-align: top;
     top:46px;
-    height: ${props => (Math.floor(props.height) - 46 + 'px;')}
+    height: ${props => (Math.floor(window.innerHeight) - 46 + 'px;')}
 	width: 25%;
 	overflow: auto;
 `
 
 const ContentContainer = styled.div<any>`
-    position: absolute;
+    position: fixed;
+    top:46px;
+    right: 0;
     display: inline-block;
     vertical-align: top;
-    height: ${props => (Math.floor(props.height) - 46 + 'px;')}
+    height: ${props => (Math.floor(window.innerHeight) - 46 + 'px;')}
     width: calc(100% - 25%);
     overflow: auto;
 `
