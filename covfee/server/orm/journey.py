@@ -38,8 +38,8 @@ class JourneySpec(Base):
         super().__init__()
         self.nodes = nodes
 
-    def instantiate(self):
-        instance = JourneyInstance()
+    def instantiate(self, index=None):
+        instance = JourneyInstance(index)
         self.journeys.append(instance)
         return instance
 
@@ -75,8 +75,11 @@ class JourneyInstance(Base):
     # updated_at = Column(DateTime, onupdate=datetime.datetime.now)
     # submitted_at = Column(DateTime)
 
-    def __init__(self):
-        self.id = secrets.token_bytes(32)
+    def __init__(self, index=None):
+        if index is None:
+            self.id = secrets.token_bytes(32)
+        else:
+            self.id = hashlib.sha256((str(index).encode())).digest() # 
         self.preview_id = hashlib.sha256((self.id + 'preview'.encode())).digest()
         self.submitted = False
         self.interface = {}

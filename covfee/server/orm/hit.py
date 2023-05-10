@@ -116,8 +116,8 @@ class HITInstance(Base):
 
         # instantiate every node only once
         nodespec_to_nodeinstance = dict()
-        for journeyspec in journeyspecs:
-            journey = journeyspec.instantiate()
+        for i, journeyspec in enumerate(journeyspecs):
+            journey = journeyspec.instantiate(i)
             journey.hit_id = self.id
 
             for nodespec in journeyspec.nodespecs:
