@@ -11,7 +11,6 @@ import {
     Button,
     Alert
 } from 'antd'
-import { valHooks } from 'jquery'
 
 /**
  * Allows the user to edit some fields of a hit specification.

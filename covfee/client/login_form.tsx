@@ -8,12 +8,10 @@ import {
     Row,
     Col, Alert, Divider
 } from 'antd'
-import {GoogleLoginButton} from 'react-social-login-buttons'
 
 import userContext from './userContext'
 import Constants from 'Constants'
 import CovfeeLogo from './art/logo.svg'
-import { GoogleLogin } from 'react-google-login'
 import './login_form.scss'
 
 import { log } from './utils'
@@ -42,22 +40,6 @@ export default class LoginForm extends React.Component<Props> {
             })
     }
 
-    onSuccessGoogle = (response: any) => {
-        log.debug(response)
-        log.debug(Constants.google_client_id)
-        this.context.loginWithGoogle(response.tokenId)
-            .then(data => {
-                this.props.onSuccess(data)
-            })
-            .catch(error => {
-                this.setState({ error: error.toString(), submitting: false })
-            })
-    }
-
-    onFailureGoogle = () => {
-
-    }
-
     render() {
         const layout = {
             labelCol: { span: 8 },
@@ -68,16 +50,6 @@ export default class LoginForm extends React.Component<Props> {
         }
 
         return <>
-
-            <GoogleLogin
-                clientId={Constants.google_client_id}
-                responseType='id_token'
-                buttonText="Sign in with Google"
-                onSuccess={this.onSuccessGoogle}
-                onFailure={this.onFailureGoogle}
-                cookiePolicy={'single_host_origin'}
-                theme='light'
-                className='login-google-btn'/>
 
             <Divider />
             <Form

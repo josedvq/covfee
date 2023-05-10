@@ -3,7 +3,6 @@
     "workspaces": {
         "packages": [
             "covfee/client",
-            "covfee/cli",
             "covfee/shared",
             "docs"
         ],

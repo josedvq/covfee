@@ -8,6 +8,7 @@ from flask_socketio import SocketIO, send, emit, join_room, leave_room
 from covfee.server.orm import TaskResponse
 from covfee.server.socketio.redux_store import ReduxStoreClient
 
+
 socketio = SocketIO()
 store = ReduxStoreClient()
 
@@ -21,11 +22,9 @@ def get_task_object(responseId: int):
     task_object = task_class(response=response)
     return task_object
 
-
-@socketio.on('message')
-def handle_message(data):
-    pass
-
+@socketio.on('connect')
+def on_connect(data):
+    emit('hello', {'data': 'Connected'})
 
 @socketio.on('join')
 def on_join(data):

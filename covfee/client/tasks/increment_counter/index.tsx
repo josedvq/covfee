@@ -24,4 +24,4 @@ function IncrementCounterTask(props: Props) {
 }
 
 
-export default {taskConstructor: IncrementCounterTask, taskReducer: reducer}
+export default {taskConstructor: IncrementCounterTask, taskReducer: slice.reducer}

@@ -11,11 +11,7 @@ context = zmq.Context()
 class ReduxStoreService:
     def run(self):
         with working_directory(os.path.join(app.config['COVFEE_SERVER_PATH'], 'socketio')):
-            subprocess.Popen(['npx', 'pm2', 'start', 'reduxStore.js', '-i', '1', '--watch', '--', 
-                'serve',
-                '--database',
-                app.config['DATABASE_PATH']
-            ])
+            subprocess.Popen(['node', 'reduxStore.js', '5555'])
 
 class ReduxStoreClient:
     ''' This class takes care of replicating the shared state in multi-party tasks server-side for 
