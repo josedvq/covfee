@@ -14,6 +14,7 @@ from covfee.shared.validator.ajv_validator import AjvValidator
 from covfee.server.app import create_app
 from covfee.cli.utils import working_directory
 
+
 class ProjectExistsException(Exception):
     pass
 
@@ -74,6 +75,10 @@ class Launcher():
             socketio.run(app, host=host, **ssl_options)
         else:
             raise f'unrecognized mode {mode}'
+        
+        from covfee.server.socketio.redux_store import ReduxStoreService
+        redux_store = ReduxStoreService()
+        redux_store.run()
 
 
     def launch_browser(self, unsafe=False):

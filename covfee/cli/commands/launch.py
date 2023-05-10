@@ -20,7 +20,6 @@ from covfee.shared.validator.validation_errors import JavascriptError, Validatio
 from covfee.shared.schemata import Schemata
 from covfee.cli.utils import NPMPackage
 from covfee.utils import covfee_make, get_start_message
-from covfee.server.rtstore import rtstore
 from covfee.launcher import launch_webpack
 from covfee.config import get_config
 

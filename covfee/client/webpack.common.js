@@ -13,10 +13,10 @@ module.exports = env => {
         },
         resolve: {
             extensions: [".ts", ".tsx", ".jsx", ".js"],
-            modules: ['node_modules'],
-            fallback: {
-                util: require.resolve("util")
-            }
+            modules: ['node_modules']
+            // fallback: {
+            //     util: require.resolve("util")
+            // }
         },
         module: {
             rules: [
@@ -50,11 +50,11 @@ module.exports = env => {
                 }
             ]
         },
-        plugins: [
-            new webpack.ProvidePlugin({
-                Buffer: [require.resolve("buffer/"), "Buffer"],
-            }),
-        ],
+        // plugins: [
+        //     new webpack.ProvidePlugin({
+        //         Buffer: [require.resolve("buffer/"), "Buffer"],
+        //     }),
+        // ],
         externals: {
             "cv": "cv",
             "video.js": "videojs",

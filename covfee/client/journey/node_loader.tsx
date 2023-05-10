@@ -16,6 +16,7 @@ import { CovfeeTask } from 'tasks/base'
 import { useNode } from '../models/Node';
 import { NodeType } from '../types/node';
 import { AllPropsRequired } from '../types/utils';
+import { useNodeState } from '../nodes/state';
 
 interface State {
     /**
@@ -115,6 +116,8 @@ export const NodeLoader = (props: Props) => {
 
     const nodeElementRef = React.useRef(null)
     const nodeInstructionsRef = React.useRef(null)
+
+    // const state = useNodeState();
 
 
     const canSubmit = () => {
