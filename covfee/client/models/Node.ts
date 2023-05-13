@@ -3,8 +3,8 @@ import { NodeType, TaskResponseType } from '../types/node';
 import { fetcher, throwBadResponse } from '../utils';
 
 export function useNode(data: NodeType) {
-    const [node, setNode] = React.useState(data);
-    const [response, setResponse] = React.useState(null);
+    const [node, setNode] = React.useState<NodeType>(data);
+    const [response, setResponse] = React.useState<TaskResponseType>(null);
 
     const fetchResponse = () => {
         const url = node.url +'/response?' + new URLSearchParams({

@@ -76,9 +76,9 @@ class Launcher():
         else:
             raise f'unrecognized mode {mode}'
         
-        from covfee.server.socketio.redux_store import ReduxStoreService
-        redux_store = ReduxStoreService()
-        redux_store.run()
+        # from covfee.server.socketio.redux_store import ReduxStoreService
+        # redux_store = ReduxStoreService()
+        # redux_store.run()
 
 
     def launch_browser(self, unsafe=False):

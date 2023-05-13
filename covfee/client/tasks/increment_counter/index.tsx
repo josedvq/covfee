@@ -1,27 +1,36 @@
-import * as React from 'react'
-import { useState, useEffect, useRef } from 'react'
-import styled from 'styled-components'
-import { BasicTaskProps, CovfeeTask } from '../base'
+import * as React from "react";
+import { useState, useEffect, useRef } from "react";
+import { BasicTaskProps, CovfeeTask } from "../base";
 
-import { VideocallTaskSpec } from '@covfee-shared/spec/tasks/videocall'
-import { TaskType } from '@covfee-shared/spec/task'
-import {useNodeState} from '../../nodes/state'
-import { State } from './slice'
-import {slice, actions} from './slice'
+import { TaskType } from "@covfee-shared/spec/task";
+import { useNodeState } from "../../journey/state";
+import { State } from "./slice";
+import { slice, actions } from "./slice";
+import { useSelector } from "react-redux";
 
-interface Props extends TaskType, BasicTaskProps {
-}
-
+interface Props extends TaskType, BasicTaskProps {}
 
 function IncrementCounterTask(props: Props) {
-    const {state, dispatch} = useNodeState<State>(slice)
+  const counter = useSelector((state) => state.counter);
+  const { dispatch } = useNodeState<State>(slice);
 
-    return <>
-        <h1>Counter {state.counter}</h1>
+  return (
+    <>
+      <h1>Counter {counter}</h1>
 
-        <button onClick={()=>{dispatch(actions.incrementValue())}}>Increment</button>
+      <button
+        onClick={() => {
+          console.log(actions.incrementValue());
+          dispatch(actions.incrementValue());
+        }}
+      >
+        Increment
+      </button>
     </>
+  );
 }
 
-
-export default {taskConstructor: IncrementCounterTask, taskReducer: slice.reducer}
+export default {
+  taskConstructor: IncrementCounterTask,
+  taskReducer: slice.reducer,
+};

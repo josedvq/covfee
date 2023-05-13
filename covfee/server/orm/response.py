@@ -21,7 +21,7 @@ class TaskResponse(Base):
     task: Mapped['TaskInstance'] = relationship(back_populates='responses')
     # node_id = Column(Integer, ForeignKey('nodeinstances.id'))
 
-    # state: Mapped[Dict[str, Any]] # holds the shared state of the task
+    state: Mapped[Dict[str, Any]] # holds the shared state of the task
     submitted: Mapped[bool]
     valid: Mapped[bool]
     # data: Mapped[Dict[str, Any]]
@@ -36,7 +36,7 @@ class TaskResponse(Base):
         super().__init__()
         self.submitted = False
         self.valid = False
-        self.extra = {}
+        self.state = {}
 
     def to_dict(self):
         response_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}

@@ -65,8 +65,14 @@ task2 = TaskSpec(spec={
     }
 })
 
+task_counter = TaskSpec(spec={
+    "name": "Counter",
+    "type": "IncrementCounterTask"
+})
+
 hit = HITSpec()
 j1 = hit.make_journey()
-j1 = task1(j1)
-j1 = task2(j1)
+j1 = task_counter(j1)
+# j1 = task1(j1)
+# j1 = task2(j1)
 hit.launch()

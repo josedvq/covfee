@@ -18,8 +18,9 @@ def create_app(mode):
     app.session = scoped_session(SessionLocal, scopefunc=_app_ctx_stack.__ident_func__)
     from .orm import set_session
     set_session(app.session)
-    socketio = SocketIO(app, cors_allowed_origins="*")
-    # socketio.init_app(app)
+    # socketio = SocketIO(app, cors_allowed_origins="*")
+    from .socketio import socketio
+    socketio.init_app(app)
 
     app.register_blueprint(frontend, url_prefix='/')
     from .rest_api import api, auth

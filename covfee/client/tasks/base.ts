@@ -1,9 +1,7 @@
 import React from 'react';
-import { AnnotationBuffer } from '../buffers/buffer'
-import { VideoPlayerContext } from 'hit/continuous_task_player';
 import { ButtonManagerClient } from 'input/button_manager';
 
-export abstract class CovfeeTask<T extends BasicTaskProps, S> extends React.Component<T, S> {
+export abstract class CovfeeTask<T extends BaseTaskProps, S> extends React.Component<T, S> {
     static taskType = 'component'
     static taskInfo: {
         bufferDataLen: number
@@ -19,12 +17,8 @@ export abstract class CovfeeTask<T extends BasicTaskProps, S> extends React.Comp
     getData?: () => any
 }
 
-export abstract class CovfeeContinuousTask<T extends ContinuousTaskProps, S> extends CovfeeTask<T, S> {
-    static taskType = 'continuous'
-}
 
-
-export interface CommonTaskProps {
+export interface BaseTaskProps {
     /**
      * The task specification
      */
@@ -38,12 +32,6 @@ export interface CommonTaskProps {
     response: any
 
     /**
-     * This buffer should be used to record data or log events during continuous tasks.
-     * It takes care of communication with the server.
-     */
-    buffer: AnnotationBuffer
-
-    /**
      * Interface to the buttons manager
      */
     buttons: ButtonManagerClient
@@ -52,12 +40,6 @@ export interface CommonTaskProps {
      * Called to get access to shared (synced) state and shared state setter
      */
     getSharedState: () => [any, (arg0: any) => void]
-}
-
-/**
- * Props used by a normal non-continuous task
- */
-export interface BasicTaskProps extends CommonTaskProps {
 
     /**
      * Whether the task should be disabled (cannot be edited)
@@ -78,27 +60,3 @@ export interface BasicTaskProps extends CommonTaskProps {
 
 }
 
-export interface ContinuousTaskProps extends CommonTaskProps {
-
-    /**
-     * Object representing the video player
-     * Includes utilities for listening to events and controlling the player
-     */
-    player: VideoPlayerContext
-    
-    /**
-     * If true, the task should visualize the action log in addition to the data.
-     */
-    visualizeActionsOn?: boolean
-    
-    /**
-     * Element that renders the video player in the task.
-     * Should be rendered when provided
-     */
-    renderPlayer?: (arg0?: any) => React.ReactNode
-    
-    /**
-     * Called when a continuous task ends
-     */
-    onEnd: (arg0: any) => void
-}

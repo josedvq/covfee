@@ -12,11 +12,13 @@ import { getTask } from '../task_utils'
 import { TaskResponseType, TaskType } from '../types/node'
 import buttonManagerContext from '../input/button_manager_context'
 import { QuestionCircleOutlined } from '@ant-design/icons'
-import { CovfeeTask } from 'tasks/base'
+import { BaseTaskProps, CovfeeTask } from 'tasks/base'
 import { useNode } from '../models/Node';
 import { NodeType } from '../types/node';
 import { AllPropsRequired } from '../types/utils';
-import { useNodeState } from '../nodes/state';
+import { NodeContext, NodeContextType } from './node_context';
+import { Provider as StoreProvider } from 'react-redux'
+import { configureStore } from '@reduxjs/toolkit';
 
 interface State {
     /**
@@ -95,6 +97,7 @@ interface Props {
 
 
 
+
 export const NodeLoader = (props: Props) => {
     const args: AllPropsRequired<Props> = {
         disabled: false,
@@ -112,10 +115,18 @@ export const NodeLoader = (props: Props) => {
     const {taskConstructor, taskReducer} = getTask(args.node.spec.type)
     const {node, setNode, response, makeResponse, fetchResponse, submitResponse} = useNode(args.node);
 
+    const reduxStore = React.useRef(configureStore({
+        reducer: taskReducer
+    }))
     
 
     const nodeElementRef = React.useRef(null)
     const nodeInstructionsRef = React.useRef(null)
+
+    const nodeContext: NodeContextType = {
+        node,
+        response
+    }
 
     // const state = useNodeState();
 
@@ -127,7 +138,7 @@ export const NodeLoader = (props: Props) => {
     // const isTask = () => args.node.spec.nodeType == 'task'
 
     React.useEffect(() => {
-        fetchResponse().then((response: TaskResponseType) => {
+        fetchResponse().then(_ => {
             setIsLoading(false)
         })
 
@@ -233,25 +244,27 @@ export const NodeLoader = (props: Props) => {
         {/* {renderErrorModal()} */}
         <div ref={nodeInstructionsRef}></div>
         <div style={{width: '100%', height: '100%', position: 'relative'}}>
-            
-            {(()=>{
-                const nodeProps = {
-                    spec: node.spec,
-                    response: response,
-                    disabled: args.disabled,
-                    onSubmit: res => handleTaskSubmit(res),
-                    renderSubmitButton: args.renderSubmitButton
-                }
+            <StoreProvider store={reduxStore.current}>
+            <NodeContext.Provider value={nodeContext}>
+                {(()=>{
+                    const nodeProps: BaseTaskProps = {
+                        spec: node.spec,
+                        response: response,
+                        disabled: args.disabled,
+                        onSubmit: res => handleTaskSubmit(res),
+                        renderSubmitButton: args.renderSubmitButton
+                    }
 
-                console.log(taskConstructor)
+                    console.log(taskConstructor)
 
-                const taskElement = React.createElement(taskConstructor, {
-                    ref: (elem: any)=>{createTaskRef(elem)},
-                    ...nodeProps
-                }, null)
+                    const taskElement = React.createElement(taskConstructor, {
+                        ...nodeProps
+                    }, null)
 
-                return taskElement
-            })()}
+                    return taskElement
+                })()}
+            </NodeContext.Provider>
+            </StoreProvider>
         </div>
     </>
 }

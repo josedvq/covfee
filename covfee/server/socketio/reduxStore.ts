@@ -1,5 +1,5 @@
 // Node.js require:
-import { configureStore, Store } from '@reduxjs/toolkit'
+import { configureStore, Slice, Store } from '@reduxjs/toolkit'
 import winston from 'winston'
 const zmq = require("zeromq")
 import slices from '../../client/tasks/slices'
@@ -31,7 +31,7 @@ class StoreService {
      * Returns the redux slice for a task
      * @param responseId 
      */
-    _getSlice(taskName: string) {        
+    _getSlice(taskName: string): Slice {        
         if(!(taskName in slices)) {
             logger.info(`Could not find slice for task name ${taskName}`)
             return undefined
@@ -54,8 +54,8 @@ class StoreService {
 
         this.rooms[responseId] = {
             store: configureStore({
-                reducer: slice,
-                preloadedState: dbState !== null ? dbState : undefined
+                reducer: slice.reducer,
+                // preloadedState: dbState !== null ? dbState : undefined
             }),
             actionIndex: 0,
             numConnections: 0
@@ -64,9 +64,19 @@ class StoreService {
     }
 
 
-
+    /**
+     * Called when subject joins the task/room
+     * If the room exists numConnections is increased
+     * If the room does not exist is created with the
+     * dbState set as current state. If dbState is null,
+     * initialState is used.
+     * @param taskName 
+     * @param responseId 
+     * @param dbState 
+     * @returns 
+     */
     async join(taskName: string, responseId: string, dbState: null | object): Promise<JoinResponse> {
-        logger.info('join')
+        
         if(!(responseId in this.rooms)) {
             if(!(this._load(taskName, responseId, dbState))) {
                 return {err: `Could not load state responseId ${responseId}`}
@@ -120,6 +130,7 @@ class StoreService {
           const req = JSON.parse(buffer.toString('utf-8')) as Request
           let res
 
+          logger.info(req)
           switch(req['command']) {
             case 'join':
                 const {responseId, taskName, currState} = req
@@ -139,6 +150,7 @@ class StoreService {
           }
 
           res['success'] = !('err' in res)
+          logger.info(res)
           await sock.send(JSON.stringify(res))
         }
     }

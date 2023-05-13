@@ -34,10 +34,12 @@ class ReduxStoreClient:
         message = self.socket.recv()
         return json.loads(message.decode('utf-8'))
 
-    def join(self, responseId):
+    def join(self, responseId, taskName, currState):
         return self.socket_request({
             'command': 'join', 
-            'responseId': responseId
+            'responseId': responseId,
+            'taskName': taskName,
+            'currState': currState
         })
 
     def leave(self, responseId):
