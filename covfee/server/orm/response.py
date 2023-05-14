@@ -10,18 +10,20 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .base import Base
 from ..tasks.base import BaseCovfeeTask
 
+
 class TaskResponse(Base):
-    """ Represents a task's response """
-    __tablename__ = 'taskresponses'
+    """Represents a task's response"""
+
+    __tablename__ = "taskresponses"
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
     # instance relationships
-    node_id: Mapped[int] = mapped_column(ForeignKey('nodeinstances.id'))
-    task: Mapped['TaskInstance'] = relationship(back_populates='responses')
+    node_id: Mapped[int] = mapped_column(ForeignKey("nodeinstances.id"))
+    task: Mapped["TaskInstance"] = relationship(back_populates="responses")
     # node_id = Column(Integer, ForeignKey('nodeinstances.id'))
 
-    state: Mapped[Dict[str, Any]] # holds the shared state of the task
+    state: Mapped[Dict[str, Any]]  # holds the shared state of the task
     submitted: Mapped[bool]
     valid: Mapped[bool]
     # data: Mapped[Dict[str, Any]]
@@ -36,18 +38,19 @@ class TaskResponse(Base):
         super().__init__()
         self.submitted = False
         self.valid = False
-        self.state = {}
+        self.state = None
 
     def to_dict(self):
         response_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
         response_dict = {**response_dict}
-        response_dict['url'] = f'{app.config["API_URL"]}/responses/{response_dict["id"]}'
-        
+        response_dict[
+            "url"
+        ] = f'{app.config["API_URL"]}/responses/{response_dict["id"]}'
+
         return response_dict
 
     def get_task_object(self):
-
-        task_class = getattr(tasks, self.task.spec.spec['type'], BaseCovfeeTask)
+        task_class = getattr(tasks, self.task.spec.spec["type"], BaseCovfeeTask)
         task_object = task_class(response=self)
         return task_object
 
@@ -67,7 +70,7 @@ class TaskResponse(Base):
             return f'{self.task.parent.spec.spec["name"]}-{self.task.spec.spec["name"]}_{response_index:d}'
         else:
             # use the task id if available
-            if self.task.spec.spec.get('id', False):
+            if self.task.spec.spec.get("id", False):
                 return f'{task_index}_{self.task.spec.spec["id"]}_{response_index:d}'
             return f'{task_index}_{self.task.spec.spec["name"]}_{response_index:d}'
 
@@ -78,23 +81,18 @@ class TaskResponse(Base):
         return self.valid
 
     def submit(self, response=None):
-        
         validation_result = self.validate()
-        
+
         if response is not None:
             self.data = response
         self.submitted = True
         self.submitted_at = datetime.datetime.now()
-        self.valid = (validation_result == True)
+        self.valid = validation_result == True
         self.task.has_unsubmitted_response = False
 
-        res = {
-            'status': 'success',
-            'valid': self.valid,
-            'response': self.to_dict()
-        }
+        res = {"status": "success", "valid": self.valid, "response": self.to_dict()}
 
         if not self.valid:
-            res['reason'] = validation_result
+            res["reason"] = validation_result
 
         return res

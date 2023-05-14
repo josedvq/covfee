@@ -41,9 +41,7 @@ def on_connect(data):
 def on_join(data):
     responseId = str(data["responseId"])
     response = get_response(responseId)
-    print(response.state)
     res = store.join(responseId, response.task.spec.spec["type"], response.state)
-    print(res)
     if res["success"]:
         join_room(responseId)
         session["responseId"] = responseId
@@ -70,19 +68,6 @@ def on_action(data):
         emit("action", action)
 
 
-@socketio.on("state")
-def on_state(data):
-    room = str(data["room"])
-    if room != session["room"]:
-        return send(
-            f'data["room"] does not match session\'s room variable. {room} != {session["room"]}'
-        )
-
-    res = store.state(room)
-    if res["success"]:
-        emit("state", res)
-
-
 def leave_responseid(responseId):
     res = store.leave(responseId)
 
@@ -90,6 +75,7 @@ def leave_responseid(responseId):
         # save state to database
         response = get_response(responseId)
         response.state = res["state"]
+        app.session.commit()
 
     # leave the room
     session["responseId"] = None
