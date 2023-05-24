@@ -44,7 +44,9 @@ def on_join(data):
     res = store.join(responseId, response.task.spec.spec["type"], response.state)
     if res["success"]:
         join_room(responseId)
+        print(f"joined room {responseId}")
         session["responseId"] = responseId
+        session.modified = True
         emit("state", res)
 
         # if this is the first join, run the on_first_join callback
@@ -60,12 +62,15 @@ def on_action(data):
     print("action")
     action = data["action"]
     responseId = str(data["responseId"])
-    # if room != session['room']:
-    #     return send(f'data["room"] does not match session\'s room variable. {room} != {session["room"]}')
+    print(session)
+    # if responseId != session["responseId"]:
+    #     return send(
+    #         f'data["responseId"] does not match session\'s responseId variable. {responseId} != {session["responseId"]}'
+    #     )
 
     res = store.action(responseId, action)
     if res["success"]:
-        emit("action", action)
+        emit("action", action, to=responseId)
 
 
 def leave_responseid(responseId):
