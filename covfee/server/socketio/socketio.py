@@ -46,6 +46,7 @@ def on_join(data):
         join_room(responseId)
         print(f"joined room {responseId}")
         session["responseId"] = responseId
+        print(session["responseId"])
         session.modified = True
         emit("state", res)
 
@@ -63,10 +64,10 @@ def on_action(data):
     action = data["action"]
     responseId = str(data["responseId"])
     print(session)
-    # if responseId != session["responseId"]:
-    #     return send(
-    #         f'data["responseId"] does not match session\'s responseId variable. {responseId} != {session["responseId"]}'
-    #     )
+    if responseId != session["responseId"]:
+        return send(
+            f'data["responseId"] does not match session\'s responseId variable. {responseId} != {session["responseId"]}'
+        )
 
     res = store.action(responseId, action)
     if res["success"]:

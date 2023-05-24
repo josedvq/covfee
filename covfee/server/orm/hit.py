@@ -118,6 +118,12 @@ class HITInstance(Base):
         default=datetime.datetime.now, onupdate=datetime.datetime.now
     )
 
+    # admin settings
+    collapsed: Mapped[bool] = mapped_column(default=True)
+    show_graph: Mapped[bool] = mapped_column(default=True)
+    show_journeys: Mapped[bool] = mapped_column(default=False)
+    show_nodes: Mapped[bool] = mapped_column(default=False)
+
     def __init__(self, id: bytes, journeyspecs: List["JourneySpec"] = []):
         super().__init__()
         self.id = id
@@ -191,6 +197,7 @@ class HITInstance(Base):
 
         # merge hit and instance dicts
         instance_dict = {**spec_dict, **instance_dict}
+        instance_dict["api_url"] = self.get_api_url()
 
         if with_nodes:
             # get the nodes
@@ -214,3 +221,7 @@ class HITInstance(Base):
     def stream_download(self, z, base_path, csv=False):
         for i, task in enumerate(self.tasks):
             yield from task.stream_download(z, base_path, i, csv)
+
+    def update(self, d):
+        for key, value in d.items():
+            setattr(self, key, value)

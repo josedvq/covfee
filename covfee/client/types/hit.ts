@@ -15,9 +15,14 @@ export interface JourneyType extends Omit<FullJourneyType, "nodes"> {
   nodes: number[];
 }
 export type HitInstanceType = Omit<HitSpec, "nodes"> & {
+  api_url: string
   nodes: NodeType[];
   journeys: JourneyType[];
   created_at: string;
   updated_at: string;
   submitted_at: string;
+  collapsed: boolean
+  show_journeys: boolean
+  show_nodes: boolean
+  show_graph: boolean
 };

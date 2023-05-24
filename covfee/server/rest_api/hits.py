@@ -23,18 +23,7 @@ def hit(hid):
                           with_instances=with_instances,
                           with_instance_nodes=with_instance_nodes)
 
-@api.route('/hits/<hid>/edit', methods=['POST'])
-@admin_required
-def hit_edit(hid):
-    """ Edits the hit configuration using the received config.
-    """
-    hit = app.session.query(HITSpec).get(int(hid))
-    if hit is None:
-        return jsonify({'msg': 'invalid hit'}), 400
 
-    hit.update(request.json)
-    app.session.commit()
-    return jsonify_or_404(hit, with_instances=False, with_config=True)
 
 # INSTANCES
 
@@ -127,3 +116,16 @@ def instance_download(iid):
     response = Response(stream_with_context(generator()), mimetype='application/zip')
     response.headers['Content-Disposition'] = 'attachment; filename={}'.format('results.zip')
     return response
+
+@api.route('/instances/<iid>/edit', methods=['POST'])
+@admin_required
+def instance_edit(iid):
+    """ Edits the hit configuration using the received config.
+    """
+    instance = app.session.query(HITInstance).get(bytes.fromhex(iid))
+    if instance is None:
+        return jsonify({'msg': 'invalid hit'}), 400
+
+    instance.update(request.json)
+    app.session.commit()
+    return jsonify_or_404(instance, with_nodes=False)

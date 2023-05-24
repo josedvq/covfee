@@ -17,10 +17,7 @@ import { HitInstanceType } from 'types/hit'
 import { HITTable } from './hit_table'
 import { getAllProjects, getProject, useProject } from '../models/Project'
 import { ProjectType } from 'types/project'
-import { HitInstanceGraph } from './hit_graph'
-
-
-
+import { HitBlock } from './hit_block'
 
 interface ProjectSpec {
     id: number,
@@ -155,7 +152,7 @@ const AdminProject = (props: Props) => {
                 {state.loadingProject?
                     <LoadingOutlined/>:
                     <>{instances.map((instance, index) => {
-                        return <HitInstanceGraph instance={instance} key={index}></HitInstanceGraph>
+                        return <HitBlock instance={instance} key={index}></HitBlock>
                     })}</>
                 }
             </>

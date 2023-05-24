@@ -1,12 +1,19 @@
 import * as React from 'react'
-import { JourneyType } from '../types/journey';
+import { JourneyType as FullJourney } from '../types/journey';
+import { JourneyType as ReducedJourney } from '../types/hit';
 import { myerror, fetcher, myinfo, throwBadResponse } from '../utils'
 import download from 'downloadjs'
 import Constants from 'Constants'
 
+type JourneyType = FullJourney | ReducedJourney
+
 export const useJourney = (data: JourneyType) => {
 
     const [journey, setJourney] = React.useState<JourneyType>(data);
+
+    const getUrl = () => {
+        return Constants.app_url + '/journeys/' + journey.id;
+    }
     
     const getApiUrl = () => {
         const url = Constants.api_url + '/journeys/' + journey.id
@@ -40,6 +47,8 @@ export const useJourney = (data: JourneyType) => {
     return {
         journey,
         setJourney,
+        getUrl,
+        getApiUrl,
         getDownloadHandler
     }
 }

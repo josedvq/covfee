@@ -3,6 +3,7 @@
 covfee.egg-info
 build
 dist
+**/*/flask_session
 
 #js
 node_modules

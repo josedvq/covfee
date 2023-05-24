@@ -7,6 +7,7 @@ import { CopyOutlined, EditOutlined } from '@ant-design/icons'
 import { HitType } from 'types/hit'
 import { HitInstanceGraph } from './hit_graph'
 import { getHitInstance } from '../models/Hit'
+import { Container } from './hit_block'
 
 interface Props { 
     hits: Array<HitType>
@@ -19,7 +20,7 @@ export const HITTable = (props: Props) => {
         
         return props.hits[record.index].instances.map(async (instance, index) => {
             const hit = await getHitInstance(instance.id)
-            return <HitInstanceGraph instance={hit} key={index}></HitInstanceGraph>
+            return <Container instance={instance} key={index}></Container>
         })
         
     }

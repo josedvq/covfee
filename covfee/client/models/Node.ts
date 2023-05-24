@@ -6,6 +6,10 @@ export function useNode(data: NodeType) {
     const [node, setNode] = React.useState<NodeType>(data);
     const [response, setResponse] = React.useState<TaskResponseType>(null);
 
+    const getUrl = () => {
+        return 'TODO'
+    }
+
     const fetchResponse = () => {
         const url = node.url +'/response?' + new URLSearchParams({
         })
@@ -45,6 +49,7 @@ export function useNode(data: NodeType) {
     return {
         node,
         setNode,
+        getUrl,
         response,
         fetchResponse,
         submitResponse,

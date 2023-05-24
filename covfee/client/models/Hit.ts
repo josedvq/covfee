@@ -6,9 +6,24 @@ import Constants from 'Constants'
 export const useHitInstance = (data: HitInstanceType) => {
   const [hitData, setHitData] = useState(data);
     
+  const setCollapsed = async (value: boolean) => {
+    return update({collapsed: value})
+  }
 
-  const update = (hit: HitInstanceType) => {
-    const url = hit.api_url + '/edit?' + new URLSearchParams({
+  const setShowGraph = async (value: boolean) => {
+    return update({show_graph: value})
+  }
+
+  const setShowJourneys = async (value: boolean) => {
+    return update({show_journeys: value})
+  }
+
+  const setShowNodes = async (value: boolean) => {
+    return update({show_nodes: value})
+  }
+
+  const update = async (hit: Partial<HitInstanceType>) => {
+    const url = hitData.api_url + '/edit?' + new URLSearchParams({
     })
 
     const requestOptions = {
@@ -29,7 +44,11 @@ export const useHitInstance = (data: HitInstanceType) => {
 
   return {
     'hitInstance': hitData,
-    update
+    update,
+    setCollapsed,
+    setShowGraph,
+    setShowJourneys,
+    setShowNodes
   }
 }
 
