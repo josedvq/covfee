@@ -255,7 +255,7 @@ export const ForceGraph = ({
         .on("drag", dragged)
         .on("end", dragended);
     }
-  });
+  }, []);
 
   return <svg ref={svgRef} style={{ width: "400px", height: "intrinsic" }} />;
 };
