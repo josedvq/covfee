@@ -20,10 +20,10 @@ class Project(Base):
     name: Mapped[str]
 
     # one project -> many HitSpec
-    hitspecs: Mapped[List["HITSpec"]] = relationship(back_populates="project")
+    hitspecs: Mapped[List[HITSpec]] = relationship(back_populates="project")
 
     def __init__(
-        self, name="Sample", email="example@example.com", hitspecs: List["HITSpec"] = []
+        self, name="Sample", email="example@example.com", hitspecs: List[HITSpec] = []
     ):
         super().__init__()
         self.name = name

@@ -49,7 +49,7 @@ class TaskInstance(NodeInstance):
         "polymorphic_identity": "TaskInstance",
     }
 
-    responses: Mapped[List["TaskResponse"]] = relationship(
+    responses: Mapped[List[TaskResponse]] = relationship(
         back_populates="task", cascade="all, delete-orphan"
     )
 

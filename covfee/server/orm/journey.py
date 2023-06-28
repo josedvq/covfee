@@ -28,17 +28,17 @@ class JourneySpec(Base):
     # spec relationships
     # up
     hitspec_id: Mapped[int] = mapped_column(ForeignKey("hitspecs.id"))
-    hitspec: Mapped["HITSpec"] = relationship(back_populates="journeyspecs")
+    hitspec: Mapped[HITSpec] = relationship(back_populates="journeyspecs")
 
     # down
-    nodespecs: Mapped[List["NodeSpec"]] = relationship(
+    nodespecs: Mapped[List[NodeSpec]] = relationship(
         secondary=journeyspec_nodespec_table, back_populates="journeyspecs"
     )
 
     # instance relationships
-    journeys: Mapped[List["JourneyInstance"]] = relationship(back_populates="spec")
+    journeys: Mapped[List[JourneyInstance]] = relationship(back_populates="spec")
 
-    def __init__(self, nodes: List["NodeSpec"] = []):
+    def __init__(self, nodes: List[NodeSpec] = []):
         super().__init__()
         self.nodes = nodes
 
@@ -64,14 +64,14 @@ class JourneyInstance(Base):
     # one JourneySpec -> many JourneyInstance
     journeyspec_id: Mapped[int] = mapped_column(ForeignKey("journeyspecs.id"))
     # journeyspec_id = Column(Integer, ForeignKey('journeyspecs.id'))
-    spec: Mapped["JourneySpec"] = relationship(back_populates="journeys")
+    spec: Mapped[JourneySpec] = relationship(back_populates="journeys")
 
     # one HitInstance -> many JourneyInstance
     hit_id: Mapped[int] = mapped_column(ForeignKey("hitinstances.id"))
     # hit_id = Column(Integer, ForeignKey('hitinstances.id'))
-    hit: Mapped["HITInstance"] = relationship(back_populates="journeys")
+    hit: Mapped[HITInstance] = relationship(back_populates="journeys")
 
-    nodes: Mapped[List["NodeInstance"]] = relationship(
+    nodes: Mapped[List[NodeInstance]] = relationship(
         secondary=journey_node_table, back_populates="journeys"
     )
     interface: Mapped[Dict[str, Any]] = mapped_column()
@@ -83,7 +83,7 @@ class JourneyInstance(Base):
     curr_node_id: Mapped[int] = mapped_column(
         ForeignKey("nodeinstances.id"), nullable=True
     )
-    curr_node: Mapped["NodeInstance"] = relationship(back_populates="curr_journeys")
+    curr_node: Mapped[NodeInstance] = relationship(back_populates="curr_journeys")
 
     # dates
     # submitted: Mapped[datetime.datetime] = mapped_column(nullable=True)

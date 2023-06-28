@@ -27,15 +27,15 @@ class HITSpec(Base):
 
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
     # project_id = Column(Integer, ForeignKey("projects.name"))
-    project: Mapped["Project"] = relationship(back_populates="hitspecs")
+    project: Mapped[Project] = relationship(back_populates="hitspecs")
 
     # spec relationship
-    journeyspecs: Mapped[List["JourneySpec"]] = relationship(back_populates="hitspec")
+    journeyspecs: Mapped[List[JourneySpec]] = relationship(back_populates="hitspec")
 
     # instance relationship
-    instances: Mapped[List["HITInstance"]] = relationship(back_populates="spec")
+    instances: Mapped[List[HITInstance]] = relationship(back_populates="spec")
 
-    def __init__(self, name=None, journeyspecs: List["JourneySpec"] = []):
+    def __init__(self, name=None, journeyspecs: List[JourneySpec] = []):
         super().__init__()
         # TODO: remove name column?
         if name is None:
@@ -105,10 +105,10 @@ class HITInstance(Base):
 
     # spec relationship
     hitspec_id: Mapped[int] = mapped_column(ForeignKey("hitspecs.id"))
-    spec: Mapped["HITSpec"] = relationship(back_populates="instances")
+    spec: Mapped[HITSpec] = relationship(back_populates="instances")
 
     # instance relationships
-    journeys: Mapped[List["JourneyInstance"]] = relationship(
+    journeys: Mapped[List[JourneyInstance]] = relationship(
         back_populates="hit", cascade="all, delete"
     )
 
@@ -124,7 +124,7 @@ class HITInstance(Base):
     show_journeys: Mapped[bool] = mapped_column(default=False)
     show_nodes: Mapped[bool] = mapped_column(default=False)
 
-    def __init__(self, id: bytes, journeyspecs: List["JourneySpec"] = []):
+    def __init__(self, id: bytes, journeyspecs: List[JourneySpec] = []):
         super().__init__()
         self.id = id
         self.preview_id = sha256((id + "preview".encode())).digest()

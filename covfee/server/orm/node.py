@@ -38,12 +38,12 @@ class NodeSpec(Base):
     }
 
     # spec relationships
-    journeyspecs: Mapped[List["JourneySpec"]] = relationship(
+    journeyspecs: Mapped[List[JourneySpec]] = relationship(
         secondary=journeyspec_nodespec_table, back_populates="nodespecs"
     )
 
     # instance relationships
-    nodes: Mapped[List["NodeInstance"]] = relationship(back_populates="spec")
+    nodes: Mapped[List[NodeInstance]] = relationship(back_populates="spec")
 
     def __init__(self):
         super().__init__()
@@ -53,7 +53,7 @@ class NodeSpec(Base):
         self.nodes.append(instance)
         return instance
 
-    def __call__(self, journey: "JourneySpec"):
+    def __call__(self, journey: JourneySpec):
         journey.append(self)
         return journey
 
@@ -79,15 +79,15 @@ class NodeInstance(Base):
 
     # spec relationships
     nodespec_id: Mapped[int] = mapped_column(ForeignKey("nodespecs.id"))
-    spec: Mapped["NodeSpec"] = relationship(back_populates="nodes")
+    spec: Mapped[NodeSpec] = relationship(back_populates="nodes")
 
     # instance relationships
-    journeys: Mapped[List["JourneyInstance"]] = relationship(
+    journeys: Mapped[List[JourneyInstance]] = relationship(
         secondary=journey_node_table, back_populates="nodes"
     )
 
     # status: journeys currently at this node
-    curr_journeys: Mapped[List["JourneyInstance"]] = relationship(
+    curr_journeys: Mapped[List[JourneyInstance]] = relationship(
         back_populates="curr_node"
     )
     # status code
