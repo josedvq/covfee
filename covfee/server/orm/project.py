@@ -1,7 +1,7 @@
 from __future__ import annotations
 import os
 import json
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import pandas as pd
 from sqlalchemy.orm import relationship, Mapped, mapped_column
@@ -10,15 +10,21 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .base import Base
 import covfee.launcher as launcher
 
+if TYPE_CHECKING:
+    from .hit import HITSpec
+
+
 class Project(Base):
-    __tablename__ = 'projects'
+    __tablename__ = "projects"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
 
     # one project -> many HitSpec
-    hitspecs: Mapped[List['HITSpec']] = relationship(back_populates='project')
+    hitspecs: Mapped[List["HITSpec"]] = relationship(back_populates="project")
 
-    def __init__(self, name = 'Sample', email = 'example@example.com', hitspecs: List['HITSpec'] = []):
+    def __init__(
+        self, name="Sample", email="example@example.com", hitspecs: List["HITSpec"] = []
+    ):
         super().__init__()
         self.name = name
         self.email = email
@@ -28,11 +34,11 @@ class Project(Base):
         self._conflicts = False
         self._filename = None
 
-    def launch(self, num_instances = 1):
+    def launch(self, num_instances=1):
         for spec in self.hitspecs:
             spec.instantiate(num_instances)
         l = launcher.Launcher([self])
-        l.start(mode='dev')
+        l.start(mode="dev")
 
     def __repr__(self):
         pass
@@ -41,17 +47,22 @@ class Project(Base):
         list_of_instances = list()
         for hit in self.hitspecs:
             for instance in hit.instances:
-                list_of_instances.append({
-                    'hit_name': hit.name,
-                    'id': instance.id.hex(),
-                    'url': instance.get_url(),
-                    'preview_url': instance.get_preview_url(),
-                    'completion_code': instance.get_completion_code()
-                })
-        df = pd.DataFrame(list_of_instances, columns=['hit_name', 'id', 'url', 'preview_url', 'completion_code'])
-        
+                list_of_instances.append(
+                    {
+                        "hit_name": hit.name,
+                        "id": instance.id.hex(),
+                        "url": instance.get_url(),
+                        "preview_url": instance.get_preview_url(),
+                        "completion_code": instance.get_completion_code(),
+                    }
+                )
+        df = pd.DataFrame(
+            list_of_instances,
+            columns=["hit_name", "id", "url", "preview_url", "completion_code"],
+        )
+
         return df
-    
+
     @staticmethod
     def from_name(name: str):
         # TODO: attach session to Project
@@ -59,10 +70,10 @@ class Project(Base):
 
     @staticmethod
     def from_json(fpath: str):
-        '''
+        """
         Loads a project into ORM objects from a project json file.
-        '''
-        with open(fpath, 'r') as f:
+        """
+        with open(fpath, "r") as f:
             proj_dict = json.load(f)
 
         return Project(**proj_dict)
@@ -72,16 +83,18 @@ class Project(Base):
             for instance in hit.instances:
                 if submitted_only and not instance.submitted:
                     continue
-                yield from instance.stream_download(z, 
-                    os.path.join(base_path, instance.id.hex()), 
-                    csv=csv)
-                
+                yield from instance.stream_download(
+                    z, os.path.join(base_path, instance.id.hex()), csv=csv
+                )
+
     def to_dict(self, with_hits=True, with_instances=False, with_instance_nodes=False):
-        project_dict = {c.name: getattr(self, c.name)
-                        for c in self.__table__.columns}
+        project_dict = super().to_dict()
         if with_hits:
-            project_dict['hits'] = [
-                hit.to_dict(with_instances=with_instances, with_instance_nodes=with_instance_nodes) 
+            project_dict["hits"] = [
+                hit.to_dict(
+                    with_instances=with_instances,
+                    with_instance_nodes=with_instance_nodes,
+                )
                 for hit in self.hitspecs
             ]
         return project_dict

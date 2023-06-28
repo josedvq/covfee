@@ -1,6 +1,6 @@
 from __future__ import annotations
 import datetime
-from typing import Dict, Any
+from typing import TYPE_CHECKING, Dict, Any
 
 import numpy as np
 from flask import current_app as app
@@ -9,6 +9,9 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from .base import Base
 from ..tasks.base import BaseCovfeeTask
+
+if TYPE_CHECKING:
+    from .task import TaskInstance
 
 
 class TaskResponse(Base):
@@ -41,7 +44,7 @@ class TaskResponse(Base):
         self.state = None
 
     def to_dict(self):
-        response_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        response_dict = super().to_dict()
         response_dict = {**response_dict}
         response_dict[
             "url"

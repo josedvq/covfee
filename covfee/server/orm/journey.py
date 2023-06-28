@@ -4,7 +4,7 @@ import datetime
 import hmac
 import secrets
 import hashlib
-from typing import List, Dict, Any
+from typing import List, Dict, Any, TYPE_CHECKING
 from typing_extensions import Annotated
 
 # from ..db import Base
@@ -13,7 +13,12 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from flask import current_app as app
 
 from .base import Base
+
 from .node import journeyspec_nodespec_table, journey_node_table
+
+if TYPE_CHECKING:
+    from .hit import HITSpec, HITInstance
+    from .node import NodeSpec, NodeInstance
 
 
 class JourneySpec(Base):
@@ -73,9 +78,19 @@ class JourneyInstance(Base):
 
     # submitted = Mapped[bool]
 
-    # created_at = Column(DateTime, default=datetime.datetime.now)
-    # updated_at = Column(DateTime, onupdate=datetime.datetime.now)
-    # submitted_at = Column(DateTime)
+    # status
+    # one NodeInstance -> many JourneyInstance
+    curr_node_id: Mapped[int] = mapped_column(
+        ForeignKey("nodeinstances.id"), nullable=True
+    )
+    curr_node: Mapped["NodeInstance"] = relationship(back_populates="curr_journeys")
+
+    # dates
+    # submitted: Mapped[datetime.datetime] = mapped_column(nullable=True)
+    created: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
+    updated: Mapped[datetime.datetime] = mapped_column(
+        default=datetime.datetime.now, onupdate=datetime.datetime.now
+    )
 
     instance_counter = 0
 
@@ -106,6 +121,10 @@ class JourneyInstance(Base):
 
     def get_preview_url(self):
         return f'{app.config["APP_URL"]}/hits/{self.preview_id.hex():s}?preview=1'
+
+    def set_curr_node(self, node):
+        self.curr_node = node
+        node.update_status()
 
     def get_completion_info(self):
         completion = {
@@ -143,7 +162,7 @@ class JourneyInstance(Base):
             return True, None
 
     def to_dict(self, with_nodes=False, with_response_info=False):
-        instance_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        instance_dict = super().to_dict()
         spec_dict = self.spec.to_dict()
 
         instance_dict["id"] = instance_dict["id"].hex()

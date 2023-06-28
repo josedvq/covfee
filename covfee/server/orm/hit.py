@@ -72,7 +72,7 @@ class HITSpec(Base):
         return f'{app.config["API_URL"]}/hits/{self.id}/instances/add_and_redirect'
 
     def to_dict(self, with_instances=False, with_instance_nodes=False):
-        hit_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        hit_dict = super().to_dict()
         hit_dict["api_url"] = self.get_api_url()
         hit_dict["generator_url"] = self.get_generator_url()
 
@@ -189,7 +189,7 @@ class HITInstance(Base):
             return True, None
 
     def to_dict(self, with_nodes=False):
-        instance_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        instance_dict = super().to_dict()
         spec_dict = self.spec.to_dict()
 
         instance_dict["id"] = instance_dict["id"].hex()

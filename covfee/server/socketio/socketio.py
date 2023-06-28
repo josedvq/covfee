@@ -17,6 +17,10 @@ socketio = SocketIO()
 store = ReduxStoreClient()
 
 
+def get_journey(jid: str) -> JourneyInstance:
+    return app.session.query(JourneyInstance).get(bytes.fromhex(jid))
+
+
 def get_response(responseId: int) -> TaskResponse:
     return app.session.query(TaskResponse).get(responseId)
 
@@ -39,8 +43,18 @@ def on_connect(data):
 
 @socketio.on("join")
 def on_join(data):
+    journeyId = str(data["journeyId"])
+    journey = get_journey(journeyId)
+
     responseId = str(data["responseId"])
     response = get_response(responseId)
+
+    if journey is None or response is None:
+        send(f"Unable to join, journeyId={journeyId}, responseId={responseId}")
+
+    journey.set_curr_node(response.task)
+    app.session.commit()
+
     res = store.join(responseId, response.task.spec.spec["type"], response.state)
     if res["success"]:
         join_room(responseId)
@@ -64,10 +78,10 @@ def on_action(data):
     action = data["action"]
     responseId = str(data["responseId"])
     print(session)
-    if responseId != session["responseId"]:
-        return send(
-            f'data["responseId"] does not match session\'s responseId variable. {responseId} != {session["responseId"]}'
-        )
+    # if responseId != session["responseId"]:
+    #     return send(
+    #         f'data["responseId"] does not match session\'s responseId variable. {responseId} != {session["responseId"]}'
+    #     )
 
     res = store.action(responseId, action)
     if res["success"]:
