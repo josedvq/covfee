@@ -15,10 +15,16 @@ from covfee.config import Config
 
 def create_app(mode):
     app = Flask(__name__, static_folder=None)
+
+    # load custom config to app.config
     config = Config(mode)
     config.update(app.config)
     app.config = config
-    # app.config.update()
+
+    # custom JSON encoding
+    from .rest_api.utils import CovfeeJSONProvider
+
+    app.json = CovfeeJSONProvider(app)
 
     from .db import SessionLocal
 
@@ -29,7 +35,8 @@ def create_app(mode):
     # socketio = SocketIO(app, cors_allowed_origins="*")
     from .socketio import socketio
 
-    socketio.init_app(app, manage_session=False)
+    # important: here, set socketio json implementation too
+    socketio.init_app(app, manage_session=False, json=app.json)
 
     app.register_blueprint(frontend, url_prefix="/")
     from .rest_api import api, auth

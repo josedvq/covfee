@@ -49,8 +49,11 @@ class NodeSpec(Base):
     # instance relationships
     nodes: Mapped[List[NodeInstance]] = relationship(back_populates="spec")
 
-    def __init__(self, settings):
+    def __init__(self, settings: Dict):
         super().__init__()
+        # default start settings
+        if len(settings.get("start", [])) == 0:
+            settings["start"] = [{"type": "all_journeys"}]
         self.settings = settings
 
     def instantiate(self):
@@ -105,8 +108,7 @@ class NodeInstance(Base):
         back_populates="curr_node"
     )
     # status code
-    status: Mapped[NodeInstanceStatus] = mapped_column(
-        default=NodeInstanceStatus.INIT)
+    status: Mapped[NodeInstanceStatus] = mapped_column(default=NodeInstanceStatus.INIT)
 
     started_at: Mapped[Optional[datetime]]
 
@@ -117,15 +119,15 @@ class NodeInstance(Base):
     def update_status(self):
         # check if the start conditions have been fullfilled
         if self.status in [NodeInstanceStatus.INIT, NodeInstanceStatus.WAITING]:
-            conditions = self.spec.settings.get('start', [])
-            if utils.test_conditions(conditions):
+            conditions = self.spec.settings.get("start", [])
+            if utils.test_conditions(conditions, self):
                 self.status = NodeInstanceStatus.RUNNING
             else:
                 if len(self.curr_journeys) > 0:
                     self.status = NodeInstanceStatus.WAITING
         elif self.status in [NodeInstanceStatus.RUNNING]:
-            conditions = self.spec.settings.get('stop', [])
-            if utils.test_conditions(conditions):
+            conditions = self.spec.settings.get("stop", [])
+            if utils.test_conditions(conditions, self):
                 self.status = NodeInstanceStatus.FINISHED
 
     def to_dict(self):

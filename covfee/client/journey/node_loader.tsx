@@ -71,22 +71,15 @@ export const NodeLoader = (props: Props) => {
   const [overlayVisible, setOverlayVisible] = React.useState(false);
   const { socket, id: journeyId } = React.useContext(JourneyContext);
 
-  const { taskConstructor, taskReducer } = getTask(args.node.spec.type);
   const {
     node,
     setNode,
     response,
     makeResponse,
-    setStatus,
+    setStatus: setNodeStatus,
     fetchResponse,
     submitResponse,
   } = useNode(args.node);
-
-  const reduxStore = React.useRef(
-    configureStore({
-      reducer: taskReducer,
-    })
-  );
 
   const nodeElementRef = React.useRef(null);
   const nodeInstructionsRef = React.useRef(null);
@@ -96,15 +89,6 @@ export const NodeLoader = (props: Props) => {
     response,
   };
 
-  // const state = useNodeState();
-
-  const canSubmit = () => {
-    return !props.node.submitted;
-  };
-
-  // const isTask = () => args.node.spec.nodeType == 'task'
-
-  //
   React.useEffect(() => {
     if (nodeContext.response) {
       socket.emit("join", {
@@ -122,10 +106,10 @@ export const NodeLoader = (props: Props) => {
 
     socket.on("status", (data) => {
       console.log("Received data:", data);
-      setStatus(data.new);
+      setNodeStatus(data.new);
     });
 
-    if (args.node.spec.nodeType == "task") {
+    if (args.node.nodeType == "task") {
       args.node.spec.instructionsType == "popped";
     }
   }, []);
@@ -133,12 +117,12 @@ export const NodeLoader = (props: Props) => {
   const handleTaskSubmit = (taskResult: any) => {
     submitResponse(taskResult)
       .then((data: any) => {
-        setStatus("submitted");
+        setNodeStatus("FINISHED");
         args.onSubmit();
       })
       .catch((error) => {
         myerror("Error submitting the task.", error);
-        setStatus("ended");
+        setNodeStatus("ended");
       });
   };
 
@@ -250,39 +234,50 @@ export const NodeLoader = (props: Props) => {
     );
   }
 
-  return (
-    <>
-      {/* {renderErrorModal()} */}
-      <div ref={nodeInstructionsRef}></div>
-      <div style={{ width: "100%", height: "100%", position: "relative" }}>
-        <StoreProvider store={reduxStore.current}>
-          <NodeContext.Provider value={nodeContext}>
-            {(() => {
-              const nodeProps: BaseTaskProps = {
-                spec: node.spec,
-                response: response,
-                disabled: args.disabled,
-                onSubmit: (res) => handleTaskSubmit(res),
-                renderSubmitButton: args.renderSubmitButton,
-              };
+  if (node.status == "RUNNING") {
+    if (node.nodeType != "task") {
+      return <h1>Unimplemented</h1>;
+    }
 
-              console.log(taskConstructor);
+    const { taskConstructor, taskReducer } = getTask(args.node.spec.type);
+    const reduxStore = React.useRef(
+      configureStore({
+        reducer: taskReducer,
+      })
+    );
 
-              const taskElement = React.createElement(
-                taskConstructor,
-                {
-                  ...nodeProps,
-                },
-                null
-              );
+    return (
+      <>
+        {/* {renderErrorModal()} */}
+        <div ref={nodeInstructionsRef}></div>
+        <div style={{ width: "100%", height: "100%", position: "relative" }}>
+          <StoreProvider store={reduxStore.current}>
+            <NodeContext.Provider value={nodeContext}>
+              {(() => {
+                const nodeProps: BaseTaskProps = {
+                  spec: node.spec,
+                  response: response,
+                  disabled: args.disabled,
+                  onSubmit: (res) => handleTaskSubmit(res),
+                  renderSubmitButton: args.renderSubmitButton,
+                };
 
-              return taskElement;
-            })()}
-          </NodeContext.Provider>
-        </StoreProvider>
-      </div>
-    </>
-  );
+                const taskElement = React.createElement(
+                  taskConstructor,
+                  {
+                    ...nodeProps,
+                  },
+                  null
+                );
+
+                return taskElement;
+              })()}
+            </NodeContext.Provider>
+          </StoreProvider>
+        </div>
+      </>
+    );
+  }
 };
 
 const InstructionsPopoverContent = styled.div`

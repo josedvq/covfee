@@ -2,7 +2,7 @@
 from covfee.server.orm import *
 from covfee.config import config
 
-config.load_environment('local')
+config.load_environment("local")
 
 task1 = TaskSpec(
     spec={
@@ -68,12 +68,9 @@ project = Project()
 
 j1_start = TaskSpec(spec={"name": "Counter", "type": "IncrementCounterTask"})
 j1_end = TaskSpec(spec={"name": "Counter", "type": "IncrementCounterTask"})
-joint_task1 = TaskSpec(
-    spec={"name": "Counter", "type": "IncrementCounterTask"})
-joint_task2 = TaskSpec(
-    spec={"name": "Counter", "type": "IncrementCounterTask"})
-joint_task3 = TaskSpec(
-    spec={"name": "Counter", "type": "IncrementCounterTask"})
+joint_task1 = TaskSpec(spec={"name": "Counter", "type": "IncrementCounterTask"})
+joint_task2 = TaskSpec(spec={"name": "Counter", "type": "IncrementCounterTask"})
+joint_task3 = TaskSpec(spec={"name": "Counter", "type": "IncrementCounterTask"})
 
 j2_start = TaskSpec(spec={"name": "Counter", "type": "IncrementCounterTask"})
 j2_end = TaskSpec(spec={"name": "Counter", "type": "IncrementCounterTask"})

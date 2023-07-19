@@ -20,8 +20,4 @@ export type TaskSpec =
   | QuestionnaireTaskSpec
   | ThreeImagesTaskSpec;
 
-interface NodeSpecTest extends BaseNodeSpec {
-  nodeType: "node";
-}
-
-export type NodeSpec = TaskSpec | NodeSpecTest;
+export type NodeSpec = TaskSpec;
