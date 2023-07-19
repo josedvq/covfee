@@ -2,29 +2,33 @@ import os
 import json
 from collections import Counter
 
-from flask import current_app as app
 from covfee.cli.utils import working_directory
+from covfee.config import config
 
 
 class Schemata:
     def __init__(self):
         self.schemata = None
 
-        self.schemata_path = app.config['SCHEMATA_PATH']
-
     def exists(self):
-        return os.path.exists(self.schemata_path)
+        return os.path.exists(config['SCHEMATA_PATH'])
 
-    def get(self):
+    def load(self):
         if self.schemata is not None:
             return self.schemata
 
         if self.exists():
-            self.schemata = json.load(open(self.schemata_path))
+            self.schemata = json.load(open(config['SCHEMATA_PATH']))
             return self.schemata
+        else:
+            self.make()
 
-        self.make()
+    def get(self):
         return self.schemata
+
+    def get_definition(self, name: str):
+        self.load()
+        return self.schemata['definitions'].get(name, None)
 
     def recursive_resolve_refs(self, definition):
         def resolve(node):
@@ -43,7 +47,8 @@ class Schemata:
                 return node
 
             if node['type'] == 'object' and 'properties' in node and node['properties']:
-                node['properties'] = {k: resolve(n) for k, n in node['properties'].items()}
+                node['properties'] = {k: resolve(
+                    n) for k, n in node['properties'].items()}
 
             if node['type'] == 'array' and node['items']:
                 if type(node['items']) == dict:
@@ -58,23 +63,20 @@ class Schemata:
         except:
             pass
 
-        
-
-        
-
     def make(self):
         try:
-            os.remove(app.config["SCHEMATA_PATH"])
+            os.remove(config["SCHEMATA_PATH"])
         except OSError:
             pass
         # make the typescript into json schemata
-        with working_directory(app.config['COVFEE_SHARED_PATH']):
-            tsconfig_path = os.path.join(app.config['COVFEE_SHARED_PATH'], 'tsconfig.json')
-            cmd = f'npx typescript-json-schema {tsconfig_path} "MyProjectSpec" --titles --ignoreErrors --required -o {app.config["SCHEMATA_PATH"]}'
+        with working_directory(config['COVFEE_SHARED_PATH']):
+            tsconfig_path = os.path.join(
+                config['COVFEE_SHARED_PATH'], 'tsconfig.json')
+            cmd = f'npx typescript-json-schema {tsconfig_path} "MyProjectSpec" --titles --ignoreErrors --required -o {config["SCHEMATA_PATH"]}'
             os.system(cmd)
 
         # process the schemata for validation
-        schemata = json.load(open(app.config["SCHEMATA_PATH"]))
+        schemata = json.load(open(config["SCHEMATA_PATH"]))
         defs_only = {
             '$schema': schemata['$schema'],
             'definitions': schemata['definitions']
@@ -85,7 +87,7 @@ class Schemata:
             k: self.add_discriminators(d)
             for k, d in self.schemata['definitions'].items()}
         json.dump(self.schemata, open(
-            app.config['SCHEMATA_PATH'], 'w'), indent=2)
+            config['SCHEMATA_PATH'], 'w'), indent=2)
 
     def get_ref(self, ref):
         return self.schemata['definitions'][ref[14:]]
@@ -127,8 +129,10 @@ class Schemata:
                 # resolve children
                 children = resolve(node)
                 # do children have default const properties?
-                children_const_props = [get_default_const_property(c) for c in children]
-                most_common, count = Counter(children_const_props).most_common(1)[0]
+                children_const_props = [
+                    get_default_const_property(c) for c in children]
+                most_common, count = Counter(
+                    children_const_props).most_common(1)[0]
 
                 if count != len(children_const_props):
                     raise 'found a default const element for some but not all of children nodes'
@@ -164,3 +168,6 @@ class Schemata:
             return node
 
         return recursive_dfs(definition)
+
+
+schemata = Schemata()

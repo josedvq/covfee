@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import List, TYPE_CHECKING
+from datetime import datetime
+from typing import Any, Dict, List, TYPE_CHECKING, Optional
 import enum
 
 from sqlalchemy import Table, Column, ForeignKey
@@ -7,6 +8,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from .base import Base
 from . import utils
+
 
 if TYPE_CHECKING:
     from .journey import JourneySpec, JourneyInstance
@@ -37,6 +39,8 @@ class NodeSpec(Base):
         "polymorphic_on": "type",
     }
 
+    settings: Mapped[Dict[str, Any]]  # json
+
     # spec relationships
     journeyspecs: Mapped[List[JourneySpec]] = relationship(
         secondary=journeyspec_nodespec_table, back_populates="nodespecs"
@@ -45,8 +49,9 @@ class NodeSpec(Base):
     # instance relationships
     nodes: Mapped[List[NodeInstance]] = relationship(back_populates="spec")
 
-    def __init__(self):
+    def __init__(self, settings):
         super().__init__()
+        self.settings = settings
 
     def instantiate(self):
         instance = NodeInstance()
@@ -58,11 +63,20 @@ class NodeSpec(Base):
         return journey
 
 
-class TaskInstanceStatus(enum.Enum):
+class NodeInstanceStatus(enum.Enum):
+    # task has been initialized.
     INIT = 0
+
+    # subject in the node. Waiting for others.
     WAITING = 1
+
+    # start conditions full-filled. task has started.
     RUNNING = 2
+
+    # pause condition fullfilled. Waiting for resume conditions.
     PAUSED = 3
+
+    # task/node has ran and is finalized.
     FINISHED = 4
 
 
@@ -91,14 +105,28 @@ class NodeInstance(Base):
         back_populates="curr_node"
     )
     # status code
-    status: Mapped[TaskInstanceStatus] = mapped_column(default=TaskInstanceStatus.INIT)
+    status: Mapped[NodeInstanceStatus] = mapped_column(
+        default=NodeInstanceStatus.INIT)
+
+    started_at: Mapped[Optional[datetime]]
 
     def __init__(self):
         super().__init__()
         self.submitted = False
 
     def update_status(self):
-        pass
+        # check if the start conditions have been fullfilled
+        if self.status in [NodeInstanceStatus.INIT, NodeInstanceStatus.WAITING]:
+            conditions = self.spec.settings.get('start', [])
+            if utils.test_conditions(conditions):
+                self.status = NodeInstanceStatus.RUNNING
+            else:
+                if len(self.curr_journeys) > 0:
+                    self.status = NodeInstanceStatus.WAITING
+        elif self.status in [NodeInstanceStatus.RUNNING]:
+            conditions = self.spec.settings.get('stop', [])
+            if utils.test_conditions(conditions):
+                self.status = NodeInstanceStatus.FINISHED
 
     def to_dict(self):
         instance_dict = super().to_dict()

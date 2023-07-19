@@ -10,12 +10,15 @@ from flask_socketio import SocketIO
 from flask_cors import CORS
 from flask_session import Session
 
-from covfee.config import load_config, get_frontend_config
+from covfee.config import Config
 
 
 def create_app(mode):
     app = Flask(__name__, static_folder=None)
-    load_config(app, mode=mode)
+    config = Config(mode)
+    config.update(app.config)
+    app.config = config
+    # app.config.update()
 
     from .db import SessionLocal
 
@@ -75,7 +78,7 @@ frontend = Blueprint(
 def main():
     return render_template(
         "app.html",
-        constants=json.dumps(get_frontend_config(app.config)),
+        constants=json.dumps(app.config.get_frontend_config()),
         bundle_url=app.config["BUNDLES_URL"],
     )
 
@@ -85,7 +88,7 @@ def main():
 def admin():
     return render_template(
         "admin.html",
-        constants=json.dumps(get_frontend_config(app.config)),
+        constants=json.dumps(app.config.get_frontend_config()),
         bundle_url=app.config["BUNDLES_URL"],
     )
 

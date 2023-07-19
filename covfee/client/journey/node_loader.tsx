@@ -16,49 +16,7 @@ import { AllPropsRequired } from "../types/utils";
 import { NodeContext, NodeContextType } from "./node_context";
 import { Provider as StoreProvider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-
-interface State {
-  /**
-   * Lifecycle states of the loader
-   * loading: responses / state are being loaded.
-   * loaded: (continuous/timed only) responses / state are loaded. overlay is shown if
-   *      - continuous task response is closed (new response is necessary)
-   *      - timed task is not started or is finished
-   * player-loading (continuous only): continuous player is being loaded
-   * ready: task is ready to be played / completed. shown when:
-   *      - timed task is underway
-   *      - continuous task response is open
-   *      - all non-continuous, non-timed tasks
-   * ended: (continuous only) player called onEnd
-   * submitted: task has been submitted
-   */
-  status:
-    | "loading"
-    | "loaded"
-    | "player-loading"
-    | "ready"
-    | "ended"
-    | "submitted";
-  /**
-   * Key, causes task to be reloaded on replay / re-do
-   */
-  taskKey: number;
-  /**
-   * State of the error modal
-   */
-  errorModal: {
-    visible: boolean;
-    message?: string;
-    loading?: boolean;
-  };
-  /**
-   * State of the overlay shown at the end of tasks
-   */
-  overlay: {
-    visible: boolean;
-    submitting?: boolean;
-  };
-}
+import { NodeStatus } from "../types/node";
 
 interface Props {
   /**
@@ -107,7 +65,7 @@ export const NodeLoader = (props: Props) => {
     ...props,
   };
 
-  const [status, setStatus] = React.useState("loading");
+  // const [status, setStatus] = React.useState<NodeStatus>("INIT");
   const [isLoading, setIsLoading] = React.useState(true);
   const [instructionsVisible, setInstructionsVisible] = React.useState(false);
   const [overlayVisible, setOverlayVisible] = React.useState(false);
@@ -119,6 +77,7 @@ export const NodeLoader = (props: Props) => {
     setNode,
     response,
     makeResponse,
+    setStatus,
     fetchResponse,
     submitResponse,
   } = useNode(args.node);
@@ -144,10 +103,13 @@ export const NodeLoader = (props: Props) => {
   };
 
   // const isTask = () => args.node.spec.nodeType == 'task'
+
+  //
   React.useEffect(() => {
     if (nodeContext.response) {
       socket.emit("join", {
         journeyId,
+        nodeId: node.id,
         responseId: nodeContext.response.id,
       });
     }
@@ -156,6 +118,11 @@ export const NodeLoader = (props: Props) => {
   React.useEffect(() => {
     fetchResponse().then((_) => {
       setIsLoading(false);
+    });
+
+    socket.on("status", (data) => {
+      console.log("Received data:", data);
+      setStatus(data.new);
     });
 
     if (args.node.spec.nodeType == "task") {
@@ -262,7 +229,26 @@ export const NodeLoader = (props: Props) => {
     );
   };
 
-  if (isLoading) return <Spin />;
+  if (node.status == "INIT") {
+    return <Spin />;
+  }
+
+  if (node.status == "WAITING") {
+    return (
+      <div>
+        <h1>Waiting for task start</h1>
+        <Spin />
+      </div>
+    );
+  }
+
+  if (node.status == "FINISHED") {
+    return (
+      <div>
+        <h1>Nothing to be done here!</h1>
+      </div>
+    );
+  }
 
   return (
     <>

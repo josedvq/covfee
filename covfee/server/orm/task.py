@@ -1,5 +1,4 @@
 from __future__ import annotations
-import datetime
 import json
 import os
 import sys
@@ -11,14 +10,13 @@ from flask import current_app as app
 from sqlalchemy import JSON
 from sqlalchemy.orm import backref, relationship, Mapped
 
-from .base import Base
 from .response import TaskResponse
 from .. import tasks
 from ..tasks.base import BaseCovfeeTask
-from ..utils.packer import Packer
 from . import utils
 
 from .node import NodeSpec, NodeInstance
+from covfee.shared.schemata import schemata
 
 
 class TaskSpec(NodeSpec):
@@ -29,8 +27,16 @@ class TaskSpec(NodeSpec):
     spec: Mapped[Dict[str, Any]]
 
     def __init__(self, spec=None):
-        super().__init__()
-        self.spec = spec
+        # split spec into node settings and task spec
+        node_schema = schemata.get_definition('BaseNodeSpec')
+        if node_schema is None:
+            raise RuntimeError('BaseNodeSpec not found in schemata')
+
+        node_properties = node_schema['properties'].keys()
+
+        node_spec = {k: v for k, v in spec.items() if k in node_properties}
+        super().__init__(node_spec)
+        self.spec = {k: v for k, v in spec.items() if k not in node_properties}
 
     def instantiate(self):
         instance = TaskInstance()
@@ -85,7 +91,8 @@ class TaskInstance(NodeInstance):
 
         task_dict = {**spec_dict, **task_dict}
 
-        task_dict["responses"] = [response.to_dict() for response in self.responses]
+        task_dict["responses"] = [response.to_dict()
+                                  for response in self.responses]
         # task is valid if any response is valid
         # task_dict['valid'] = self.has_valid_response()
 
@@ -128,14 +135,16 @@ class TaskInstance(NodeInstance):
                     )
 
             # write the json response
-            response_dict = response.get_json(with_chunk_data=not csv)  # important
+            response_dict = response.get_json(
+                with_chunk_data=not csv)  # important
             stream = BytesIO()
             stream.write(json.dumps(response_dict).encode())
             stream.seek(0)
             z.write_iter(
                 os.path.join(
                     base_path,
-                    response.get_download_filename(task_index=index, response_index=i)
+                    response.get_download_filename(
+                        task_index=index, response_index=i)
                     + ".json",
                 ),
                 stream,

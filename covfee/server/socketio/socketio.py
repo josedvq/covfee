@@ -6,9 +6,10 @@ from ..tasks.base import BaseCovfeeTask
 from flask import current_app as app, session
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 from covfee.server.orm import (
+    NodeInstance,
     TaskResponse,
-    TaskInstance,
     JourneyInstance,
+    NodeInstanceStatus
 )
 from covfee.server.socketio.redux_store import ReduxStoreClient
 
@@ -19,6 +20,10 @@ store = ReduxStoreClient()
 
 def get_journey(jid: str) -> JourneyInstance:
     return app.session.query(JourneyInstance).get(bytes.fromhex(jid))
+
+
+def get_node(nodeId: int) -> NodeInstance:
+    return app.session.query(NodeInstance).get(nodeId)
 
 
 def get_response(responseId: int) -> TaskResponse:
@@ -46,18 +51,35 @@ def on_join(data):
     journeyId = str(data["journeyId"])
     journey = get_journey(journeyId)
 
+    nodeId = str(data["nodeId"])
+    node = get_node(nodeId)
+
     responseId = str(data["responseId"])
     response = get_response(responseId)
 
-    if journey is None or response is None:
-        send(f"Unable to join, journeyId={journeyId}, responseId={responseId}")
+    if journey is None or node is None:
+        return send(f"Unable to join, journeyId={journeyId}, nodeId={nodeId}")
 
-    journey.set_curr_node(response.task)
+    if node not in journey.nodes:
+        return send(
+            f"Unable to join nodeId={nodeId} is not in journey journeyId={journeyId}")
+
+    join_room(responseId)
+    prev_status = node.status
+    # update the journey and node status
+    journey.set_curr_node(node)
     app.session.commit()
+    new_status = node.status
 
-    res = store.join(responseId, response.task.spec.spec["type"], response.state)
+    # emit event if status changed
+    if prev_status != new_status:
+        payload = {'prev': prev_status, 'new': new_status}
+        emit('status', payload, to=responseId)
+
+    res = store.join(
+        responseId, response.task.spec.spec["type"], response.state)
     if res["success"]:
-        join_room(responseId)
+
         print(f"joined room {responseId}")
         session["responseId"] = responseId
         print(session["responseId"])

@@ -151,7 +151,7 @@ const NodeRow = (props: NodeType) => {
   return (
     <div>
       <a href={node.getUrl()}>
-        <LinkOutlined /> {node.node.id}
+        <LinkOutlined /> {node.node.id} - {node.node.status}
       </a>
     </div>
   );

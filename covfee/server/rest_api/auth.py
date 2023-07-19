@@ -4,8 +4,6 @@ import hashlib
 
 from functools import wraps
 
-from google.oauth2 import id_token
-from google.auth.transport import requests
 from flask import abort, request, jsonify, Blueprint, current_app as app
 from flask_jwt_extended import (
     jwt_required,
@@ -89,7 +87,8 @@ def login_user(user):
     access_token = create_access_token(identity=user)
     refresh_token = create_refresh_token(identity=user)
 
-    res = jsonify({"id": user.id, "username": user.username, "roles": user.roles})
+    res = jsonify(
+        {"id": user.id, "username": user.username, "roles": user.roles})
     set_access_cookies(res, access_token)
     set_refresh_cookies(res, refresh_token)
     return res, 200
@@ -119,40 +118,6 @@ def login_password():
         return jsonify({"msg": "Bad username or password"}), 401
 
     return login_user(provider.user)
-
-
-@auth.route("/login-google", methods=["POST"])
-def login_google():
-    token = request.json.get("token", None)
-
-    if token is None:
-        return jsonify({"msg": "Missing auth token"}), 401
-
-    try:
-        # Specify the CLIENT_ID of the app that accesses the backend:
-        idinfo = id_token.verify_oauth2_token(
-            token, requests.Request(), app.config.get("GOOGLE_CLIENT_ID", None)
-        )
-
-        # ID token is valid. Get the user's Google Account ID from the decoded token.
-        userid = idinfo["sub"]
-    except ValueError:
-        # Invalid token
-        return jsonify({"msg": "Invalid auth token"}), 401
-
-    provider = AuthProvider.query.filter_by(
-        user_id=userid, provider_id="google"
-    ).first()
-
-    if provider is None:
-        # create the new user
-        user = User(userid, roles=["user"])
-        user.add_provider("google", userid)
-        app.session.add(user)
-        app.session.commit()
-        return login_user(user)
-    else:
-        return login_user(provider.user)
 
 
 @auth.route("/signup-password", methods=["POST"])
