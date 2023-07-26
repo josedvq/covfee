@@ -7,7 +7,7 @@ export type AppContextProps = UserContextMethods &
     socket: any;
   };
 
-const userContext = React.createContext<AppContextProps>({
+export const appContext = React.createContext<AppContextProps>({
   logged: false,
   roles: [],
   login: () => Promise.resolve({}),
@@ -15,5 +15,3 @@ const userContext = React.createContext<AppContextProps>({
   logout: () => Promise.resolve(),
   socket: io(),
 }); // Create a context object
-
-export default userContext;

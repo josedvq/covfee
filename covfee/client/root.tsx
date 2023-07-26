@@ -3,32 +3,26 @@ import { Layout, Typography } from "antd";
 import "./css/gui.scss";
 
 const { Title, Paragraph, Text } = Typography;
-import AppContext from "./app_provider";
+import { AppProvider } from "./app_provider";
 
-import { HashRouter as Router, Switch, Route, Link } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, Link } from "react-router-dom";
 
-import { JourneyPageWithRouter } from "./journey/journey";
+import { JourneyPage } from "./journey/journey";
 
 const { Header, Footer, Content, Sider } = Layout;
-
-function About() {
-  return <h2>About</h2>;
-}
 
 const Root = () => {
   return (
     <Router>
-      <AppContext>
+      <AppProvider>
         <Layout>
           <Layout>
-            <Switch>
-              <Route path="/about">
-                <About />
-              </Route>
-              <Route path="/journeys/:journeyId/:nodeId?">
-                <JourneyPageWithRouter />
-              </Route>
-            </Switch>
+            <Routes>
+              <Route
+                path="/journeys/:journeyId/:nodeId?"
+                element={<JourneyPage />}
+              ></Route>
+            </Routes>
           </Layout>
           {/* <Footer>
                         <Text style={{float: 'right'}}>
@@ -36,7 +30,7 @@ const Root = () => {
                         </Text>
                     </Footer> */}
         </Layout>
-      </AppContext>
+      </AppProvider>
     </Router>
   );
 };

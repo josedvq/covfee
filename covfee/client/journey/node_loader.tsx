@@ -139,6 +139,13 @@ export const NodeLoader = (props: Props) => {
       });
   };
 
+  const { taskConstructor, taskReducer } = getTask(args.node.spec.type);
+  const reduxStore = React.useRef(
+    configureStore({
+      reducer: taskReducer,
+    })
+  );
+
   // const renderErrorModal = () => {
   //     return <Modal
   //         title="Error"
@@ -251,13 +258,6 @@ export const NodeLoader = (props: Props) => {
     if (node.type != "TaskInstance") {
       return <h1>Unimplemented</h1>;
     }
-
-    const { taskConstructor, taskReducer } = getTask(args.node.spec.type);
-    const reduxStore = React.useRef(
-      configureStore({
-        reducer: taskReducer,
-      })
-    );
 
     return (
       <>

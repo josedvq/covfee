@@ -1,6 +1,7 @@
 import * as React from "react";
-import userContext from "./app_context";
+import { appContext } from "./app_context";
 import Constants from "Constants";
+import { io } from "socket.io-client";
 import {
   log,
   fetcher,
@@ -14,7 +15,6 @@ interface LoginInfo {
   password: string;
 }
 
-
 export interface UserState {
   logged: boolean;
   username?: string;
@@ -27,24 +27,42 @@ export interface UserContextMethods {
   loginWithGoogle: (token: string) => Promise<any>;
   logout: () => Promise<void>;
 }
-export const AppProvider: React.FC = ({ children }) => {
-
-  const [logged, setLogged] = React.useState(false)
-  const [username, setUsername] = React.useState(null)
-  const [loginTime, setLoginTime] = React.useState(null)
-  const [roles, setRoles] = React.useState([])
-
-  // refreshPromise: Promise<Response | void>;
-  // timeoutId: any;
+export const AppProvider: React.FC<React.PropsWithChildren<{}>> = ({
+  children,
+}) => {
+  const [logged, setLogged] = React.useState(false);
+  const [username, setUsername] = React.useState(null);
+  const [loginTime, setLoginTime] = React.useState(null);
+  const [roles, setRoles] = React.useState([]);
+  const socket = React.useRef(io());
 
   React.useEffect(() => {
     if (localStorage) {
       const ls = JSON.parse(localStorage.getItem("user"));
       if (ls != null) {
-        setUsername(ls.username)
-        setLoginTime(ls.loginTime)
-        setLogged(true)
-        setRoles(ls.roles)
+        setUsername(ls.username);
+        setLoginTime(ls.loginTime);
+        setLogged(true);
+        setRoles(ls.roles);
+
+        refresh()
+          .then((response) => {
+            if (!response.ok) {
+              // user has been logged out
+              setUsername(null);
+              setLoginTime(null);
+              setLogged(false);
+              setRoles([]);
+              localStorage.removeItem("user");
+            }
+            // user is logged in
+            // refresh every 10 mins
+            scheduleRefresh(10);
+          })
+          .catch(() => {
+            // error reaching the server, try again later
+            scheduleRefresh(1);
+          });
       }
     }
 
@@ -52,36 +70,13 @@ export const AppProvider: React.FC = ({ children }) => {
     const ls = JSON.parse(localStorage.getItem("user"));
     if (ls != null) {
       // user is probably logged in, refresh JWT
-      this.refreshPromise = this.refresh();
-      this.refreshPromise
-        .then((response) => {
-          if (!response.ok) {
-            // user has been logged out
-            this.state = {
-              username: null,
-              loginTime: null,
-              roles: null,
-              logged: false,
-            };
-            localStorage.removeItem("user");
-          }
-          // user is logged in
-          // refresh every 10 mins
-          this.scheduleRefresh(10);
-        })
-        .catch(() => {
-          // error reaching the server, try again later
-          this.scheduleRefresh(1);
-        });
     } else {
       // user is not logged in
-      this.refreshPromise = Promise.resolve();
     }
-  }, [])
-
+  }, []);
 
   // Refreshes the auth token
-  private refresh = () => {
+  const refresh = async () => {
     log.info("refreshing auth token");
     const url = Constants.auth_url + "/refresh";
     let options: RequestInit = {
@@ -99,31 +94,33 @@ export const AppProvider: React.FC = ({ children }) => {
     return fetch(url, options);
   };
 
-  scheduleRefresh = (minutes: number = 10) => {
-    this.timeoutId = setTimeout(() => {
-      this.refresh();
-      this.scheduleRefresh(10);
+  const scheduleRefresh = (minutes: number = 10) => {
+    const timeoutId = setTimeout(() => {
+      refresh();
+      scheduleRefresh(10);
     }, 1000 * 60 * minutes); // 10 minutes
   };
 
-  _onLogin = (data) => {
-    const newState = {
-      logged: true,
-      username: data.username,
-      roles: data.roles,
-      loginTime: Date.now(),
-    };
-    this.setState(newState);
-    localStorage.setItem("user", JSON.stringify(newState));
+  const _onLogin = (data) => {
+    setUsername(data.username);
+    setLoginTime(Date.now());
+    setLogged(true);
+    setRoles(data.roles);
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        username,
+        loginTime,
+        roles,
+      })
+    );
   };
 
-  _onFailure = () => {
-    this.setState({
-      logged: false,
-    });
+  const _onFailure = () => {
+    setLogged(false);
   };
 
-  contextMethods: UserContextMethods = {
+  const contextMethods: UserContextMethods = {
     login: (info: LoginInfo) => {
       const url = Constants.auth_url + "/login-password";
       const requestOptions = {
@@ -136,10 +133,10 @@ export const AppProvider: React.FC = ({ children }) => {
 
       res
         .then((data) => {
-          this._onLogin(data);
+          _onLogin(data);
         })
         .catch(() => {
-          this._onFailure();
+          _onFailure();
         });
 
       return res;
@@ -160,10 +157,10 @@ export const AppProvider: React.FC = ({ children }) => {
           log.debug(
             `/auth/login-google responded with ${JSON.stringify(data)}`
           );
-          this._onLogin(data);
+          _onLogin(data);
         })
         .catch(() => {
-          this._onFailure();
+          _onFailure();
         });
 
       return res;
@@ -179,12 +176,10 @@ export const AppProvider: React.FC = ({ children }) => {
 
       p.then(() => {
         localStorage.removeItem("user");
-        this.setState({
-          logged: false,
-          username: null,
-          roles: null,
-          loginTime: null,
-        });
+        setUsername(null);
+        setLoginTime(null);
+        setLogged(false);
+        setRoles([]);
       }).catch((error) => {
         myerror("Error in logging out", error);
       });
@@ -194,12 +189,17 @@ export const AppProvider: React.FC = ({ children }) => {
   };
 
   return (
-    <userContext.Provider
+    <appContext.Provider
       value={{
-        ...this.state,
-        ...this.contextMethods,
-      }}>
-      {this.props.children}
-    </userContext.Provider>
+        username,
+        loginTime,
+        logged,
+        roles,
+        socket: socket.current,
+        ...contextMethods,
+      }}
+    >
+      {children}
+    </appContext.Provider>
   );
-}
+};

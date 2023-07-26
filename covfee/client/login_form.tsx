@@ -2,12 +2,8 @@ import * as React from "react";
 
 import { Form, Input, Button, Layout, Row, Col, Alert, Divider } from "antd";
 
-import userContext from "./app_context";
-import Constants from "Constants";
-import CovfeeLogo from "./art/logo.svg";
+import { appContext } from "./app_context";
 import "./login_form.scss";
-
-import { log } from "./utils";
 
 interface Props {
   onSuccess: () => void;
@@ -87,4 +83,4 @@ export default class LoginForm extends React.Component<Props> {
   }
 }
 
-LoginForm.contextType = userContext;
+LoginForm.contextType = appContext;

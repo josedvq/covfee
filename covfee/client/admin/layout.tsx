@@ -13,86 +13,85 @@ import {
 import Constants from "Constants";
 import { Footer } from "antd/lib/layout/layout";
 const { Title, Paragraph, Text } = Typography;
-import userContext, { AppContextProps } from "../app_context";
+import { appContext, AppContextProps } from "../app_context";
 
 import { CovfeeMenuItem } from "../gui";
-import AppContext from "app_provider";
+import { AllPropsRequired } from "types/utils";
 
 interface HeaderProps {
   menuItems?: React.ReactElement[];
-  userContext?: AppContextProps;
   showLogin?: boolean;
 }
 
-class AdminHeader extends React.Component<HeaderProps> {
-  static defaultProps: HeaderProps = {
+export const AdminHeader: React.FunctionComponent<HeaderProps> = (props) => {
+  const args: AllPropsRequired<HeaderProps> = {
     menuItems: [],
     showLogin: true,
+    ...props,
   };
 
-  handleLogout = () => {
-    this.props.userContext.logout().then(() => {
+  const { logged, logout } = React.useContext(appContext);
+
+  const handleLogin = () => {
+    window.location.replace(Constants.admin.login_url);
+  };
+
+  const handleLogout = () => {
+    logout().then(() => {
       window.location.replace(Constants.admin.login_url);
     });
   };
 
-  handleLogin = () => {
-    window.location.replace(Constants.admin.login_url);
-  };
-
-  render() {
-    return (
-      <Menu
-        mode="horizontal"
-        theme="dark"
-        style={{ position: "sticky", top: 0, width: "100%", zIndex: 1000 }}
-      >
-        <Menu.Item key="1" disabled>
-          <CovfeeMenuItem />
+  return (
+    <Menu
+      mode="horizontal"
+      theme="dark"
+      style={{ position: "sticky", top: 0, width: "100%", zIndex: 1000 }}
+    >
+      <Menu.Item key="1" disabled>
+        <CovfeeMenuItem />
+      </Menu.Item>
+      {logged ? (
+        <Menu.Item
+          key="2"
+          onClick={this.handleLogout}
+          style={{ float: "right" }}
+        >
+          Logout
         </Menu.Item>
-        {this.props.userContext.logged ? (
-          <Menu.Item
-            key="2"
-            onClick={this.handleLogout}
-            style={{ float: "right" }}
-          >
-            Logout
+      ) : (
+        args.showLogin && (
+          <Menu.Item key="2" onClick={handleLogin} style={{ float: "right" }}>
+            Log in
           </Menu.Item>
-        ) : (
-          this.props.showLogin && (
-            <Menu.Item
-              key="2"
-              onClick={this.handleLogin}
-              style={{ float: "right" }}
-            >
-              Log in
-            </Menu.Item>
-          )
-        )}
-        {this.props.menuItems &&
-          this.props.menuItems.map((item, index) => {
-            return <Menu.Item key={3 + index}>{item.label}</Menu.Item>;
-          })}
-      </Menu>
-    );
-  }
-}
+        )
+      )}
+      {args.menuItems &&
+        args.menuItems.map((item, index) => {
+          return <Menu.Item key={3 + index}>{item.label}</Menu.Item>;
+        })}
+    </Menu>
+  );
+};
 
 interface LayoutProps {
   loggedRequired?: boolean;
   rolesRequired?: string[];
   header?: HeaderProps;
+  children: React.Component;
 }
 
-class AdminLayout extends React.Component<LayoutProps> {
-  context!: React.ContextType<typeof userContext>;
-
-  static defaultProps = {
+export const AdminLayout: React.FunctionComponent<LayoutProps> = (props) => {
+  const args: AllPropsRequired<LayoutProps> = {
     loggedRequired: true,
     rolesRequired: ["admin", "requester"],
+    header: {},
+    ...props,
   };
 
-  renderContentForbidden(reason: string) {
+  const { logged, roles } = React.useContext(appContext);
+
+  const renderContentForbidden = (reason: string) => {
     const error_pages = {
       not_logged: {
         msg: "You must be logged in to access this page.",
@@ -127,50 +126,43 @@ class AdminLayout extends React.Component<LayoutProps> {
         }
       />
     );
-  }
+  };
 
-  render() {
-    return (
+  return (
+    <Layout>
+      <AdminHeader {...args.header} />
       <Layout>
-        <AdminHeader {...this.props.header} userContext={this.context} />
-        <Layout>
-          {(() => {
-            if (Constants.admin.unsafe_mode_on) return this.props.children;
+        {(() => {
+          if (Constants.admin.unsafe_mode_on) return args.children;
 
-            if (this.props.loggedRequired && !this.context.logged)
-              return this.renderContentForbidden("not_logged");
+          if (args.loggedRequired && !logged)
+            return renderContentForbidden("not_logged");
 
-            if (this.props.loggedRequired && this.props.rolesRequired) {
-              const isAllowed =
-                this.props.rolesRequired.filter((value) =>
-                  this.context.roles.includes(value)
-                ).length > 0;
-              if (!isAllowed) return this.renderContentForbidden("roles");
-            }
+          if (args.loggedRequired && args.rolesRequired) {
+            const isAllowed =
+              args.rolesRequired.filter((value) => roles.includes(value))
+                .length > 0;
+            if (!isAllowed) return renderContentForbidden("roles");
+          }
 
-            return this.props.children;
-          })()}
-        </Layout>
-        <Footer>
-          <Text style={{ float: "right", color: "#666666" }}>
-            <CovfeeLogo
-              style={{
-                width: "1em",
-                display: "inline",
-                position: "relative",
-                top: "0.3em",
-                marginRight: "4px",
-              }}
-            />
-            covfee ©{new Date().getFullYear()} Created by Jose Vargas
-            {/* <a href="https://github.com/josedvq/covfee">covfee</a> */}
-          </Text>
-        </Footer>
+          return args.children;
+        })()}
       </Layout>
-    );
-  }
-}
-
-AdminLayout.contextType = userContext;
-
-export default AdminLayout;
+      <Footer>
+        <Text style={{ float: "right", color: "#666666" }}>
+          <CovfeeLogo
+            style={{
+              width: "1em",
+              display: "inline",
+              position: "relative",
+              top: "0.3em",
+              marginRight: "4px",
+            }}
+          />
+          covfee ©{new Date().getFullYear()} Created by Jose Vargas
+          {/* <a href="https://github.com/josedvq/covfee">covfee</a> */}
+        </Text>
+      </Footer>
+    </Layout>
+  );
+};

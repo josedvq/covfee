@@ -1,16 +1,15 @@
 {
-    "private": true,
-    "workspaces": {
-        "packages": [
-            "covfee/client",
-            "covfee/shared",
-            "docs"
-        ],
-        "nohoist": [
-            "docs/**"
-        ]
-    },
-    "scripts": {
-        "ppp": "rm -rf dist/ && covfee-dev schemata && covfee-dev build && python -m build && python -m twine upload dist/*"
-    }
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "covfee/client",
+      "covfee/shared"
+    ],
+    "nohoist": [
+      "docs/**"
+    ]
+  },
+  "scripts": {
+    "ppp": "rm -rf dist/ && covfee-dev schemata && covfee-dev build && python -m build && python -m twine upload dist/*"
+  }
 }
