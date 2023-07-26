@@ -90,16 +90,6 @@ export const NodeLoader = (props: Props) => {
   };
 
   React.useEffect(() => {
-    if (nodeContext.response) {
-      socket.emit("join", {
-        journeyId,
-        nodeId: node.id,
-        responseId: nodeContext.response.id,
-      });
-    }
-  }, [nodeContext.response]);
-
-  React.useEffect(() => {
     fetchResponse().then((_) => {
       setIsLoading(false);
     });
@@ -108,10 +98,33 @@ export const NodeLoader = (props: Props) => {
       console.log("Received data:", data);
       setNodeStatus(data.new);
     });
+  }, []);
 
-    if (args.node.nodeType == "task") {
+  React.useEffect(() => {
+    if (response) {
+      console.log(response);
+      socket.emit("join", {
+        journeyId,
+        nodeId: node.id,
+        responseId: nodeContext.response.id,
+      });
+    }
+    return () => {
+      if (response) {
+        socket.emit("leave", {
+          journeyId,
+          nodeId: node.id,
+          responseId: response.id,
+        });
+      }
+    };
+  }, [response]);
+
+  React.useEffect(() => {
+    if (args.node.type == "TaskInstance") {
       args.node.spec.instructionsType == "popped";
     }
+    console.log("mount");
   }, []);
 
   const handleTaskSubmit = (taskResult: any) => {
@@ -235,7 +248,7 @@ export const NodeLoader = (props: Props) => {
   }
 
   if (node.status == "RUNNING") {
-    if (node.nodeType != "task") {
+    if (node.type != "TaskInstance") {
       return <h1>Unimplemented</h1>;
     }
 

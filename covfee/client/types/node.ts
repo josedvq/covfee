@@ -17,7 +17,7 @@ export interface NodeType extends BaseNodeSpec {
   /**
    * Identifies the node as a task or a generic node
    */
-  nodeType: "task" | "node";
+  type: "TaskInstance" | "NodeInstance";
   /**
    * Task-specific arguments
    */

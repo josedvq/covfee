@@ -36,7 +36,8 @@ class JourneySpec(Base):
     )
 
     # instance relationships
-    journeys: Mapped[List[JourneyInstance]] = relationship(back_populates="spec")
+    journeys: Mapped[List[JourneyInstance]
+                     ] = relationship(back_populates="spec")
 
     def __init__(self, nodes: List[NodeSpec] = []):
         super().__init__()
@@ -83,11 +84,13 @@ class JourneyInstance(Base):
     curr_node_id: Mapped[int] = mapped_column(
         ForeignKey("nodeinstances.id"), nullable=True
     )
-    curr_node: Mapped[NodeInstance] = relationship(back_populates="curr_journeys")
+    curr_node: Mapped[NodeInstance] = relationship(
+        back_populates="curr_journeys")
 
     # dates
     # submitted: Mapped[datetime.datetime] = mapped_column(nullable=True)
-    created: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
+    created: Mapped[datetime.datetime] = mapped_column(
+        default=datetime.datetime.now)
     updated: Mapped[datetime.datetime] = mapped_column(
         default=datetime.datetime.now, onupdate=datetime.datetime.now
     )
@@ -109,7 +112,8 @@ class JourneyInstance(Base):
 
     def __init__(self):
         self.id = JourneyInstance.get_id()
-        self.preview_id = hashlib.sha256((self.id + "preview".encode())).digest()
+        self.preview_id = hashlib.sha256(
+            (self.id + "preview".encode())).digest()
         self.submitted = False
         self.interface = {}
 
@@ -124,7 +128,8 @@ class JourneyInstance(Base):
 
     def set_curr_node(self, node):
         self.curr_node = node
-        node.update_status()
+        if node is not None:
+            node.update_status()
 
     def get_completion_info(self):
         completion = {
@@ -143,7 +148,8 @@ class JourneyInstance(Base):
 
     def get_hmac(self):
         h = hmac.new(
-            app.config["COVFEE_SECRET_KEY"].encode("utf-8"), self.id, hashlib.sha256
+            app.config["COVFEE_SECRET_KEY"].encode(
+                "utf-8"), self.id, hashlib.sha256
         )
         return h.hexdigest()
 
@@ -176,6 +182,8 @@ class JourneyInstance(Base):
             instance_dict["nodes"] = [n.to_dict() for n in self.nodes]
         else:
             instance_dict["nodes"] = [n.id for n in self.nodes]
+
+        instance_dict['online'] = self.curr_node is not None
 
         # if self.submitted:
         #     instance_dict['completionInfo'] = self.get_completion_info()

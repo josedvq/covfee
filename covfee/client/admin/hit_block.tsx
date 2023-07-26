@@ -6,9 +6,11 @@ import { useHitInstance } from "../models/Hit";
 import { HitInstanceGraph } from "./hit_graph";
 import { ForceGraph, Node, Link } from "./force_graph";
 import {
+  CheckCircleOutlined,
   DownOutlined,
   LinkOutlined,
   NodeIndexOutlined,
+  StopOutlined,
 } from "@ant-design/icons";
 import { useJourney } from "../models/Journey";
 import { useNode } from "../models/Node";
@@ -136,22 +138,25 @@ const SectionButton = styled.div`
 `;
 
 const JourneyRow = (props: JourneyType) => {
-  const journey = useJourney(props);
+  const { journey, getUrl } = useJourney(props);
   return (
     <div>
-      <a href={journey.getUrl()}>
-        <span>{props.id.substring(0, 10)}</span> <LinkOutlined />
+      <a href={getUrl()}>
+        <span>
+          {journey.online ? <CheckCircleOutlined /> : <StopOutlined />}
+        </span>
+        <span>{journey.id.substring(0, 10)}</span> <LinkOutlined />
       </a>
     </div>
   );
 };
 
 const NodeRow = (props: NodeType) => {
-  const node = useNode(props);
+  const { node, getUrl } = useNode(props);
   return (
     <div>
-      <a href={node.getUrl()}>
-        <LinkOutlined /> {node.node.id} - {node.node.status}
+      <a href={getUrl()}>
+        <LinkOutlined /> {node.id} - {node.status}
       </a>
     </div>
   );

@@ -11,7 +11,6 @@ import Title from "antd/lib/typography/Title";
 import "antd/dist/antd.css";
 import Collapsible from "react-collapsible";
 const { Text } = Typography;
-import { io } from "socket.io-client";
 
 import Constants from "Constants";
 import { myerror } from "../utils";
@@ -27,8 +26,9 @@ import { NodeLoader } from "./node_loader";
 
 import "./journey.scss";
 import { fetchJourney, useJourney } from "../models/Journey";
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { AllPropsRequired } from "../types/utils";
+import AppContext from "app_provider";
 
 // url parameters
 interface MatchParams {
@@ -65,6 +65,7 @@ export const JourneyPage: React.FunctionComponent<Props> = (props) => {
     ...props,
   };
 
+  const { socket } = useContext(AppContext);
   const { journey, setJourney } = useJourney(null);
   const [currNode, setCurrNode] = useState(null);
 

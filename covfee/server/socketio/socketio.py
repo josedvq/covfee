@@ -43,13 +43,14 @@ def get_task_object(responseId: int):
 
 @socketio.on("connect")
 def on_connect(data):
-    pass
+    print('CONNECT')
 
 
 @socketio.on("join")
 def on_join(data):
     journeyId = str(data["journeyId"])
     journey = get_journey(journeyId)
+    # hitId = journey.hit.id.hex()
 
     nodeId = str(data["nodeId"])
     node = get_node(nodeId)
@@ -76,14 +77,14 @@ def on_join(data):
         payload = {'prev': prev_status, 'new': new_status}
         emit('status', payload, to=responseId)
 
+    print(f"joined room {responseId}")
+    session['journeyId'] = journeyId
+    session["responseId"] = responseId
+    session.modified = True
+
     res = store.join(
         responseId, response.task.spec.spec["type"], response.state)
     if res["success"]:
-
-        print(f"joined room {responseId}")
-        session["responseId"] = responseId
-        print(session["responseId"])
-        session.modified = True
         emit("state", res)
 
         # if this is the first join, run the on_first_join callback
@@ -111,6 +112,7 @@ def on_action(data):
 
 
 def leave_responseid(responseId):
+    print(f'Leaving response {responseId}')
     res = store.leave(responseId)
 
     if res["success"]:
@@ -124,8 +126,20 @@ def leave_responseid(responseId):
     leave_room(responseId)
 
 
+def leave_journey(journeyId):
+    print(f'Leaving journey {journeyId}')
+    journey = get_journey(journeyId)
+
+    if journey is None:
+        return ValueError(f'Unknown journeyID {journeyId}')
+
+    journey.set_curr_node(None)
+    session['journeyId'] = None
+
+
 @socketio.on("leave")
 def on_leave(data):
+    print(session)
     responseId = str(data["responseId"])
     if responseId != session["responseId"]:
         return send(
@@ -139,6 +153,11 @@ def on_leave(data):
 
 @socketio.on("disconnect")
 def disconnect():
+    print('disconnect')
     if "responseId" in session:
         responseId = session["responseId"]
         leave_responseid(responseId)
+
+    if "journeyId" in session:
+        journeyId = session["journeyId"]
+        leave_journey(journeyId)

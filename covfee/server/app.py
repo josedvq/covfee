@@ -36,7 +36,7 @@ def create_app(mode):
     from .socketio import socketio
 
     # important: here, set socketio json implementation too
-    socketio.init_app(app, manage_session=False, json=app.json)
+    socketio.init_app(app, manage_session=True, json=app.json)
 
     app.register_blueprint(frontend, url_prefix="/")
     from .rest_api import api, auth
