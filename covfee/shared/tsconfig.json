@@ -1,27 +1,24 @@
 {
-    "compilerOptions": {
-        "target": "es5",
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "skipLibCheck": true,
-        "noImplicitAny": true,
-        "removeComments": true,
-        "preserveConstEnums": true,
-        "sourceMap": true,
-        "jsx": "react",
-        "baseUrl": "./",
-        "paths": {
-            "@tasks/*": ["../client/tasks/*"]
-        }
-    },
-    "include": [
-        "**/*.ts",
-        "../client/tasks/*.tsx",
-        "node_modules/@types/**/*.d.ts"
-    ],
-    "exclude": [
-        "spec/*.ts",
-        "node_modules",
-        "dist"
-    ],
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "jsx": "react",
+    "baseUrl": "./",
+    "paths": {
+      "@tasks/*": ["../client/tasks/*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "../client/tasks/*.tsx",
+    "node_modules/@types/**/*.d.ts",
+    "../client/tasks/instructions/index.tsx"
+  ],
+  "exclude": ["spec/*.ts", "node_modules", "dist"]
 }

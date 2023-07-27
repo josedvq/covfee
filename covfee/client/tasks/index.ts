@@ -1,9 +1,9 @@
+import { TaskExport } from "types/node";
 // import ContinuousKeypointTask from './continuous_keypoint'
 // import Continuous1DTask from './continuous_1d'
-// import QuestionnaireTask from './questionnaire'
-// import InstructionsTask from './instructions'
 // import ThreeImagesTask from './three_images'
-import { TaskExport } from "types/node";
+import QuestionnaireTask from "./questionnaire";
+import InstructionsTask from "./instructions";
 import IncrementCounterTask from "./increment_counter";
 // import VideocallTask from './videocall'
 
@@ -11,9 +11,9 @@ import IncrementCounterTask from "./increment_counter";
 export {
   // ContinuousKeypointTask,
   // Continuous1DTask,
-  // QuestionnaireTask,
-  // InstructionsTask,
   // ThreeImagesTask,
+  QuestionnaireTask,
+  InstructionsTask,
   IncrementCounterTask,
 };
 
@@ -21,8 +21,8 @@ export {
 export default {
   // 'ContinuousKeypointTask': ContinuousKeypointTask,
   // 'Continuous1DTask': Continuous1DTask,
-  // 'QuestionnaireTask': QuestionnaireTask,
-  // 'InstructionsTask': InstructionsTask,
-  // 'ThreeImagesTask': ThreeImagesTask,
-  IncrementCounterTask: IncrementCounterTask,
+  QuestionnaireTask,
+  InstructionsTask,
+  // ThreeImagesTask: ThreeImagesTask,
+  IncrementCounterTask,
 } as Record<string, TaskExport>;

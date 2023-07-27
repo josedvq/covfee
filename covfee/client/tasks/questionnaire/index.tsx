@@ -16,7 +16,6 @@ interface Props extends BaseTaskProps {
 }
 
 export const QuestionnaireTask: React.FC<Props> = (props) => {
-  // export class QuestionnaireTask extends CovfeeTask<Props, State> {
   const args: AllPropsRequired<Props> = {
     ...props,
     spec: {
@@ -36,17 +35,6 @@ export const QuestionnaireTask: React.FC<Props> = (props) => {
   const formDisabled = useSelector<NodeState<State>, boolean>(
     (state) => state.formDisabled
   );
-
-  // state: State = {
-  //     media: {
-  //         paused: true
-  //     },
-  //     form: {
-  //         // values: this.props.spec.form && this.props.spec.form.fields.map(field=>{return {name: field.name}}),
-  //         values: null,
-  //         disabled: this.props.disabled
-  //     }
-  // }
 
   React.useEffect(() => {
     if (args.response && args.response.data) {
@@ -96,7 +84,7 @@ export const QuestionnaireTask: React.FC<Props> = (props) => {
             {...args.spec.form}
             disabled={formDisabled}
             values={formValues}
-            setValues={actions.setFormValues}
+            setValues={(v) => dispatch(actions.setFormValues(v))}
             withSubmitButton={true}
             renderSubmitButton={args.renderSubmitButton}
             onSubmit={handleSubmit}
