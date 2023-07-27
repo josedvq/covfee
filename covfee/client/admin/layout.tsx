@@ -23,7 +23,9 @@ interface HeaderProps {
   showLogin?: boolean;
 }
 
-export const AdminHeader: React.FunctionComponent<HeaderProps> = (props) => {
+export const AdminHeader: React.FC<React.PropsWithChildren<HeaderProps>> = (
+  props
+) => {
   const args: AllPropsRequired<HeaderProps> = {
     menuItems: [],
     showLogin: true,
@@ -52,11 +54,7 @@ export const AdminHeader: React.FunctionComponent<HeaderProps> = (props) => {
         <CovfeeMenuItem />
       </Menu.Item>
       {logged ? (
-        <Menu.Item
-          key="2"
-          onClick={this.handleLogout}
-          style={{ float: "right" }}
-        >
+        <Menu.Item key="2" onClick={handleLogout} style={{ float: "right" }}>
           Logout
         </Menu.Item>
       ) : (
@@ -68,7 +66,7 @@ export const AdminHeader: React.FunctionComponent<HeaderProps> = (props) => {
       )}
       {args.menuItems &&
         args.menuItems.map((item, index) => {
-          return <Menu.Item key={3 + index}>{item.label}</Menu.Item>;
+          return <Menu.Item key={3 + index}>{item}</Menu.Item>;
         })}
     </Menu>
   );
@@ -78,10 +76,11 @@ interface LayoutProps {
   loggedRequired?: boolean;
   rolesRequired?: string[];
   header?: HeaderProps;
-  children: React.Component;
 }
 
-export const AdminLayout: React.FunctionComponent<LayoutProps> = (props) => {
+export const AdminLayout: React.FC<React.PropsWithChildren<LayoutProps>> = (
+  props
+) => {
   const args: AllPropsRequired<LayoutProps> = {
     loggedRequired: true,
     rolesRequired: ["admin", "requester"],
@@ -91,7 +90,9 @@ export const AdminLayout: React.FunctionComponent<LayoutProps> = (props) => {
 
   const { logged, roles } = React.useContext(appContext);
 
-  const renderContentForbidden = (reason: string) => {
+  const renderContentForbidden = (
+    reason: "not_logged" | "roles" | "default"
+  ) => {
     const error_pages = {
       not_logged: {
         msg: "You must be logged in to access this page.",
@@ -103,10 +104,12 @@ export const AdminLayout: React.FunctionComponent<LayoutProps> = (props) => {
       roles: {
         msg: 'A role of "admin" or "requester" is required to access the admin panel. Please contact an administrator to request access',
         btn: false,
+        act: () => {},
       },
       default: {
         msg: "Sorry, you are not authorized to access this page.",
         btn: false,
+        act: () => {},
       },
     };
 
@@ -119,7 +122,12 @@ export const AdminLayout: React.FunctionComponent<LayoutProps> = (props) => {
         subTitle={page.msg}
         extra={
           page.btn && (
-            <Button type="primary" onClick={page.act}>
+            <Button
+              type="primary"
+              onClick={() => {
+                page.act();
+              }}
+            >
               {page.btn}
             </Button>
           )
@@ -131,9 +139,10 @@ export const AdminLayout: React.FunctionComponent<LayoutProps> = (props) => {
   return (
     <Layout>
       <AdminHeader {...args.header} />
+      {props.children}
       <Layout>
         {(() => {
-          if (Constants.admin.unsafe_mode_on) return args.children;
+          if (Constants.admin.unsafe_mode_on) return props.children;
 
           if (args.loggedRequired && !logged)
             return renderContentForbidden("not_logged");
@@ -145,7 +154,7 @@ export const AdminLayout: React.FunctionComponent<LayoutProps> = (props) => {
             if (!isAllowed) return renderContentForbidden("roles");
           }
 
-          return args.children;
+          return props.children;
         })()}
       </Layout>
       <Footer>

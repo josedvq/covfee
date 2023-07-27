@@ -1,11 +1,14 @@
+import { RateSpec } from "@covfee-spec/form";
 import { BaseNodeSpec } from "@covfee-spec/node";
 import { BaseTaskSpec, NodeSpec, TaskSpec } from "@covfee-spec/task";
+import React, { Reducer } from "react";
+import { AllPropsRequired } from "./utils";
 
 export type NodeStatus = "INIT" | "WAITING" | "RUNNING" | "PAUSED" | "FINISHED";
 /**
  * Node spec augmented with database status
  */
-export interface NodeType extends BaseNodeSpec {
+export interface NodeType extends AllPropsRequired<BaseNodeSpec> {
   /**
    * Unique ID of the node
    */
@@ -57,10 +60,6 @@ export interface TaskType extends BaseTaskSpec {
    * True if the task has been successfully validated
    */
   valid: boolean;
-  /**
-   * Task-specific props to be fed to the task
-   */
-  taskSpecific?: any;
 }
 
 export interface EditableTaskFields {
@@ -72,4 +71,11 @@ export interface EditableTaskFields {
    * Task specification as provided by the user
    */
   // spec: any,
+}
+
+export type NodeState<T> = T;
+
+export interface TaskExport {
+  taskComponent: React.FC;
+  taskReducer: Reducer<any, any>;
 }

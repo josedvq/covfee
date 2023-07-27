@@ -1,14 +1,13 @@
 import * as React from "react";
-import { useState, useEffect, useRef } from "react";
-import { BasicTaskProps, CovfeeTask } from "../base";
 
-import { TaskType } from "@covfee-shared/spec/task";
 import { useNodeState } from "../../journey/state";
 import { State } from "./slice";
 import { slice, actions } from "./slice";
 import { useSelector } from "react-redux";
+import { TaskExport, TaskType } from "types/node";
+import { BaseTaskProps } from "tasks/base";
 
-interface Props extends TaskType, BasicTaskProps {}
+interface Props extends TaskType, BaseTaskProps {}
 
 function IncrementCounterTask(props: Props) {
   const counter = useSelector((state) => state.counter);
@@ -31,6 +30,6 @@ function IncrementCounterTask(props: Props) {
 }
 
 export default {
-  taskConstructor: IncrementCounterTask,
+  taskComponent: IncrementCounterTask,
   taskReducer: slice.reducer,
-};
+} as TaskExport;

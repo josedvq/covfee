@@ -48,7 +48,7 @@ const AdminProject = (props: Props) => {
     React.useState<number>(null);
   const [projects, setProjects] = React.useState<ProjectType[]>([]);
   // let projects: Array<ProjectSpec> = []
-  const { project, setProject } = useProject({});
+  const { project, setProject } = useProject(null);
 
   const [instances, setInstances] = React.useState<HitInstanceType[]>();
   // let instances: HitInstanceType[]

@@ -23,7 +23,7 @@ import { JourneyContext, JourneyContextType } from "./journey_context";
 import { NodeLoader } from "./node_loader";
 
 import "./journey.scss";
-import { fetchJourney, useJourney } from "../models/Journey";
+import { FullJourney, fetchJourney, useJourney } from "../models/Journey";
 import { useState, useContext } from "react";
 import { AllPropsRequired } from "../types/utils";
 import { appContext } from "../app_context";
@@ -64,7 +64,7 @@ export const JourneyPage: React.FC<Props> = (props) => {
 
   const routeParams = useParams();
   const { socket } = useContext(appContext);
-  const { journey, setJourney } = useJourney(null);
+  const { journey, setJourney } = useJourney<FullJourney>(null);
   const [currNode, setCurrNode] = useState(null);
 
   const [extraOpen, setExtraOpen] = useState(false);

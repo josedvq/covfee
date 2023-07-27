@@ -139,7 +139,7 @@ export const NodeLoader = (props: Props) => {
       });
   };
 
-  const { taskConstructor, taskReducer } = getTask(args.node.spec.type);
+  const { taskComponent, taskReducer } = getTask(args.node.spec.type);
   const reduxStore = React.useRef(
     configureStore({
       reducer: taskReducer,
@@ -276,7 +276,7 @@ export const NodeLoader = (props: Props) => {
                 };
 
                 const taskElement = React.createElement(
-                  taskConstructor,
+                  taskComponent,
                   {
                     ...nodeProps,
                   },
