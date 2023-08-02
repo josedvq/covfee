@@ -36,12 +36,6 @@ export const AppProvider: React.FC<React.PropsWithChildren<{}>> = ({
   const [roles, setRoles] = React.useState([]);
   const [socket, setSocket] = React.useState(null);
 
-  const test = React.useRef(
-    (() => {
-      console.log("FIRED");
-    })()
-  );
-
   React.useEffect(() => {
     if (socket == null) {
       console.log("CALLED");

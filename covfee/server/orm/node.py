@@ -109,7 +109,7 @@ class NodeInstance(Base):
     )
 
     # chat relationship
-    chat: Mapped[Chat] = relationship(back_populates="Node")
+    chat: Mapped[Chat] = relationship(back_populates="node")
 
     # status code
     status: Mapped[NodeInstanceStatus] = mapped_column(default=NodeInstanceStatus.INIT)

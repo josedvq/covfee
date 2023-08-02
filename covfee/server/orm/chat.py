@@ -1,4 +1,6 @@
-from typing import Annotated, Any, Dict, List, TYPE_CHECKING, Optional
+from __future__ import annotations
+from typing import Any, Dict, List, TYPE_CHECKING, Optional
+from typing_extensions import Annotated
 import enum
 import datetime
 
@@ -12,15 +14,16 @@ if TYPE_CHECKING:
     from .node import NodeInstance
     from .journey import JourneyInstance
 
+
 class Chat(Base):
     __tablename__ = "chats"
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    # chat can be attached to a node or to a Journey 
-    node_id: Mapped[Optional[int]] = mapped_column(ForeignKey("node.id"))
+    # chat can be attached to a node or to a Journey
+    node_id: Mapped[Optional[int]] = mapped_column(ForeignKey("nodeinstances.id"))
     node: Mapped[Optional[NodeInstance]] = relationship(back_populates="chat")
 
-    journey_id: Mapped[Optional[int]] = mapped_column(ForeignKey("journey.id"))
+    journey_id: Mapped[Optional[int]] = mapped_column(ForeignKey("journeyinstances.id"))
     journey: Mapped[Optional[JourneyInstance]] = relationship(back_populates="chat")
 
     # one chat -> many chat messages
@@ -35,12 +38,19 @@ class Chat(Base):
         super().__init__()
         pass
 
+    def to_dict(self):
+        chat_dict = super().to_dict()
+        chat_dict["messages"] = [message.to_dict() for message in self.messages]
+
+        return chat_dict
+
+
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    
-    chat_id: Mapped[int] = mapped_column(ForeignKey("chat.id"))
+
+    chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"))
     chat: Mapped[Chat] = relationship(back_populates="messages")
 
     message: Mapped[Annotated[str, 2048]]

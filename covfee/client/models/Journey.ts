@@ -8,7 +8,7 @@ import Constants from "Constants";
 
 type JourneyType = FullJourney | ReducedJourney;
 
-// export { JourneyType, FullJourney, ReducedJourney };
+export { JourneyType, FullJourney, ReducedJourney };
 
 export const useJourney = <T extends JourneyType>(data: T) => {
   const [journey, setJourney] = React.useState<T>(data);

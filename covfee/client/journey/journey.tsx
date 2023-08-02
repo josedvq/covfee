@@ -28,6 +28,7 @@ import { useState, useContext } from "react";
 import { AllPropsRequired } from "../types/utils";
 import { appContext } from "../app_context";
 import { useMatch, useParams } from "react-router-dom";
+import { useChats } from "models/Chat";
 
 // url parameters
 interface MatchParams {
@@ -65,6 +66,7 @@ export const JourneyPage: React.FC<Props> = (props) => {
   const routeParams = useParams();
   const { socket } = useContext(appContext);
   const { journey, setJourney } = useJourney<FullJourney>(null);
+  const chats = useChats([]);
   const [currNode, setCurrNode] = useState(null);
 
   const [extraOpen, setExtraOpen] = useState(false);
@@ -74,6 +76,7 @@ export const JourneyPage: React.FC<Props> = (props) => {
   const journeyContext: JourneyContextType = {
     id: routeParams.journeyId,
     socket,
+    ...chats,
   };
 
   React.useEffect(() => {

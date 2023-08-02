@@ -7,6 +7,7 @@ export interface JourneyType extends Omit<JourneySpec, "nodes"> {
   hit_id: string;
   journeyspec_id: number;
   hitspec_id: number;
+  chat_id: number;
   nodes: NodeType[];
   extra: MarkdownContentSpec;
   submitted: boolean;

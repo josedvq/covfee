@@ -9,17 +9,12 @@ export type NodeStatus = "INIT" | "WAITING" | "RUNNING" | "PAUSED" | "FINISHED";
  * Node spec augmented with database status
  */
 export interface NodeType extends AllPropsRequired<BaseNodeSpec> {
-  /**
-   * Unique ID of the node
-   */
   id: number;
   /**
    * URL to task api endpoint
    */
+  chat_id: number;
   url: string;
-  /**
-   * Identifies the node as a task or a generic node
-   */
   type: "TaskInstance" | "NodeInstance";
   /**
    * Task-specific arguments
