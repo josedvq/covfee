@@ -1,12 +1,14 @@
-import { createContext } from 'react';
-import { NodeType, TaskResponseType } from '../types/node';
+import { createContext } from "react";
+import { NodeType, TaskResponseType } from "../types/node";
+import { BasePlayerStateProps } from "players/base";
 
 export type NodeContextType = {
-    node: NodeType,
-    response?: TaskResponseType
-}
+  node: NodeType;
+  response?: TaskResponseType;
+  player?: BasePlayerStateProps;
+};
 
-export const NodeContext = createContext<NodeContextType>({
-    node: null,
-    response: null
+export const nodeContext = createContext<NodeContextType>({
+  node: null,
+  response: null,
 });

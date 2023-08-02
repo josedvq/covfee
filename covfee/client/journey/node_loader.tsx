@@ -13,7 +13,7 @@ import { BaseTaskProps, CovfeeTask } from "tasks/base";
 import { useNode } from "../models/Node";
 import { NodeType } from "../types/node";
 import { AllPropsRequired } from "../types/utils";
-import { NodeContext, NodeContextType } from "./node_context";
+import { nodeContext, NodeContextType } from "./node_context";
 import { Provider as StoreProvider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { NodeStatus } from "../types/node";
@@ -265,7 +265,7 @@ export const NodeLoader = (props: Props) => {
         <div ref={nodeInstructionsRef}></div>
         <div style={{ width: "100%", height: "100%", position: "relative" }}>
           <StoreProvider store={reduxStore.current}>
-            <NodeContext.Provider value={nodeContext}>
+            <nodeContext.Provider value={nodeContext}>
               {(() => {
                 const nodeProps: BaseTaskProps = {
                   spec: node.spec,
@@ -285,7 +285,7 @@ export const NodeLoader = (props: Props) => {
 
                 return taskElement;
               })()}
-            </NodeContext.Provider>
+            </nodeContext.Provider>
           </StoreProvider>
         </div>
       </>

@@ -1,12 +1,12 @@
 import { Store, Slice, configureStore, Action } from "@reduxjs/toolkit";
 import React, { useState, useRef, useEffect, useContext } from "react";
 
-import { NodeContext } from "./node_context";
+import { nodeContext } from "./node_context";
 import { JourneyContext } from "./journey_context";
 import { useDispatch } from "react-redux";
 
 export const useNodeState = <T>(slice: Slice) => {
-  const nodeContext = useContext(NodeContext);
+  const nodeContext = useContext(nodeContext);
   const { socket } = useContext(JourneyContext);
 
   const reduxDispatch = useDispatch();
