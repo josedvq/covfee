@@ -6,8 +6,4 @@ import RootContainer from "./root";
 const title = "covfee: the continuous video feedback tool";
 
 const root = ReactDOM.createRoot(document.getElementById("app"));
-root.render(
-  <React.StrictMode>
-    <RootContainer />
-  </React.StrictMode>
-);
+root.render(<RootContainer />);

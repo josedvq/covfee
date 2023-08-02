@@ -134,6 +134,7 @@ def leave_journey(journeyId):
         return ValueError(f'Unknown journeyID {journeyId}')
 
     journey.set_curr_node(None)
+    app.session.commit()
     session['journeyId'] = None
 
 

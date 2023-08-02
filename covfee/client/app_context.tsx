@@ -14,5 +14,5 @@ export const appContext = React.createContext<AppContextProps>({
   login: () => Promise.resolve({}),
   loginWithGoogle: () => Promise.resolve({}),
   logout: () => Promise.resolve(),
-  socket: io(),
+  socket: null,
 }); // Create a context object

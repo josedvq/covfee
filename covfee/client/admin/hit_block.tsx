@@ -76,42 +76,55 @@ export const HitBlock = (props: Props) => {
       </Header>
 
       {!collapsed && (
-        <div>
-          <Button onClick={() => setShowGraph(!showGraph)}>Graph</Button>
-          {showGraph && (
-            <div>
-              <HitInstanceGraph instance={props.instance}></HitInstanceGraph>
-            </div>
-          )}
+        <div style={{ display: "flex", flexDirection: "row" }}>
+          <div style={{ width: "60%" }}>
+            <SectionButton onClick={() => setShowNodes(!showNodes)}>
+              Nodes
+            </SectionButton>
 
-          <SectionButton onClick={() => setShowJourneys(!showJourneys)}>
-            Journeys
-          </SectionButton>
+            {showNodes && (
+              <div>
+                {hitInstance.nodes.map((node, index) => {
+                  return <NodeRow key={index} {...node}></NodeRow>;
+                })}
+              </div>
+            )}
 
-          {showJourneys && (
-            <div>
-              {hitInstance.journeys.map((journey, index) => {
-                return <JourneyRow key={index} {...journey}></JourneyRow>;
-              })}
-            </div>
-          )}
+            <Button onClick={() => setShowGraph(!showGraph)}>Graph</Button>
+            {showGraph && (
+              <div>
+                <HitInstanceGraph instance={props.instance}></HitInstanceGraph>
+              </div>
+            )}
+          </div>
 
-          <SectionButton onClick={() => setShowNodes(!showNodes)}>
-            Nodes
-          </SectionButton>
+          <div style={{ width: "40%" }}>
+            <SectionButton onClick={() => setShowJourneys(!showJourneys)}>
+              Journeys
+            </SectionButton>
 
-          {showNodes && (
-            <div>
-              {hitInstance.nodes.map((node, index) => {
-                return <NodeRow key={index} {...node}></NodeRow>;
-              })}
-            </div>
-          )}
+            {showJourneys && (
+              <div>
+                {hitInstance.journeys.map((journey, index) => {
+                  return <JourneyRow key={index} {...journey}></JourneyRow>;
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </Container>
   );
 };
+const StatusIcon = styled.span<{ status: "online" | "offline" }>`
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.2em;
+  border-radius: 0.5em;
+  background-color: ${(props) => (props.status == "online" ? "green" : "red")};
+  vertical-align: middle;
+`;
 
 const Container = styled.div`
   margin: 1em 0;
@@ -143,7 +156,9 @@ const JourneyRow = (props: JourneyType) => {
     <div>
       <a href={getUrl()}>
         <span>
-          {journey.online ? <CheckCircleOutlined /> : <StopOutlined />}
+          <StatusIcon
+            status={journey.online ? "online" : "offline"}
+          ></StatusIcon>
         </span>
         <span>{journey.id.substring(0, 10)}</span> <LinkOutlined />
       </a>

@@ -19,7 +19,7 @@ from .node import journeyspec_nodespec_table, journey_node_table
 if TYPE_CHECKING:
     from .hit import HITSpec, HITInstance
     from .node import NodeSpec, NodeInstance
-
+    from .chat import Chat
 
 class JourneySpec(Base):
     __tablename__ = "journeyspecs"
@@ -71,6 +71,9 @@ class JourneyInstance(Base):
     hit_id: Mapped[int] = mapped_column(ForeignKey("hitinstances.id"))
     # hit_id = Column(Integer, ForeignKey('hitinstances.id'))
     hit: Mapped[HITInstance] = relationship(back_populates="journeys")
+
+    # chat relationship
+    chat: Mapped[Chat] = relationship(back_populates="journey")
 
     nodes: Mapped[List[NodeInstance]] = relationship(
         secondary=journey_node_table, back_populates="journeys"
