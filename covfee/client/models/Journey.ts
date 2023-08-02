@@ -1,4 +1,5 @@
 import * as React from "react";
+
 import { JourneyType as FullJourney } from "../types/journey";
 import { JourneyType as ReducedJourney } from "../types/hit";
 import { myerror, fetcher, myinfo, throwBadResponse } from "../utils";
@@ -7,7 +8,7 @@ import Constants from "Constants";
 
 type JourneyType = FullJourney | ReducedJourney;
 
-export { JourneyType, FullJourney, ReducedJourney };
+// export { JourneyType, FullJourney, ReducedJourney };
 
 export const useJourney = <T extends JourneyType>(data: T) => {
   const [journey, setJourney] = React.useState<T>(data);

@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import { adminContext } from "./admin_context";
 
 export const AdminProvider: React.FC = ({ children }) => {
-  const socket = React.useRef(io());
+  const socket = React.useRef(null);
 
   return (
     <adminContext.Provider

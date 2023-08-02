@@ -15,16 +15,20 @@ export const useNodeState = <T>(slice: Slice) => {
     socket.emit("action", { responseId: nodeContext.response.id, action });
   };
 
-  socket.on("action", (action) => {
-    console.log(action);
-    reduxDispatch(action);
-  });
+  React.useEffect(() => {
+    if (socket) {
+      socket.on("action", (action) => {
+        console.log(action);
+        reduxDispatch(action);
+      });
 
-  socket.on("state", (state) => {
-    const action = { type: `${slice.name}/setState`, payload: state.state };
-    console.log(action);
-    reduxDispatch(action);
-  });
+      socket.on("state", (state) => {
+        const action = { type: `${slice.name}/setState`, payload: state.state };
+        console.log(action);
+        reduxDispatch(action);
+      });
+    }
+  }, [socket]);
 
   return {
     dispatch,

@@ -94,14 +94,17 @@ export const NodeLoader = (props: Props) => {
       setIsLoading(false);
     });
 
-    socket.on("status", (data) => {
-      console.log("Received data:", data);
-      setNodeStatus(data.new);
-    });
-  }, []);
+    if (socket) {
+      socket.on("status", (data) => {
+        console.log("Received data:", data);
+        setNodeStatus(data.new);
+      });
+    }
+  }, [socket]);
 
   React.useEffect(() => {
-    if (response) {
+    console.log(["useEffect", response, socket]);
+    if (response && socket) {
       console.log(response);
       socket.emit("join", {
         journeyId,
@@ -110,7 +113,7 @@ export const NodeLoader = (props: Props) => {
       });
     }
     return () => {
-      if (response) {
+      if (response && socket) {
         socket.emit("leave", {
           journeyId,
           nodeId: node.id,
@@ -118,7 +121,7 @@ export const NodeLoader = (props: Props) => {
         });
       }
     };
-  }, [response]);
+  }, [response, socket]);
 
   React.useEffect(() => {
     if (args.node.type == "TaskInstance") {

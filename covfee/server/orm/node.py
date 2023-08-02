@@ -9,9 +9,9 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .base import Base
 from . import utils
 
-
 if TYPE_CHECKING:
     from .journey import JourneySpec, JourneyInstance
+    from .chat import Chat
 
 journeyspec_nodespec_table = Table(
     "journeyspec_nodespec",
@@ -107,6 +107,10 @@ class NodeInstance(Base):
     curr_journeys: Mapped[List[JourneyInstance]] = relationship(
         back_populates="curr_node"
     )
+
+    # chat relationship
+    chat: Mapped[Chat] = relationship(back_populates="Node")
+
     # status code
     status: Mapped[NodeInstanceStatus] = mapped_column(default=NodeInstanceStatus.INIT)
 

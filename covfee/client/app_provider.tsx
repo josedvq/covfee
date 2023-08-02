@@ -34,9 +34,19 @@ export const AppProvider: React.FC<React.PropsWithChildren<{}>> = ({
   const [username, setUsername] = React.useState(null);
   const [loginTime, setLoginTime] = React.useState(null);
   const [roles, setRoles] = React.useState([]);
-  const socket = React.useRef(io());
+  const [socket, setSocket] = React.useState(null);
+
+  const test = React.useRef(
+    (() => {
+      console.log("FIRED");
+    })()
+  );
 
   React.useEffect(() => {
+    if (socket == null) {
+      console.log("CALLED");
+      setSocket(io());
+    }
     if (localStorage) {
       const ls = JSON.parse(localStorage.getItem("user"));
       if (ls != null) {
@@ -73,7 +83,7 @@ export const AppProvider: React.FC<React.PropsWithChildren<{}>> = ({
     } else {
       // user is not logged in
     }
-  }, []);
+  }, [socket]);
 
   // Refreshes the auth token
   const refresh = async () => {
@@ -195,7 +205,7 @@ export const AppProvider: React.FC<React.PropsWithChildren<{}>> = ({
         loginTime,
         logged,
         roles,
-        socket: socket.current,
+        socket: socket,
         ...contextMethods,
       }}
     >
