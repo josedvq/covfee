@@ -139,7 +139,6 @@ export const AdminLayout: React.FC<React.PropsWithChildren<LayoutProps>> = (
   return (
     <Layout>
       <AdminHeader {...args.header} />
-      {props.children}
       <Layout>
         {(() => {
           if (Constants.admin.unsafe_mode_on) return props.children;

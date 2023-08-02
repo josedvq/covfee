@@ -14,7 +14,7 @@ const { Text } = Typography;
 
 import Constants from "Constants";
 import { myerror } from "../utils";
-import { MarkdownLoader } from "../tasks/instructions";
+import { MarkdownLoader } from "../tasks/utils/markdown_loader";
 import { CovfeeMenuItem } from "../gui";
 import { Sidebar } from "./sidebar";
 // import ButtonEventManagerContext from "../input/button_manager";

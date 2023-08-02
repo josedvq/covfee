@@ -1,6 +1,6 @@
 import { HitSpec } from "@covfee-spec/hit";
 import { NodeType } from "./node";
-export { NodeType } from "./node";
+// export { NodeType };
 import { JourneyType as FullJourneyType } from "./journey";
 
 export type HitType = Omit<HitSpec, "nodes" | "journeys"> & {

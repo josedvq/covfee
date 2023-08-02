@@ -6,7 +6,7 @@ import { BaseTaskProps } from "../base";
 import { Form } from "../../input/form";
 import { AllPropsRequired } from "types/utils";
 import { State, slice, actions } from "./slice";
-import { useNodeState } from "journey/state";
+import { useNodeState } from "../../journey/state";
 import { NodeState, TaskExport } from "types/node";
 import { useSelector } from "react-redux";
 

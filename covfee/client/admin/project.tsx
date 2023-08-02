@@ -79,9 +79,6 @@ const AdminProject = (props: Props) => {
   React.useEffect(() => {
     if (!projects || currentProjectIndex === null) return;
 
-    console.log(projects);
-    console.log(currentProjectIndex);
-
     setState((s) => ({
       ...s,
       loadingProject: true,
@@ -129,7 +126,7 @@ const AdminProject = (props: Props) => {
         <>
           {!state.loadingProject && (
             <Modal
-              visible={state.hitEditor.visible}
+              open={state.hitEditor.visible}
               footer={null}
               onCancel={() => {
                 setState({
@@ -162,22 +159,26 @@ const AdminProject = (props: Props) => {
                 );
               })}
             </Select>
-            <Button
-              type="primary"
-              href={Constants.api_url + "/projects/" + project.id + "/csv"}
-            >
-              Download URLs
-            </Button>
-            <Button
-              href={
-                Constants.api_url +
-                "/projects/" +
-                project.id +
-                "/download?csv=1"
-              }
-            >
-              Download results (CSV)
-            </Button>
+            {!state.loadingProject && (
+              <>
+                <Button
+                  type="primary"
+                  href={Constants.api_url + "/projects/" + project.id + "/csv"}
+                >
+                  Download URLs
+                </Button>
+                <Button
+                  href={
+                    Constants.api_url +
+                    "/projects/" +
+                    project.id +
+                    "/download?csv=1"
+                  }
+                >
+                  Download results (CSV)
+                </Button>
+              </>
+            )}
           </div>
 
           {state.loadingProject ? (
