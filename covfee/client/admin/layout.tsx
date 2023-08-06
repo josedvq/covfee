@@ -17,6 +17,7 @@ import { appContext, AppContextProps } from "../app_context";
 
 import { CovfeeMenuItem } from "../gui";
 import { AllPropsRequired } from "types/utils";
+import { ChatPopup } from "../chat/chat";
 
 interface HeaderProps {
   menuItems?: React.ReactElement[];
@@ -88,7 +89,7 @@ export const AdminLayout: React.FC<React.PropsWithChildren<LayoutProps>> = (
     ...props,
   };
 
-  const { logged, roles } = React.useContext(appContext);
+  const { logged, roles, chats } = React.useContext(appContext);
 
   const renderContentForbidden = (
     reason: "not_logged" | "roles" | "default"
@@ -171,6 +172,8 @@ export const AdminLayout: React.FC<React.PropsWithChildren<LayoutProps>> = (
           {/* <a href="https://github.com/josedvq/covfee">covfee</a> */}
         </Text>
       </Footer>
+
+      <ChatPopup chats={chats} />
     </Layout>
   );
 };

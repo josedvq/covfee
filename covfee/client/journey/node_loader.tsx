@@ -6,17 +6,15 @@ import { Button, Popover, Spin } from "antd";
 import { JourneyContext } from "./journey_context";
 import { myerror } from "../utils";
 import { getTask } from "../task_utils";
-import { TaskResponseType, TaskType } from "../types/node";
-import buttonManagerContext from "../input/button_manager_context";
 import { QuestionCircleOutlined } from "@ant-design/icons";
 import { BaseTaskProps, CovfeeTask } from "tasks/base";
 import { useNode } from "../models/Node";
 import { NodeType } from "../types/node";
 import { AllPropsRequired } from "../types/utils";
-import { nodeContext, NodeContextType } from "./node_context";
+import { nodeContext } from "./node_context";
 import { Provider as StoreProvider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { NodeStatus } from "../types/node";
+import { appContext } from "../app_context";
 
 interface Props {
   /**
@@ -54,8 +52,6 @@ interface Props {
   onClickNext?: () => void;
 }
 
-// type defaultProps = Required<Pick<Props, 'parent' | 'disabled' | 'previewMode' | 'interfaceMode' | 'renderTaskSubmitButton' | 'renderTaskNextButton' | 'fetchTaskResponse' | 'submitTaskResponse' | 'onSubmit' | 'onClickNext'>>
-
 export const NodeLoader = (props: Props) => {
   const args: AllPropsRequired<Props> = {
     disabled: false,
@@ -65,11 +61,11 @@ export const NodeLoader = (props: Props) => {
     ...props,
   };
 
-  // const [status, setStatus] = React.useState<NodeStatus>("INIT");
+  const { socket, chocket } = React.useContext(appContext);
   const [isLoading, setIsLoading] = React.useState(true);
   const [instructionsVisible, setInstructionsVisible] = React.useState(false);
   const [overlayVisible, setOverlayVisible] = React.useState(false);
-  const { socket, id: journeyId } = React.useContext(JourneyContext);
+  const { id: journeyId } = React.useContext(JourneyContext);
 
   const {
     node,
@@ -84,10 +80,22 @@ export const NodeLoader = (props: Props) => {
   const nodeElementRef = React.useRef(null);
   const nodeInstructionsRef = React.useRef(null);
 
-  const nodeContext: NodeContextType = {
-    node,
-    response,
-  };
+  const {
+    taskComponent,
+    taskReducer,
+    useSharedState: taskRequestsSharedState,
+  } = getTask(args.node.spec.type);
+  const taskuseSharedState =
+    taskRequestsSharedState !== undefined ? taskRequestsSharedState : false;
+  const useSharedState =
+    args.node.useSharedState !== undefined
+      ? args.node.useSharedState
+      : taskuseSharedState;
+  const reduxStore = React.useRef(
+    configureStore({
+      reducer: taskReducer,
+    })
+  );
 
   React.useEffect(() => {
     fetchResponse().then((_) => {
@@ -103,13 +111,12 @@ export const NodeLoader = (props: Props) => {
   }, [socket]);
 
   React.useEffect(() => {
-    console.log(["useEffect", response, socket]);
     if (response && socket) {
-      console.log(response);
       socket.emit("join", {
         journeyId,
         nodeId: node.id,
-        responseId: nodeContext.response.id,
+        responseId: response.id,
+        useSharedState,
       });
     }
     return () => {
@@ -118,6 +125,7 @@ export const NodeLoader = (props: Props) => {
           journeyId,
           nodeId: node.id,
           responseId: response.id,
+          useSharedState,
         });
       }
     };
@@ -127,7 +135,6 @@ export const NodeLoader = (props: Props) => {
     if (args.node.type == "TaskInstance") {
       args.node.spec.instructionsType == "popped";
     }
-    console.log("mount");
   }, []);
 
   const handleTaskSubmit = (taskResult: any) => {
@@ -138,16 +145,9 @@ export const NodeLoader = (props: Props) => {
       })
       .catch((error) => {
         myerror("Error submitting the task.", error);
-        setNodeStatus("ended");
+        setNodeStatus("FINISHED");
       });
   };
-
-  const { taskComponent, taskReducer } = getTask(args.node.spec.type);
-  const reduxStore = React.useRef(
-    configureStore({
-      reducer: taskReducer,
-    })
-  );
 
   // const renderErrorModal = () => {
   //     return <Modal
@@ -214,8 +214,8 @@ export const NodeLoader = (props: Props) => {
       <Popover
         title="Instructions"
         placement="bottom"
-        visible={instructionsVisible}
-        onVisibleChange={handleInstructionsVisibleChange}
+        open={instructionsVisible}
+        onOpenChange={handleInstructionsVisibleChange}
         content={
           <InstructionsPopoverContent>
             {node.spec.instructions}
@@ -268,7 +268,7 @@ export const NodeLoader = (props: Props) => {
         <div ref={nodeInstructionsRef}></div>
         <div style={{ width: "100%", height: "100%", position: "relative" }}>
           <StoreProvider store={reduxStore.current}>
-            <nodeContext.Provider value={nodeContext}>
+            <nodeContext.Provider value={{ node, useSharedState, response }}>
               {(() => {
                 const nodeProps: BaseTaskProps = {
                   spec: node.spec,

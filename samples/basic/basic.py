@@ -66,14 +66,28 @@ task2 = TaskSpec(
 
 project = Project()
 
-j1_start = TaskSpec(spec={"name": "Counter", "type": "IncrementCounterTask"})
-j1_end = TaskSpec(spec={"name": "Counter", "type": "IncrementCounterTask"})
-joint_task1 = TaskSpec(spec={"name": "Counter", "type": "IncrementCounterTask"})
-joint_task2 = TaskSpec(spec={"name": "Counter", "type": "IncrementCounterTask"})
-joint_task3 = TaskSpec(spec={"name": "Counter", "type": "IncrementCounterTask"})
+j1_start = TaskSpec(
+    spec={"name": "Counter", "type": "IncrementCounterTask", "useSharedState": False}
+)
+j1_end = TaskSpec(
+    spec={"name": "Counter", "type": "IncrementCounterTask", "useSharedState": False}
+)
+joint_task1 = TaskSpec(
+    spec={"name": "Counter", "type": "IncrementCounterTask", "useSharedState": False}
+)
+joint_task2 = TaskSpec(
+    spec={"name": "Counter", "type": "IncrementCounterTask", "useSharedState": False}
+)
+joint_task3 = TaskSpec(
+    spec={"name": "Counter", "type": "IncrementCounterTask", "useSharedState": False}
+)
 
-j2_start = TaskSpec(spec={"name": "Counter", "type": "IncrementCounterTask"})
-j2_end = TaskSpec(spec={"name": "Counter", "type": "IncrementCounterTask"})
+j2_start = TaskSpec(
+    spec={"name": "Counter", "type": "IncrementCounterTask", "useSharedState": False}
+)
+j2_end = TaskSpec(
+    spec={"name": "Counter", "type": "IncrementCounterTask", "useSharedState": False}
+)
 
 hit = HITSpec()
 j1 = hit.make_journey()

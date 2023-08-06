@@ -3,6 +3,7 @@ import { BaseNodeSpec } from "@covfee-spec/node";
 import { BaseTaskSpec, NodeSpec, TaskSpec } from "@covfee-spec/task";
 import React, { Reducer } from "react";
 import { AllPropsRequired } from "./utils";
+import { BaseTaskProps } from "../tasks/base";
 
 export type NodeStatus = "INIT" | "WAITING" | "RUNNING" | "PAUSED" | "FINISHED";
 /**
@@ -71,6 +72,7 @@ export interface EditableTaskFields {
 export type NodeState<T> = T;
 
 export interface TaskExport {
-  taskComponent: React.FC;
+  taskComponent: React.FC<BaseTaskProps>;
   taskReducer: Reducer<any, any>;
+  useSharedState?: boolean;
 }

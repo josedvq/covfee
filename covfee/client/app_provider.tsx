@@ -9,6 +9,8 @@ import {
   getCookieValue,
   myerror,
 } from "./utils";
+import { useChats } from "./models/Chat";
+import { AllPropsRequired } from "./types/utils";
 
 interface LoginInfo {
   username: string;
@@ -27,19 +29,32 @@ export interface UserContextMethods {
   loginWithGoogle: (token: string) => Promise<any>;
   logout: () => Promise<void>;
 }
-export const AppProvider: React.FC<React.PropsWithChildren<{}>> = ({
-  children,
-}) => {
+
+interface Props {
+  admin?: boolean;
+  children: React.ReactNode;
+}
+
+export const AppProvider: React.FC<Props> = (props) => {
+  const args: AllPropsRequired<Props> = {
+    admin: false,
+    ...props,
+  };
   const [logged, setLogged] = React.useState(false);
   const [username, setUsername] = React.useState(null);
   const [loginTime, setLoginTime] = React.useState(null);
   const [roles, setRoles] = React.useState([]);
   const [socket, setSocket] = React.useState(null);
+  const [chocket, setChocket] = React.useState(null);
+  const chats = useChats(chocket, []);
 
   React.useEffect(() => {
     if (socket == null) {
-      console.log("CALLED");
       setSocket(io());
+    }
+    if (chocket == null) {
+      if (args.admin) setChocket(io("/admin_chat"));
+      else setChocket(io("/chat"));
     }
     if (localStorage) {
       const ls = JSON.parse(localStorage.getItem("user"));
@@ -199,11 +214,13 @@ export const AppProvider: React.FC<React.PropsWithChildren<{}>> = ({
         loginTime,
         logged,
         roles,
-        socket: socket,
+        socket,
+        chocket,
+        ...chats,
         ...contextMethods,
       }}
     >
-      {children}
+      {args.children}
     </appContext.Provider>
   );
 };

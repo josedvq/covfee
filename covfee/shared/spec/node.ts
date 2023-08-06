@@ -61,4 +61,6 @@ export interface BaseNodeSpec {
   start?: StartCondition[];
 
   stop?: StopCondition[];
+
+  useSharedState?: boolean;
 }

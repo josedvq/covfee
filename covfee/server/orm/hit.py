@@ -192,7 +192,6 @@ class HITInstance(Base):
         instance_dict = super().to_dict()
         spec_dict = self.spec.to_dict()
 
-        instance_dict["id"] = instance_dict["id"].hex()
         instance_dict["token"] = self.get_hmac()
 
         # merge hit and instance dicts

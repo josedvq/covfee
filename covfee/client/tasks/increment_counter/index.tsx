@@ -32,4 +32,5 @@ function IncrementCounterTask(props: Props) {
 export default {
   taskComponent: IncrementCounterTask,
   taskReducer: slice.reducer,
+  useSharedState: true,
 } as TaskExport;

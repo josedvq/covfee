@@ -28,11 +28,11 @@ class TaskSpec(NodeSpec):
 
     def __init__(self, spec=None):
         # split spec into node settings and task spec
-        node_schema = schemata.get_definition('BaseNodeSpec')
+        node_schema = schemata.get_definition("BaseNodeSpec")
         if node_schema is None:
-            raise RuntimeError('BaseNodeSpec not found in schemata')
+            raise RuntimeError("BaseNodeSpec not found in schemata")
 
-        node_properties = node_schema['properties'].keys()
+        node_properties = node_schema["properties"].keys()
 
         node_spec = {k: v for k, v in spec.items() if k in node_properties}
         super().__init__(node_spec)
@@ -82,25 +82,20 @@ class TaskInstance(NodeInstance):
 
     def to_dict(self):
         # merge task and spec dicts
+        # task_dict = {
+        #     c.name: utils.to_dict(getattr(self, c.name))
+        #     for c in self.__table__.columns
+        #     if c not in ["responses"]
+        # }
+        # spec_dict = self.spec.to_dict()
+
         task_dict = {
-            c.name: utils.to_dict(getattr(self, c.name))
-            for c in self.__table__.columns
-            if c not in ["responses"]
+            **super().to_dict(),
+            # **spec_dict,
+            # **task_dict,
+            "responses": [response.to_dict() for response in self.responses],
+            "taskSpecific": self.get_task_object().get_task_specific_props(),
         }
-        spec_dict = self.spec.to_dict()
-
-        task_dict = {**spec_dict, **task_dict}
-
-        task_dict["responses"] = [response.to_dict()
-                                  for response in self.responses]
-        # task is valid if any response is valid
-        # task_dict['valid'] = self.has_valid_response()
-
-        # task_dict['num_submissions'] = sum([1 if res.submitted else 0 for res in self.responses])
-        task_dict["url"] = f'{app.config["API_URL"]}/tasks/{task_dict["id"]}'
-
-        task_object = self.get_task_object()
-        task_dict["taskSpecific"] = task_object.get_task_specific_props()
 
         return task_dict
 
@@ -135,16 +130,14 @@ class TaskInstance(NodeInstance):
                     )
 
             # write the json response
-            response_dict = response.get_json(
-                with_chunk_data=not csv)  # important
+            response_dict = response.get_json(with_chunk_data=not csv)  # important
             stream = BytesIO()
             stream.write(json.dumps(response_dict).encode())
             stream.seek(0)
             z.write_iter(
                 os.path.join(
                     base_path,
-                    response.get_download_filename(
-                        task_index=index, response_index=i)
+                    response.get_download_filename(task_index=index, response_index=i)
                     + ".json",
                 ),
                 stream,

@@ -20,7 +20,7 @@ const logger = winston.createLogger({
 
 class StoreService {
   rooms: {
-    [key: string]: {
+    [key: number]: {
       store: Store;
       actionIndex: number;
       numConnections: number;
@@ -47,7 +47,7 @@ class StoreService {
    * @returns true if the state was loaded from the database, false otherwise
    *
    */
-  _load(taskName: string, responseId: string, dbState: null | object): boolean {
+  _load(taskName: string, responseId: number, dbState: null | object): boolean {
     const slice = this._getSlice(taskName);
     if (!slice) {
       logger.warn(
@@ -80,7 +80,7 @@ class StoreService {
    */
   async join(
     taskName: string,
-    responseId: string,
+    responseId: number,
     dbState: null | object
   ): Promise<JoinResponse> {
     if (!(responseId in this.rooms)) {
@@ -94,7 +94,7 @@ class StoreService {
     return this.state(responseId);
   }
 
-  async leave(responseId: string): Promise<LeaveResponse> {
+  async leave(responseId: number): Promise<LeaveResponse> {
     if (!(responseId in this.rooms)) {
       return { err: `Could not find responseId ${responseId}` };
     }
@@ -109,7 +109,7 @@ class StoreService {
     };
   }
 
-  async action(responseId: string, action: Action): Promise<ActionResponse> {
+  async action(responseId: number, action: Action): Promise<ActionResponse> {
     if (!(responseId in this.rooms)) return { err: "Task store not found." };
 
     const dispatchedAction = this.rooms[responseId].store.dispatch(action);
@@ -118,7 +118,7 @@ class StoreService {
     };
   }
 
-  state(responseId: string): StateResponse {
+  state(responseId: number): StateResponse {
     if (!(responseId in this.rooms)) return { err: "Task store not found." };
 
     return {

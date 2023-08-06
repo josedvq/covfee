@@ -23,7 +23,9 @@ class Chat(Base):
     node_id: Mapped[Optional[int]] = mapped_column(ForeignKey("nodeinstances.id"))
     node: Mapped[Optional[NodeInstance]] = relationship(back_populates="chat")
 
-    journey_id: Mapped[Optional[int]] = mapped_column(ForeignKey("journeyinstances.id"))
+    journey_id: Mapped[Optional[bytes]] = mapped_column(
+        ForeignKey("journeyinstances.id")
+    )
     journey: Mapped[Optional[JourneyInstance]] = relationship(back_populates="chat")
 
     # one chat -> many chat messages
@@ -34,9 +36,8 @@ class Chat(Base):
         default=datetime.datetime.now, onupdate=datetime.datetime.now
     )
 
-    def __init__():
+    def __init__(self):
         super().__init__()
-        pass
 
     def to_dict(self):
         chat_dict = super().to_dict()
@@ -56,9 +57,7 @@ class ChatMessage(Base):
     message: Mapped[Annotated[str, 2048]]
 
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
-    updated_at: Mapped[datetime.datetime] = mapped_column(
-        default=datetime.datetime.now, onupdate=datetime.datetime.now
-    )
 
-    def __init__(self):
+    def __init__(self, message):
         super().__init__()
+        self.message = message

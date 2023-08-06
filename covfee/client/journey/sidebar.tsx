@@ -61,10 +61,11 @@ interface Props {
    * Called when the user changes the active task
    */
   onChangeActiveTask: (arg0: number) => void;
+  children?: React.ReactNode;
 }
 interface State {}
 
-export const Sidebar: React.FunctionComponent<Props> = (props) => {
+export const Sidebar: React.FC<Props> = (props) => {
   const taskElementRefs = React.useRef<HTMLElement[]>([]);
 
   React.useEffect(() => {
@@ -155,21 +156,20 @@ const SidebarButton = styled.nav`
 
 /* Sidebar buttons */
 const SidebarContainer = styled.nav`
-    display: flex;
-    flex-flow: column;
-    width: 100%;
-    height: inherit;
-    background-color: #a6a6a6;
+  display: flex;
+  flex-flow: column;
+  width: 100%;
+  height: inherit;
+  background-color: #a6a6a6;
 
-  
-    &-new {
-      margin: 2px;
-    }
-  
-    &.bottom {
-      margin-top: auto;
-    }
-  }`;
+  &-new {
+    margin: 2px;
+  }
+
+  &.bottom {
+    margin-top: auto;
+  }
+`;
 
 const SidebarHead = styled.nav`
   background-color: #464646;

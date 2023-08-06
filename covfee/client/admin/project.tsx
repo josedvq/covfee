@@ -13,6 +13,7 @@ import { HitInstanceType } from "types/hit";
 import { getAllProjects, getProject, useProject } from "../models/Project";
 import { ProjectType } from "types/project";
 import { HitBlock } from "./hit_block";
+import { appContext } from "../app_context";
 
 interface ProjectSpec {
   id: number;
@@ -47,11 +48,11 @@ const AdminProject = (props: Props) => {
   const [currentProjectIndex, setCurrentProjectIndex] =
     React.useState<number>(null);
   const [projects, setProjects] = React.useState<ProjectType[]>([]);
-  // let projects: Array<ProjectSpec> = []
   const { project, setProject } = useProject(null);
 
   const [instances, setInstances] = React.useState<HitInstanceType[]>();
-  // let instances: HitInstanceType[]
+  const { clearChats, addChats, clearChatListeners, addChatListeners } =
+    React.useContext(appContext);
 
   React.useEffect(() => {
     // fetch projects
@@ -87,12 +88,22 @@ const AdminProject = (props: Props) => {
     getProject(projects[currentProjectIndex].id).then((proj) => {
       setProject(proj);
       const hitgroups = proj.hits.map((h) => h.instances);
-      setInstances([].concat.apply([], hitgroups));
+      const instances = [].concat.apply([], hitgroups) as HitInstanceType[];
+      setInstances(instances);
 
       setState((s) => ({
         ...s,
         loadingProject: false,
       }));
+
+      const chat_ids = [].concat.apply(
+        [],
+        instances.map((inst) => inst.journeys.map((j) => j.chat_id))
+      ) as number[];
+      clearChatListeners();
+      clearChats();
+
+      addChatListeners(chat_ids);
     });
   }, [projects, currentProjectIndex]);
 
@@ -197,14 +208,4 @@ const AdminProject = (props: Props) => {
   }
 };
 
-class AdminProjectLoader extends React.Component {
-  render() {
-    return (
-      <AdminLayout>
-        <AdminProject />
-      </AdminLayout>
-    );
-  }
-}
-
-export default AdminProjectLoader;
+export default AdminProject;

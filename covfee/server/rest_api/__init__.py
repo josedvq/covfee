@@ -3,4 +3,5 @@ from .projects import *
 from .hits import *
 from .journeys import *
 from .tasks import *
+from .chat import *
 from .auth import *

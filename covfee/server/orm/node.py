@@ -2,16 +2,17 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, TYPE_CHECKING, Optional
 import enum
+from flask import current_app as app
 
 from sqlalchemy import Table, Column, ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from .base import Base
+from .chat import Chat
 from . import utils
 
 if TYPE_CHECKING:
     from .journey import JourneySpec, JourneyInstance
-    from .chat import Chat
 
 journeyspec_nodespec_table = Table(
     "journeyspec_nodespec",
@@ -64,6 +65,12 @@ class NodeSpec(Base):
     def __call__(self, journey: JourneySpec):
         journey.append(self)
         return journey
+
+    def to_dict(self):
+        spec_dict = super().to_dict()
+        settings = spec_dict["settings"]
+        del spec_dict["settings"]
+        return {**spec_dict, **settings}
 
 
 class NodeInstanceStatus(enum.Enum):
@@ -118,6 +125,7 @@ class NodeInstance(Base):
 
     def __init__(self):
         super().__init__()
+        self.chat = Chat()
         self.submitted = False
 
     def update_status(self):
@@ -139,6 +147,11 @@ class NodeInstance(Base):
         spec_dict = self.spec.to_dict()
 
         # merge spec and instance dicts
-        instance_dict = {**spec_dict, **instance_dict}
+        instance_dict = {
+            **spec_dict,
+            **instance_dict,
+            "chat_id": self.chat.id,
+            "url": f'{app.config["API_URL"]}/tasks/{self.id}',
+        }
 
         return instance_dict

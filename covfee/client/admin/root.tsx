@@ -6,12 +6,14 @@ import { HashRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { AppProvider } from "../app_provider";
 import AdminProject from "./project";
 import { LoginPage } from "./login";
+import { ChatPopup } from "../chat/chat";
+import { AdminLayout } from "./layout";
 
-class Root extends React.Component {
-  render() {
-    return (
-      <Router>
-        <AppProvider>
+export const Root: React.FC<void> = (props) => {
+  return (
+    <Router>
+      <AppProvider admin={true}>
+        <AdminLayout>
           <Routes>
             <Route
               path="/projects/:projectId"
@@ -20,10 +22,10 @@ class Root extends React.Component {
             <Route path="/login" element={<LoginPage />}></Route>
             <Route path="/" element={<AdminProject />}></Route>
           </Routes>
-        </AppProvider>
-      </Router>
-    );
-  }
-}
+        </AdminLayout>
+      </AppProvider>
+    </Router>
+  );
+};
 
 export default Root;

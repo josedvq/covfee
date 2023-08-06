@@ -1,7 +1,8 @@
 import * as React from "react";
 import styled from "styled-components";
 
-import { HitInstanceType, HitType, JourneyType, NodeType } from "types/hit";
+import { HitInstanceType, HitType, JourneyType } from "types/hit";
+import { NodeType } from "types/node";
 import { useHitInstance } from "../models/Hit";
 import { HitInstanceGraph } from "./hit_graph";
 import { ForceGraph, Node, Link } from "./force_graph";
@@ -11,10 +12,13 @@ import {
   LinkOutlined,
   NodeIndexOutlined,
   StopOutlined,
+  WechatOutlined,
 } from "@ant-design/icons";
 import { useJourney } from "../models/Journey";
 import { useNode } from "../models/Node";
 import { Button } from "antd";
+import AppContext from "antd/es/app/context";
+import { appContext } from "../app_context";
 
 interface Props {
   instance: HitInstanceType;
@@ -151,6 +155,7 @@ const SectionButton = styled.div`
 `;
 
 const JourneyRow = (props: JourneyType) => {
+  const { addChats } = React.useContext(appContext);
   const { journey, getUrl } = useJourney(props);
   return (
     <div>
@@ -162,17 +167,32 @@ const JourneyRow = (props: JourneyType) => {
         </span>
         <span>{journey.id.substring(0, 10)}</span> <LinkOutlined />
       </a>
+      <button
+        onClick={() => {
+          addChats([journey.chat_id]);
+        }}
+      >
+        <WechatOutlined />
+      </button>
     </div>
   );
 };
 
 const NodeRow = (props: NodeType) => {
+  const { addChats } = React.useContext(appContext);
   const { node, getUrl } = useNode(props);
   return (
     <div>
       <a href={getUrl()}>
         <LinkOutlined /> {node.id} - {node.status}
       </a>
+      <button
+        onClick={() => {
+          addChats([node.chat_id]);
+        }}
+      >
+        <WechatOutlined />
+      </button>
     </div>
   );
 };

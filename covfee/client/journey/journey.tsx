@@ -1,13 +1,8 @@
 import * as React from "react";
 import styled from "styled-components";
 import { generatePath } from "react-router";
-import {
-  ArrowRightOutlined,
-  LoadingOutlined,
-  PlusOutlined,
-} from "@ant-design/icons";
+import { ArrowRightOutlined, PlusOutlined } from "@ant-design/icons";
 import { Row, Col, Typography, Menu, Button, Modal, Progress } from "antd";
-import Title from "antd/lib/typography/Title";
 import "antd/dist/reset.css";
 import Collapsible from "react-collapsible";
 const { Text } = Typography;
@@ -27,8 +22,8 @@ import { FullJourney, fetchJourney, useJourney } from "../models/Journey";
 import { useState, useContext } from "react";
 import { AllPropsRequired } from "../types/utils";
 import { appContext } from "../app_context";
-import { useMatch, useParams } from "react-router-dom";
-import { useChats } from "models/Chat";
+import { useParams } from "react-router-dom";
+import { ChatPopup } from "../chat/chat";
 
 // url parameters
 interface MatchParams {
@@ -64,9 +59,9 @@ export const JourneyPage: React.FC<Props> = (props) => {
   };
 
   const routeParams = useParams();
-  const { socket } = useContext(appContext);
+  const { socket, chocket, chats, addChats } = useContext(appContext);
   const { journey, setJourney } = useJourney<FullJourney>(null);
-  const chats = useChats([]);
+
   const [currNode, setCurrNode] = useState(null);
 
   const [extraOpen, setExtraOpen] = useState(false);
@@ -76,7 +71,6 @@ export const JourneyPage: React.FC<Props> = (props) => {
   const journeyContext: JourneyContextType = {
     id: routeParams.journeyId,
     socket,
-    ...chats,
   };
 
   React.useEffect(() => {
@@ -93,6 +87,13 @@ export const JourneyPage: React.FC<Props> = (props) => {
       setLoadingJourney(false);
     });
   }, []);
+
+  React.useEffect(() => {
+    if (chocket && journey) {
+      chocket.emit("join_chat", { chatId: journey.chat_id });
+      addChats([journey.chat_id]);
+    }
+  }, [chocket, journey]);
 
   const changeActiveNode = (nodeIndex: number) => {
     // instructionsFn = null
@@ -241,111 +242,114 @@ export const JourneyPage: React.FC<Props> = (props) => {
   const hitExtra = getHitExtra();
 
   return (
-    <JourneyContext.Provider value={journeyContext}>
-      {/* <ButtonEventManagerContext> */}
-      <Menu
-        onClick={handleMenuClick}
-        mode="horizontal"
-        theme="dark"
-        style={{ position: "sticky", top: 0, width: "100%", zIndex: 1000 }}
-      >
-        <Menu.Item key="logo" disabled>
-          <CovfeeMenuItem />
-        </Menu.Item>
-        <Menu.Item key="task" disabled>
-          <Text strong style={{ color: "white" }}>
-            {nodeProps.name}
-          </Text>
-        </Menu.Item>
-        {hitExtra && (
-          <Menu.Item key="extra" icon={<PlusOutlined />}>
-            Extra
-          </Menu.Item>
-        )}
-      </Menu>
-      <SidebarContainer height={window.innerHeight}>
-        <Sidebar
-          nodes={journey.nodes}
-          currNode={currNode}
-          onChangeActiveTask={changeActiveNode}
+    <>
+      <JourneyContext.Provider value={journeyContext}>
+        {/* <ButtonEventManagerContext> */}
+        <Menu
+          onClick={handleMenuClick}
+          mode="horizontal"
+          theme="dark"
+          style={{ position: "sticky", top: 0, width: "100%", zIndex: 1000 }}
         >
-          {journey.submitted && (
-            <Button
-              type="primary"
-              style={{
-                width: "100%",
-                backgroundColor: "#5b8c00",
-                borderColor: "#5b8c00",
-              }}
-              onClick={showCompletionInfo}
-            >
-              Show completion code
-            </Button>
+          <Menu.Item key="logo" disabled>
+            <CovfeeMenuItem />
+          </Menu.Item>
+          <Menu.Item key="task" disabled>
+            <Text strong style={{ color: "white" }}>
+              {nodeProps.name}
+            </Text>
+          </Menu.Item>
+          {hitExtra && (
+            <Menu.Item key="extra" icon={<PlusOutlined />}>
+              Extra
+            </Menu.Item>
           )}
-        </Sidebar>
-      </SidebarContainer>
+        </Menu>
+        <SidebarContainer height={window.innerHeight}>
+          <Sidebar
+            nodes={journey.nodes}
+            currNode={currNode}
+            onChangeActiveTask={changeActiveNode}
+          >
+            {journey.submitted && (
+              <Button
+                type="primary"
+                style={{
+                  width: "100%",
+                  backgroundColor: "#5b8c00",
+                  borderColor: "#5b8c00",
+                }}
+                onClick={showCompletionInfo}
+              >
+                Show completion code
+              </Button>
+            )}
+          </Sidebar>
+        </SidebarContainer>
 
-      <ContentContainer height={window.innerHeight}>
-        {hitExtra && (
-          <Collapsible open={extraOpen}>
-            <Row>
-              <Col span={24}>{hitExtra}</Col>
-            </Row>
-          </Collapsible>
-        )}
-        <Row style={{ height: "100%" }}>
-          {journey.interface.showProgress && (
-            <div style={{ margin: "5px 15px" }}>
-              {(() => {
-                const num_valid = journey.nodes.filter((t) => t.valid).length;
-                const num_steps = journey.nodes.length;
-                return (
-                  <Progress
-                    percent={(100 * num_valid) / num_steps}
-                    format={(p) => {
-                      return num_valid + "/" + num_steps;
-                    }}
-                    trailColor={"#c0c0c0"}
-                  />
-                );
-              })()}
-            </div>
+        <ContentContainer height={window.innerHeight}>
+          {hitExtra && (
+            <Collapsible open={extraOpen}>
+              <Row>
+                <Col span={24}>{hitExtra}</Col>
+              </Row>
+            </Collapsible>
           )}
-          <NodeLoader
-            key={currKey}
-            node={nodeProps}
-            disabled={nodeProps.submitted}
-            previewMode={props.previewMode}
-            // render props
-            renderSubmitButton={renderTaskSubmitButton}
-            renderNextButton={renderTaskNextButton}
-            // callbacks
-            onClickNext={gotoNextNode}
-            onSubmit={handleNodeSubmitted}
-          />
-        </Row>
-      </ContentContainer>
-      {/* </ButtonEventManagerContext> */}
-    </JourneyContext.Provider>
+          <Row style={{ height: "100%" }}>
+            {journey.interface.showProgress && (
+              <div style={{ margin: "5px 15px" }}>
+                {(() => {
+                  const num_valid = journey.nodes.filter((t) => t.valid).length;
+                  const num_steps = journey.nodes.length;
+                  return (
+                    <Progress
+                      percent={(100 * num_valid) / num_steps}
+                      format={(p) => {
+                        return num_valid + "/" + num_steps;
+                      }}
+                      trailColor={"#c0c0c0"}
+                    />
+                  );
+                })()}
+              </div>
+            )}
+            <NodeLoader
+              key={currKey}
+              node={nodeProps}
+              disabled={nodeProps.submitted}
+              previewMode={props.previewMode}
+              // render props
+              renderSubmitButton={renderTaskSubmitButton}
+              renderNextButton={renderTaskNextButton}
+              // callbacks
+              onClickNext={gotoNextNode}
+              onSubmit={handleNodeSubmitted}
+            />
+          </Row>
+        </ContentContainer>
+        {/* </ButtonEventManagerContext> */}
+      </JourneyContext.Provider>
+      <ChatPopup chats={chats} />
+    </>
   );
 };
 const SidebarContainer = styled.div<any>`
-    position: sticky;
-    display: inline-block;
-    vertical-align: top;
-    top:46px;
-    height: ${(props) => Math.floor(window.innerHeight) - 46 + "px;"}
-	width: 25%;
-	overflow: auto;
+  position: sticky;
+  display: inline-block;
+  vertical-align: top;
+  top: 46px;
+  height: ${(props) => Math.floor(window.innerHeight) - 46 + "px;"};
+  width: 25%;
+  overflow: auto;
 `;
 
 const ContentContainer = styled.div<any>`
-    position: fixed;
-    top:46px;
-    right: 0;
-    display: inline-block;
-    vertical-align: top;
-    height: ${(props) => Math.floor(window.innerHeight) - 46 + "px;"}
-    width: calc(100% - 25%);
-    overflow: auto;
+  position: fixed;
+  top: 46px;
+  right: 0;
+  display: inline-block;
+  vertical-align: top;
+  height: ${(props) => Math.floor(window.innerHeight) - 46 + "px;"};
+  width: calc(100% - 25%);
+  overflow: auto;
 `;
