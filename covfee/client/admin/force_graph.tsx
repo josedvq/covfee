@@ -6,6 +6,8 @@ import { NodesVisitor } from "typescript";
 export type GraphPath = number[];
 export type Node = {
   id: number;
+  name: string;
+  color: string;
 };
 
 export type Link = {
@@ -38,6 +40,21 @@ interface Props {
   height?: number;
 }
 
+const getDimensions = (nodes: SimulationNode[], nodeRadius: number) => {
+  let minX = Infinity,
+    maxX = -Infinity;
+  let minY = Infinity,
+    maxY = -Infinity;
+  for (const node of nodes) {
+    minX = Math.min(minX, node.x);
+    maxX = Math.max(maxX, node.x);
+    minY = Math.min(minY, node.y);
+    maxY = Math.max(maxY, node.y);
+  }
+
+  return [maxX - minX + 2 * nodeRadius, maxY - minY + 2 * (nodeRadius + 50)];
+};
+
 const createLinks = (paths: GraphPath[]) => {
   const links: Link[] = [];
   paths.forEach((paths, index) => {
@@ -61,10 +78,8 @@ const createLinks = (paths: GraphPath[]) => {
 export const ForceGraph = ({
   nodes,
   paths,
-  nodeId = (d) => d.id, // given d in nodes, returns a unique identifier (string)
   nodeGroup, // given d in nodes, returns an (ordinal) value for color
   linkGroup,
-  nodeTitle, // given d in nodes, a title string
   nodeFill = "currentColor", // node stroke fill (if not using a group color encoding)
   nodeStroke = "#fff", // node stroke color
   nodeStrokeWidth = 1.5, // node stroke width, in pixels
@@ -73,11 +88,24 @@ export const ForceGraph = ({
   nodeStrength = -500,
   linkStrokeWidth = 1.5, // given d in links, returns a stroke width in pixels
   linkStrength = 0.25,
-  colors = d3.schemeTableau10, // an array of color strings, for the node groups
-  width = 640, // outer width, in pixels
-  height = 400, // outer height, in pixels
 }: Props) => {
   const svgRef = React.useRef<SVGSVGElement>();
+
+  const nodesRefs = React.useRef(null);
+  const linksRefs = React.useRef(null);
+
+  const updateNodes = () => {
+    nodesRefs.current
+      .attr("fill", ({ index }) => nodes[index].color)
+      .append("title")
+      .text(({ index }) => nodes[index].name);
+  };
+
+  React.useEffect(() => {
+    if (nodesRefs.current) {
+      updateNodes();
+    }
+  }, [nodes]);
 
   React.useEffect(() => {
     // Compute values.
@@ -92,23 +120,18 @@ export const ForceGraph = ({
       `longestPathLength=${longestPathLength}, nodeRadius=${nodeRadius}, linkDistance=${linkDistance}`
     );
 
-    const N = d3.map(nodes, nodeId);
+    // const N = d3.map(nodes, nodeId);
     const LS = d3.map(links, ({ source }) => source);
     const LT = d3.map(links, ({ target }) => target);
-    if (nodeTitle === undefined) nodeTitle = (_, i) => N[i];
-    const T = nodeTitle == null ? null : d3.map(nodes, nodeTitle);
     const G = nodeGroup == null ? null : d3.map(nodes, nodeGroup);
     const L = linkGroup == null ? null : d3.map(links, linkGroup);
 
-    const W =
-      typeof linkStrokeWidth !== "function"
-        ? null
-        : d3.map(links, linkStrokeWidth);
-    // const L = typeof linkStroke !== "function" ? null : d3.map(links, linkStroke);
-
     // Replace the input nodes and links with mutable objects for the simulation.
-    const _nodes: SimulationNode[] = d3.map(nodes, (_, i) => ({ id: N[i] }));
-    const _links = d3.map(links, (_, i) => ({ source: LS[i], target: LT[i] }));
+    let _nodes: SimulationNode[] = d3.map(nodes, (n) => ({ id: n.id }));
+    // add source and sync to simulation
+    _nodes.push({ id: -1 }); // source
+    _nodes.push({ id: -2 }); // sink
+    let _links = d3.map(links, (_, i) => ({ source: LS[i], target: LT[i] }));
 
     // Compute default domains.
     let nodeGroups, linkGroups;
@@ -119,16 +142,10 @@ export const ForceGraph = ({
       linkGroups = d3.sort(L);
     }
 
-    // Construct the scales.
-    const nodeColor =
-      nodeGroup == null ? null : d3.scaleOrdinal(nodeGroups, colors);
-    const linkColor =
-      nodeGroup == null ? null : d3.scaleOrdinal(nodeGroups, colors);
-
     // Construct the forces.
     // const forceY = d3.forceY();
     const forceNode = d3.forceManyBody();
-    const forceLink = d3.forceLink(_links).id(({ index: i }) => N[i]);
+    const forceLink = d3.forceLink(_links).id(({ index: i }) => _nodes[i].id);
     forceLink.distance((_) => linkDistance);
     if (nodeStrength !== undefined) forceNode.strength(nodeStrength);
     if (linkStrength !== undefined) forceLink.strength(2);
@@ -153,28 +170,25 @@ export const ForceGraph = ({
         }
       })
       // .force("center", d3.forceCenter())
-      .on("tick", ticked)
+      .on("tick", () => {
+        linksRefs.current
+          .attr("x1", (d) => d.source.x)
+          .attr("y1", (d) => d.source.y)
+          .attr("x2", (d) => d.target.x)
+          .attr("y2", (d) => d.target.y);
+
+        nodesRefs.current.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+      })
       .tick(100);
 
-    const getDimensions = (nodes: SimulationNode[]) => {
-      let minX = Infinity,
-        maxX = -Infinity;
-      let minY = Infinity,
-        maxY = -Infinity;
-      for (const node of nodes) {
-        minX = Math.min(minX, node.x);
-        maxX = Math.max(maxX, node.x);
-        minY = Math.min(minY, node.y);
-        maxY = Math.max(maxY, node.y);
-      }
+    console.log(_nodes);
+    // remove the source and sync
+    _nodes = _nodes.filter((n) => n.id != -1 && n.id != -2);
+    console.log(_links);
+    _links = _links.filter((l) => l.source.id != -1 && l.target.id != -2);
+    console.log(_links);
 
-      return [
-        maxX - minX + 2 * nodeRadius,
-        maxY - minY + 2 * (nodeRadius + 50),
-      ];
-    };
-
-    const [width, height] = getDimensions(_nodes);
+    const [width, height] = getDimensions(_nodes, nodeRadius);
     const svg = d3
       .select(svgRef.current)
       .attr("width", width)
@@ -185,7 +199,7 @@ export const ForceGraph = ({
         "width: 500px; max-width: 100%; height: auto; height: intrinsic;"
       );
 
-    const link = svg
+    linksRefs.current = svg
       .append("g")
       .attr("stroke", "#000")
       .attr("stroke-opacity", 0.5)
@@ -198,7 +212,7 @@ export const ForceGraph = ({
       .data(_links)
       .join("line");
 
-    const node = svg
+    nodesRefs.current = svg
       .append("g")
       .attr("fill", nodeFill)
       .attr("stroke", nodeStroke)
@@ -207,54 +221,9 @@ export const ForceGraph = ({
       .selectAll("circle")
       .data(_nodes)
       .join("circle")
-      .attr("r", nodeRadius)
-      .call(drag(simulation));
+      .attr("r", nodeRadius);
 
-    if (W) link.attr("stroke-width", ({ index: i }) => W[i]);
-    console.log(L);
-    if (L)
-      link.attr("stroke", ({ index: i }) => {
-        console.log(L[i]);
-        return linkColor(L[i]);
-      });
-    if (G) node.attr("fill", ({ index: i }) => nodeColor(G[i]));
-    if (T) node.append("title").text(({ index: i }) => T[i]);
-
-    function ticked() {
-      console.log("tick");
-      link
-        .attr("x1", (d) => d.source.x)
-        .attr("y1", (d) => d.source.y)
-        .attr("x2", (d) => d.target.x)
-        .attr("y2", (d) => d.target.y);
-
-      node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
-    }
-
-    function drag(simulation: Simulation<SimulationNode, any>) {
-      function dragstarted(event) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        event.subject.fx = event.subject.x;
-        event.subject.fy = event.subject.y;
-      }
-
-      function dragged(event) {
-        event.subject.fx = event.x;
-        event.subject.fy = event.y;
-      }
-
-      function dragended(event) {
-        if (!event.active) simulation.alphaTarget(0);
-        event.subject.fx = null;
-        event.subject.fy = null;
-      }
-
-      return d3
-        .drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended);
-    }
+    updateNodes();
   }, []);
 
   return <svg ref={svgRef} style={{ width: "400px", height: "intrinsic" }} />;

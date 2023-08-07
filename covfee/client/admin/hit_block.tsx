@@ -81,39 +81,35 @@ export const HitBlock = (props: Props) => {
 
       {!collapsed && (
         <div style={{ display: "flex", flexDirection: "row" }}>
-          <div style={{ width: "60%" }}>
-            <SectionButton onClick={() => setShowNodes(!showNodes)}>
-              Nodes
-            </SectionButton>
+          <div style={{ display: "flex", alignItems: "center", width: "60%" }}>
+            <NodesList>
+              <h2>Nodes</h2>
 
-            {showNodes && (
-              <div>
+              <ul>
                 {hitInstance.nodes.map((node, index) => {
                   return <NodeRow key={index} {...node}></NodeRow>;
                 })}
-              </div>
-            )}
+              </ul>
+            </NodesList>
 
-            <Button onClick={() => setShowGraph(!showGraph)}>Graph</Button>
+            {/* <Button onClick={() => setShowGraph(!showGraph)}>Graph</Button> */}
             {showGraph && (
-              <div>
+              <GraphContainer>
                 <HitInstanceGraph instance={props.instance}></HitInstanceGraph>
-              </div>
+              </GraphContainer>
             )}
           </div>
 
           <div style={{ width: "40%" }}>
-            <SectionButton onClick={() => setShowJourneys(!showJourneys)}>
-              Journeys
-            </SectionButton>
+            <JourneysList>
+              <h2>Journeys</h2>
 
-            {showJourneys && (
-              <div>
+              <ul>
                 {hitInstance.journeys.map((journey, index) => {
                   return <JourneyRow key={index} {...journey}></JourneyRow>;
                 })}
-              </div>
-            )}
+              </ul>
+            </JourneysList>
           </div>
         </div>
       )}
@@ -147,12 +143,55 @@ const Header = styled.div`
 `;
 
 const ShowGraphButton = styled.div``;
+const GraphContainer = styled.div`
+  flex: 1 0 auto;
+  max-width: 60%;
+`;
+const NodesList = styled.div`
+  max-width: 50%;
+  flex: 1 0 auto;
+  padding: 3px;
 
-const SectionButton = styled.div`
-  :hover {
-    cursor: pointer;
+  > ul {
+    list-style-type: none;
+    padding-left: 0;
+  }
+
+  > ul > li {
+    display: block;
+    margin: 0;
+    padding: 5px 0;
+    display: flex;
+    flex-direction: row;
+
+    > * {
+      flex: 1 0 auto;
+    }
+
+    > a {
+      width: 150px;
+      max-width: 200px;
+    }
+
+    > .button {
+      flex: 0 0 auto;
+      width: 30px;
+    }
+
+    :hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+  }
+
+  > h2 {
+    font-size: 1.2em;
+    :hover {
+      cursor: pointer;
+    }
   }
 `;
+
+const JourneysList = styled.div``;
 
 const JourneyRow = (props: JourneyType) => {
   const { addChats } = React.useContext(appContext);
@@ -167,13 +206,15 @@ const JourneyRow = (props: JourneyType) => {
         </span>
         <span>{journey.id.substring(0, 10)}</span> <LinkOutlined />
       </a>
-      <button
-        onClick={() => {
-          addChats([journey.chat_id]);
-        }}
-      >
-        <WechatOutlined />
-      </button>
+      <span className="button">
+        <button
+          onClick={() => {
+            addChats([journey.chat_id]);
+          }}
+        >
+          <WechatOutlined />
+        </button>
+      </span>
     </div>
   );
 };
@@ -182,17 +223,19 @@ const NodeRow = (props: NodeType) => {
   const { addChats } = React.useContext(appContext);
   const { node, getUrl } = useNode(props);
   return (
-    <div>
+    <li>
       <a href={getUrl()}>
-        <LinkOutlined /> {node.id} - {node.status}
+        <LinkOutlined /> {node.name}[{node.id}] - {node.status}
       </a>
-      <button
-        onClick={() => {
-          addChats([node.chat_id]);
-        }}
-      >
-        <WechatOutlined />
-      </button>
-    </div>
+      <span className="button">
+        <button
+          onClick={() => {
+            addChats([node.chat_id]);
+          }}
+        >
+          <WechatOutlined />
+        </button>
+      </span>
+    </li>
   );
 };

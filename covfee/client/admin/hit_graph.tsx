@@ -1,22 +1,36 @@
 import * as React from "react";
 
-import { HitInstanceType, HitType, JourneyType, NodeType } from "types/hit";
+import { HitInstanceType, HitType, JourneyType } from "types/hit";
+import { NodeType } from "types/node";
 import { useHitInstance } from "../models/Hit";
 import { ForceGraph, Node, Link } from "./force_graph";
+import { NodeStatus } from "../types/node";
 
 interface Props {
   instance: HitInstanceType;
 }
+
+const statusToColor: Record<NodeStatus, string> = {
+  INIT: "red",
+  WAITING: "yellow",
+  PAUSED: "yellow",
+  RUNNING: "blue",
+  FINISHED: "green",
+};
 
 export const HitInstanceGraph = (props: Props) => {
   const svgRef = React.useRef();
 
   const createNodes = (nodes: NodeType[]) => {
     const n = props.instance.nodes.map((n) => {
-      return { id: n.id, group: 1 };
+      return {
+        id: n.id,
+        name: n.name,
+        group: 1,
+        color: statusToColor[n.status],
+      };
     });
-    n.push({ id: -1, group: -1 }); // source
-    n.push({ id: -2, group: -2 }); // sink
+
     return n;
   };
 
