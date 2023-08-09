@@ -1,8 +1,9 @@
 import * as React from "react";
 import { NodeStatus, NodeType, TaskResponseType } from "../types/node";
 import { fetcher, throwBadResponse } from "../utils";
+import { MainSocket } from "../app_context";
 
-export function useNode(data: NodeType) {
+export function useNode(data: NodeType, socket: MainSocket = null) {
   const [node, setNode] = React.useState<NodeType>(data);
   const [response, setResponse] = React.useState<TaskResponseType>(null);
 
@@ -16,6 +17,22 @@ export function useNode(data: NodeType) {
       status: status,
     });
   };
+
+  React.useEffect(() => {
+    if (socket) {
+      socket.on("status", (data) => {
+        console.log(["status", data]);
+        setNode({
+          ...node,
+          status: data.new,
+          curr_journeys: data.curr_journeys,
+        });
+      });
+    }
+    return () => {
+      socket.removeAllListeners("status");
+    };
+  }, [socket]);
 
   const fetchResponse = () => {
     const url = node.url + "/response?" + new URLSearchParams({});

@@ -152,6 +152,8 @@ class NodeInstance(Base):
             **instance_dict,
             "chat_id": self.chat.id,
             "url": f'{app.config["API_URL"]}/tasks/{self.id}',
+            "num_journeys": len(self.journeys),
+            "curr_journeys": [j.id.hex() for j in self.curr_journeys]
         }
 
         return instance_dict

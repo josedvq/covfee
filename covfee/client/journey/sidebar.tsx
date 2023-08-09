@@ -84,8 +84,6 @@ export const Sidebar: React.FC<Props> = (props) => {
     );
   }, [props.nodes]);
 
-  console.log(props);
-
   return (
     <SidebarContainer>
       <SidebarHead>{props.children}</SidebarHead>

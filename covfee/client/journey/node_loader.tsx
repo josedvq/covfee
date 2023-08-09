@@ -75,7 +75,7 @@ export const NodeLoader = (props: Props) => {
     setStatus: setNodeStatus,
     fetchResponse,
     submitResponse,
-  } = useNode(args.node);
+  } = useNode(args.node, socket);
 
   const nodeElementRef = React.useRef(null);
   const nodeInstructionsRef = React.useRef(null);
@@ -101,13 +101,6 @@ export const NodeLoader = (props: Props) => {
     fetchResponse().then((_) => {
       setIsLoading(false);
     });
-
-    if (socket) {
-      socket.on("status", (data) => {
-        console.log("Received data:", data);
-        setNodeStatus(data.new);
-      });
-    }
   }, [socket]);
 
   React.useEffect(() => {
@@ -119,16 +112,6 @@ export const NodeLoader = (props: Props) => {
         useSharedState,
       });
     }
-    return () => {
-      if (response && socket) {
-        socket.emit("leave", {
-          journeyId,
-          nodeId: node.id,
-          responseId: response.id,
-          useSharedState,
-        });
-      }
-    };
   }, [response, socket]);
 
   React.useEffect(() => {
@@ -242,24 +225,32 @@ export const NodeLoader = (props: Props) => {
 
   if (node.status == "WAITING") {
     return (
-      <div>
+      <NodeLoaderMessage>
         <h1>Waiting for task start</h1>
         <Spin />
-      </div>
+        <p>
+          {node.curr_journeys.length} / {node.num_journeys} subjects present
+        </p>
+      </NodeLoaderMessage>
     );
   }
 
   if (node.status == "FINISHED") {
     return (
-      <div>
-        <h1>Nothing to be done here!</h1>
-      </div>
+      <NodeLoaderMessage>
+        <h1>Task is finished</h1>
+        <p>Nothing to be done here!</p>
+      </NodeLoaderMessage>
     );
   }
 
   if (node.status == "RUNNING") {
     if (node.type != "TaskInstance") {
-      return <h1>Unimplemented</h1>;
+      return (
+        <NodeLoaderMessage>
+          <h1>Unimplemented</h1>
+        </NodeLoaderMessage>
+      );
     }
 
     return (
@@ -295,6 +286,36 @@ export const NodeLoader = (props: Props) => {
     );
   }
 };
+
+interface NodeLoaderMessageProps {
+  children: React.ReactNode;
+}
+export const NodeLoaderMessage = (props: NodeLoaderMessageProps) => {
+  const args: AllPropsRequired<NodeLoaderMessageProps> = { ...props };
+
+  return (
+    <MessageContainer>
+      <div>{args.children}</div>
+    </MessageContainer>
+  );
+};
+
+const MessageContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+
+  > div {
+    width: 70%;
+    padding: 5%;
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
+    text-align: center;
+  }
+`;
 
 const InstructionsPopoverContent = styled.div`
   width: calc(30vw);

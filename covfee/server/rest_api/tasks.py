@@ -47,12 +47,12 @@ def make_response(kid):
     return jsonify(response.to_dict())
 
 # record a response to a task
-@api.route('/responses/<rid>/submit', methods=['POST'])
-def response_submit(rid):
-    response = app.session.query(TaskResponse).get(int(rid))
-    if response is None:
-        return jsonify({'msg': 'invalid response'}), 400
+# @api.route('/responses/<rid>/submit', methods=['POST'])
+# def response_submit(rid):
+#     response = app.session.query(TaskResponse).get(int(rid))
+#     if response is None:
+#         return jsonify({'msg': 'invalid response'}), 400
 
-    res = response.submit(request.json)    
-    app.session.commit()
-    return jsonify(res)
+#     res = response.submit(request.json)    
+#     app.session.commit()
+#     return jsonify(res)

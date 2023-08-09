@@ -14,25 +14,23 @@ const { Header, Footer, Content, Sider } = Layout;
 const Root = () => {
   return (
     <AppProvider>
-      <React.StrictMode>
-        <Router>
+      <Router>
+        <Layout>
           <Layout>
-            <Layout>
-              <Routes>
-                <Route
-                  path="/journeys/:journeyId/:nodeId?"
-                  element={<JourneyPage />}
-                ></Route>
-              </Routes>
-            </Layout>
-            {/* <Footer>
+            <Routes>
+              <Route
+                path="/journeys/:journeyId/:nodeId?"
+                element={<JourneyPage />}
+              ></Route>
+            </Routes>
+          </Layout>
+          {/* <Footer>
                         <Text style={{float: 'right'}}>
                             Interface created with <a href="https://github.com/josedvq/covfee">covfee</a>
                         </Text>
                     </Footer> */}
-          </Layout>
-        </Router>
-      </React.StrictMode>
+        </Layout>
+      </Router>
     </AppProvider>
   );
 };

@@ -50,7 +50,8 @@ export const AppProvider: React.FC<Props> = (props) => {
 
   React.useEffect(() => {
     if (socket == null) {
-      setSocket(io());
+      if (args.admin) setSocket(io("/admin"));
+      else setSocket(io());
     }
     if (chocket == null) {
       if (args.admin) setChocket(io("/admin_chat"));

@@ -12,7 +12,11 @@ import {
 } from "../server/socketio/types";
 
 interface ServerToClientEvents {
-  status: (arg0: { prev: NodeStatus; new: NodeStatus }) => void;
+  status: (arg0: {
+    prev: NodeStatus;
+    new: NodeStatus;
+    curr_journeys: string[];
+  }) => void;
   action: (arg0: ActionResponse) => void;
   state: (arg0: StateResponse) => void;
 }

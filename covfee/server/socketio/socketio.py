@@ -50,50 +50,102 @@ def get_task_object(responseId: int):
 
 @socketio.on("connect")
 def on_connect(data):
-    print("CONNECT")
+    pass
 
+
+# @socketio.on("leave")
+# def on_leave(data):
+#     print(session)
+#     responseId = str(data["responseId"])
+#     if responseId != session["responseId"]:
+#         return send(
+#             f'data["responseId"] does not match session\'s responseId variable. {responseId} != {session["responseId"]}'
+#         )
+
+#     use_shared_state = data["useSharedState"]
+#     if use_shared_state:
+#         leave_store(responseId)
+
+#     # leave the room
+#     session["responseId"] = None
+#     leave_room(responseId)
+#     # if the room is now empty
+#     # if res["numConnections"] == 0:
+#     #     get_task_object(int(responseId)).on_last_leave()
+
+def make_node_status_payload(prev_status:NodeInstanceStatus ,node: NodeInstance):
+    return {
+        "id": node.id,
+        "prev": prev_status, 
+        "new": node.status, 
+        'curr_journeys': [j.id.hex() for j in node.curr_journeys]
+    }
 
 @socketio.on("join")
 def on_join(data):
-    journeyId = str(data["journeyId"])
-    journey = get_journey(journeyId)
+    curr_journey_id = str(data["journeyId"])
+    curr_journey = get_journey(curr_journey_id)
 
-    nodeId = str(data["nodeId"])
-    node = get_node(nodeId)
+    curr_node_id = int(data["nodeId"])
+    curr_node = get_node(curr_node_id)
 
-    responseId = str(data["responseId"])
-    response = get_response(responseId)
+    curr_response_id = int(data["responseId"])
+    response = get_response(curr_response_id)
 
     use_shared_state = data["useSharedState"]
 
-    if journey is None or node is None:
-        return send(f"Unable to join, journeyId={journeyId}, nodeId={nodeId}")
+    if curr_journey is None or curr_node is None:
+        return send(f"Unable to join, journeyId={curr_journey_id}, nodeId={curr_node_id}")
 
-    if node not in journey.nodes:
+    if curr_node not in curr_journey.nodes:
         return send(
-            f"Unable to join nodeId={nodeId} is not in journey journeyId={journeyId}"
+            f"Unable to join nodeId={curr_node_id} is not in journey journeyId={curr_journey_id}"
         )
+    
+    if "responseId" in session:
+        # user comes from another node
+        prev_response_id = str(session["responseId"])
+        leave_room(prev_response_id)
+        session["responseId"] = None # just in case
 
-    join_room(responseId)
-    # join_room(node.chat.id, namespace="/chat")
-    prev_status = node.status
+        prev_node_id = str(session["nodeId"])
+        prev_node = get_node(prev_node_id)
+        prev_node_prev_status = prev_node.status
+
+        if 'useSharedState' in session and session['useSharedState']:
+            leave_store(prev_response_id)
+    else:
+        prev_response_id = None
+        prev_node = None
+        prev_node_prev_status= None
+        
+
+    join_room(curr_response_id)
+    curr_node_prev_status = curr_node.status
+    
+
     # update the journey and node status
-    journey.set_curr_node(node)
+    curr_journey.set_curr_node(curr_node)
     app.session.commit()
-    new_status = node.status
 
-    # emit event if status changed
-    if prev_status != new_status:
-        payload = {"prev": prev_status, "new": new_status}
-        emit("status", payload, to=responseId)
+    # update previous node status
+    if prev_node is not None:
+        payload = make_node_status_payload(prev_node_prev_status, prev_node)
+        emit("status", payload, to=prev_response_id)
+        emit("status", payload, namespace="/admin", broadcast=True)
 
-    print(f"joined room {responseId}")
-    session["journeyId"] = journeyId
-    session["responseId"] = responseId
-    session.modified = True
+    # update current node status
+    payload = make_node_status_payload(curr_node_prev_status, curr_node)
+    emit("status", payload, to=curr_response_id)
+    emit("status", payload, namespace="/admin", broadcast=True)
+
+    session["journeyId"] = curr_journey_id
+    session['nodeId'] = curr_node_id
+    session["responseId"] = curr_response_id
+    session['useSharedState'] = use_shared_state
 
     if use_shared_state:
-        res = store.join(responseId, response.task.spec.spec["type"], response.state)
+        res = store.join(curr_response_id, response.task.spec.spec["type"], response.state)
         if res["success"]:
             emit("state", res)
 
@@ -102,7 +154,7 @@ def on_join(data):
             #     get_task_object(int(room)).on_first_join()
 
         else:
-            send(f"Unable to join room id={responseId}")
+            send(f"Unable to join room id={curr_response_id}")
 
 
 @socketio.on("action")
@@ -131,50 +183,26 @@ def leave_store(responseId):
         app.session.commit()
 
 
-def leave_journey(journeyId):
-    print(f"Leaving journey {journeyId}")
-    journey = get_journey(journeyId)
-
-    if journey is None:
-        return ValueError(f"Unknown journeyID {journeyId}")
-
-    journey.set_curr_node(None)
-    app.session.commit()
-    session["journeyId"] = None
-
-
-@socketio.on("leave")
-def on_leave(data):
-    print(session)
-    responseId = str(data["responseId"])
-    if responseId != session["responseId"]:
-        return send(
-            f'data["responseId"] does not match session\'s responseId variable. {responseId} != {session["responseId"]}'
-        )
-
-    use_shared_state = data["useSharedState"]
-    if use_shared_state:
-        leave_store(responseId)
-
-    # leave the room
-    session["responseId"] = None
-    leave_room(responseId)
-    # if the room is now empty
-    # if res["numConnections"] == 0:
-    #     get_task_object(int(responseId)).on_last_leave()
-
-
 @socketio.on("disconnect")
 def disconnect():
-    print("disconnect")
-    if "responseId" in session:
-        responseId = session["responseId"]
-        leave_store(responseId)
+    if 'responseId' not in session or 'journeyId' not in session:
+        return
+    
+    journey_id = session["journeyId"]
+    response_id = int(session['responseId'])
 
-    if "journeyId" in session:
-        journeyId = session["journeyId"]
-        leave_journey(journeyId)
+    if 'useSharedState' in session and session['useSharedState']:
+        leave_store(response_id)
 
+    journey = get_journey(journey_id)
+    node = journey.curr_node
+    prev_status = node.status
+    journey.set_curr_node(None)
+    app.session.commit()
+
+    payload = make_node_status_payload(prev_status, node)
+    emit("status", payload, to=response_id)
+    emit("status", payload, namespace="/admin", broadcast=True)
 
 ### CHAT ###
 

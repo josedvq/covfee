@@ -25,6 +25,8 @@ export interface NodeType extends AllPropsRequired<BaseNodeSpec> {
    * Status of the node
    */
   status: NodeStatus;
+  num_journeys: number;
+  curr_journeys: string[];
 }
 
 export interface TaskResponseType {
