@@ -12,6 +12,6 @@ export interface JourneyType extends Omit<JourneySpec, "nodes"> {
   extra: MarkdownContentSpec;
   submitted: boolean;
   completionInfo?: any;
-  online: boolean;
+  num_connections: number;
   curr_node_id: number;
 }

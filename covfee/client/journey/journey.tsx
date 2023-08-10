@@ -24,6 +24,7 @@ import { AllPropsRequired } from "../types/utils";
 import { appContext } from "../app_context";
 import { useParams } from "react-router-dom";
 import { ChatPopup } from "../chat/chat";
+import { AppProvider } from "../app_provider";
 
 // url parameters
 interface MatchParams {
@@ -242,7 +243,7 @@ export const JourneyPage: React.FC<Props> = (props) => {
   const hitExtra = getHitExtra();
 
   return (
-    <>
+    <AppProvider>
       <JourneyContext.Provider value={journeyContext}>
         {/* <ButtonEventManagerContext> */}
         <Menu
@@ -330,7 +331,7 @@ export const JourneyPage: React.FC<Props> = (props) => {
         {/* </ButtonEventManagerContext> */}
       </JourneyContext.Provider>
       <ChatPopup chats={chats} />
-    </>
+    </AppProvider>
   );
 };
 const SidebarContainer = styled.div<any>`

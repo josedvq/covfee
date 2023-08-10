@@ -10,51 +10,55 @@ type JourneyType = FullJourney | ReducedJourney;
 
 export type { JourneyType, FullJourney, ReducedJourney };
 
-export const useJourney = <T extends JourneyType>(data: T) => {
-  const [journey, setJourney] = React.useState<T>(data);
-
-  const getUrl = () => {
-    return Constants.app_url + "/journeys/" + journey.id;
-  };
-
+export const useJourneyFns = <T extends JourneyType>(journey: T) => {
   const getApiUrl = () => {
     const url = Constants.api_url + "/journeys/" + journey.id;
     return url;
   };
+  return {
+    getApiUrl,
+    getUrl: () => {
+      return Constants.app_url + "/journeys/" + journey.id;
+    },
 
-  const getDownloadHandler = (csv: boolean) => {
-    const request_url = getApiUrl() + "/download" + (csv ? "?csv=1" : "");
-    return () => {
-      fetcher(request_url)
-        .then(async (response: any) => {
-          if (!response.ok) {
-            const data = await response.json();
-            if (data.hasOwnProperty("msg")) {
-              throw Error(data.msg);
+    getDownloadHandler: (csv: boolean) => {
+      const request_url = getApiUrl() + "/download" + (csv ? "?csv=1" : "");
+      return () => {
+        fetcher(request_url)
+          .then(async (response: any) => {
+            if (!response.ok) {
+              const data = await response.json();
+              if (data.hasOwnProperty("msg")) {
+                throw Error(data.msg);
+              }
+              throw Error(response.statusText);
             }
-            throw Error(response.statusText);
-          }
-          return response;
-        })
-        .then(async (response: any) => {
-          if (response.status == 204) {
-            return myinfo("Nothing to download.");
-          }
-          const blob = await response.blob();
-          download(blob);
-        })
-        .catch((error) => {
-          myerror("Error fetching task response.", error);
-        });
-    };
+            return response;
+          })
+          .then(async (response: any) => {
+            if (response.status == 204) {
+              return myinfo("Nothing to download.");
+            }
+            const blob = await response.blob();
+            download(blob);
+          })
+          .catch((error) => {
+            myerror("Error fetching task response.", error);
+          });
+      };
+    },
   };
+};
+
+export const useJourney = <T extends JourneyType>(data: T) => {
+  const [journey, setJourney] = React.useState<T>(data);
+
+  const journeyFns = useJourneyFns(journey);
 
   return {
     journey,
     setJourney,
-    getUrl,
-    getApiUrl,
-    getDownloadHandler,
+    ...journeyFns,
   };
 };
 

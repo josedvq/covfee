@@ -2,11 +2,10 @@ import os
 import json
 
 import greenlet
-from flask import current_app as app, _app_ctx_stack
+from flask import current_app as app
 from flask import Flask, Blueprint, render_template, send_from_directory
 from sqlalchemy.orm import scoped_session
 from flask_jwt_extended import JWTManager
-from flask_socketio import SocketIO
 from flask_cors import CORS
 from flask_session import Session
 
@@ -61,11 +60,11 @@ def create_app(mode):
     jwt.user_identity_loader(user_identity_lookup)
     jwt.user_lookup_loader(user_loader_callback)
 
-    # @app.teardown_request
-    # def teardown_request(exception):
-    #     if exception:
-    #         db.session.rollback()
-    #     db.session.remove()
+    @app.teardown_request
+    def teardown_request(exception):
+        if exception:
+            app.session.rollback()
+        app.session.remove()
 
     return socketio, app
 

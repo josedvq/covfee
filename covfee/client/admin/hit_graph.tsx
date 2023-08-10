@@ -2,7 +2,6 @@ import * as React from "react";
 
 import { HitInstanceType, HitType, JourneyType } from "types/hit";
 import { NodeType } from "types/node";
-import { useHitInstance } from "../models/Hit";
 import { ForceGraph, Node, Link } from "./force_graph";
 import { NodeStatus } from "../types/node";
 

@@ -14,16 +14,16 @@ import {
   StopOutlined,
   WechatOutlined,
 } from "@ant-design/icons";
-import { useJourney } from "../models/Journey";
-import { useNode } from "../models/Node";
-import { Button } from "antd";
-import AppContext from "antd/es/app/context";
+import { useJourney, useJourneyFns } from "../models/Journey";
+import { useNode, useNodeFns } from "../models/Node";
+import { App, Button } from "antd";
 import { appContext } from "../app_context";
 
 interface Props {
   instance: HitInstanceType;
 }
 export const HitBlock = (props: Props) => {
+  const { socket } = React.useContext(appContext);
   const [collapsed, _setCollapsed] = React.useState<boolean>(
     props.instance.collapsed
   );
@@ -42,7 +42,7 @@ export const HitBlock = (props: Props) => {
     setShowGraph: storeShowGraph,
     setShowJourneys: storeShowJourneys,
     setShowNodes: storeShowNodes,
-  } = useHitInstance(props.instance);
+  } = useHitInstance(props.instance, socket);
 
   const setCollapsed = async (value: boolean) => {
     _setCollapsed(value);
@@ -193,18 +193,22 @@ const NodesList = styled.div`
 
 const JourneysList = styled.div``;
 
-const JourneyRow = (props: JourneyType) => {
+const JourneyRow = (journey: JourneyType) => {
   const { addChats } = React.useContext(appContext);
-  const { journey, getUrl } = useJourney(props);
+  const { getUrl } = useJourneyFns(journey);
+
   return (
     <div>
       <a href={getUrl()}>
         <span>
           <StatusIcon
-            status={journey.online ? "online" : "offline"}
+            status={journey.num_connections > 0 ? "online" : "offline"}
           ></StatusIcon>
         </span>
-        <span>{journey.id.substring(0, 10)}</span> <LinkOutlined />
+        <span>
+          {journey.id.substring(0, 10)} [{journey.num_connections}]
+        </span>{" "}
+        <LinkOutlined />
       </a>
       <span className="button">
         <button
@@ -219,9 +223,10 @@ const JourneyRow = (props: JourneyType) => {
   );
 };
 
-const NodeRow = (props: NodeType) => {
+const NodeRow = (node: NodeType) => {
   const { addChats } = React.useContext(appContext);
-  const { node, getUrl } = useNode(props);
+  const { getUrl } = useNodeFns(node);
+
   return (
     <li>
       <a href={getUrl()}>

@@ -11,6 +11,7 @@ import {
 } from "./utils";
 import { useChats } from "./models/Chat";
 import { AllPropsRequired } from "./types/utils";
+import { useParams } from "react-router-dom";
 
 interface LoginInfo {
   username: string;
@@ -47,11 +48,16 @@ export const AppProvider: React.FC<Props> = (props) => {
   const [socket, setSocket] = React.useState(null);
   const [chocket, setChocket] = React.useState(null);
   const chats = useChats(chocket, []);
+  const routeParams = useParams();
 
   React.useEffect(() => {
     if (socket == null) {
       if (args.admin) setSocket(io("/admin"));
-      else setSocket(io());
+      else {
+        if (routeParams.journeyId) {
+          setSocket(io({ auth: { journeyId: routeParams.journeyId } }));
+        }
+      }
     }
     if (chocket == null) {
       if (args.admin) setChocket(io("/admin_chat"));

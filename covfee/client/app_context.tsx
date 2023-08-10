@@ -11,11 +11,20 @@ import {
   StateRequestPayload,
 } from "../server/socketio/types";
 
-interface ServerToClientEvents {
+export interface ServerToClientEvents {
   status: (arg0: {
+    id: number;
     prev: NodeStatus;
     new: NodeStatus;
     curr_journeys: string[];
+  }) => void;
+  journey_connect: (arg0: {
+    journey_id: string;
+    num_connections: number;
+  }) => void;
+  journey_disconnect: (arg0: {
+    journey_id: string;
+    num_connections: number;
   }) => void;
   action: (arg0: ActionResponse) => void;
   state: (arg0: StateResponse) => void;

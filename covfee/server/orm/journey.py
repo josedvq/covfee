@@ -86,6 +86,7 @@ class JourneyInstance(Base):
     curr_node_id: Mapped[int] = mapped_column(
         ForeignKey("nodeinstances.id"), nullable=True
     )
+    num_connections: Mapped[int] = mapped_column(default=0)
     curr_node: Mapped[NodeInstance] = relationship(back_populates="curr_journeys")
 
     # dates
