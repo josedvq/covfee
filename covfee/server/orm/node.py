@@ -13,6 +13,7 @@ from . import utils
 
 if TYPE_CHECKING:
     from .journey import JourneySpec, JourneyInstance
+    from .hit import HITInstance
 
 journeyspec_nodespec_table = Table(
     "journeyspec_nodespec",
@@ -92,14 +93,13 @@ class NodeInstanceStatus(enum.Enum):
 
 class NodeInstance(Base):
     __tablename__ = "nodeinstances"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    type: Mapped[str]
-    # id = Column(Integer, primary_key=True)
     __mapper_args__ = {
         "polymorphic_identity": "NodeInstance",
         "polymorphic_on": "type",
     }
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    type: Mapped[str]
 
     # spec relationships
     nodespec_id: Mapped[int] = mapped_column(ForeignKey("nodespecs.id"))
@@ -109,6 +109,10 @@ class NodeInstance(Base):
     journeys: Mapped[List[JourneyInstance]] = relationship(
         secondary=journey_node_table, back_populates="nodes"
     )
+    # one HitInstance -> many JourneyInstance
+    hit_id: Mapped[bytes] = mapped_column(ForeignKey("hitinstances.id"))
+    # hit_id = Column(Integer, ForeignKey('hitinstances.id'))
+    hit: Mapped[HITInstance] = relationship(back_populates="nodes")
 
     # status: journeys currently at this node
     curr_journeys: Mapped[List[JourneyInstance]] = relationship(
@@ -153,7 +157,7 @@ class NodeInstance(Base):
             "chat_id": self.chat.id,
             "url": f'{app.config["API_URL"]}/tasks/{self.id}',
             "num_journeys": len(self.journeys),
-            "curr_journeys": [j.id.hex() for j in self.curr_journeys]
+            "curr_journeys": [j.id.hex() for j in self.curr_journeys],
         }
 
         return instance_dict

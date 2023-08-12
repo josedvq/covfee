@@ -71,18 +71,12 @@ class HITSpec(Base):
         """
         return f'{app.config["API_URL"]}/hits/{self.id}/instances/add_and_redirect'
 
-    def to_dict(self, with_instances=False, with_instance_nodes=False):
+    def to_dict(self):
         hit_dict = super().to_dict()
         hit_dict["api_url"] = self.get_api_url()
         hit_dict["generator_url"] = self.get_generator_url()
 
-        if with_instances:
-            hit_dict["instances"] = [
-                instance.to_dict(with_nodes=with_instance_nodes)
-                for instance in self.instances
-            ]
-
-        hit_dict["project"] = self.project.to_dict(with_hits=False)
+        hit_dict["project"] = self.project.to_dict(with_hits=False, with_hitspecs=False)
         del hit_dict["project_id"]
 
         return hit_dict
@@ -109,6 +103,9 @@ class HITInstance(Base):
 
     # instance relationships
     journeys: Mapped[List[JourneyInstance]] = relationship(
+        back_populates="hit", cascade="all, delete"
+    )
+    nodes: Mapped[List[NodeInstance]] = relationship(
         back_populates="hit", cascade="all, delete"
     )
 
@@ -145,6 +142,7 @@ class HITInstance(Base):
 
                 journey.nodes.append(node_instance)
             self.journeys.append(journey)
+        self.nodes = list(nodespec_to_nodeinstance.values())
 
     def get_api_url(self):
         return f'{app.config["API_URL"]}/instances/{self.id.hex():s}'

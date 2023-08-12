@@ -1,4 +1,5 @@
 from __future__ import annotations
+import enum
 import os
 import datetime
 import hmac
@@ -54,6 +55,20 @@ class JourneySpec(Base):
         pass
 
 
+class JourneyInstanceStatus(enum.Enum):
+    # task has been initialized.
+    INIT = 0
+
+    # start conditions full-filled. task has started.
+    STARTED = 1
+
+    # pause condition fullfilled. Waiting for resume conditions.
+    DISABLED = 2
+
+    # task/node has ran and is finalized.
+    FINISHED = 3
+
+
 class JourneyInstance(Base):
     """Represents an instance of a HIT, to be solved by one user"""
 
@@ -67,7 +82,7 @@ class JourneyInstance(Base):
     spec: Mapped[JourneySpec] = relationship(back_populates="journeys")
 
     # one HitInstance -> many JourneyInstance
-    hit_id: Mapped[int] = mapped_column(ForeignKey("hitinstances.id"))
+    hit_id: Mapped[bytes] = mapped_column(ForeignKey("hitinstances.id"))
     # hit_id = Column(Integer, ForeignKey('hitinstances.id'))
     hit: Mapped[HITInstance] = relationship(back_populates="journeys")
 
@@ -94,6 +109,11 @@ class JourneyInstance(Base):
     created: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
     updated: Mapped[datetime.datetime] = mapped_column(
         default=datetime.datetime.now, onupdate=datetime.datetime.now
+    )
+
+    # status code
+    status: Mapped[JourneyInstanceStatus] = mapped_column(
+        default=JourneyInstanceStatus.INIT
     )
 
     instance_counter = 0

@@ -5,7 +5,14 @@ import React, { Reducer } from "react";
 import { AllPropsRequired } from "./utils";
 import { BaseTaskProps } from "../tasks/base";
 
-export type NodeStatus = "INIT" | "WAITING" | "RUNNING" | "PAUSED" | "FINISHED";
+export const NodeStatuses = [
+  "INIT",
+  "WAITING",
+  "RUNNING",
+  "PAUSED",
+  "FINISHED",
+] as const;
+export type NodeStatus = (typeof NodeStatuses)[number];
 /**
  * Node spec augmented with database status
  */

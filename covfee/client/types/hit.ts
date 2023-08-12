@@ -6,7 +6,7 @@ import { JourneyType as FullJourneyType } from "./journey";
 export type HitType = Omit<HitSpec, "nodes" | "journeys"> & {
   nodespecs: NodeType[];
   journeyspecs: number[];
-  instances: HitInstanceType[];
+
   generator_url: string;
 };
 

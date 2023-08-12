@@ -1,5 +1,11 @@
-from flask import request, jsonify, make_response, Response,\
-     stream_with_context, current_app as app
+from flask import (
+    request,
+    jsonify,
+    make_response,
+    Response,
+    stream_with_context,
+    current_app as app,
+)
 import zipstream
 
 from .api import api
@@ -7,8 +13,9 @@ from .auth import admin_required
 from .utils import jsonify_or_404
 from ..orm import Project
 
+
 # return all projects
-@api.route('/projects')
+@api.route("/projects")
 @admin_required
 def projects():
     """Lists all the projects currently in covfee
@@ -16,22 +23,19 @@ def projects():
     Returns:
         [type]: list of project objects
     """
-    with_hits = request.args.get('with_hits', False)
-    with_instances = request.args.get('with_instances', False)
-    with_instance_nodes = request.args.get('with_instance_nodes', False)
+    with_hits = request.args.get("with_hits", False)
+    with_hit_nodes = request.args.get("with_hit_nodes", False)
     res = app.session.query(Project).all()
     if res is None:
         return jsonify([])
     else:
-        return jsonify([p.to_dict(
-            with_hits=with_hits,
-            with_instances=with_instances,
-            with_instance_nodes=with_instance_nodes
-        ) for p in res])
+        return jsonify(
+            [p.to_dict(with_hits=with_hits, with_hit_nodes=with_hit_nodes) for p in res]
+        )
 
 
 # return one project
-@api.route('/projects/<pid>')
+@api.route("/projects/<pid>")
 @admin_required
 def project(pid):
     """Returns a project object
@@ -39,13 +43,13 @@ def project(pid):
     Args:
         pid (str): project ID
     """
-    with_instances = request.args.get('with_instances', False)
-    with_instance_nodes = request.args.get('with_instance_nodes', False)
+    with_hits = request.args.get("with_hits", False)
+    with_hit_nodes = request.args.get("with_hit_nodes", False)
     res = app.session.query(Project).get(pid)
-    return jsonify_or_404(res, with_instances=with_instances, with_instance_nodes=with_instance_nodes)
+    return jsonify_or_404(res, with_hits=with_hits, with_hit_nodes=with_hit_nodes)
 
 
-@api.route('/projects/<pid>/csv')
+@api.route("/projects/<pid>/csv")
 @admin_required
 def project_csv(pid):
     """Creates a CSV file with links and completion codes for HITs
@@ -60,7 +64,7 @@ def project_csv(pid):
     """
     project = app.session.query(Project).get(pid)
     if project is None:
-        return {'msg': 'not found'}, 404
+        return {"msg": "not found"}, 404
     else:
         df = project.get_dataframe()
         res = make_response(df.to_csv())
@@ -69,7 +73,7 @@ def project_csv(pid):
         return res
 
 
-@api.route('/projects/<pid>/download')
+@api.route("/projects/<pid>/download")
 @admin_required
 def project_download(pid):
     """Generates a downloadable with all the responses in a project.
@@ -82,18 +86,20 @@ def project_download(pid):
     Returns:
         [type]: stream response with a compressed archive. 204 if the project has no responses
     """
-    is_csv = bool(request.args.get('csv', False))
+    is_csv = bool(request.args.get("csv", False))
 
     project = app.session.query(Project).get(bytes.fromhex(pid))
     if project is None:
-        return {'msg': 'not found'}, 404
+        return {"msg": "not found"}, 404
 
     def generator():
-        z = zipstream.ZipFile(mode='w', compression=zipstream.ZIP_DEFLATED)
-        for chunk in project.stream_download(z, './', csv=is_csv):
+        z = zipstream.ZipFile(mode="w", compression=zipstream.ZIP_DEFLATED)
+        for chunk in project.stream_download(z, "./", csv=is_csv):
             yield chunk
         yield from z
 
-    response = Response(stream_with_context(generator()), mimetype='application/zip')
-    response.headers['Content-Disposition'] = 'attachment; filename={}'.format('results.zip')
+    response = Response(stream_with_context(generator()), mimetype="application/zip")
+    response.headers["Content-Disposition"] = "attachment; filename={}".format(
+        "results.zip"
+    )
     return response

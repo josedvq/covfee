@@ -87,14 +87,16 @@ class Project(Base):
                     z, os.path.join(base_path, instance.id.hex()), csv=csv
                 )
 
-    def to_dict(self, with_hits=True, with_instances=False, with_instance_nodes=False):
+    def to_dict(self, with_hits=True, with_hitspecs=True, with_hit_nodes=False):
         project_dict = super().to_dict()
+        if with_hitspecs:
+            project_dict["hitSpecs"] = [hit.to_dict() for hit in self.hitspecs]
         if with_hits:
+            hit_instances = [h for hitspec in self.hitspecs for h in hitspec.instances]
             project_dict["hits"] = [
                 hit.to_dict(
-                    with_instances=with_instances,
-                    with_instance_nodes=with_instance_nodes,
+                    with_nodes=with_hit_nodes,
                 )
-                for hit in self.hitspecs
+                for hit in hit_instances
             ]
         return project_dict

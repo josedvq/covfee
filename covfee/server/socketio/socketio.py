@@ -59,6 +59,7 @@ def on_connect(data):
 
     session["journeyId"] = data["journeyId"]
     payload = {
+        "hit_id": journey.hit_id.hex(),
         "journey_id": data["journeyId"],
         "num_connections": journey.num_connections,
     }
@@ -70,6 +71,7 @@ def on_connect(data):
 def make_node_status_payload(prev_status: NodeInstanceStatus, node: NodeInstance):
     return {
         "id": node.id,
+        "hit_id": node.hit_id.hex(),
         "prev": prev_status,
         "new": node.status,
         "curr_journeys": [j.id.hex() for j in node.curr_journeys],
@@ -192,8 +194,12 @@ def disconnect():
     app.session.commit()
 
     # broadcast to admins
-    payload = {"journey_id": journey_id, "num_connections": journey.num_connections}
-    emit("journey_disconnect", payload, namespace="/admin", broadcast=True)
+    payload = {
+        "hit_id": journey.hit_id.hex(),
+        "journey_id": journey_id,
+        "num_connections": journey.num_connections,
+    }
+    emit("journey_connect", payload, namespace="/admin", broadcast=True)
 
     # now update node
     if "responseId" not in session:

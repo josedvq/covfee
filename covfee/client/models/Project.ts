@@ -3,13 +3,19 @@ import * as React from "react";
 import Constants from "Constants";
 import { fetcher, throwBadResponse } from "../utils";
 import { ProjectType } from "types/project";
+import { useHitInstances } from "./Hits";
+import { MainSocket } from "../app_context";
 
-export function useProject(data: ProjectType) {
-  const [project, setProject] = React.useState(data);
+export function useProject(data: ProjectType, socket: MainSocket = null) {
+  const { hits, ...projectWithoutHits } = data;
+  const [_project, _setProject] = React.useState(projectWithoutHits);
+  const allHits = useHitInstances(hits, socket);
+
+  const { setHits: _setHits } = allHits;
 
   return {
-    project,
-    setProject,
+    project: { ..._project, hits: allHits.hits },
+    ...allHits,
   };
 }
 
@@ -21,8 +27,7 @@ export function getProject(id: number): Promise<ProjectType> {
     "?" +
     new URLSearchParams({
       with_hits: "1",
-      with_instances: "1",
-      with_instance_nodes: "1",
+      with_hit_nodes: "1",
     });
 
   return fetcher(url).then(throwBadResponse);

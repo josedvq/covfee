@@ -14,15 +14,18 @@ import {
 export interface ServerToClientEvents {
   status: (arg0: {
     id: number;
+    hit_id: string;
     prev: NodeStatus;
     new: NodeStatus;
     curr_journeys: string[];
   }) => void;
   journey_connect: (arg0: {
+    hit_id: string;
     journey_id: string;
     num_connections: number;
   }) => void;
   journey_disconnect: (arg0: {
+    hit_id: string;
     journey_id: string;
     num_connections: number;
   }) => void;
