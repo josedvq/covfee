@@ -1,18 +1,18 @@
-import * as React from "react";
-import styled from "styled-components";
+import * as React from "react"
+import styled from "styled-components"
 
-import { HitInstanceType } from "../types/hit";
-import { JourneyType } from "../types/journey";
-import { NodeStatus, NodeStatuses, NodeType } from "../types/node";
+import { HitInstanceType } from "../types/hit"
+import { JourneyType } from "../types/journey"
+import { NodeStatus, NodeStatuses, NodeType } from "../types/node"
 import {
   DownOutlined,
   LinkOutlined,
   NodeIndexOutlined,
   WechatOutlined,
-} from "@ant-design/icons";
-import { useJourneyFns } from "../models/Journey";
-import { useNodeFns } from "../models/Node";
-import { appContext } from "../app_context";
+} from "@ant-design/icons"
+import { useJourneyFns } from "../models/Journey"
+import { useNodeFns } from "../models/Node"
+import { appContext } from "../app_context"
 import {
   JourneyColorStatus,
   JourneyColorStatuses,
@@ -23,33 +23,33 @@ import {
   StatusIcon,
   getJourneyStatus,
   getNodeStatus,
-} from "./utils";
-import classNames from "classnames";
-import { ForceGraph } from "./force_graph";
+} from "./utils"
+import classNames from "classnames"
+import { ForceGraph } from "./force_graph"
 
 interface Props {
-  hit: HitInstanceType;
+  hit: HitInstanceType
 }
 export const HitBlock = (props: Props) => {
   const [collapsed, _setCollapsed] = React.useState<boolean>(
     props.hit.collapsed
-  );
+  )
   const [showGraph, _setShowGraph] = React.useState<boolean>(
     props.hit.show_graph
-  );
+  )
   const [showJourneys, _setShowJourneys] = React.useState<boolean>(
     props.hit.show_journeys
-  );
+  )
   const [showNodes, _setShowNodes] = React.useState<boolean>(
     props.hit.show_nodes
-  );
-  const timeout = React.useRef<NodeJS.Timeout>(null);
+  )
+  const timeout = React.useRef<NodeJS.Timeout>(null)
 
-  const [focusedNode, setFocusedNode] = React.useState<number>(null);
-  const [focusedJourney, setFocusedJourney] = React.useState<number>(null);
+  const [focusedNode, setFocusedNode] = React.useState<number>(null)
+  const [focusedJourney, setFocusedJourney] = React.useState<number>(null)
   const [hoveringButtonProps, setHoveringButtonProps] = React.useState<
     Omit<HoveringNodeButtonsProps, "node"> & { nodeIndex: number }
-  >({ nodeIndex: null, hide: false, x: 100, y: 100 });
+  >({ nodeIndex: null, hide: false, x: 100, y: 100 })
 
   const startHoveringButtonsTimeout = () => {
     timeout.current = setTimeout(() => {
@@ -57,16 +57,16 @@ export const HitBlock = (props: Props) => {
         ...hoveringButtonProps,
         nodeIndex: null,
         hide: true,
-      });
-    }, 500);
-  };
+      })
+    }, 500)
+  }
 
   const handleNodeHover = (
     nodeIndex: number,
     x: number = null,
     y: number = null
   ) => {
-    setFocusedNode(nodeIndex);
+    setFocusedNode(nodeIndex)
     if (x && y) {
       setHoveringButtonProps({
         ...hoveringButtonProps,
@@ -74,56 +74,56 @@ export const HitBlock = (props: Props) => {
         nodeIndex,
         x,
         y,
-      });
+      })
     } else {
       setHoveringButtonProps({
         ...hoveringButtonProps,
         hide: false,
         nodeIndex,
-      });
+      })
     }
-    clearTimeout(timeout.current);
-  };
+    clearTimeout(timeout.current)
+  }
 
   const setCollapsed = async (value: boolean) => {
-    _setCollapsed(value);
+    _setCollapsed(value)
     // storeCollapsed(value);
-  };
+  }
 
   const setShowGraph = async (value: boolean) => {
-    _setShowGraph(value);
+    _setShowGraph(value)
     // storeShowGraph(value);
-  };
+  }
 
   const setShowJourneys = async (value: boolean) => {
-    _setShowJourneys(value);
+    _setShowJourneys(value)
     // storeShowJourneys(value);
-  };
+  }
 
   const setShowNodes = async (value: boolean) => {
-    _setShowNodes(value);
+    _setShowNodes(value)
     // storeShowNodes(value);
-  };
+  }
 
   const nodesHist = Object.fromEntries(
     NodeColorStatuses.map((k) => [k, 0])
-  ) as Record<NodeStatus, number>;
+  ) as Record<NodeStatus, number>
   for (let i = 0; i < props.hit.nodes.length; i++) {
-    nodesHist[getNodeStatus(props.hit.nodes[i])] += 1;
+    nodesHist[getNodeStatus(props.hit.nodes[i])] += 1
   }
 
   const journeysHist = Object.fromEntries(
     JourneyColorStatuses.map((k) => [k, 0])
-  ) as Record<string, number>;
+  ) as Record<string, number>
   for (let i = 0; i < props.hit.journeys.length; i++) {
-    journeysHist[getJourneyStatus(props.hit.journeys[i])] += 1;
+    journeysHist[getJourneyStatus(props.hit.journeys[i])] += 1
   }
 
   return (
     <Container>
       <Header
         onClick={() => {
-          setCollapsed(!collapsed);
+          setCollapsed(!collapsed)
         }}
         className={classNames({ collapsed: collapsed })}
       >
@@ -131,8 +131,8 @@ export const HitBlock = (props: Props) => {
         <span>{props.hit.id.substring(0, 10)}</span>{" "}
         <NodeStatusSummary>
           <span>Nodes: </span>
-          {Object.entries(nodesHist).map(([status, count]) => (
-            <span>
+          {Object.entries(nodesHist).map(([status, count], index) => (
+            <span key={index}>
               <StatusIcon
                 color={NodeStatusToColor[status as NodeColorStatus]}
               />
@@ -142,8 +142,8 @@ export const HitBlock = (props: Props) => {
         </NodeStatusSummary>
         <JourneyStatusSummary>
           <span>Journeys: </span>
-          {Object.entries(journeysHist).map(([status, count]) => (
-            <span>
+          {Object.entries(journeysHist).map(([status, count], index) => (
+            <span key={index}>
               <StatusIcon
                 color={JourneyStatusToColor[status as JourneyColorStatus]}
               />
@@ -166,13 +166,13 @@ export const HitBlock = (props: Props) => {
                       node={node}
                       focus={focusedNode == index}
                       onFocus={() => {
-                        setFocusedNode(index);
+                        setFocusedNode(index)
                       }}
                       onBlur={() => {
-                        setFocusedNode(null);
+                        setFocusedNode(null)
                       }}
                     />
-                  );
+                  )
                 })}
               </ul>
             </NodesList>
@@ -185,12 +185,12 @@ export const HitBlock = (props: Props) => {
                   focusedNode={focusedNode}
                   focusedJourney={focusedJourney}
                   onNodeFocus={(i, x, y) => {
-                    handleNodeHover(i, x, y);
+                    handleNodeHover(i, x, y)
                     // setHoveringButtonProps({ ...hoveringButtonProps, x, y });
                   }}
                   onNodeBlur={() => {
-                    startHoveringButtonsTimeout();
-                    setFocusedNode(null);
+                    startHoveringButtonsTimeout()
+                    setFocusedNode(null)
                   }}
                 ></ForceGraph>
               </GraphContainer>
@@ -208,14 +208,14 @@ export const HitBlock = (props: Props) => {
                       key={index}
                       focus={focusedJourney == index}
                       onFocus={() => {
-                        setFocusedJourney(index);
+                        setFocusedJourney(index)
                       }}
                       onBlur={() => {
-                        setFocusedJourney(null);
+                        setFocusedJourney(null)
                       }}
                       journey={journey}
                     ></JourneyRow>
-                  );
+                  )
                 })}
               </ul>
             </JourneysList>
@@ -226,15 +226,15 @@ export const HitBlock = (props: Props) => {
         node={props.hit.nodes[hoveringButtonProps.nodeIndex]}
         {...hoveringButtonProps}
         onFocus={() => {
-          handleNodeHover(hoveringButtonProps.nodeIndex);
+          handleNodeHover(hoveringButtonProps.nodeIndex)
         }}
         onBlur={() => {
-          startHoveringButtonsTimeout();
+          startHoveringButtonsTimeout()
         }}
       />
     </Container>
-  );
-};
+  )
+}
 
 const Container = styled.div`
   margin: 1em 0;
@@ -242,12 +242,12 @@ const Container = styled.div`
   border-radius: 8px;
   border: 1px solid rgb(217, 217, 217);
   background-color: rgba(255, 255, 255, 0.88);
-`;
+`
 
 const Header = styled.div`
   padding: 0.5em;
   cursor: pointer;
-`;
+`
 
 const NodeStatusSummary = styled.span`
   margin: 0 0.5em;
@@ -258,13 +258,13 @@ const NodeStatusSummary = styled.span`
   > span {
     margin: 0 0.3em;
   }
-`;
-const JourneyStatusSummary = NodeStatusSummary;
+`
+const JourneyStatusSummary = NodeStatusSummary
 
 const GraphContainer = styled.div`
   flex: 1 0 auto;
   max-width: 60%;
-`;
+`
 const NodesList = styled.div`
   max-width: 50%;
   flex: 1 0 auto;
@@ -307,7 +307,7 @@ const NodesList = styled.div`
       cursor: pointer;
     }
   }
-`;
+`
 
 const JourneysList = styled.div`
   max-width: 50%;
@@ -351,17 +351,19 @@ const JourneysList = styled.div`
       cursor: pointer;
     }
   }
-`;
+`
 
 type JourneyRowProps = {
-  journey: JourneyType;
-  focus: boolean;
-  onFocus: () => void;
-  onBlur: () => void;
-};
+  journey: JourneyType
+  focus: boolean
+  onFocus: () => void
+  onBlur: () => void
+}
 const JourneyRow = ({ journey, focus, onFocus, onBlur }: JourneyRowProps) => {
-  const { addChats } = React.useContext(appContext);
-  const { getUrl } = useJourneyFns(journey);
+  const {
+    chats: { addChats },
+  } = React.useContext(appContext)
+  const { getUrl } = useJourneyFns(journey)
 
   return (
     <li
@@ -381,30 +383,29 @@ const JourneyRow = ({ journey, focus, onFocus, onBlur }: JourneyRowProps) => {
       <span className="button">
         <button
           onClick={() => {
-            addChats([journey.chat_id]);
+            addChats([journey.chat_id])
           }}
         >
           <WechatOutlined />
         </button>
       </span>
     </li>
-  );
-};
+  )
+}
 
 type NodeRowProps = {
-  node: NodeType;
-  focus: boolean;
-  onFocus: () => void;
-  onBlur: () => void;
-};
+  node: NodeType
+  focus: boolean
+  onFocus: () => void
+  onBlur: () => void
+}
 const NodeRow = ({
   node,
   focus = false,
   onFocus = () => {},
   onBlur = () => {},
 }: NodeRowProps) => {
-  const { addChats } = React.useContext(appContext);
-  const { getUrl } = useNodeFns(node);
+  const { getAdminUrl: getUrl } = useNodeFns(node)
 
   return (
     <li
@@ -420,15 +421,17 @@ const NodeRow = ({
       </a>
       <NodeButtons node={node} />
     </li>
-  );
-};
+  )
+}
 
 type NodeButtonsProps = {
-  node: NodeType;
-};
+  node: NodeType
+}
 export const NodeButtons = ({ node }: NodeButtonsProps) => {
-  const { addChats } = React.useContext(appContext);
-  const { getUrl } = useNodeFns(node);
+  const {
+    chats: { addChats },
+  } = React.useContext(appContext)
+  const { getAdminUrl: getUrl } = useNodeFns(node)
 
   return (
     <NodeButtonsContainer>
@@ -442,15 +445,15 @@ export const NodeButtons = ({ node }: NodeButtonsProps) => {
       <li>
         <button
           onClick={() => {
-            addChats([node.chat_id]);
+            addChats([node.chat_id])
           }}
         >
           <WechatOutlined />
         </button>
       </li>
     </NodeButtonsContainer>
-  );
-};
+  )
+}
 
 const NodeButtonsContainer = styled.ul`
   list-style-type: none;
@@ -465,16 +468,16 @@ const NodeButtonsContainer = styled.ul`
       cursor: pointer;
     }
   }
-`;
+`
 
 type HoveringNodeButtonsProps = {
-  node: NodeType;
-  x: number;
-  y: number;
-  hide: boolean;
-  onFocus: () => void;
-  onBlur: () => void;
-};
+  node: NodeType
+  x: number
+  y: number
+  hide: boolean
+  onFocus: () => void
+  onBlur: () => void
+}
 export const HoveringNodeButtons = ({
   node,
   x,
@@ -500,5 +503,5 @@ export const HoveringNodeButtons = ({
       >
         <NodeButtons node={node} />
       </div>
-    );
-};
+    )
+}

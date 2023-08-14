@@ -1,65 +1,72 @@
-import * as React from "react";
-import { Chat, ChatMessage, IoChatMessage } from "../types/chat";
-import { AllPropsRequired } from "../types/utils";
-import { styled } from "styled-components";
-import { SendOutlined, WechatOutlined } from "@ant-design/icons";
-import classNames from "classnames";
-import { Empty } from "antd";
-import { appContext } from "../app_context";
-import { getHumanFriendlyDateString } from "../utils";
+import React, { useContext } from "react"
+import { Chat, ChatMessage, IoChatMessage } from "../types/chat"
+import { AllPropsRequired } from "../types/utils"
+import { styled } from "styled-components"
+import { SendOutlined, WechatOutlined } from "@ant-design/icons"
+import classNames from "classnames"
+import { Empty } from "antd"
+import { appContext } from "../app_context"
+import { getHumanFriendlyDateString } from "../utils"
 
-type ChatPopupProps = {
-  chats: Chat[];
-};
+const getChatName = (chat: Chat) => {
+  if (chat.journey_id) {
+    return chat.journey_id.substring(0, 10)
+  }
+  if (chat.node_id) {
+    return `Node ${chat.node_id}`
+  }
+}
 
-export const ChatPopup: React.FC<ChatPopupProps> = (props) => {
-  const args: AllPropsRequired<ChatPopupProps> = {
+export const ChatPopup: React.FC<{}> = (props) => {
+  const args: AllPropsRequired<{}> = {
     ...props,
-  };
+  }
 
-  const [chatOpen, setChatOpen] = React.useState(true);
-  const [currChat, setCurrChat] = React.useState(0);
+  const {
+    chats: {
+      chats,
+      addChats,
+      removeChats,
+      hasChat,
+      chatOpen,
+      setChatOpen,
+      getNumberUnreadMessages,
+    },
+  } = useContext(appContext)
 
-  const getChatName = (chat: Chat) => {
-    if (chat.journey_id) {
-      return chat.journey_id.substring(0, 10);
-    }
-    if (chat.node_id) {
-      return `Node ${chat.node_id}`;
-    }
-  };
+  const [currChat, setCurrChat] = React.useState(0)
 
   return (
     <>
       {chatOpen && (
         <PopupContainer>
           <ChatSelection>
-            {args.chats.map((chat, index) => (
+            {chats.map((chat, index) => (
               <button
                 key={index}
                 className={classNames({ active: currChat == index })}
                 onClick={() => {
-                  setCurrChat(index);
+                  setCurrChat(index)
                 }}
               >
-                {getChatName(chat)}
+                {getChatName(chat)} ({getNumberUnreadMessages(chat.id)})
               </button>
             ))}
           </ChatSelection>
-          {args.chats.length && <Chatbox chat={args.chats[currChat]} />}
+          {chats.length && <Chatbox chat={chats[currChat]} />}
         </PopupContainer>
       )}
       <ChatButton
         onClick={() => {
-          setChatOpen(!chatOpen);
+          setChatOpen(!chatOpen)
         }}
         $chatOpen
       >
         <WechatOutlined />
       </ChatButton>
     </>
-  );
-};
+  )
+}
 
 const PopupContainer = styled.div<any>`
   position: fixed;
@@ -72,7 +79,7 @@ const PopupContainer = styled.div<any>`
   border: 1px solid gray;
   padding: 3px;
   border-radius: 8px;
-`;
+`
 
 const ChatButton = styled.button<{ $chatOpen: boolean }>`
   cursor: pointer;
@@ -88,7 +95,7 @@ const ChatButton = styled.button<{ $chatOpen: boolean }>`
   border-bottom: 0;
   padding: 3px;
   border-radius: 8px 8px 0 0;
-`;
+`
 
 const ChatSelection = styled.div<any>`
   position: absolute;
@@ -115,25 +122,29 @@ const ChatSelection = styled.div<any>`
       color: white;
     }
   }
-`;
+`
 
 type ChatboxProps = {
-  chat: Chat;
-};
+  chat: Chat
+}
 
 export const Chatbox: React.FC<ChatboxProps> = (props) => {
   const args: AllPropsRequired<ChatboxProps> = {
     ...props,
-  };
+  }
 
-  const { emitMessage } = React.useContext(appContext);
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const {
+    chats: { emitMessage, getChatMessages },
+  } = React.useContext(appContext)
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+
+  const messages = getChatMessages(props.chat.id)
 
   return (
     <ChatboxContainer>
-      {args.chat.messages.length ? (
+      {messages.length ? (
         <ul>
-          {args.chat.messages.map((message, index) => (
+          {messages.map((message, index) => (
             <li key={index}>
               <span>{message.message}</span>
               <span className="date">
@@ -152,16 +163,16 @@ export const Chatbox: React.FC<ChatboxProps> = (props) => {
         <textarea ref={textareaRef} />
         <button
           onClick={() => {
-            emitMessage(args.chat.id, textareaRef.current.value);
-            textareaRef.current.value = "";
+            emitMessage(args.chat.id, textareaRef.current.value)
+            textareaRef.current.value = ""
           }}
         >
           <SendOutlined />
         </button>
       </div>
     </ChatboxContainer>
-  );
-};
+  )
+}
 
 const ChatboxContainer = styled.div<any>`
   position: absolute;
@@ -213,4 +224,4 @@ const ChatboxContainer = styled.div<any>`
       height: 100%;
     }
   }
-`;
+`

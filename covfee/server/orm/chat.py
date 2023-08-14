@@ -55,6 +55,7 @@ class ChatMessage(Base):
     chat: Mapped[Chat] = relationship(back_populates="messages")
 
     message: Mapped[Annotated[str, 2048]]
+    read: Mapped[bool] = mapped_column(default=False)
 
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
 

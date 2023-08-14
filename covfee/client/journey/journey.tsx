@@ -1,46 +1,48 @@
-import * as React from "react";
-import styled from "styled-components";
-import { generatePath } from "react-router";
-import { ArrowRightOutlined, PlusOutlined } from "@ant-design/icons";
-import { Row, Col, Typography, Menu, Button, Modal, Progress } from "antd";
-import "antd/dist/reset.css";
-import Collapsible from "react-collapsible";
-const { Text } = Typography;
+import * as React from "react"
+import styled from "styled-components"
+import { generatePath } from "react-router"
+import { ArrowRightOutlined, PlusOutlined } from "@ant-design/icons"
+import { Row, Col, Typography, Menu, Button, Modal, Progress } from "antd"
+import "antd/dist/reset.css"
+import Collapsible from "react-collapsible"
+const { Text } = Typography
 
-import Constants from "Constants";
-import { myerror } from "../utils";
-import { MarkdownLoader } from "../tasks/utils/markdown_loader";
-import { CovfeeMenuItem } from "../gui";
-import { Sidebar } from "./sidebar";
+import Constants from "Constants"
+import { myerror } from "../utils"
+import { MarkdownLoader } from "../tasks/utils/markdown_loader"
+import { CovfeeMenuItem } from "../gui"
+import { Sidebar } from "./sidebar"
 // import ButtonEventManagerContext from "../input/button_manager";
 
-import { JourneyContext, JourneyContextType } from "./journey_context";
-import { NodeLoader } from "./node_loader";
+import { JourneyContext, JourneyContextType } from "./journey_context"
+import { NodeLoader } from "./node_loader"
 
-import "./journey.scss";
-import { FullJourney, fetchJourney, useJourney } from "../models/Journey";
-import { useState, useContext } from "react";
-import { AllPropsRequired } from "../types/utils";
-import { appContext } from "../app_context";
-import { useParams } from "react-router-dom";
-import { ChatPopup } from "../chat/chat";
-import { AppProvider } from "../app_provider";
+import "./journey.scss"
+import {
+  FullJourney,
+  JourneyType,
+  fetchJourney,
+  useJourney,
+} from "../models/Journey"
+import { useState, useContext } from "react"
+import { AllPropsRequired } from "../types/utils"
+import { appContext } from "../app_context"
+import { useParams } from "react-router-dom"
+import { ChatPopup } from "../chat/chat"
+import { AppProvider } from "../app_provider"
+import { io } from "socket.io-client"
+import { Chat } from "../types/chat"
 
-// url parameters
-interface MatchParams {
-  journeyId: string;
-  nodeId: string;
-}
-
-interface Props {
+type Props = {
+  journey: FullJourney
   /**
    * Enables preview mode where data submission is disabled.
    */
-  previewMode?: boolean;
+  previewMode?: boolean
   /**
    * Tells the annotation component to keep urls up to date
    */
-  routingEnabled?: boolean;
+  routingEnabled?: boolean
 
   // ASYNC OPERATIONS
   // submitTaskResponse: (arg0: TaskResponseType, arg1: any) => Promise<TaskResponseType>
@@ -48,95 +50,78 @@ interface Props {
   /**
    * Called when the Hit submit button is clicked
    */
-  onSubmit?: () => Promise<any>;
+  onSubmit?: () => Promise<any>
 }
 
-export const JourneyPage: React.FC<Props> = (props) => {
-  const args: AllPropsRequired<Props> = {
-    routingEnabled: true,
-    previewMode: false,
-    onSubmit: () => null,
-    ...props,
-  };
+export const _JourneyPage: React.FC<Props> = (props) => {
+  const args: AllPropsRequired<Props> = React.useMemo(
+    () => ({
+      routingEnabled: true,
+      previewMode: false,
+      onSubmit: () => null,
+      ...props,
+    }),
+    [props]
+  )
 
-  const routeParams = useParams();
-  const { socket, chocket, chats, addChats } = useContext(appContext);
-  const { journey, setJourney } = useJourney<FullJourney>(null);
+  const routeParams = useParams()
+  const {
+    socket,
+    chocket,
+    chats: { addChats, removeChats, hasChat },
+  } = useContext(appContext)
+  const { journey, setJourney } = useJourney<FullJourney>(args.journey)
 
-  const [currNode, setCurrNode] = useState(null);
+  const [currNode, setCurrNode] = useState(
+    routeParams.nodeId !== undefined ? parseInt(routeParams.nodeId) : 0
+  )
 
-  const [extraOpen, setExtraOpen] = useState(false);
-  const [loadingJourney, setLoadingJourney] = useState(true);
-  const [loadingNode, setLoadingNode] = useState(true);
-  const [currKey, setCurrKey] = useState(0);
+  const [extraOpen, setExtraOpen] = useState(false)
+
+  const [loadingNode, setLoadingNode] = useState(true)
+  const [currKey, setCurrKey] = useState(0)
   const journeyContext: JourneyContextType = {
     id: routeParams.journeyId,
     socket,
-  };
+  }
+
+  // React.useEffect(() => {
+  //   const nodeIndex =
+  //     routeParams.nodeId !== undefined ? parseInt(routeParams.nodeId) : 0
+
+  //   if(currNode == null)
+  // }, [routeParams.nodeId, addChats, journey.chat_id, journey.nodes])
 
   React.useEffect(() => {
-    fetchJourney(routeParams.journeyId).then((response) => {
-      console.log(`loaded journey ${response.id}`);
-      setJourney(response);
-
-      if (routeParams.nodeId !== undefined) {
-        changeActiveNode(parseInt(routeParams.nodeId));
-      } else {
-        changeActiveNode(0);
-      }
-
-      setLoadingJourney(false);
-    });
-  }, []);
+    if (!hasChat(journey.chat_id)) addChats([journey.chat_id])
+  }, [addChats, hasChat, journey.chat_id])
 
   React.useEffect(() => {
-    if (chocket && journey) {
-      chocket.emit("join_chat", { chatId: journey.chat_id });
-      addChats([journey.chat_id]);
+    if (!hasChat(journey.nodes[currNode].chat_id)) {
+      removeChats((chat: Chat) => chat.node_id !== null)
+      addChats([journey.nodes[currNode].chat_id])
     }
-  }, [chocket, journey]);
+  }, [addChats, currNode, hasChat, journey.nodes, removeChats])
 
-  const changeActiveNode = (nodeIndex: number) => {
-    // instructionsFn = null
-    setCurrNode(nodeIndex);
-    setCurrKey((k) => k + 1);
-    updateUrl(nodeIndex);
-  };
+  React.useEffect(() => {
+    window.history.pushState(
+      null,
+      null,
+      "#" +
+        generatePath("/journeys/:journeyId/:nodeId", {
+          journeyId: routeParams.journeyId,
+          nodeId: currNode.toString(),
+        })
+    )
+  }, [currNode, routeParams.journeyId])
 
-  const gotoNextNode = () => {
-    // if done with nodes
-    if (currNode[0] === journey.nodes.length - 1) {
-      handleHitSubmit();
-    } else {
-      // go to next node
-      changeActiveNode(currNode + 1);
-    }
-  };
+  const changeActiveNode = React.useCallback((nodeIndex: number) => {
+    setCurrNode(nodeIndex)
+    setCurrKey((k) => k + 1)
+  }, [])
 
-  const handleNodeSubmitted = () => {
-    gotoNextNode();
-  };
-
-  const updateUrl = (nodeIndex: number) => {
-    if (args.routingEnabled) {
-      window.history.pushState(
-        null,
-        null,
-        "#" +
-          generatePath("/journeys/:journeyId/:nodeId", {
-            journeyId: routeParams.journeyId,
-            nodeId: nodeIndex.toString(),
-          })
-      );
-    }
-  };
-
-  const handleMenuClick = (e: any) => {
-    if (e.key == "extra") setExtraOpen((v) => !v);
-  };
-
-  const showCompletionInfo = () => {
-    const config = journey.completionInfo;
+  const showCompletionInfo = React.useCallback(() => {
+    const config = journey.completionInfo
     return Modal.success({
       title: "HIT submitted!",
       content: (
@@ -165,14 +150,14 @@ export const JourneyPage: React.FC<Props> = (props) => {
           )}
         </>
       ),
-    });
-  };
+    })
+  }, [journey])
 
-  const handleHitSubmit = () => {
+  const handleSubmit = React.useCallback(() => {
     args
       .onSubmit()
       .then(() => {
-        showCompletionInfo();
+        showCompletionInfo()
       })
       .catch((err) => {
         if (err.message.includes("required tasks")) {
@@ -180,50 +165,67 @@ export const JourneyPage: React.FC<Props> = (props) => {
             err.message +
               " Please make sure all tasks are marked green before submitting.",
             err
-          );
+          )
         } else {
           myerror(
             "Error submitting HIT. Please try again or contact the organizers.",
             err
-          );
+          )
         }
-      });
-  };
+      })
+  }, [args, showCompletionInfo])
+
+  const gotoNextNode = React.useCallback(() => {
+    // if done with nodes
+    if (currNode === journey.nodes.length - 1) {
+      handleSubmit()
+    } else {
+      // go to next node
+      changeActiveNode(currNode + 1)
+    }
+  }, [changeActiveNode, currNode, handleSubmit, journey])
+
+  const handleNodeSubmitted = () => {
+    gotoNextNode()
+  }
+
+  const handleMenuClick = (e: any) => {
+    if (e.key == "extra") setExtraOpen((v) => !v)
+  }
 
   /**
    * True if the hit can be submitted:
    * - all required nodes have a valid response
    */
   const canSubmitHit = () => {
-    let canSubmit = true;
+    let canSubmit = true
     journey.nodes.forEach((node) => {
-      if (node.required && !node.valid) canSubmit = false;
-    });
-    return canSubmit;
-  };
+      if (node.required && !node.valid) canSubmit = false
+    })
+    return canSubmit
+  }
 
   const getHitExtra = () => {
-    if (args.extra) return <MarkdownLoader content={args.extra} />;
-    else return false;
-  };
+    if (journey.extra) return <MarkdownLoader content={journey.extra} />
+    else return false
+  }
 
   const renderTaskSubmitButton = (extraProps: any) => {
     return (
       <Button type="primary" htmlType="submit" {...extraProps}>
         Submit
       </Button>
-    );
-  };
+    )
+  }
 
   const renderTaskNextButton = (extraProps: any) => {
     return (
       <Button type="primary" onClick={gotoNextNode} {...extraProps}>
         Next
       </Button>
-    );
-  };
+    )
+  }
 
-  if (loadingJourney) return <></>;
   // return (
   //   <Modal
   //     title={
@@ -239,110 +241,111 @@ export const JourneyPage: React.FC<Props> = (props) => {
   //   </Modal>
   // );
 
-  const nodeProps = journey.nodes[currNode];
-  const hitExtra = getHitExtra();
+  console.log(journey.nodes)
+  console.log(currNode)
+  const nodeProps = journey.nodes[currNode]
+  const hitExtra = getHitExtra()
 
   return (
-    <AppProvider>
-      <JourneyContext.Provider value={journeyContext}>
-        {/* <ButtonEventManagerContext> */}
-        <Menu
-          onClick={handleMenuClick}
-          mode="horizontal"
-          theme="dark"
-          style={{ position: "sticky", top: 0, width: "100%", zIndex: 1000 }}
+    <JourneyContext.Provider value={journeyContext}>
+      {/* <ButtonEventManagerContext> */}
+      <Menu
+        onClick={handleMenuClick}
+        mode="horizontal"
+        theme="dark"
+        style={{ position: "sticky", top: 0, width: "100%", zIndex: 1000 }}
+      >
+        <Menu.Item key="logo" disabled>
+          <CovfeeMenuItem />
+        </Menu.Item>
+        <Menu.Item key="task" disabled>
+          <Text strong style={{ color: "white" }}>
+            {nodeProps.name}
+          </Text>
+        </Menu.Item>
+        {hitExtra && (
+          <Menu.Item key="extra" icon={<PlusOutlined />}>
+            Extra
+          </Menu.Item>
+        )}
+      </Menu>
+      <SidebarContainer height={window.innerHeight}>
+        <Sidebar
+          nodes={journey.nodes}
+          currNode={currNode}
+          onChangeActiveTask={changeActiveNode}
         >
-          <Menu.Item key="logo" disabled>
-            <CovfeeMenuItem />
-          </Menu.Item>
-          <Menu.Item key="task" disabled>
-            <Text strong style={{ color: "white" }}>
-              {nodeProps.name}
-            </Text>
-          </Menu.Item>
-          {hitExtra && (
-            <Menu.Item key="extra" icon={<PlusOutlined />}>
-              Extra
-            </Menu.Item>
+          {journey.submitted && (
+            <Button
+              type="primary"
+              style={{
+                width: "100%",
+                backgroundColor: "#5b8c00",
+                borderColor: "#5b8c00",
+              }}
+              onClick={showCompletionInfo}
+            >
+              Show completion code
+            </Button>
           )}
-        </Menu>
-        <SidebarContainer height={window.innerHeight}>
-          <Sidebar
-            nodes={journey.nodes}
-            currNode={currNode}
-            onChangeActiveTask={changeActiveNode}
-          >
-            {journey.submitted && (
-              <Button
-                type="primary"
-                style={{
-                  width: "100%",
-                  backgroundColor: "#5b8c00",
-                  borderColor: "#5b8c00",
-                }}
-                onClick={showCompletionInfo}
-              >
-                Show completion code
-              </Button>
-            )}
-          </Sidebar>
-        </SidebarContainer>
+        </Sidebar>
+      </SidebarContainer>
 
-        <ContentContainer height={window.innerHeight}>
-          {hitExtra && (
-            <Collapsible open={extraOpen}>
-              <Row>
-                <Col span={24}>{hitExtra}</Col>
-              </Row>
-            </Collapsible>
+      <ContentContainer height={window.innerHeight}>
+        {hitExtra && (
+          <></>
+          // <Collapsible open={extraOpen}>
+          //   <Row>
+          //     <Col span={24}>{hitExtra}</Col>
+          //   </Row>
+          // </Collapsible>
+        )}
+        <Row style={{ height: "100%" }}>
+          {journey.interface.showProgress && (
+            <div style={{ margin: "5px 15px" }}>
+              {(() => {
+                const num_valid = journey.nodes.filter((t) => t.valid).length
+                const num_steps = journey.nodes.length
+                return (
+                  <Progress
+                    percent={(100 * num_valid) / num_steps}
+                    format={(p) => {
+                      return num_valid + "/" + num_steps
+                    }}
+                    trailColor={"#c0c0c0"}
+                  />
+                )
+              })()}
+            </div>
           )}
-          <Row style={{ height: "100%" }}>
-            {journey.interface.showProgress && (
-              <div style={{ margin: "5px 15px" }}>
-                {(() => {
-                  const num_valid = journey.nodes.filter((t) => t.valid).length;
-                  const num_steps = journey.nodes.length;
-                  return (
-                    <Progress
-                      percent={(100 * num_valid) / num_steps}
-                      format={(p) => {
-                        return num_valid + "/" + num_steps;
-                      }}
-                      trailColor={"#c0c0c0"}
-                    />
-                  );
-                })()}
-              </div>
-            )}
-            <NodeLoader
-              key={currKey}
-              node={nodeProps}
-              disabled={nodeProps.submitted}
-              previewMode={props.previewMode}
-              // render props
-              renderSubmitButton={renderTaskSubmitButton}
-              renderNextButton={renderTaskNextButton}
-              // callbacks
-              onClickNext={gotoNextNode}
-              onSubmit={handleNodeSubmitted}
-            />
-          </Row>
-        </ContentContainer>
-        {/* </ButtonEventManagerContext> */}
-      </JourneyContext.Provider>
-      <ChatPopup chats={chats} />
-    </AppProvider>
-  );
-};
+          <NodeLoader
+            key={currKey}
+            node={nodeProps}
+            disabled={false}
+            previewMode={props.previewMode}
+            // render props
+            renderSubmitButton={renderTaskSubmitButton}
+            renderNextButton={renderTaskNextButton}
+            // callbacks
+            onClickNext={gotoNextNode}
+            onSubmit={handleNodeSubmitted}
+          />
+        </Row>
+      </ContentContainer>
+      {/* </ButtonEventManagerContext> */}
+      <ChatPopup />
+    </JourneyContext.Provider>
+  )
+}
 const SidebarContainer = styled.div<any>`
   position: sticky;
   display: inline-block;
   vertical-align: top;
   top: 46px;
-  height: ${(props) => Math.floor(window.innerHeight) - 46 + "px;"};
+  height: ${() => Math.floor(window.innerHeight) - 46 + "px;"};
   width: 25%;
   overflow: auto;
-`;
+`
 
 const ContentContainer = styled.div<any>`
   position: fixed;
@@ -350,7 +353,31 @@ const ContentContainer = styled.div<any>`
   right: 0;
   display: inline-block;
   vertical-align: top;
-  height: ${(props) => Math.floor(window.innerHeight) - 46 + "px;"};
+  height: ${() => Math.floor(window.innerHeight) - 46 + "px;"};
   width: calc(100% - 25%);
   overflow: auto;
-`;
+`
+
+export const JourneyPage: React.FC<{}> = () => {
+  const [journey, setJourney] = useState<FullJourney>()
+  const [loadingJourney, setLoadingJourney] = useState<boolean>(true)
+  const routeParams = useParams()
+
+  React.useEffect(() => {
+    if (!journey) {
+      fetchJourney(routeParams.journeyId).then((response) => {
+        console.log(`loaded journey ${response.id}`)
+        setJourney(response)
+        setLoadingJourney(false)
+      })
+    }
+  }, [journey, routeParams.journeyId])
+
+  if (loadingJourney) return <></>
+
+  return (
+    <AppProvider>
+      <_JourneyPage journey={journey}></_JourneyPage>
+    </AppProvider>
+  )
+}

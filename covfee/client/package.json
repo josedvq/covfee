@@ -63,7 +63,7 @@
     "react-router-dom": "^6.14.2",
     "socket.io-client": "^4.6.1",
     "styled-components": "^6.0.5",
-    "typescript": "^4.3.5",
+    "typescript": "^5.1.6",
     "video.js": "^7.8.4",
     "wavesurfer.js": "^5.2.0"
   }

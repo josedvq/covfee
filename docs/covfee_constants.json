@@ -10,6 +10,6 @@
   "admin": {
     "unsafe_mode_on": false,
     "home_url": "http://127.0.0.1:5000/admin#",
-    "login_url": "http://127.0.0.1:5000/admin#login"
+    "login_url": "http://127.0.0.1:5000/admin#/login"
   }
 }

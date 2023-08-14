@@ -1,11 +1,11 @@
-import * as React from "react";
-import "./css/gui.scss";
+import * as React from "react"
+import "./css/gui.scss"
 
-import { AppProvider } from "./app_provider";
+import { AppProvider } from "./app_provider"
 
-import { HashRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, Link } from "react-router-dom"
 
-import { JourneyPage } from "./journey/journey";
+import { JourneyPage } from "./journey/journey"
 
 const Root = () => {
   return (
@@ -22,7 +22,7 @@ const Root = () => {
                         </Text>
                     </Footer> */}
     </Router>
-  );
-};
+  )
+}
 
-export default Root;
+export default Root

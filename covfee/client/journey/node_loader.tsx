@@ -1,71 +1,71 @@
-import * as React from "react";
-import styled from "styled-components";
-import ReactDOM from "react-dom";
-import { Button, Popover, Spin } from "antd";
+import * as React from "react"
+import styled from "styled-components"
+import ReactDOM from "react-dom"
+import { Button, Popover, Spin } from "antd"
 
-import { JourneyContext } from "./journey_context";
-import { myerror } from "../utils";
-import { getTask } from "../task_utils";
-import { QuestionCircleOutlined } from "@ant-design/icons";
-import { BaseTaskProps, CovfeeTask } from "tasks/base";
-import { useNode } from "../models/Node";
-import { NodeType } from "../types/node";
-import { AllPropsRequired } from "../types/utils";
-import { nodeContext } from "./node_context";
-import { Provider as StoreProvider } from "react-redux";
-import { configureStore } from "@reduxjs/toolkit";
-import { appContext } from "../app_context";
+import { JourneyContext } from "./journey_context"
+import { myerror } from "../utils"
+import { getTask } from "../task_utils"
+import { QuestionCircleOutlined } from "@ant-design/icons"
+import { BaseTaskProps, CovfeeTask } from "tasks/base"
+import { useNode } from "../models/Node"
+import { NodeType } from "../types/node"
+import { AllPropsRequired } from "../types/utils"
+import { nodeContext } from "./node_context"
+import { Provider as StoreProvider } from "react-redux"
+import { configureStore } from "@reduxjs/toolkit"
+import { appContext } from "../app_context"
 
 interface Props {
   /**
    * Task props and specification
    */
-  node: NodeType;
+  node: NodeType
   /**
    * If true, the task cannot be interacted with
    */
-  disabled?: boolean;
+  disabled?: boolean
   /**
    * If true, the task is only previewed: submission and server communication are disabled.
    * Used for previews and playground where no server is available.
    */
-  previewMode?: boolean;
+  previewMode?: boolean
 
   // INTERFACE
 
   /**
    * Passed to tasks to render the submit button
    */
-  renderSubmitButton: (arg0?: any) => React.ReactNode;
+  renderSubmitButton: (arg0?: any) => React.ReactNode
   /**
    * Used in the class to render the "next" button
    */
-  renderNextButton: (arg0?: any) => React.ReactNode;
+  renderNextButton: (arg0?: any) => React.ReactNode
   // CALLBACKS
   /**
    * To be called when the task is submitted.
    */
-  onSubmit?: () => void;
+  onSubmit?: () => void
   /**
    * To be called when the user clicks to go to the next task
    */
-  onClickNext?: () => void;
+  onClickNext?: () => void
 }
 
-export const NodeLoader = (props: Props) => {
+export const NodeLoader: React.FC<Props> = (props: Props) => {
   const args: AllPropsRequired<Props> = {
     disabled: false,
     previewMode: false,
     onSubmit: () => {},
     onClickNext: () => {},
     ...props,
-  };
+  }
 
-  const { socket, chocket } = React.useContext(appContext);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [instructionsVisible, setInstructionsVisible] = React.useState(false);
-  const [overlayVisible, setOverlayVisible] = React.useState(false);
-  const { id: journeyId } = React.useContext(JourneyContext);
+  const { socket, chocket } = React.useContext(appContext)
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [instructionsVisible, setInstructionsVisible] = React.useState(false)
+  const [overlayVisible, setOverlayVisible] = React.useState(false)
+  const { id: journeyId } = React.useContext(JourneyContext)
 
   const {
     node,
@@ -75,33 +75,35 @@ export const NodeLoader = (props: Props) => {
     setStatus: setNodeStatus,
     fetchResponse,
     submitResponse,
-  } = useNode(args.node, socket);
+  } = useNode(args.node, socket)
 
-  const nodeElementRef = React.useRef(null);
-  const nodeInstructionsRef = React.useRef(null);
+  const nodeElementRef = React.useRef(null)
+  const nodeInstructionsRef = React.useRef(null)
 
   const {
     taskComponent,
     taskReducer,
     useSharedState: taskRequestsSharedState,
-  } = getTask(args.node.spec.type);
+  } = getTask(args.node.spec.type)
+
   const taskuseSharedState =
-    taskRequestsSharedState !== undefined ? taskRequestsSharedState : false;
+    taskRequestsSharedState !== undefined ? taskRequestsSharedState : false
   const useSharedState =
     args.node.useSharedState !== undefined
       ? args.node.useSharedState
-      : taskuseSharedState;
+      : taskuseSharedState
+
   const reduxStore = React.useRef(
     configureStore({
       reducer: taskReducer,
     })
-  );
+  )
 
   React.useEffect(() => {
     fetchResponse().then((_) => {
-      setIsLoading(false);
-    });
-  }, [socket]);
+      setIsLoading(false)
+    })
+  }, [fetchResponse])
 
   React.useEffect(() => {
     if (response && socket) {
@@ -110,27 +112,27 @@ export const NodeLoader = (props: Props) => {
         nodeId: node.id,
         responseId: response.id,
         useSharedState,
-      });
+      })
     }
-  }, [response, socket]);
+  }, [journeyId, node.id, response, socket, useSharedState])
 
   React.useEffect(() => {
     if (args.node.type == "TaskInstance") {
-      args.node.spec.instructionsType == "popped";
+      args.node.spec.instructionsType == "popped"
     }
-  }, []);
+  }, [])
 
   const handleTaskSubmit = (taskResult: any) => {
     submitResponse(taskResult)
       .then((data: any) => {
-        setNodeStatus("FINISHED");
-        args.onSubmit();
+        setNodeStatus("FINISHED")
+        args.onSubmit()
       })
       .catch((error) => {
-        myerror("Error submitting the task.", error);
-        setNodeStatus("FINISHED");
-      });
-  };
+        myerror("Error submitting the task.", error)
+        setNodeStatus("FINISHED")
+      })
+  }
 
   // const renderErrorModal = () => {
   //     return <Modal
@@ -168,29 +170,29 @@ export const NodeLoader = (props: Props) => {
     return {
       title: "Your task is submitted!",
       mainOptions: [args.renderNextButton()],
-    };
-  };
+    }
+  }
 
   const createTaskRef = (element: CovfeeTask<any, any>) => {
-    nodeElementRef.current = element;
+    nodeElementRef.current = element
     if (element && element.instructions) {
       ReactDOM.render(
         renderTaskInfo(element.instructions()),
         nodeInstructionsRef.current
-      );
+      )
     } else {
       if (node.spec.instructions)
-        ReactDOM.render(renderTaskInfo(null), nodeInstructionsRef.current);
+        ReactDOM.render(renderTaskInfo(null), nodeInstructionsRef.current)
     }
-  };
+  }
 
   const hideInstructions = () => {
-    setInstructionsVisible(false);
-  };
+    setInstructionsVisible(false)
+  }
 
   const handleInstructionsVisibleChange = (visible: boolean) => {
-    setInstructionsVisible(visible);
-  };
+    setInstructionsVisible(visible)
+  }
 
   const renderTaskInfo = (instructions: React.ReactNode = null) => {
     return (
@@ -216,11 +218,19 @@ export const NodeLoader = (props: Props) => {
           <QuestionCircleOutlined /> Instructions
         </div>
       </Popover>
-    );
-  };
+    )
+  }
 
   if (node.status == "INIT") {
-    return <Spin />;
+    return (
+      <NodeLoaderMessage>
+        <h1>Waiting for subjects...</h1>
+        <Spin />
+        <p>
+          {node.curr_journeys.length} / {node.num_journeys} subjects present
+        </p>
+      </NodeLoaderMessage>
+    )
   }
 
   if (node.status == "WAITING") {
@@ -232,7 +242,7 @@ export const NodeLoader = (props: Props) => {
           {node.curr_journeys.length} / {node.num_journeys} subjects present
         </p>
       </NodeLoaderMessage>
-    );
+    )
   }
 
   if (node.status == "FINISHED") {
@@ -241,7 +251,7 @@ export const NodeLoader = (props: Props) => {
         <h1>Task is finished</h1>
         <p>Nothing to be done here!</p>
       </NodeLoaderMessage>
-    );
+    )
   }
 
   if (node.status == "RUNNING") {
@@ -250,7 +260,7 @@ export const NodeLoader = (props: Props) => {
         <NodeLoaderMessage>
           <h1>Unimplemented</h1>
         </NodeLoaderMessage>
-      );
+      )
     }
 
     return (
@@ -267,7 +277,7 @@ export const NodeLoader = (props: Props) => {
                   disabled: args.disabled,
                   onSubmit: (res) => handleTaskSubmit(res),
                   renderSubmitButton: args.renderSubmitButton,
-                };
+                }
 
                 const taskElement = React.createElement(
                   taskComponent,
@@ -275,30 +285,30 @@ export const NodeLoader = (props: Props) => {
                     ...nodeProps,
                   },
                   null
-                );
+                )
 
-                return taskElement;
+                return taskElement
               })()}
             </nodeContext.Provider>
           </StoreProvider>
         </div>
       </>
-    );
+    )
   }
-};
+}
 
 interface NodeLoaderMessageProps {
-  children: React.ReactNode;
+  children: React.ReactNode
 }
 export const NodeLoaderMessage = (props: NodeLoaderMessageProps) => {
-  const args: AllPropsRequired<NodeLoaderMessageProps> = { ...props };
+  const args: AllPropsRequired<NodeLoaderMessageProps> = { ...props }
 
   return (
     <MessageContainer>
       <div>{args.children}</div>
     </MessageContainer>
-  );
-};
+  )
+}
 
 const MessageContainer = styled.div`
   display: flex;
@@ -315,9 +325,9 @@ const MessageContainer = styled.div`
     margin: 0 auto;
     text-align: center;
   }
-`;
+`
 
 const InstructionsPopoverContent = styled.div`
   width: calc(30vw);
   max-height: calc(50vh);
-`;
+`

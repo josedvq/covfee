@@ -55,7 +55,6 @@ def on_connect(data):
         return False
     journey.num_connections += 1
     app.session.commit()
-    print(journey.num_connections)
 
     session["journeyId"] = data["journeyId"]
     payload = {
@@ -64,8 +63,6 @@ def on_connect(data):
         "num_connections": journey.num_connections,
     }
     emit("journey_connect", payload, namespace="/admin", broadcast=True)
-
-    # update DB
 
 
 def make_node_status_payload(prev_status: NodeInstanceStatus, node: NodeInstance):
@@ -156,6 +153,37 @@ def on_join(data):
             send(f"Unable to join room id={curr_response_id}")
 
 
+# admin joins a node
+@socketio.on("join", namespace="/admin")
+def on_admin_join(data):
+    curr_node_id = int(data["nodeId"])
+    curr_response_id = int(data["responseId"])
+    response = get_response(curr_response_id)
+
+    use_shared_state = data["useSharedState"]
+
+    join_room(curr_response_id, namespace="/admin")
+
+    session["nodeId"] = curr_node_id
+    session["responseId"] = curr_response_id
+    session["useSharedState"] = use_shared_state
+
+    if use_shared_state:
+        # task may not be running so we need to pass the state
+        res = store.join(
+            curr_response_id, response.task.spec.spec["type"], response.state
+        )
+        if res["success"]:
+            emit("state", res, namespace="/admin", broadcast=True)
+
+            # if this is the first join, run the on_first_join callback
+            # if res['numConnections'] == 1:
+            #     get_task_object(int(room)).on_first_join()
+
+        else:
+            send(f"Unable to join room id={curr_response_id}")
+
+
 @socketio.on("action")
 def on_action(data):
     action = data["action"]
@@ -169,6 +197,7 @@ def on_action(data):
     res = store.action(responseId, action)
     if res["success"]:
         emit("action", action, to=responseId)
+        emit("action", action, to=responseId, namespace="/admin")
 
 
 def leave_store(responseId):

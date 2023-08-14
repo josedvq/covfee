@@ -6,8 +6,8 @@ import { HashRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { AppProvider } from "../app_provider";
 import ProjectsPage from "./projects_page";
 import { LoginPage } from "./login";
-import { ChatPopup } from "../chat/chat";
 import { AdminLayout } from "./layout";
+import { NodePage } from "./node_page";
 
 export const Root: React.FC<void> = (props) => {
   return (
@@ -19,6 +19,7 @@ export const Root: React.FC<void> = (props) => {
               path="/projects/:projectId"
               element={<ProjectsPage />}
             ></Route>
+            <Route path="/nodes/:nodeId" element={<NodePage />}></Route>
             <Route path="/login" element={<LoginPage />}></Route>
             <Route path="/" element={<ProjectsPage />}></Route>
           </Routes>

@@ -1,15 +1,6 @@
 import * as React from "react";
 import CovfeeLogo from "../art/logo.svg";
-import {
-  Alert,
-  Col,
-  Layout,
-  Menu,
-  Row,
-  Typography,
-  Result,
-  Button,
-} from "antd";
+import { Layout, Menu, Typography, Result, Button } from "antd";
 import Constants from "Constants";
 import { Footer } from "antd/lib/layout/layout";
 const { Title, Paragraph, Text } = Typography;
@@ -36,7 +27,7 @@ export const AdminHeader: React.FC<React.PropsWithChildren<HeaderProps>> = (
   const { logged, logout } = React.useContext(appContext);
 
   const handleLogin = () => {
-    window.location.replace(Constants.admin.login_url);
+    window.location.replace(Constants.admin.home_url + "/login");
   };
 
   const handleLogout = () => {

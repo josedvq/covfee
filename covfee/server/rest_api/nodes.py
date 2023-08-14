@@ -1,8 +1,9 @@
 from io import BytesIO
 
-from flask import request, jsonify, \
-     send_file, current_app as app
+from flask import request, jsonify, send_file, current_app as app
 import zipstream
+
+from covfee.server.orm.node import NodeInstance
 
 from .api import api
 from .auth import admin_required
@@ -11,32 +12,39 @@ from ..orm import TaskSpec, TaskInstance, TaskResponse
 
 # TASKS
 
-@api.route('/tasks/<kid>/response')
-def response(kid):
-    ''' Will return the last response for a task
-    '''
-    task = app.session.query(TaskInstance).get(int(kid))
+
+@api.route("/nodes/<nid>")
+def nodes(nid):
+    node = app.session.query(NodeInstance).get(int(nid))
+    return jsonify_or_404(node)
+
+
+@api.route("/tasks/<tid>/response")
+def response(tid):
+    """Will return the last response for a task"""
+    task = app.session.query(TaskInstance).get(int(tid))
     if task is None:
-        return jsonify({'msg': 'invalid task'}), 400
+        return jsonify({"msg": "invalid task"}), 400
 
     responses = task.responses
-    submitted = request.args.get('submitted', None)
+    submitted = request.args.get("submitted", None)
     if submitted is not None:
         responses = [r for r in responses if r.submitted == bool(submitted)]
 
     if len(responses) == 0:
-        return jsonify(msg='No submitted responses found.'), 403
+        return jsonify(msg="No submitted responses found."), 403
 
     response_dict = responses[-1].to_dict()
     return jsonify(response_dict)
 
-@api.route('/tasks/<kid>/make_response', methods=['POST'])
+
+@api.route("/tasks/<kid>/make_response", methods=["POST"])
 def make_response(kid):
-    submit = bool(request.args.get('submit', False))
+    submit = bool(request.args.get("submit", False))
 
     task = app.session.query(TaskInstance).get(int(kid))
     if task is None:
-        return jsonify({'msg': 'invalid task'}), 400
+        return jsonify({"msg": "invalid task"}), 400
 
     response = task.add_response()
     if request.json:
@@ -46,6 +54,7 @@ def make_response(kid):
     app.session.commit()
     return jsonify(response.to_dict())
 
+
 # record a response to a task
 # @api.route('/responses/<rid>/submit', methods=['POST'])
 # def response_submit(rid):
@@ -53,6 +62,6 @@ def make_response(kid):
 #     if response is None:
 #         return jsonify({'msg': 'invalid response'}), 400
 
-#     res = response.submit(request.json)    
+#     res = response.submit(request.json)
 #     app.session.commit()
 #     return jsonify(res)
