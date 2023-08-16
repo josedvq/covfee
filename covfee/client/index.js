@@ -1,21 +1,17 @@
-import * as React from "react";
-import ReactDOM from "react-dom/client";
+import * as React from "react"
+import ReactDOM from "react-dom/client"
 
-import RootContainer from "./root";
+import { createHashRouter, RouterProvider } from "react-router-dom"
+import { JourneyPage } from "./journey/journey"
 
-const title = "covfee: the continuous video feedback tool";
+const title = "covfee: the continuous video feedback tool"
 
-const root = ReactDOM.createRoot(document.getElementById("app"));
-root.render(<RootContainer />);
-// const render = () => {
-//     ReactDOM.render(<RootContainer />, document.getElementById('app'));
-// }
+const router = createHashRouter([
+  {
+    path: "/journeys/:journeyId/:nodeId?",
+    element: <JourneyPage />,
+  },
+])
 
-// render(RootContainer)
-
-// if (module.hot) {
-//     module.hot.accept('./root.tsx', () => {
-//         const NextRootContainer = require('./root.tsx').default;
-//         render(NextRootContainer);
-//     })
-// }
+const root = ReactDOM.createRoot(document.getElementById("app"))
+root.render(<RouterProvider router={router} />)

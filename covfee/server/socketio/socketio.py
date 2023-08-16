@@ -218,7 +218,7 @@ def disconnect():
     journey = get_journey(journey_id)
     journey.num_connections = max(0, journey.num_connections - 1)
     node = journey.curr_node
-    prev_status = node.status
+    prev_status = node.status if node else None
     # journey.set_curr_node(None)
     app.session.commit()
 
@@ -238,9 +238,10 @@ def disconnect():
     if "useSharedState" in session and session["useSharedState"]:
         leave_store(response_id)
 
-    payload = make_node_status_payload(prev_status, node)
-    emit("status", payload, to=response_id)
-    emit("status", payload, namespace="/admin", broadcast=True)
+    if node:
+        payload = make_node_status_payload(prev_status, node)
+        emit("status", payload, to=response_id)
+        emit("status", payload, namespace="/admin", broadcast=True)
 
 
 ### CHAT ###

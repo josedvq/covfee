@@ -34,12 +34,6 @@ class Project(Base):
         self._conflicts = False
         self._filename = None
 
-    def launch(self, num_instances=1):
-        for spec in self.hitspecs:
-            spec.instantiate(num_instances)
-        l = launcher.Launcher([self])
-        l.start(mode="dev")
-
     def __repr__(self):
         pass
 

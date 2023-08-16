@@ -12,6 +12,7 @@ import {
 import { useChats } from "./models/Chat"
 import { AllPropsRequired } from "./types/utils"
 import { useParams } from "react-router-dom"
+import { useUserConfig } from "./user_config"
 
 interface LoginInfo {
   username: string
@@ -66,7 +67,7 @@ export const AppProvider: React.FC<Props> = (props) => {
   const [roles, setRoles] = React.useState([])
   const [socket, setSocket] = React.useState(getSocket)
   const [chocket, setChocket] = React.useState(getChocket)
-  const chats = useChats(chocket, [])
+  const userConfig = useUserConfig(props.admin ? "admin" : "user")
 
   // Refreshes the auth token
   const refresh = async () => {
@@ -221,7 +222,7 @@ export const AppProvider: React.FC<Props> = (props) => {
         setSocket,
         chocket,
         setChocket,
-        chats,
+        userConfig,
         ...contextMethods,
       }}
     >

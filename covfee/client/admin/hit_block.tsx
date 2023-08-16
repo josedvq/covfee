@@ -26,23 +26,24 @@ import {
 } from "./utils"
 import classNames from "classnames"
 import { ForceGraph } from "./force_graph"
+import { chatContext } from "../chat_context"
 
 interface Props {
   hit: HitInstanceType
 }
 export const HitBlock = (props: Props) => {
-  const [collapsed, _setCollapsed] = React.useState<boolean>(
-    props.hit.collapsed
+  const {
+    userConfig: { setConfig, getConfig },
+  } = React.useContext(appContext)
+
+  // sync collapsed with user config
+  const [collapsed, setCollapsed] = React.useState<boolean>(
+    getConfig(`${props.hit.id}_collapsed`, "0") == "1"
   )
-  const [showGraph, _setShowGraph] = React.useState<boolean>(
-    props.hit.show_graph
-  )
-  const [showJourneys, _setShowJourneys] = React.useState<boolean>(
-    props.hit.show_journeys
-  )
-  const [showNodes, _setShowNodes] = React.useState<boolean>(
-    props.hit.show_nodes
-  )
+  React.useEffect(() => {
+    setConfig(`${props.hit.id}_collapsed`, collapsed ? "1" : "0")
+  }, [collapsed, props.hit.id, setConfig])
+
   const timeout = React.useRef<NodeJS.Timeout>(null)
 
   const [focusedNode, setFocusedNode] = React.useState<number>(null)
@@ -83,26 +84,6 @@ export const HitBlock = (props: Props) => {
       })
     }
     clearTimeout(timeout.current)
-  }
-
-  const setCollapsed = async (value: boolean) => {
-    _setCollapsed(value)
-    // storeCollapsed(value);
-  }
-
-  const setShowGraph = async (value: boolean) => {
-    _setShowGraph(value)
-    // storeShowGraph(value);
-  }
-
-  const setShowJourneys = async (value: boolean) => {
-    _setShowJourneys(value)
-    // storeShowJourneys(value);
-  }
-
-  const setShowNodes = async (value: boolean) => {
-    _setShowNodes(value)
-    // storeShowNodes(value);
   }
 
   const nodesHist = Object.fromEntries(
@@ -177,24 +158,21 @@ export const HitBlock = (props: Props) => {
               </ul>
             </NodesList>
 
-            {/* <Button onClick={() => setShowGraph(!showGraph)}>Graph</Button> */}
-            {showGraph && (
-              <GraphContainer>
-                <ForceGraph
-                  hit={props.hit}
-                  focusedNode={focusedNode}
-                  focusedJourney={focusedJourney}
-                  onNodeFocus={(i, x, y) => {
-                    handleNodeHover(i, x, y)
-                    // setHoveringButtonProps({ ...hoveringButtonProps, x, y });
-                  }}
-                  onNodeBlur={() => {
-                    startHoveringButtonsTimeout()
-                    setFocusedNode(null)
-                  }}
-                ></ForceGraph>
-              </GraphContainer>
-            )}
+            <GraphContainer>
+              <ForceGraph
+                hit={props.hit}
+                focusedNode={focusedNode}
+                focusedJourney={focusedJourney}
+                onNodeFocus={(i, x, y) => {
+                  handleNodeHover(i, x, y)
+                  // setHoveringButtonProps({ ...hoveringButtonProps, x, y });
+                }}
+                onNodeBlur={() => {
+                  startHoveringButtonsTimeout()
+                  setFocusedNode(null)
+                }}
+              ></ForceGraph>
+            </GraphContainer>
           </div>
 
           <div style={{ width: "40%" }}>
@@ -360,9 +338,7 @@ type JourneyRowProps = {
   onBlur: () => void
 }
 const JourneyRow = ({ journey, focus, onFocus, onBlur }: JourneyRowProps) => {
-  const {
-    chats: { addChats },
-  } = React.useContext(appContext)
+  const { addChats } = React.useContext(chatContext)
   const { getUrl } = useJourneyFns(journey)
 
   return (
@@ -428,9 +404,7 @@ type NodeButtonsProps = {
   node: NodeType
 }
 export const NodeButtons = ({ node }: NodeButtonsProps) => {
-  const {
-    chats: { addChats },
-  } = React.useContext(appContext)
+  const { addChats } = React.useContext(chatContext)
   const { getAdminUrl: getUrl } = useNodeFns(node)
 
   return (

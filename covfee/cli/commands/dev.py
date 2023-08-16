@@ -40,4 +40,5 @@ def make_schemata():
     with Halo(text="Making schemata", spinner="dots") as spinner:
         schema = Schemata()
         schema.make()
+        schema.make_dataclasses()
         spinner.succeed("Schemata made.")

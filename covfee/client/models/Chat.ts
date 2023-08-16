@@ -2,39 +2,39 @@ import * as React from "react"
 import { ApiChat, Chat, ChatMessage, IoChatMessage } from "../types/chat"
 import { fetcher, throwBadResponse } from "../utils"
 import Constants from "Constants"
-import { ChatSocket } from "../app_context"
+import { ChatSocket, appContext } from "../app_context"
 
-export const useChats = (chocket: ChatSocket, chat_ids: number[] = []) => {
+type Props = {
+  initialChatIds?: number[]
+  initialChatOpen?: boolean
+  initialActiveChatId?: number
+}
+
+export const useChats = ({
+  initialChatIds = [],
+  initialChatOpen = false,
+  initialActiveChatId,
+}: Props) => {
+  const { chocket } = React.useContext(appContext)
+  const [init, setInit] = React.useState<boolean>(true)
   const [chatIdsBeingFetched, setChatIdsBeingFetched] = React.useState<
     Set<number>
   >(new Set())
 
   const [chatIdsToListen, setChatIdsToListen] = React.useState<Set<number>>(
-    new Set(chat_ids)
+    new Set()
   )
   const [chats, setChats] = React.useState<Record<string, Chat>>({})
   const [messages, setMessages] = React.useState<Record<string, ChatMessage>>(
     {}
   )
 
-  const [chatOpen, setChatOpen] = React.useState(true)
+  const [chatOpen, setChatOpen] = React.useState(initialChatOpen)
   const [activeChatId, setActiveChatId] = React.useState(0)
 
   const [unreadCounts, setUnreadCounts] = React.useState<
     Record<string, number>
   >({})
-
-  React.useEffect(() => {
-    const unreadCounts: Record<string, number> = Object.fromEntries(
-      Object.values(chats).map((chat) => [chat.id, 0])
-    )
-    Object.values(messages).forEach((message) => {
-      unreadCounts[message.chat_id] += message.read ? 0 : 1
-    })
-    console.log(messages)
-    console.log(unreadCounts)
-    setUnreadCounts(unreadCounts)
-  }, [chats, messages])
 
   const setChatData = (chatId: number, fn: (arg0: Chat) => Chat) => {
     setChats((chats) => ({
@@ -148,28 +148,6 @@ export const useChats = (chocket: ChatSocket, chat_ids: number[] = []) => {
     })
   }, [])
 
-  React.useEffect(() => {
-    if (Object.keys(chats).length && chocket) {
-      chocket.removeAllListeners("message")
-      chocket.on("message", (message: IoChatMessage) => {
-        console.log(`MESSAGE: ${message}`)
-        if (message.chat_id in chats) {
-          setMessages((messages) => ({
-            ...messages,
-            [message.chat_id]: message,
-          }))
-        } else {
-          if (
-            chatIdsToListen.size || // listen to all chats by default
-            chatIdsToListen.has(message.chat_id)
-          ) {
-            addChats([message.chat_id])
-          }
-        }
-      })
-    }
-  }, [addChats, chatIdsToListen, chats, chocket])
-
   const clearChatListeners = () => {
     setChatIdsToListen(new Set())
   }
@@ -196,8 +174,48 @@ export const useChats = (chocket: ChatSocket, chat_ids: number[] = []) => {
     [unreadCounts]
   )
 
+  React.useEffect(() => {
+    if (!init) return
+    // will only run once
+    addChats(initialChatIds)
+    setInit(false)
+  }, [init, addChats, initialChatIds])
+
+  React.useEffect(() => {
+    const unreadCounts: Record<string, number> = Object.fromEntries(
+      Object.values(chats).map((chat) => [chat.id, 0])
+    )
+    Object.values(messages).forEach((message) => {
+      unreadCounts[message.chat_id] += message.read ? 0 : 1
+    })
+    setUnreadCounts(unreadCounts)
+  }, [chats, messages])
+
+  React.useEffect(() => {
+    if (Object.keys(chats).length && chocket) {
+      chocket.removeAllListeners("message")
+      chocket.on("message", (message: IoChatMessage) => {
+        console.log(`MESSAGE: ${message}`)
+        if (message.chat_id in chats) {
+          setMessages((messages) => ({
+            ...messages,
+            [message.chat_id]: message,
+          }))
+        } else {
+          if (
+            chatIdsToListen.size || // listen to all chats by default
+            chatIdsToListen.has(message.chat_id)
+          ) {
+            addChats([message.chat_id])
+          }
+        }
+      })
+    }
+  }, [addChats, chatIdsToListen, chats, chocket])
+
   return {
     chats: Object.values(chats),
+    chatIds: Object.keys(chats),
     getChatMessages,
     addChatListeners,
     clearChatListeners,

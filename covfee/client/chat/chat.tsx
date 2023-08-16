@@ -7,6 +7,7 @@ import classNames from "classnames"
 import { Empty } from "antd"
 import { appContext } from "../app_context"
 import { getHumanFriendlyDateString } from "../utils"
+import { chatContext } from "../chat_context"
 
 const getChatName = (chat: Chat) => {
   if (chat.journey_id) {
@@ -22,17 +23,8 @@ export const ChatPopup: React.FC<{}> = (props) => {
     ...props,
   }
 
-  const {
-    chats: {
-      chats,
-      addChats,
-      removeChats,
-      hasChat,
-      chatOpen,
-      setChatOpen,
-      getNumberUnreadMessages,
-    },
-  } = useContext(appContext)
+  const { chats, chatOpen, setChatOpen, getNumberUnreadMessages } =
+    useContext(chatContext)
 
   const [currChat, setCurrChat] = React.useState(0)
 
@@ -133,9 +125,7 @@ export const Chatbox: React.FC<ChatboxProps> = (props) => {
     ...props,
   }
 
-  const {
-    chats: { emitMessage, getChatMessages },
-  } = React.useContext(appContext)
+  const { emitMessage, getChatMessages } = React.useContext(chatContext)
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
 
   const messages = getChatMessages(props.chat.id)

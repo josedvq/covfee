@@ -30,6 +30,7 @@ import { appContext } from "../app_context"
 import { useParams } from "react-router-dom"
 import { ChatPopup } from "../chat/chat"
 import { AppProvider } from "../app_provider"
+import { ChatProvider, chatContext } from "../chat_context"
 import { io } from "socket.io-client"
 import { Chat } from "../types/chat"
 
@@ -65,11 +66,8 @@ export const _JourneyPage: React.FC<Props> = (props) => {
   )
 
   const routeParams = useParams()
-  const {
-    socket,
-    chocket,
-    chats: { addChats, removeChats, hasChat },
-  } = useContext(appContext)
+  const { socket, chocket } = useContext(appContext)
+  const { addChats, removeChats, hasChat } = useContext(chatContext)
   const { journey, setJourney } = useJourney<FullJourney>(args.journey)
 
   const [currNode, setCurrNode] = useState(
@@ -377,7 +375,9 @@ export const JourneyPage: React.FC<{}> = () => {
 
   return (
     <AppProvider>
-      <_JourneyPage journey={journey}></_JourneyPage>
+      <ChatProvider>
+        <_JourneyPage journey={journey}></_JourneyPage>
+      </ChatProvider>
     </AppProvider>
   )
 }

@@ -1,20 +1,19 @@
-import * as React from "react";
-import { Select, Typography, Empty, Button } from "antd";
+import * as React from "react"
+import { Select, Typography, Empty, Button } from "antd"
 
-import Constants from "Constants";
-import { getAllProjects, getProject, useProject } from "../models/Project";
-import { ProjectType } from "types/project";
-import { HitBlock } from "./hit_block";
-import { appContext } from "../app_context";
+import Constants from "Constants"
+import { getAllProjects, getProject, useProject } from "../models/Project"
+import { ProjectType } from "types/project"
+import { HitBlock } from "./hit_block"
+import { appContext } from "../app_context"
 
 interface Props {
-  project: ProjectType;
+  project: ProjectType
 }
 
 export const Project = (props: Props) => {
-  const { socket, clearChats, addChats, clearChatListeners, addChatListeners } =
-    React.useContext(appContext);
-  const { project } = useProject(props.project, socket);
+  const { socket } = React.useContext(appContext)
+  const { project } = useProject(props.project, socket)
 
   return (
     <>
@@ -37,9 +36,9 @@ export const Project = (props: Props) => {
 
       <div style={{ padding: "1em" }}>
         {project.hits.map((hit, index) => {
-          return <HitBlock hit={hit} key={index}></HitBlock>;
+          return <HitBlock hit={hit} key={index}></HitBlock>
         })}
       </div>
     </>
-  );
-};
+  )
+}

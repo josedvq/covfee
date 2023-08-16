@@ -10,6 +10,7 @@ import {
   ActionRequestPayload,
   StateRequestPayload,
 } from "../server/socketio/types"
+import { UserConfig } from "./user_config"
 
 export interface ServerToClientEvents {
   status: (arg0: {
@@ -72,7 +73,7 @@ export type AppContextProps = UserContextMethods &
     chocket: ChatSocket
     setSocket: (arg0: MainSocket) => void
     setChocket: (arg0: ChatSocket) => void
-    chats: UseChats
+    userConfig: UserConfig
   }
 
 export const appContext = React.createContext<AppContextProps>(null) // Create a context object

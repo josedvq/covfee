@@ -115,12 +115,6 @@ class HITInstance(Base):
         default=datetime.datetime.now, onupdate=datetime.datetime.now
     )
 
-    # admin settings
-    collapsed: Mapped[bool] = mapped_column(default=True)
-    show_graph: Mapped[bool] = mapped_column(default=True)
-    show_journeys: Mapped[bool] = mapped_column(default=False)
-    show_nodes: Mapped[bool] = mapped_column(default=False)
-
     def __init__(self, id: bytes, journeyspecs: List[JourneySpec] = []):
         super().__init__()
         self.id = id
