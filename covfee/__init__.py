@@ -1,10 +1,5 @@
 # expose building blocks
-from .server.orm import (
-    Project as Project,
-    HITSpec as HIT,
-    JourneySpec as Journey,
-    TaskSpec as Task,
-)
+from .shared.task_dataclasses import *
 
 from . import _version
 
