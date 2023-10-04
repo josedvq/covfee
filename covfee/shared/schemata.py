@@ -3,12 +3,10 @@ import json
 from collections import Counter
 
 from json_ref_dict import materialize, RefDict
-from statham.schema.parser import parse
-from statham.titles import title_labeller
-from statham.serializers.python import serialize_python
 
 from covfee.cli.utils import working_directory
 from covfee.config import config
+from .dataclass_maker import DataclassMaker
 
 
 class Schemata:
@@ -183,12 +181,18 @@ class Schemata:
         return recursive_dfs(definition)
 
     def make_dataclasses(self):
-        schemata = materialize(
-            RefDict(config["SCHEMATA_PATH"]), context_labeller=title_labeller()
-        )
-        elements = parse(schemata)
-        with open(config["DATACLASSES_PATH"], "w") as fh:
-            fh.write(serialize_python(*elements))
+        task_specs = [
+            sch
+            for sch in self.schemata["definitions"].values()
+            if sch["title"].endswith("TaskSpec")
+        ]
+        definitions = self.schemata["definitions"]
+
+        dm = DataclassMaker(definitions)
+        pfile = dm.make_dataclasses_file(task_specs, definitions)
+
+        with open(config["DATACLASSES_PATH"], "w") as f:
+            f.write(pfile)
 
 
 schemata = Schemata()
