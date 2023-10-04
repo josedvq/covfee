@@ -103,11 +103,15 @@ class DataclassMaker:
         params = [e for p in params for e in p]
         return [f'"""{description}', "### Parameters", *params, '"""']
 
-    def sort_props(self, props):
+    def sort_props(self, props, required_props):
         props_const = [p for p in props if self.is_constant(p)]
         props_nonconst = [p for p in props if not self.is_constant(p)]
-        props_without_defaults = [p for p in props_nonconst if "default" not in p]
-        props_with_defaults = [p for p in props_nonconst if "default" in p]
+        props_without_defaults = [
+            p for p in props_nonconst if p["title"] in required_props
+        ]
+        props_with_defaults = [
+            p for p in props_nonconst if p["title"] not in required_props
+        ]
 
         props_without_defaults = sorted(
             props_without_defaults, key=lambda x: x["title"]
@@ -116,21 +120,29 @@ class DataclassMaker:
 
         return props_const, props_without_defaults, props_with_defaults
 
+    def get_default_value(self, prop):
+        if "default" in prop:
+            return prop["default"]
+        else:
+            return None
+
     def make_dataclass(self, schema, definitions):
         props = list(schema["properties"].values())
         # props = [self.deref(prop) for prop in props]
         class_name = schema["title"]
+        required_props = schema["required"]
         description = schema.get("description", "")
 
         props_const, props_without_defaults, props_with_defaults = self.sort_props(
-            props
+            props, required_props
         )
         all_props = props_const + props_without_defaults + props_with_defaults
         constructor_props = props_without_defaults + props_with_defaults
 
         arglist = [f'{prop["title"]}' for prop in props_without_defaults]
         arglist += [
-            f'{prop["title"]} = {prop["default"]}' for prop in props_with_defaults
+            f'{prop["title"]} = {self.get_default_value(prop)}'
+            for prop in props_with_defaults
         ]
 
         prop_assignments = [
@@ -151,6 +163,7 @@ class DataclassMaker:
             *tab(1, [f'def __init__(self, {", ".join(arglist)}):']),
             *tab(2, self.make_docstring(description, constructor_props)),
             NEWL,
+            *tab(2, ["super().__init__()"]),
             *tab(2, prop_assignments),
         ]
 

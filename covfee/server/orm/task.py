@@ -38,6 +38,9 @@ class TaskSpec(NodeSpec):
         super().__init__(node_spec)
         self.spec = {k: v for k, v in spec.items() if k not in node_properties}
 
+        print(node_spec)
+        print(self.spec)
+
     def instantiate(self):
         instance = TaskInstance()
         self.nodes.append(instance)

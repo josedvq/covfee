@@ -1,5 +1,6 @@
 # expose building blocks
-from .shared.task_dataclasses import *
+from .shared.dataclass import Project, HIT, Journey
+from .shared import task_dataclasses as tasks
 
 from . import _version
 

@@ -47,10 +47,6 @@ export interface HitSpec {
    */
   extra?: MarkdownContentSpec
   /**
-   * If true, the user will be required to log in before starting the task
-   */
-  requireLogin?: boolean
-  /**
    * HIT configuration and other params
    */
   config?: completionInfo

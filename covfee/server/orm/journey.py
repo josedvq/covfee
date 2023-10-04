@@ -39,9 +39,9 @@ class JourneySpec(Base):
     # instance relationships
     journeys: Mapped[List[JourneyInstance]] = relationship(back_populates="spec")
 
-    def __init__(self, nodes: List[NodeSpec] = []):
+    def __init__(self, nodespecs: List[NodeSpec] = []):
         super().__init__()
-        self.nodes = nodes
+        self.nodespecs = nodespecs
 
     def instantiate(self):
         instance = JourneyInstance()

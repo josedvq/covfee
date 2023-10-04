@@ -54,7 +54,9 @@ class NodeSpec(Base):
     def __init__(self, settings: Dict):
         super().__init__()
         # default start settings
-        if len(settings.get("start", [])) == 0:
+        if settings["start"] is None or (
+            isinstance(settings["start"], list) and len(settings["start"]) == 0
+        ):
             settings["start"] = [{"type": "all_journeys"}]
         self.settings = settings
 

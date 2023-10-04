@@ -121,13 +121,17 @@ class HITInstance(Base):
         self.preview_id = sha256((id + "preview".encode())).digest()
         self.submitted = False
 
+        print("MAKING HIT INSTANCE")
+
         # instantiate every node only once
         nodespec_to_nodeinstance = dict()
         for i, journeyspec in enumerate(journeyspecs):
+            print("JOURNEYSPEC")
             journey = journeyspec.instantiate()
             journey.hit_id = self.id
 
             for nodespec in journeyspec.nodespecs:
+                print("INSTANTIATING NODE")
                 if nodespec._unique_id in nodespec_to_nodeinstance:
                     node_instance = nodespec_to_nodeinstance[nodespec._unique_id]
                 else:
