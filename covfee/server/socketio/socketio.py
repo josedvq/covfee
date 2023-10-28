@@ -50,6 +50,8 @@ def get_task_object(responseId: int):
 
 @socketio.on("connect")
 def on_connect(data):
+    app.logger.info(f"socketio: connect {str(data)}")
+
     journey = get_journey(data["journeyId"])
     if journey is None:
         return False
@@ -77,6 +79,7 @@ def make_node_status_payload(prev_status: NodeInstanceStatus, node: NodeInstance
 
 @socketio.on("join")
 def on_join(data):
+    app.logger.info(f"socketio: join {str(data)}")
     curr_journey_id = str(data["journeyId"])
     curr_journey = get_journey(curr_journey_id)
 
@@ -120,6 +123,9 @@ def on_join(data):
 
     # update the journey and node status
     curr_journey.set_curr_node(curr_node)
+    task_object = get_task_object(int(curr_response_id))
+    task_data = task_object.on_join(curr_journey)
+    emit("join", {"task_data": task_data})
     app.session.commit()
 
     # update previous node status
@@ -144,13 +150,8 @@ def on_join(data):
         )
         if res["success"]:
             emit("state", res)
-
-            # if this is the first join, run the on_first_join callback
-            # if res['numConnections'] == 1:
-            #     get_task_object(int(room)).on_first_join()
-
         else:
-            send(f"Unable to join room id={curr_response_id}")
+            app.logger.error(f"Redux store returned error")
 
 
 # admin joins a node
@@ -188,7 +189,6 @@ def on_admin_join(data):
 def on_action(data):
     action = data["action"]
     responseId = str(data["responseId"])
-    print(session)
     # if responseId != session["responseId"]:
     #     return send(
     #         f'data["responseId"] does not match session\'s responseId variable. {responseId} != {session["responseId"]}'
@@ -201,7 +201,7 @@ def on_action(data):
 
 
 def leave_store(responseId):
-    print(f"Leaving response {responseId}")
+    logger.info(f"Leaving response {responseId}")
     res = store.leave(responseId)
     if res["success"]:
         # save state to database
@@ -248,7 +248,6 @@ def disconnect():
 
 
 def on_chat(data: Dict):
-    print("MESSAGE")
     if "chatId" not in data:
         return send(f"chatId not sent")
 
@@ -260,7 +259,6 @@ def on_chat(data: Dict):
     chat.messages.append(message)
     app.session.commit()
 
-    print("emmiting")
     # emit the message
     emit("message", message.to_dict(), to=chatId, namespace="/chat")
 
@@ -275,7 +273,6 @@ socketio.on_event("message", on_chat, namespace="/admin")
 
 @socketio.on("join_chat", namespace="/chat")
 def on_join_chat(data):
-    print("JOIN CHAT")
     chatId = data["chatId"]
     chat = get_chat(chatId)
 

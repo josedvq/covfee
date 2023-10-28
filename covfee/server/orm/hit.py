@@ -6,6 +6,7 @@ import hashlib
 import datetime
 from typing import List, TYPE_CHECKING
 from hashlib import sha256
+from pprint import pformat
 
 from flask import current_app as app
 from sqlalchemy import ForeignKey, UniqueConstraint
@@ -84,6 +85,11 @@ class HITSpec(Base):
     def __repr__(self):
         pass
 
+    def __str__(self):
+        return pformat(
+            {"id": self.id, "name": self.name, "project_id": self.project_id}
+        )
+
 
 class HITInstance(Base):
     """Represents an instance of a HIT, to be solved by one user
@@ -121,17 +127,13 @@ class HITInstance(Base):
         self.preview_id = sha256((id + "preview".encode())).digest()
         self.submitted = False
 
-        print("MAKING HIT INSTANCE")
-
         # instantiate every node only once
         nodespec_to_nodeinstance = dict()
         for i, journeyspec in enumerate(journeyspecs):
-            print("JOURNEYSPEC")
             journey = journeyspec.instantiate()
             journey.hit_id = self.id
 
             for nodespec in journeyspec.nodespecs:
-                print("INSTANTIATING NODE")
                 if nodespec._unique_id in nodespec_to_nodeinstance:
                     node_instance = nodespec_to_nodeinstance[nodespec._unique_id]
                 else:

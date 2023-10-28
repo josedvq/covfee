@@ -239,8 +239,6 @@ export const _JourneyPage: React.FC<Props> = (props) => {
   //   </Modal>
   // );
 
-  console.log(journey.nodes)
-  console.log(currNode)
   const nodeProps = journey.nodes[currNode]
   const hitExtra = getHitExtra()
 

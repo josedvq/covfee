@@ -58,6 +58,8 @@ class NodeSpec(Base):
             isinstance(settings["start"], list) and len(settings["start"]) == 0
         ):
             settings["start"] = [{"type": "all_journeys"}]
+        if settings["stop"] is None:
+            settings["stop"] = []
         self.settings = settings
 
     def instantiate(self):

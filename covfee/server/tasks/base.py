@@ -1,10 +1,12 @@
 import pandas as pd
 import numpy as np
 from typing import Tuple, List, Any
-# from ..orm.task import Task, TaskResponse
+
+from ..orm.journey import JourneyInstance
+from ...logger import logger
+
 
 class BaseCovfeeTask:
-
     def __init__(self, response=None, task=None):
         self.response = response
 
@@ -38,12 +40,12 @@ class BaseCovfeeTask:
             chunk_data, chunk_logs = (None, None)
 
         return {
-            'response': self.response.data,
-            'data': chunk_data.tolist() if chunk_data is not None else [],
-            'logs': chunk_logs if chunk_logs is not None else [],
-            'created_at': self.response.created_at.isoformat(),
-            'updated_at': self.response.updated_at.isoformat(),
-            'submitted_at': self.response.submitted_at.isoformat(),
+            "response": self.response.data,
+            "data": chunk_data.tolist() if chunk_data is not None else [],
+            "logs": chunk_logs if chunk_logs is not None else [],
+            "created_at": self.response.created_at.isoformat(),
+            "updated_at": self.response.updated_at.isoformat(),
+            "submitted_at": self.response.submitted_at.isoformat(),
         }
 
     def to_dataframe(self, data: np.ndarray) -> pd.DataFrame:
@@ -66,17 +68,26 @@ class BaseCovfeeTask:
             assert data.ndim == 2
             assert data.shape[1] >= 3
             num_columns = data.shape[1] - 2
-            return pd.DataFrame(data, columns=['index', 'media_time', *[f'data{i}' for i in range(num_columns)]])
+            return pd.DataFrame(
+                data,
+                columns=[
+                    "index",
+                    "media_time",
+                    *[f"data{i}" for i in range(num_columns)],
+                ],
+            )
 
-    def validate(self, response: Any, data: np.ndarray = None, log_data: List[List[Any]] = None):
+    def validate(
+        self, response: Any, data: np.ndarray = None, log_data: List[List[Any]] = None
+    ):
         """This method decides whether a particular task submission will be accepted or not
 
         Args:
-            response (object): The (non-continuous) task response. Usually includes the value of 
+            response (object): The (non-continuous) task response. Usually includes the value of
                 input forms / sliders / radio buttons in the task.
-            data (pd.DataFrame): The continuous task response, includes all the data points 
+            data (pd.DataFrame): The continuous task response, includes all the data points
                 logged by the task. For continuous tasks this may be the only response.
-            log_data (list[list[any]], optional): The logs submitted by the task via buffer.log(). 
+            log_data (list[list[any]], optional): The logs submitted by the task via buffer.log().
                 Usually contains auxiliary information. Defaults to None.
 
         Returns:
@@ -84,14 +95,21 @@ class BaseCovfeeTask:
         """
         return True
 
-    def on_first_join():
-        """ Called when the first visitor joins the task.
-            (for socketio-enabled tasks)
+    def on_create(self):
+        """Called when the task is created
+        (for socketio-enabled tasks)
         """
-        pass
+        logger.info("BaseCovfeeTask: on_create")
 
-    def on_last_leave():
-        """ Called when the last person left leaves the task page
-            (for socketio-enabled tasks)
+    def on_join(self, journey: JourneyInstance):
+        """Called when any visitor joins the task.
+        May be called multiple times per journey.
+        (for socketio-enabled tasks)
         """
-        pass
+        logger.info("BaseCovfeeTask: on_join")
+
+    def on_leave(self):
+        """Called when a subject the task page
+        (for socketio-enabled tasks)
+        """
+        logger.info("BaseCovfeeTask: on_leave")

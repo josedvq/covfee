@@ -1,5 +1,6 @@
 from typing import Any
 import random
+from pprint import pformat
 
 import covfee.launcher as launcher
 from covfee.server.orm import (
@@ -9,6 +10,7 @@ from covfee.server.orm import (
     Project as OrmProject,
 )
 from covfee.shared.schemata import schemata
+from covfee.logger import logger
 
 
 class BaseDataclass:
@@ -29,6 +31,7 @@ class CovfeeTask(BaseDataclass):
         }
 
         self._orm_task = OrmTask({**spec, **class_vars})
+        logger.debug(f"Created ORM task: {str(self._orm_task)}")
         return self._orm_task
 
 
@@ -38,7 +41,9 @@ class Journey(BaseDataclass):
         self.nodes = nodes if nodes is not None else list()
 
     def orm(self):
-        return OrmJourney([n.orm() for n in self.nodes])
+        journey = OrmJourney([n.orm() for n in self.nodes])
+        logger.debug(f"Created ORM journey: {str(journey)}")
+        return journey
 
 
 class HIT(BaseDataclass):
@@ -56,7 +61,9 @@ class HIT(BaseDataclass):
         return j
 
     def orm(self):
-        return OrmHit(self.name, [j.orm() for j in self.journeys])
+        hit = OrmHit(self.name, [j.orm() for j in self.journeys])
+        logger.debug(f"Created ORM HIT: {str(hit)}")
+        return hit
 
 
 class Project(BaseDataclass):
@@ -67,7 +74,9 @@ class Project(BaseDataclass):
         self.hits = hits if hits is not None else list()
 
     def orm(self):
-        return OrmProject(self.name, self.email, [h.orm() for h in self.hits])
+        project = OrmProject(self.name, self.email, [h.orm() for h in self.hits])
+        logger.debug(f"Created ORM Project: {str(project)}")
+        return project
 
     def launch(self, num_instances=1):
         orm_project = self.orm()

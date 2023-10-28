@@ -100,9 +100,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
   )
 
   React.useEffect(() => {
-    fetchResponse().then((_) => {
-      setIsLoading(false)
-    })
+    fetchResponse()
   }, [fetchResponse])
 
   React.useEffect(() => {
@@ -120,7 +118,15 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
     if (args.node.type == "TaskInstance") {
       args.node.spec.instructionsType == "popped"
     }
-  }, [])
+  }, [args.node.spec.instructionsType, args.node.type])
+
+  React.useEffect(()=>{
+    console.log([node, response])
+    // check that all the node requirements are ready
+    if(node.taskData !== undefined && response !== null) {
+      setIsLoading(false)
+    }
+  }, [node, response])
 
   const handleTaskSubmit = (taskResult: any) => {
     submitResponse(taskResult)
@@ -263,37 +269,44 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
       )
     }
 
-    return (
-      <>
-        {/* {renderErrorModal()} */}
-        <div ref={nodeInstructionsRef}></div>
-        <div style={{ width: "100%", height: "100%", position: "relative" }}>
-          <StoreProvider store={reduxStore.current}>
-            <nodeContext.Provider value={{ node, useSharedState, response }}>
-              {(() => {
-                const nodeProps: BaseTaskProps = {
-                  spec: node.spec,
-                  response: response,
-                  disabled: args.disabled,
-                  onSubmit: (res) => handleTaskSubmit(res),
-                  renderSubmitButton: args.renderSubmitButton,
-                }
+    if(isLoading) {
+      return <></>
+    } else {
+      return (
+        <>
+          {/* {renderErrorModal()} */}
+          <div ref={nodeInstructionsRef}></div>
+          <div style={{ width: "100%", height: "100%", position: "relative" }}>
+            <StoreProvider store={reduxStore.current}>
+              <nodeContext.Provider value={{ node, useSharedState, response }}>
+                {(() => {
+                  const nodeProps: BaseTaskProps = {
+                    spec: node.spec,
+                    taskData: node.taskData,
+                    response: response,
+                    disabled: args.disabled,
+                    onSubmit: (res) => handleTaskSubmit(res),
+                    renderSubmitButton: args.renderSubmitButton,
+                  }
 
-                const taskElement = React.createElement(
-                  taskComponent,
-                  {
-                    ...nodeProps,
-                  },
-                  null
-                )
+                  const taskElement = React.createElement(
+                    taskComponent,
+                    {
+                      ...nodeProps,
+                    },
+                    null
+                  )
 
-                return taskElement
-              })()}
-            </nodeContext.Provider>
-          </StoreProvider>
-        </div>
-      </>
-    )
+                  console.log(`${args.node.spec.type} built with props`, nodeProps)
+
+                  return taskElement
+                })()}
+              </nodeContext.Provider>
+            </StoreProvider>
+          </div>
+        </>
+      )
+    }
   }
 }
 

@@ -5,13 +5,14 @@ import { TaskExport } from "types/node";
 import QuestionnaireTask from "./questionnaire";
 import InstructionsTask from "./instructions";
 import IncrementCounterTask from "./increment_counter";
-// import VideocallTask from './videocall'
+import VideocallTask from './videocall'
 
 // these will be available in source code:
 export {
   // ContinuousKeypointTask,
   // Continuous1DTask,
   // ThreeImagesTask,
+  VideocallTask,
   QuestionnaireTask,
   InstructionsTask,
   IncrementCounterTask,
@@ -25,4 +26,5 @@ export default {
   InstructionsTask,
   // ThreeImagesTask: ThreeImagesTask,
   IncrementCounterTask,
+  VideocallTask
 } as Record<string, TaskExport>;

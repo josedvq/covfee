@@ -296,26 +296,75 @@ class QuestionnaireTaskSpec(CovfeeTask):
     type: str = "QuestionnaireTask"
     # Specification of the form to be created.
     form: Any
+    name: str
     # If true, the form will only become active after the media playback ends
     disabledUntilEnd: bool
+    # Instructions to be displayed for the node
+    instructions: str
+    # How the instructions will be displayed
+    instructions_type: str
+    # Maximum number of submissions a user can make for the task.
+    max_submissions: float
     # Media file to be displayed.
     media: Union[Any,Any]
-    def __init__(self, form, disabledUntilEnd = None, media = None):
+    # Node is marked as a prerrequisite
+    # Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
+    prerequisite: bool
+    # If true, this node must have a valid submission before the HIT can be submitted
+    required: bool
+    # Conditions for task start
+    start: List[Union[Any,Any,Any]]
+    # Conditions for task end
+    stop: List[Union[Any,Any]]
+    # If true, the task state will be synced between clients.
+    # This applies both to multiple clients in the same journey and across journeys.
+    # Internally covfee uses socketio to synchronize task state.
+    useSharedState: bool
+    def __init__(self, form, name, disabledUntilEnd = None, instructions = None, instructions_type = 'default', max_submissions = 0, media = None, prerequisite = False, required = True, start = None, stop = None, useSharedState = False):
         """
         ### Parameters
         0. form : Any
             - Specification of the form to be created.
-        1. disabledUntilEnd : bool
+        1. name : str
+        2. disabledUntilEnd : bool
             - If true, the form will only become active after the media playback ends
-        2. media : Union[Any,Any]
+        3. instructions : str
+            - Instructions to be displayed for the node
+        4. instructions_type : str
+            - How the instructions will be displayed
+        5. max_submissions : float
+            - Maximum number of submissions a user can make for the task.
+        6. media : Union[Any,Any]
             - Media file to be displayed.
+        7. prerequisite : bool
+            - Node is marked as a prerrequisite
+Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
+        8. required : bool
+            - If true, this node must have a valid submission before the HIT can be submitted
+        9. start : List[Union[Any,Any,Any]]
+            - Conditions for task start
+        10. stop : List[Union[Any,Any]]
+            - Conditions for task end
+        11. useSharedState : bool
+            - If true, the task state will be synced between clients.
+This applies both to multiple clients in the same journey and across journeys.
+Internally covfee uses socketio to synchronize task state.
         """
 
 
         super().__init__()
         self.form = form
+        self.name = name
         self.disabledUntilEnd = disabledUntilEnd
+        self.instructions = instructions
+        self.instructions_type = instructions_type
+        self.max_submissions = max_submissions
         self.media = media
+        self.prerequisite = prerequisite
+        self.required = required
+        self.start = start
+        self.stop = stop
+        self.useSharedState = useSharedState
 
 
 class ThreeImagesTaskSpec(CovfeeTask):
@@ -390,5 +439,65 @@ Internally covfee uses socketio to synchronize task state.
         self.start = start
         self.stop = stop
         self.text = text
+        self.useSharedState = useSharedState
+
+
+class VideocallTaskSpec(CovfeeTask):
+    type: str = "VideocallTask"
+    name: str
+    # Instructions to be displayed for the node
+    instructions: str
+    # How the instructions will be displayed
+    instructions_type: str
+    # Maximum number of submissions a user can make for the task.
+    max_submissions: float
+    # Node is marked as a prerrequisite
+    # Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
+    prerequisite: bool
+    # If true, this node must have a valid submission before the HIT can be submitted
+    required: bool
+    # Conditions for task start
+    start: List[Union[Any,Any,Any]]
+    # Conditions for task end
+    stop: List[Union[Any,Any]]
+    # If true, the task state will be synced between clients.
+    # This applies both to multiple clients in the same journey and across journeys.
+    # Internally covfee uses socketio to synchronize task state.
+    useSharedState: bool
+    def __init__(self, name, instructions = None, instructions_type = 'default', max_submissions = 0, prerequisite = False, required = True, start = None, stop = None, useSharedState = False):
+        """
+        ### Parameters
+        0. name : str
+        1. instructions : str
+            - Instructions to be displayed for the node
+        2. instructions_type : str
+            - How the instructions will be displayed
+        3. max_submissions : float
+            - Maximum number of submissions a user can make for the task.
+        4. prerequisite : bool
+            - Node is marked as a prerrequisite
+Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
+        5. required : bool
+            - If true, this node must have a valid submission before the HIT can be submitted
+        6. start : List[Union[Any,Any,Any]]
+            - Conditions for task start
+        7. stop : List[Union[Any,Any]]
+            - Conditions for task end
+        8. useSharedState : bool
+            - If true, the task state will be synced between clients.
+This applies both to multiple clients in the same journey and across journeys.
+Internally covfee uses socketio to synchronize task state.
+        """
+
+
+        super().__init__()
+        self.name = name
+        self.instructions = instructions
+        self.instructions_type = instructions_type
+        self.max_submissions = max_submissions
+        self.prerequisite = prerequisite
+        self.required = required
+        self.start = start
+        self.stop = stop
         self.useSharedState = useSharedState
 

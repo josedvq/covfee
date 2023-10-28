@@ -44,20 +44,28 @@ export const AppProvider: React.FC<Props> = (props) => {
   }
 
   const getSocket = () => {
-    console.log("getSocket")
-    if (args.admin) return io("/admin")
-    else {
+    if (args.admin) {
+      console.log('IO: connect: /admin')
+      return io("/admin")
+    } else {
       if (routeParams.journeyId) {
+        console.log('IO: connect', { auth: { journeyId: routeParams.journeyId } })
         return io({ auth: { journeyId: routeParams.journeyId } })
       } else {
+        console.log('IO: connect', {})
         return io()
       }
     }
   }
 
   const getChocket = () => {
-    if (args.admin) return io("/admin_chat")
-    else return io("/chat")
+    if (args.admin) {
+      console.log('IO: connect: /admin_chat')
+      return io("/admin_chat")
+    } else {
+      console.log('IO: connect: /chat')
+      return io("/chat")
+    }
   }
 
   const routeParams = useParams()

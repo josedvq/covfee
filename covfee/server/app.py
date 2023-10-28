@@ -107,7 +107,6 @@ def project_www_file(filename):
 
 @frontend.route("/bundles/<path:filename>")
 def bundles(filename):
-    print(app.config["MASTER_BUNDLE_PATH"])
     return send_from_directory(app.config["MASTER_BUNDLE_PATH"], filename)
 
 

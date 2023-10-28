@@ -1,6 +1,7 @@
 from __future__ import annotations
 import os
 import json
+from pprint import pformat
 from typing import TYPE_CHECKING, List
 
 import pandas as pd
@@ -33,9 +34,6 @@ class Project(Base):
         # to keep track of info at launch time
         self._conflicts = False
         self._filename = None
-
-    def __repr__(self):
-        pass
 
     def get_dataframe(self):
         list_of_instances = list()
@@ -94,3 +92,9 @@ class Project(Base):
                 for hit in hit_instances
             ]
         return project_dict
+
+    def __repr__(self):
+        pass
+
+    def __str__(self):
+        return pformat({"id": self.id, "name": self.name})

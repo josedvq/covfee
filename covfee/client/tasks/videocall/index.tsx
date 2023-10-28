@@ -1,15 +1,12 @@
-import * as React from "react";
-import { useState, useEffect, useRef } from "react";
-import styled from "styled-components";
-import { BasicTaskProps, CovfeeTask } from "../base";
+import * as React from "react"
+import * as openvidu from "openvidu-browser"
+import { useState, useEffect, useRef } from "react"
+import styled from "styled-components"
+import { BaseTaskProps } from "../base"
 
-import { VideocallTaskSpec } from "@covfee-shared/spec/tasks/videocall";
-import { TaskType } from "@covfee-shared/spec/task";
+import { slice, actions } from "./slice"
+import { VideocallTaskSpec } from "@covfee-shared/spec/tasks/videocall"
 
-import reducer, { incrementValue } from "./videocallSlice";
-import AgoraRTC from "agora-rtc-sdk-ng";
-import useAgora from "./useAgora";
-import MediaPlayer from "./mediaPlayer";
 import {
   AudioMutedOutlined,
   AudioOutlined,
@@ -17,179 +14,204 @@ import {
   CalendarTwoTone,
   FundProjectionScreenOutlined,
   VideoCameraOutlined,
-} from "@ant-design/icons";
+} from "@ant-design/icons"
+import { TaskExport } from "../../types/node"
+import ThreeImagesTask from "../three_images"
+import { AllPropsRequired } from "../../types/utils"
+import { VideocallGUI } from "./gui"
 
-const client = AgoraRTC.createClient({ codec: "h264", mode: "rtc" });
 
-interface Props extends TaskType, BasicTaskProps {
+interface Props extends BaseTaskProps {
   spec: VideocallTaskSpec;
-  agoraAppId: string;
-  agoraToken: string;
+  taskData: {
+    session_id: string,
+    connection_token: string
+  }
 }
 
 interface State {}
 
-function VideocallTask(props: Props) {
-  const [muted, setMuted] = useState<boolean>(true);
-  const [cameraOn, setCameraOn] = useState<boolean>(false);
+export const VideocallTask: React.FC<Props> = (props) => {
+  const args: AllPropsRequired<Props> = React.useMemo(
+    () => ({
+      ...props,
+    }),
+    [props]
+  )
 
-  const {
-    localVideoTrack,
-    leave,
-    join,
-    publishLocalAudio,
-    publishLocalVideo,
-    unpublishLocalAudio,
-    unpublishLocalVideo,
-    joinState,
-    remoteUsers,
-    volumes,
-  } = useAgora(client);
+  const OV = React.useRef(new openvidu.OpenVidu())
+  // const [OV, setOV] = React.useState(new openvidu.OpenVidu())
+  const [session, setSession] = React.useState<openvidu.Session>(null)
+  const [publisher, setPublisher] = React.useState<openvidu.Publisher>(null)
+  const [subscribers, setSubscribers] = React.useState<openvidu.Subscriber[]>([])
+  const [currentVideoDevice, setCurrentVideoDevice] = React.useState<openvidu.Device>(null)
 
-  const observer = new ResizeObserver((entries: ResizeObserverEntry[]) => {
-    for (let entry of entries) {
-      entry.target.style.width = (entry.contentRect.height * 4) / 3;
-    }
-  });
+  const leaveSession = React.useCallback(() => {
+    // --- 7) Leave the session by calling 'disconnect' method over the Session object ---
+    // Empty all properties...
+    setSession(session => {
+      if (session) {
+        session.disconnect()
+      }
+      return null
+    })
+    setSubscribers([])
+  }, [])
 
-  const [shtate, setShtate] = props.getSharedState();
+  React.useEffect(()=>{
+    console.log('initSession')
+    const session = OV.current.initSession()
+    setSession(session)
+    console.log('initSession')
 
-  useEffect(() => {
-    join(props.agoraAppId, props.response.id.toString(), props.agoraToken);
+    // On every new Stream received...
+    session.on("streamCreated", (event) => {
+      // Subscribe to the Stream to receive it. Second parameter is undefined
+      // so OpenVidu doesn't create an HTML video by its own
+      var subscriber = session.subscribe(event.stream, undefined)
 
-    setShtate({ asdf: "asdf" });
+      // Update the state with the new subscribers
+      setSubscribers(subscribers=>[...subscribers, subscriber])
+    })
+
+    // On every Stream destroyed...
+    session.on("streamDestroyed", (event) => {
+      setSubscribers(subscribers => subscribers.filter(s => s != event.stream.streamManager))
+    })
+
+    // On every asynchronous exception...
+    session.on("exception", (exception) => {
+      console.warn(exception)
+    })
+
+    
+
+    session.connect(args.taskData.connection_token, { })
+      .then(async () => {
+
+        // --- 5) Get your own camera stream ---
+
+        // Init a publisher passing undefined as targetElement (we don't want OpenVidu to insert a video
+        // element: we will manage it on our own) and with the desired properties
+        let _publisher = await OV.current.initPublisherAsync(undefined, {
+          audioSource: undefined, // The source of audio. If undefined default microphone
+          videoSource: undefined, // The source of video. If undefined default webcam
+          publishAudio: true, // Whether you want to start publishing with your audio unmuted or not
+          publishVideo: true, // Whether you want to start publishing with your video enabled or not
+          resolution: "640x480", // The resolution of your video
+          frameRate: 30, // The frame rate of your video
+          insertMode: "APPEND", // How the video is inserted in the target element 'video-container'
+          mirror: false, // Whether to mirror your local video or not
+        })
+
+        // --- 6) Publish your stream ---
+
+        session.publish(_publisher)
+
+        // Obtain the current video device in use
+        var devices = await OV.current.getDevices()
+        var videoDevices = devices.filter(device => device.kind === "videoinput")
+        var currentVideoDeviceId = _publisher.stream.getMediaStream().getVideoTracks()[0].getSettings().deviceId
+        var _currentVideoDevice = videoDevices.find(device => device.deviceId === currentVideoDeviceId)
+
+        // Set the main video in the page to display our webcam and store our Publisher
+        setCurrentVideoDevice(_currentVideoDevice)
+        setPublisher(_publisher)
+      }).catch((error) => {
+        console.log("There was an error connecting to the session:", error.code, error.message)
+      })
 
     return () => {
-      leave();
-    };
-  }, []);
-
-  const toggleMuted = () => {
-    if (muted) {
-      publishLocalAudio();
-    } else {
-      unpublishLocalAudio();
+      leaveSession()
     }
-    setMuted(!muted);
-  };
+  }, [OV, args.taskData.connection_token, leaveSession])
 
-  const toggleCamera = () => {
-    if (cameraOn) {
-      unpublishLocalVideo();
-    } else {
-      publishLocalVideo();
-    }
-    setCameraOn(!cameraOn);
-  };
 
-  const renderBar = () => {
-    return (
-      <CommandBar>
-        <div onClick={toggleMuted}>
-          {muted ? (
-            <AudioMutedOutlined style={{ color: "red" }} />
-          ) : (
-            <AudioOutlined />
-          )}
-        </div>
-        <div onClick={toggleCamera}>
-          <VideoCameraOutlined style={{ color: cameraOn ? "white" : "red" }} />
-        </div>
-        <div>
-          <FundProjectionScreenOutlined />
-        </div>
-      </CommandBar>
-    );
-  };
+  const switchCamera = async () => {
+    try {
+      const devices = await OV.current.getDevices()
+      var videoDevices = devices.filter(device => device.kind === "videoinput")
 
-  const renderSpeakerMode = () => {
-    const speakerIndex = volumes.indexOf(Math.max(...volumes));
-    const speaker = remoteUsers[speakerIndex];
+      if (videoDevices && videoDevices.length > 1) {
 
-    return (
-      <div style={{ height: "calc(100vh - 46px)" }}>
-        <div style={{ backgroundColor: "#202020", height: "calc(15vh)" }}>
-          {remoteUsers.map((user) => (
-            <div className="remote-player-wrapper" key={user.uid}>
-              <div
-                ref={(elem) => {
-                  if (elem) observer.observe(elem);
-                }}
-              >
-                <MediaPlayer
-                  videoTrack={user.videoTrack}
-                  audioTrack={user.audioTrack}
-                ></MediaPlayer>
-              </div>
-            </div>
-          ))}
-        </div>
+        var newVideoDevice = videoDevices.filter(device => device.deviceId !== currentVideoDevice.deviceId)
 
-        <div style={{ height: "calc(85vh - 46px)", position: "relative" }}>
-          {speaker ? (
-            <MediaPlayer
-              style={{ width: "100%" }}
-              videoTrack={speaker.videoTrack}
-              audioTrack={speaker.audioTrack}
-            ></MediaPlayer>
-          ) : (
-            <MediaPlayer style={{ width: "100%" }}></MediaPlayer>
-          )}
-          <MediaPlayer
-            style={{
-              position: "absolute",
-              width: "24vh",
-              height: "18vh",
-              border: "1px solid #969696",
-              bottom: "15px",
-              right: "15px",
-            }}
-            videoTrack={localVideoTrack}
-          ></MediaPlayer>
-          <div style={{ position: "absolute", bottom: "15px", left: "15px" }}>
-            {renderBar()}
-          </div>
-        </div>
-      </div>
-    );
-  };
+        if (newVideoDevice.length > 0) {
+          // Creating a new publisher with specific videoSource
+          // In mobile devices the default and first camera is the front one
+          var newPublisher = OV.current.initPublisher(undefined, {
+            videoSource: newVideoDevice[0].deviceId,
+            publishAudio: true,
+            publishVideo: true,
+            mirror: true
+          })
 
-  const renderGalleryMode = () => {};
+          //newPublisher.once("accessAllowed", () => {
+          await session.unpublish(publisher)
+          await session.publish(newPublisher)
 
-  return (
-    <>
-      {/* <h1>{state.queryIdx}</h1>
-        <Button onClick={increment}>Increment</Button>
-
-        <div className='button-group'>
-          <button id='join' type='button' className='btn btn-primary btn-sm' disabled={joinState} onClick={() => {console.log(props); join(props.agoraAppId, props.response.id.toString(), props.agoraToken)}}>Join</button>
-          <button id='leave' type='button' className='btn btn-primary btn-sm' disabled={!joinState} onClick={() => {leave()}}>Leave</button>
-        </div> */}
-
-      <div className="player-container">
-        {props.spec.mode == "speaker" && renderSpeakerMode()}
-        {props.spec.mode == "gallery" && renderSpeakerMode()}
-      </div>
-    </>
-  );
-}
-
-const CommandBar = styled.div`
-  background-color: #161616;
-  border: 2px solid #363636;
-  border-radius: 5px;
-  color: #fafafa;
-  font-size: 50px;
-
-  > div {
-    padding: 8px;
-    cursor: pointer;
-    opacity: 0.7;
-
-    &:hover {
-      opacity: 1;
+          setPublisher(newPublisher)
+          setCurrentVideoDevice(newVideoDevice[0])
+        }
+      }
+    } catch (e) {
+      console.error(e)
     }
   }
-`;
 
-export default { taskComponent: VideocallTask, taskReducer: reducer };
+
+  return (
+    <VideocallGUI
+      subscribers={subscribers.map(s=>s.addVideoElement)}
+      clientSubscriber={publisher ? publisher.addVideoElement : null}/>
+  )
+  // if(args.spec.layout == "grid") {
+  //   return (
+  //     <div className="container">
+  //       {session !== undefined ? (
+  //         <div id="session">
+  //           <div id="session-header">
+  //             <input
+  //               className="btn btn-large btn-danger"
+  //               type="button"
+  //               id="buttonLeaveSession"
+  //               onClick={leaveSession}
+  //               value="Leave session"
+  //             />
+  //             <input
+  //               className="btn btn-large btn-success"
+  //               type="button"
+  //               id="buttonSwitchCamera"
+  //               onClick={switchCamera}
+  //               value="Switch Camera"
+  //             />
+  //           </div>
+  //           <div id="video-container" className="col-md-6">
+  //             {publisher !== undefined ? (
+  //               <div className="stream-container col-md-6 col-xs-6">
+  //                 <UserVideoComponent
+  //                   streamManager={this.state.publisher} />
+  //               </div>
+  //             ) : null}
+  //             {subscribers.map((sub, i) => (
+  //               <div key={sub.id} className="stream-container col-md-6 col-xs-6">
+  //                 <span>{sub.id}</span>
+  //                 <UserVideoComponent streamManager={sub} />
+  //               </div>
+  //             ))}
+  //           </div>
+  //         </div>
+  //       ) : null}
+  //     </div>
+  //   )
+  // } else {
+  //   return "Undefined layout"
+  // }
+}
+
+
+
+export default {
+  taskComponent: VideocallTask,
+  taskReducer: slice.reducer,
+} as TaskExport

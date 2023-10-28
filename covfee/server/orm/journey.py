@@ -54,6 +54,9 @@ class JourneySpec(Base):
     def __repr__(self):
         pass
 
+    def __str__(self):
+        return str({id: self.id})
+
 
 class JourneyInstanceStatus(enum.Enum):
     # task has been initialized.
@@ -104,19 +107,20 @@ class JourneyInstance(Base):
     num_connections: Mapped[int] = mapped_column(default=0)
     curr_node: Mapped[NodeInstance] = relationship(back_populates="curr_journeys")
 
+    # status code
+    status: Mapped[JourneyInstanceStatus] = mapped_column(
+        default=JourneyInstanceStatus.INIT
+    )
+    aux: Mapped[Dict[str, Any]]  # json state associated to the journey
+
+    instance_counter = 0
+
     # dates
     # submitted: Mapped[datetime.datetime] = mapped_column(nullable=True)
     created: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
     updated: Mapped[datetime.datetime] = mapped_column(
         default=datetime.datetime.now, onupdate=datetime.datetime.now
     )
-
-    # status code
-    status: Mapped[JourneyInstanceStatus] = mapped_column(
-        default=JourneyInstanceStatus.INIT
-    )
-
-    instance_counter = 0
 
     @staticmethod
     def get_id():
@@ -136,6 +140,7 @@ class JourneyInstance(Base):
         self.preview_id = hashlib.sha256((self.id + "preview".encode())).digest()
         self.submitted = False
         self.interface = {}
+        self.aux = {}
         self.chat = Chat()
 
     def get_api_url(self):

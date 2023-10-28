@@ -18,6 +18,7 @@ export type TaskSpec =
   | ContinuousKeypointTaskSpec
   | InstructionsTaskSpec
   | QuestionnaireTaskSpec
-  | ThreeImagesTaskSpec;
+  | ThreeImagesTaskSpec
+  | VideocallTaskSpec
 
 export type NodeSpec = TaskSpec;

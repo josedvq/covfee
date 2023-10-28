@@ -30,6 +30,9 @@ export interface ServerToClientEvents {
     journey_id: string
     num_connections: number
   }) => void
+  join: (arg0: {
+    task_data: any
+  }) => void
   action: (arg0: ActionResponse) => void
   state: (arg0: StateResponse) => void
 }

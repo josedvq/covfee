@@ -3,6 +3,7 @@ import json
 import os
 import sys
 from io import BytesIO
+from pprint import pformat
 from typing import Any, Dict, List, TYPE_CHECKING
 
 import numpy as np
@@ -38,9 +39,6 @@ class TaskSpec(NodeSpec):
         super().__init__(node_spec)
         self.spec = {k: v for k, v in spec.items() if k not in node_properties}
 
-        print(node_spec)
-        print(self.spec)
-
     def instantiate(self):
         instance = TaskInstance()
         self.nodes.append(instance)
@@ -52,6 +50,9 @@ class TaskSpec(NodeSpec):
     def __repr__(self):
         pass
 
+    def __str__(self):
+        return pformat({"settings": self.settings, "spec": self.spec})
+
 
 class TaskInstance(NodeInstance):
     __mapper_args__ = {
@@ -62,9 +63,12 @@ class TaskInstance(NodeInstance):
         back_populates="task", cascade="all, delete-orphan"
     )
 
+    aux: Mapped[Dict[str, Any]]  # auxiliary task specific data
+
     def __init__(self):
         super().__init__()
         self.has_unsubmitted_response = False
+        self.aux = {}
         self.add_response()  # add initial empty response
 
     def __hash__(self):

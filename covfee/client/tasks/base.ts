@@ -25,7 +25,10 @@ export interface BaseTaskProps {
    * The task specification
    */
   spec: any;
-
+  /**
+   * Auxiliary task information
+   */
+  taskData: any
   /**
    * Task response to be displayed, possibly for editing
    * A null value indicates the task should initialize an empty state

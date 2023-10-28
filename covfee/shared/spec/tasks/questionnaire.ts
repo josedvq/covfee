@@ -6,7 +6,7 @@ import { FormSpec, InputSpec } from "../form";
 /**
  * @TJS-additionalProperties false
  */
-export interface QuestionnaireTaskSpec {
+export interface QuestionnaireTaskBaseSpec {
   /**
    * @default "QuestionnaireTask"
    */
@@ -24,3 +24,8 @@ export interface QuestionnaireTaskSpec {
    */
   disabledUntilEnd?: boolean;
 }
+
+/**
+* @TJS-additionalProperties false
+*/
+export interface QuestionnaireTaskSpec extends QuestionnaireTaskBaseSpec, BaseTaskSpec {}

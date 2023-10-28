@@ -32,6 +32,7 @@ export interface NodeType extends AllPropsRequired<BaseNodeSpec> {
    * Status of the node
    */
   status: NodeStatus
+  taskData: any,
   num_journeys: number
   curr_journeys: string[]
   valid: boolean
