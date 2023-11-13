@@ -53,7 +53,7 @@ def start_covfee(socketio, app, mode="local", host="localhost"):
 @covfee_cli.command()
 @click.option(
     "--host",
-    default="localhost",
+    default=None,
     help="Specify the IP address to serve webpack dev server. Use for testing in a local network.",
 )
 def webpack(host):
@@ -61,6 +61,10 @@ def webpack(host):
     Launches a webpack instance for use in dev mode
     """
     config = Config("dev")
+
+    host = (
+        host if host is not None else config.get("WEBPACK_DEVSERVER_HOST", "localhost")
+    )
     launch_webpack(config["COVFEE_CLIENT_PATH"], host)
 
 

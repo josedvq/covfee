@@ -126,6 +126,7 @@ def on_join(data):
     task_object = get_task_object(int(curr_response_id))
     task_data = task_object.on_join(curr_journey)
     emit("join", {"task_data": task_data})
+    app.logger.info(f'socketio: join: {str({"task_data": task_data})}')
     app.session.commit()
 
     # update previous node status

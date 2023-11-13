@@ -443,14 +443,24 @@ Internally covfee uses socketio to synchronize task state.
 
 
 class VideocallTaskSpec(CovfeeTask):
+    # Layout mode
+    layout: str = "grid"
     type: str = "VideocallTask"
     name: str
+    # Allow the user to mute their own audio
+    allowMute: bool
+    # Allow the user to share their screen
+    allowScreenShare: bool
+    # Allow the user to stop their own video
+    allowStopVideo: bool
     # Instructions to be displayed for the node
     instructions: str
     # How the instructions will be displayed
     instructions_type: str
     # Maximum number of submissions a user can make for the task.
     max_submissions: float
+    # Videocall is muted
+    muted: bool
     # Node is marked as a prerrequisite
     # Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
     prerequisite: bool
@@ -464,40 +474,59 @@ class VideocallTaskSpec(CovfeeTask):
     # This applies both to multiple clients in the same journey and across journeys.
     # Internally covfee uses socketio to synchronize task state.
     useSharedState: bool
-    def __init__(self, name, instructions = None, instructions_type = 'default', max_submissions = 0, prerequisite = False, required = True, start = None, stop = None, useSharedState = False):
+    # Call is audio only
+    # video is always off
+    videoOff: bool
+    def __init__(self, name, allowMute = True, allowScreenShare = True, allowStopVideo = True, instructions = None, instructions_type = 'default', max_submissions = 0, muted = False, prerequisite = False, required = True, start = None, stop = None, useSharedState = False, videoOff = False):
         """
         ### Parameters
         0. name : str
-        1. instructions : str
+        1. allowMute : bool
+            - Allow the user to mute their own audio
+        2. allowScreenShare : bool
+            - Allow the user to share their screen
+        3. allowStopVideo : bool
+            - Allow the user to stop their own video
+        4. instructions : str
             - Instructions to be displayed for the node
-        2. instructions_type : str
+        5. instructions_type : str
             - How the instructions will be displayed
-        3. max_submissions : float
+        6. max_submissions : float
             - Maximum number of submissions a user can make for the task.
-        4. prerequisite : bool
+        7. muted : bool
+            - Videocall is muted
+        8. prerequisite : bool
             - Node is marked as a prerrequisite
 Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
-        5. required : bool
+        9. required : bool
             - If true, this node must have a valid submission before the HIT can be submitted
-        6. start : List[Union[Any,Any,Any]]
+        10. start : List[Union[Any,Any,Any]]
             - Conditions for task start
-        7. stop : List[Union[Any,Any]]
+        11. stop : List[Union[Any,Any]]
             - Conditions for task end
-        8. useSharedState : bool
+        12. useSharedState : bool
             - If true, the task state will be synced between clients.
 This applies both to multiple clients in the same journey and across journeys.
 Internally covfee uses socketio to synchronize task state.
+        13. videoOff : bool
+            - Call is audio only
+video is always off
         """
 
 
         super().__init__()
         self.name = name
+        self.allowMute = allowMute
+        self.allowScreenShare = allowScreenShare
+        self.allowStopVideo = allowStopVideo
         self.instructions = instructions
         self.instructions_type = instructions_type
         self.max_submissions = max_submissions
+        self.muted = muted
         self.prerequisite = prerequisite
         self.required = required
         self.start = start
         self.stop = stop
         self.useSharedState = useSharedState
+        self.videoOff = videoOff
 

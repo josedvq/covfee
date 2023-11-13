@@ -58,7 +58,7 @@ class Launcher:
             app.config["UNSAFE_MODE_ON"] = True
             self._start_server(socketio, app, mode)
 
-    def _start_server(self, socketio, app, mode="local", host="localhost"):
+    def _start_server(self, socketio, app, mode="local", host="0.0.0.0"):
         if app.config["SSL_ENABLED"]:
             ssl_options = {
                 "keyfile": app.config["SSL_KEY_FILE"],

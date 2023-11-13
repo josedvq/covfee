@@ -35,6 +35,7 @@ JWT_COOKIE_CSRF_PROTECT = False
 MASTER_BUNDLE_PATH = os.path.join(COVFEE_BASE_PATH, "client", "bundles")
 BUNDLES_URL = os.path.join(BASE_URL, "bundles")
 # dev mode setting
+WEBPACK_DEVSERVER_HOST = "localhost"
 DEV_BUNDLES_URL = "http://localhost:8085"
 
 # PROJECT FOLDER PATHS

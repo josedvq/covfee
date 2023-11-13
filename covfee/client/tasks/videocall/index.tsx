@@ -34,17 +34,25 @@ interface State {}
 export const VideocallTask: React.FC<Props> = (props) => {
   const args: AllPropsRequired<Props> = React.useMemo(
     () => ({
+      spec: {
+        muted: false,
+        videoOff: false,
+        ...props.spec
+      },
       ...props,
     }),
     [props]
   )
 
-  const OV = React.useRef(new openvidu.OpenVidu())
-  // const [OV, setOV] = React.useState(new openvidu.OpenVidu())
+  // const OV = React.useRef(new openvidu.OpenVidu())
+  const [OV, setOV] = React.useState(new openvidu.OpenVidu())
   const [session, setSession] = React.useState<openvidu.Session>(null)
   const [publisher, setPublisher] = React.useState<openvidu.Publisher>(null)
   const [subscribers, setSubscribers] = React.useState<openvidu.Subscriber[]>([])
   const [currentVideoDevice, setCurrentVideoDevice] = React.useState<openvidu.Device>(null)
+
+  const [muted, setMuted] = React.useState(false)
+  const [videoStopped, setStopVideo] = React.useState(false)
 
   const leaveSession = React.useCallback(() => {
     // --- 7) Leave the session by calling 'disconnect' method over the Session object ---
@@ -58,14 +66,24 @@ export const VideocallTask: React.FC<Props> = (props) => {
     setSubscribers([])
   }, [])
 
+  useEffect(() => {
+    // takes care of leaving the session when the user closes the tab.
+    // this is not called by the effect's cleanup fn
+    window.addEventListener('beforeunload', leaveSession);
+
+    return () => {
+      window.removeEventListener('beforeunload', leaveSession);
+    };
+  })
+
   React.useEffect(()=>{
-    console.log('initSession')
-    const session = OV.current.initSession()
+    const session = OV.initSession()
+    console.log(`OV.current.initSession() called`)
     setSession(session)
-    console.log('initSession')
 
     // On every new Stream received...
     session.on("streamCreated", (event) => {
+      console.log(`ON: streamCreated`)
       // Subscribe to the Stream to receive it. Second parameter is undefined
       // so OpenVidu doesn't create an HTML video by its own
       var subscriber = session.subscribe(event.stream, undefined)
@@ -85,7 +103,7 @@ export const VideocallTask: React.FC<Props> = (props) => {
     })
 
     
-
+    console.log(`OV: connecting with token: ${args.taskData.connection_token}`)
     session.connect(args.taskData.connection_token, { })
       .then(async () => {
 
@@ -93,11 +111,11 @@ export const VideocallTask: React.FC<Props> = (props) => {
 
         // Init a publisher passing undefined as targetElement (we don't want OpenVidu to insert a video
         // element: we will manage it on our own) and with the desired properties
-        let _publisher = await OV.current.initPublisherAsync(undefined, {
+        let _publisher = await OV.initPublisherAsync(undefined, {
           audioSource: undefined, // The source of audio. If undefined default microphone
           videoSource: undefined, // The source of video. If undefined default webcam
-          publishAudio: true, // Whether you want to start publishing with your audio unmuted or not
-          publishVideo: true, // Whether you want to start publishing with your video enabled or not
+          publishAudio: !args.spec.muted, // Whether you want to start publishing with your audio unmuted or not
+          publishVideo: !args.spec.videoOff, // Whether you want to start publishing with your video enabled or not
           resolution: "640x480", // The resolution of your video
           frameRate: 30, // The frame rate of your video
           insertMode: "APPEND", // How the video is inserted in the target element 'video-container'
@@ -109,7 +127,7 @@ export const VideocallTask: React.FC<Props> = (props) => {
         session.publish(_publisher)
 
         // Obtain the current video device in use
-        var devices = await OV.current.getDevices()
+        var devices = await OV.getDevices()
         var videoDevices = devices.filter(device => device.kind === "videoinput")
         var currentVideoDeviceId = _publisher.stream.getMediaStream().getVideoTracks()[0].getSettings().deviceId
         var _currentVideoDevice = videoDevices.find(device => device.deviceId === currentVideoDeviceId)
@@ -124,7 +142,23 @@ export const VideocallTask: React.FC<Props> = (props) => {
     return () => {
       leaveSession()
     }
-  }, [OV, args.taskData.connection_token, leaveSession])
+  }, [OV, args.spec.muted, args.spec.videoOff, args.taskData.connection_token, leaveSession])
+
+
+  const toggleMuted = () => {
+    console.log(`toggleMuted`)
+    setMuted(muted => {
+      publisher.publishAudio(!!muted);
+      return !muted
+    })
+  }
+
+  const toggleVideo = () => {
+    setStopVideo(videoStopped => {
+      publisher.publishVideo(!!videoStopped);
+      return !videoStopped
+    })
+  }
 
 
   const switchCamera = async () => {
@@ -162,51 +196,13 @@ export const VideocallTask: React.FC<Props> = (props) => {
 
   return (
     <VideocallGUI
-      subscribers={subscribers.map(s=>s.addVideoElement)}
-      clientSubscriber={publisher ? publisher.addVideoElement : null}/>
+      subscribers={subscribers.map(s=>s.addVideoElement.bind(s))}
+      clientSubscriber={publisher ? publisher.addVideoElement.bind(publisher) : null}
+      muted={muted}
+      videoStopped={videoStopped}
+      onMute={toggleMuted}
+      onStopVideo={toggleVideo}/>
   )
-  // if(args.spec.layout == "grid") {
-  //   return (
-  //     <div className="container">
-  //       {session !== undefined ? (
-  //         <div id="session">
-  //           <div id="session-header">
-  //             <input
-  //               className="btn btn-large btn-danger"
-  //               type="button"
-  //               id="buttonLeaveSession"
-  //               onClick={leaveSession}
-  //               value="Leave session"
-  //             />
-  //             <input
-  //               className="btn btn-large btn-success"
-  //               type="button"
-  //               id="buttonSwitchCamera"
-  //               onClick={switchCamera}
-  //               value="Switch Camera"
-  //             />
-  //           </div>
-  //           <div id="video-container" className="col-md-6">
-  //             {publisher !== undefined ? (
-  //               <div className="stream-container col-md-6 col-xs-6">
-  //                 <UserVideoComponent
-  //                   streamManager={this.state.publisher} />
-  //               </div>
-  //             ) : null}
-  //             {subscribers.map((sub, i) => (
-  //               <div key={sub.id} className="stream-container col-md-6 col-xs-6">
-  //                 <span>{sub.id}</span>
-  //                 <UserVideoComponent streamManager={sub} />
-  //               </div>
-  //             ))}
-  //           </div>
-  //         </div>
-  //       ) : null}
-  //     </div>
-  //   )
-  // } else {
-  //   return "Undefined layout"
-  // }
 }
 
 
