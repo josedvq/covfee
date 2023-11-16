@@ -95,4 +95,3 @@ j1 = hit.add_journey(nodes=[j1_consent, j1_instructions, j1_videocall_task, j1_f
 # j1 = hit.add_journey(nodes=[j2_consent, j2_instructions, j2_videocall_task, j2_final])
 
 project = Project("My Project", email="example@example.com", hits=[hit])
-project.launch()

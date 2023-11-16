@@ -1,11 +1,15 @@
 import os
+import platform
+import shutil
 import sys
 import json
 from shutil import which
 from typing import Any, List
+from click import Path
 
 from halo.halo import Halo
 from colorama import init as colorama_init, Fore
+from covfee.loader import cli_create_tables
 
 from covfee.server.db import SessionLocal, engine
 from covfee.config import config
@@ -30,9 +34,10 @@ class Launcher:
     # holds valid projects
     projects: List["orm.Project"]
 
-    def __init__(self, projects: List["orm.Project"] = []):
+    def __init__(self, projects: List["orm.Project"] = [], folder: Path = None):
         config.load_environment("local")
         self.projects = projects
+        self.folder = folder
 
     def start(self, mode="local"):
         orm.Base.metadata.create_all(engine)
@@ -128,6 +133,42 @@ class Launcher:
                 # spinner.succeed(
                 #     f'Project {project["name"]} created successfully from file {cf}')
             session.commit()
+
+    def init(self):
+        covfee_hidden = os.path.join(self.folder, ".covfee")
+        if not os.path.exists(covfee_hidden):
+            os.makedirs(covfee_hidden)
+        media_path = os.path.join(self.folder, "www", "media")
+        if not os.path.exists(media_path):
+            os.makedirs(media_path)
+        cli_create_tables()
+
+    def link_bundles(self):
+        master_bundle_path = os.path.join(config["MASTER_BUNDLE_PATH"], "main.js")
+        if not os.path.exists(master_bundle_path):
+            raise Exception("Master bundles not found.")
+        bundle_path = os.path.join(config["PROJECT_WWW_PATH"], "main.js")
+        if os.path.exists(bundle_path):
+            os.remove(bundle_path)
+        # windows requires admin rights for symlinking -> fall back to copying
+        if platform.system() == "Windows":
+            shutil.copyfile(master_bundle_path, bundle_path)
+        else:
+            os.symlink(master_bundle_path, bundle_path)
+
+        admin_bundle_path = os.path.join(config["PROJECT_WWW_PATH"], "admin.js")
+        if os.path.exists(admin_bundle_path):
+            os.remove(admin_bundle_path)
+        if platform.system() == "Windows":
+            shutil.copyfile(
+                os.path.join(config["MASTER_BUNDLE_PATH"], "admin.js"),
+                admin_bundle_path,
+            )
+        else:
+            os.symlink(
+                os.path.join(config["MASTER_BUNDLE_PATH"], "admin.js"),
+                admin_bundle_path,
+            )
 
 
 def launch_webpack(covfee_client_path, host=None):
