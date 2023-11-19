@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 import random
 from pprint import pformat
 
@@ -78,9 +78,30 @@ class Project(BaseDataclass):
         logger.debug(f"Created ORM Project: {str(project)}")
         return project
 
+    # def launch(self, num_instances=1):
+    #     orm_project = self.orm()
+    #     for spec in orm_project.hitspecs:
+    #         spec.instantiate(num_instances)
+    #     l = launcher.Launcher([orm_project])
+    #     l.launch(mode="dev")
+
+
+class CovfeeApp(BaseDataclass):
+    def __init__(self, projects: List[Project]):
+        super().__init__()
+        self.projects = projects
+
+    def get_instantiated_projects(self, num_instances=1):
+        orm_projects = []
+        for p in self.projects:
+            orm_project = p.orm()
+            for spec in orm_project.hitspecs:
+                spec.instantiate(num_instances)
+            orm_projects.append(orm_project)
+        return orm_projects
+
     def launch(self, num_instances=1):
-        orm_project = self.orm()
-        for spec in orm_project.hitspecs:
-            spec.instantiate(num_instances)
-        l = launcher.Launcher([orm_project])
-        l.start(mode="dev")
+        orm_projects = self.get_instantiated_projects(num_instances)
+        l = launcher.Launcher("dev", orm_projects, folder=None)
+        l.make_database()
+        l.launch()

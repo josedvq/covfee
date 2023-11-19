@@ -13,7 +13,7 @@ from . import utils
 
 if TYPE_CHECKING:
     from .journey import JourneySpec, JourneyInstance
-    from .hit import HITInstance
+    from .hit import HITSpec, HITInstance
 
 journeyspec_nodespec_table = Table(
     "journeyspec_nodespec",
@@ -42,6 +42,9 @@ class NodeSpec(Base):
     }
 
     settings: Mapped[Dict[str, Any]]  # json
+
+    hitspec_id: Mapped[int] = mapped_column(ForeignKey("hitspecs.id"))
+    hitspec: Mapped[HITSpec] = relationship(back_populates="nodespecs")
 
     # spec relationships
     journeyspecs: Mapped[List[JourneySpec]] = relationship(
@@ -124,7 +127,7 @@ class NodeInstance(Base):
     )
 
     # chat relationship
-    chat: Mapped[Chat] = relationship(back_populates="node")
+    chat: Mapped[Chat] = relationship(back_populates="node", cascade="all,delete")
 
     # status code
     status: Mapped[NodeInstanceStatus] = mapped_column(default=NodeInstanceStatus.INIT)

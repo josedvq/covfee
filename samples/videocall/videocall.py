@@ -1,6 +1,7 @@
 # from covfee import Task, HIT
 from covfee import Project, HIT, Journey, tasks
 from covfee.config import config
+from covfee.shared.dataclass import CovfeeApp
 
 config.load_environment("local")
 
@@ -94,4 +95,5 @@ hit = HIT("Joint counter")
 j1 = hit.add_journey(nodes=[j1_consent, j1_instructions, j1_videocall_task, j1_final])
 # j1 = hit.add_journey(nodes=[j2_consent, j2_instructions, j2_videocall_task, j2_final])
 
-project = Project("My Project", email="example@example.com", hits=[hit])
+projects = [Project("My Project", email="example@example.com", hits=[hit])]
+app = CovfeeApp(projects)

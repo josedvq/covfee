@@ -31,25 +31,6 @@ def covfee_cli():
     pass
 
 
-def start_covfee(socketio, app, mode="local", host="localhost"):
-    if app.config["SSL_ENABLED"]:
-        ssl_options = {
-            "keyfile": app.config["SSL_KEY_FILE"],
-            "certfile": app.config["SSL_CERT_FILE"],
-        }
-    else:
-        ssl_options = {}
-
-    if mode == "local":
-        socketio.run(app, host=host, port=5000, **ssl_options)
-    elif mode == "dev":
-        socketio.run(app, host=host, port=5000, debug=True, **ssl_options)
-    elif mode == "deploy":
-        socketio.run(app, host=host, **ssl_options)
-    else:
-        raise f"unrecognized mode {mode}"
-
-
 @covfee_cli.command()
 @click.option(
     "--host",
@@ -123,32 +104,17 @@ def start(dev, deploy, launch_browser, safe):
         start_covfee(socketio, app, mode)
 
 
-def covfee_make(file_or_folder, force=False, rms=False, stdout_enabled=True):
-    project_folder = Loader(os.getcwd())
-
-    # add the covfee files to the project
-    with Halo(
-        text="Adding .covfee.json files", spinner="dots", enabled=stdout_enabled
-    ) as spinner:
-        covfee_files = project_folder.add_covfee_files(file_or_folder)
-
-        if len(covfee_files) == 0:
-            err = f"No valid covfee files found. Make sure that {file_or_folder} points to a file or to a folder containing .covfee.json files."
-            spinner.fail(err)
-            raise FileNotFoundError(err)
-
-        spinner.succeed(f"{len(covfee_files)} covfee project files found.")
-
-
-def get_start_message(config, unsafe):
-    url = config["ADMIN_URL"] if unsafe else config["LOGIN_URL"]
-    msg = r"""
+def get_start_message(url):
+    msg = (
+        Fore.GREEN
+        + r"""
                       __             
   ___   ___  __   __ / _|  ___   ___ 
  / __| / _ \ \ \ / /| |_  / _ \ / _ \
 | (__ | (_) | \ V / |  _||  __/|  __/
  \___| \___/   \_/  |_|   \___| \___|"""
-    msg += f"\nURL: {url}"
+    )
+    msg += f"\n\nURL: {url}\n"
     return msg
 
 
@@ -161,9 +127,10 @@ def get_start_message(config, unsafe):
     "--no-launch", is_flag=True, help="Do not launch covfee, only make the DB"
 )
 @click.argument("project_spec_file")
-def make(force, deploy, safe, rms, launch_browser, no_launch, project_spec_file):
-    # mode = "deploy" if deploy else "local"
-    unsafe = False if deploy else (not safe)
+def make(force, dev, safe, rms, no_launch, project_spec_file):
+    environment = "dev" if dev else "local"
+    unsafe = False if environment == "deploy" else (not safe)
+    config = Config(environment)
 
     install_npm_packages()
 
@@ -171,22 +138,15 @@ def make(force, deploy, safe, rms, launch_browser, no_launch, project_spec_file)
         loader = Loader(project_spec_file)
         projects = loader.process(with_spinner=True)
 
-        launcher = Launcher(Path(project_spec_file).parent, projects)
-
-        # init project folder if necessary
-        if not loader.is_project():
-            loader.init()
-        loader.push(force=force, with_spinner=True)
-
-        # link bundles
-        with Halo(text="Linking covfee bundles", spinner="dots") as spinner:
-            try:
-                launcher.link_bundles()
-            except Exception as e:
-                spinner.fail("Error linking bundles. Aborted.")
-                raise e
-            spinner.succeed("covfee bundles linked.")
-        # covfee_make(file_or_folder, force=force, rms=rms, stdout_enabled=True)
+        launcher = Launcher(environment, projects, Path(project_spec_file).parent)
+        launcher.make_database(force, with_spinner=True)
+        if not no_launch:
+            print(
+                get_start_message(
+                    url=config["ADMIN_URL"] if unsafe else config["LOGIN_URL"]
+                )
+            )
+            launcher.launch()
     except FileNotFoundError:
         pass
     except JavascriptError as err:
@@ -197,19 +157,14 @@ def make(force, deploy, safe, rms, launch_browser, no_launch, project_spec_file)
     except ValidationError as err:
         return err.print_friendly()
     except ProjectExistsException as err:
-        return print("Project exists in covfee. Add --force option to overwrite.")
+        return print(
+            f'Project "{err.name}" exists in database. Add --force option to overwrite all projects.'
+        )
     except Exception as err:
         print(traceback.format_exc())
         if "js_stack_trace" in dir(err):
             print(err.js_stack_trace)
         return
-
-    if no_launch:
-        return
-
-    app.config["UNSAFE_MODE_ON"] = unsafe
-    print(get_start_message(app.config, unsafe))
-    start_covfee(socketio, app, "local")
 
 
 def install_npm_packages(force=False):

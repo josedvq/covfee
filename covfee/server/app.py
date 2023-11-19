@@ -12,7 +12,10 @@ from flask_session import Session
 from covfee.config import Config
 
 
-def create_app(mode):
+def create_app(mode, session_local=None):
+    # called once per process
+    # but reused across threads
+
     app = Flask(__name__, static_folder=None)
 
     # load custom config to app.config
@@ -25,9 +28,14 @@ def create_app(mode):
 
     app.json = CovfeeJSONProvider(app)
 
-    from .db import SessionLocal
+    if session_local is None:
+        from .db import get_session_local
 
-    app.session = scoped_session(SessionLocal, scopefunc=greenlet.getcurrent)
+        session_local = get_session_local(
+            in_memory=False, db_path=config["DATABASE_PATH"]
+        )
+
+    app.session = scoped_session(session_local, scopefunc=greenlet.getcurrent)
     from .orm import set_session
 
     set_session(app.session)

@@ -15,7 +15,6 @@ from covfee.server.orm import (
     NodeInstanceStatus,
 )
 from covfee.server.socketio.redux_store import ReduxStoreClient
-from covfee.server.db import SessionLocal
 
 socketio = SocketIO()
 store = ReduxStoreClient()

@@ -17,7 +17,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .base import Base
 from .journey import JourneySpec, JourneyInstance
 from .project import Project
-from .node import NodeInstance
+from .node import NodeInstance, NodeSpec
 
 
 class HITSpec(Base):
@@ -30,11 +30,19 @@ class HITSpec(Base):
     # project_id = Column(Integer, ForeignKey("projects.name"))
     project: Mapped[Project] = relationship(back_populates="hitspecs")
 
+    nodespecs: Mapped[List[NodeSpec]] = relationship(
+        back_populates="hitspec", cascade="all,delete"
+    )
+
     # spec relationship
-    journeyspecs: Mapped[List[JourneySpec]] = relationship(back_populates="hitspec")
+    journeyspecs: Mapped[List[JourneySpec]] = relationship(
+        back_populates="hitspec", cascade="all,delete"
+    )
 
     # instance relationship
-    instances: Mapped[List[HITInstance]] = relationship(back_populates="spec")
+    instances: Mapped[List[HITInstance]] = relationship(
+        back_populates="spec", cascade="all,delete"
+    )
 
     def __init__(self, name=None, journeyspecs: List[JourneySpec] = []):
         super().__init__()
@@ -43,6 +51,7 @@ class HITSpec(Base):
             name = binascii.b2a_hex(os.urandom(8)).decode("utf-8")
         self.name = name
         self.journeyspecs = journeyspecs
+        self.nodespecs = [n for js in journeyspecs for n in js.nodespecs]
 
     def make_journey(self):
         journeyspec = JourneySpec()

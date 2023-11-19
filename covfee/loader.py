@@ -1,4 +1,8 @@
 import os
+import sys
+import json
+import importlib
+from pathlib import Path
 from typing import List
 
 from flask import current_app as app
@@ -8,10 +12,8 @@ from colorama import init as colorama_init, Fore
 
 from covfee.server.orm.user import User, password_hash
 from covfee.cli.utils import working_directory
-from pathlib import Path
 from covfee.shared.schemata import Schemata
 from covfee.shared.validator.ajv_validator import AjvValidator
-import json
 from covfee.server.orm.project import Project
 
 colorama_init()
@@ -23,10 +25,6 @@ def cli_create_tables():
     """
     with Halo(text="Creating tables", spinner="dots") as spinner:
         spinner.succeed("Created database tables.")
-
-
-class ProjectExistsException(Exception):
-    pass
 
 
 class Loader:
@@ -92,11 +90,15 @@ class Loader:
                 )
 
     def python_load(self):
-        pass
+        if os.getcwd() not in sys.path:
+            sys.path.append(os.getcwd())
+        module = importlib.import_module(self.project_spec_file.stem)
+        app = getattr(module, "app")
+        self.projects += app.get_instantiated_projects()
 
     def process(self, with_spinner=False) -> List[Project]:
         if self.file_extension == ".py":
-            return self.python_load()
+            self.python_load()
         else:
             # validate the covfee files
             schema = Schemata()
@@ -105,4 +107,5 @@ class Loader:
 
             self.json_parse(with_spinner)
             self.validate(with_spinner)
-            return self.json_make(with_spinner)
+            self.json_make(with_spinner)
+        return self.projects

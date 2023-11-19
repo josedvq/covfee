@@ -51,9 +51,15 @@ $s = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBat
 $p = New-ScheduledTaskPrincipal -GroupId "BUILTIN\Administrators" -RunLevel Highest
 Register-ScheduledTask -TaskName "WSL2PortsBridge" -Action $a -Trigger $t -Settings $s -Principal $p
 
+## Run script manually
+powershell -ExecutionPolicy Bypass -File C:\Users\Jose\install\Bridge-WslPorts.ps1
 
 ## Running for LAN access
 
 covfee webpack --host 0.0.0.0
 
 docker run -p 4443:4443 --rm -e DOMAIN_OR_PUBLIC_IP=192.168.0.22 -e OPENVIDU_SECRET=MY_SECRET openvidu/openvidu-dev:2.29.0
+
+## Check portproxy
+
+netsh interface portproxy show all

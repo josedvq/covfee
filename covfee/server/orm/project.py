@@ -5,6 +5,7 @@ from pprint import pformat
 from typing import TYPE_CHECKING, List
 
 import pandas as pd
+from sqlalchemy import select
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 # from ..db import Base
@@ -21,7 +22,9 @@ class Project(Base):
     name: Mapped[str]
 
     # one project -> many HitSpec
-    hitspecs: Mapped[List[HITSpec]] = relationship(back_populates="project")
+    hitspecs: Mapped[List[HITSpec]] = relationship(
+        back_populates="project", cascade="all,delete"
+    )
 
     def __init__(
         self, name="Sample", email="example@example.com", hitspecs: List[HITSpec] = []
@@ -56,9 +59,12 @@ class Project(Base):
         return df
 
     @staticmethod
-    def from_name(name: str):
-        # TODO: attach session to Project
-        return Project.session.query(Project).where(Project.name == name).first()
+    def from_name(session, name: str):
+        return (
+            session.execute(select(Project).where(Project.name == name))
+            .scalars()
+            .first()
+        )
 
     @staticmethod
     def from_json(fpath: str):

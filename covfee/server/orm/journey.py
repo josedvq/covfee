@@ -37,7 +37,9 @@ class JourneySpec(Base):
     )
 
     # instance relationships
-    journeys: Mapped[List[JourneyInstance]] = relationship(back_populates="spec")
+    journeys: Mapped[List[JourneyInstance]] = relationship(
+        back_populates="spec", cascade="all,delete"
+    )
 
     def __init__(self, nodespecs: List[NodeSpec] = []):
         super().__init__()
@@ -81,16 +83,14 @@ class JourneyInstance(Base):
 
     # one JourneySpec -> many JourneyInstance
     journeyspec_id: Mapped[int] = mapped_column(ForeignKey("journeyspecs.id"))
-    # journeyspec_id = Column(Integer, ForeignKey('journeyspecs.id'))
     spec: Mapped[JourneySpec] = relationship(back_populates="journeys")
 
     # one HitInstance -> many JourneyInstance
     hit_id: Mapped[bytes] = mapped_column(ForeignKey("hitinstances.id"))
-    # hit_id = Column(Integer, ForeignKey('hitinstances.id'))
     hit: Mapped[HITInstance] = relationship(back_populates="journeys")
 
     # chat relationship
-    chat: Mapped[Chat] = relationship(back_populates="journey")
+    chat: Mapped[Chat] = relationship(back_populates="journey", cascade="all,delete")
 
     nodes: Mapped[List[NodeInstance]] = relationship(
         secondary=journey_node_table, back_populates="journeys"
