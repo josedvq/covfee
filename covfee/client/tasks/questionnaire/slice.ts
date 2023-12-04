@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from "../utils/state";
 
 export interface State {
   formValues: any;
@@ -12,10 +12,8 @@ export const initialState: State = {
   formDisabled: false,
 };
 
-export const slice = createSlice({
-  name: "questionnaire",
-  initialState,
-  reducers: {
+export const slice = createSlice(initialState,
+  {
     playMedia: (state) => {
       return { ...state, mediaPaused: false };
     },
@@ -37,7 +35,7 @@ export const slice = createSlice({
         },
       };
     },
-  },
-});
+  }
+);
 
 export const { actions, reducer } = slice;

@@ -1,9 +1,26 @@
+from __future__ import annotations
 import pandas as pd
 import numpy as np
-from typing import Tuple, List, Any
+from typing import Tuple, List, Any, TYPE_CHECKING
 
 from ..orm.journey import JourneyInstance
 from ...logger import logger
+
+if TYPE_CHECKING:
+    from covfee.server.orm.response import TaskResponse
+
+
+class CriticalError(Exception):
+    """When raised from a custom task callback will cause a critical error message to be shown to the user."""
+
+    def __ini__(self, load_task=False):
+        """_summary_
+
+        Args:
+            load_task (bool, optional): Whether to continue loading the task in frontend. Defaults to False.
+        """
+        super().__init__("Critical error encountered in custom task callback.")
+        self.load_task = load_task
 
 
 class BaseCovfeeTask:
@@ -78,22 +95,18 @@ class BaseCovfeeTask:
             )
 
     def validate(
-        self, response: Any, data: np.ndarray = None, log_data: List[List[Any]] = None
-    ):
+        self,
+        response: TaskResponse,
+    ) -> (bool, str):
         """This method decides whether a particular task submission will be accepted or not
 
         Args:
-            response (object): The (non-continuous) task response. Usually includes the value of
-                input forms / sliders / radio buttons in the task.
-            data (pd.DataFrame): The continuous task response, includes all the data points
-                logged by the task. For continuous tasks this may be the only response.
-            log_data (list[list[any]], optional): The logs submitted by the task via buffer.log().
-                Usually contains auxiliary information. Defaults to None.
+            response (object): The task response object.
 
         Returns:
             [type]: [description]
         """
-        return True
+        return True, None
 
     def on_create(self):
         """Called when the task is created

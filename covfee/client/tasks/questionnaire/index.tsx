@@ -1,18 +1,18 @@
-import * as React from "react";
-import { Row, Col } from "antd";
-import VideojsPlayer from "../../players/videojs";
-import WaveSurferPlayer from "../../players/wavesurfer";
-import { Form } from "../../input/form";
-import { BaseTaskProps } from "../base";
-import { QuestionnaireTaskSpec } from "@covfee-shared/spec/tasks/questionnaire";
-import { State, slice, actions } from "./slice";
-import { TaskExport, TaskType, NodeState } from "types/node";
-import { useSelector } from "react-redux";
-import { useNodeState } from "../../journey/state";
-import { AllPropsRequired } from "types/utils";
+import * as React from "react"
+import { Row, Col } from "antd"
+import VideojsPlayer from "../../players/videojs"
+import WaveSurferPlayer from "../../players/wavesurfer"
+import { Form } from "../../input/form"
+import { BaseTaskProps } from "../base"
+import { QuestionnaireTaskSpec } from "@covfee-shared/spec/tasks/questionnaire"
+import { State, slice, actions } from "./slice"
+import { TaskExport, TaskType, NodeState } from "types/node"
+import { useSelector } from "react-redux"
+import { useNodeState } from "../../journey/state"
+import { AllPropsRequired } from "types/utils"
 
 interface Props extends BaseTaskProps {
-  spec: QuestionnaireTaskSpec;
+  spec: QuestionnaireTaskSpec
 }
 
 export const QuestionnaireTask: React.FC<Props> = (props) => {
@@ -23,34 +23,18 @@ export const QuestionnaireTask: React.FC<Props> = (props) => {
       media: null,
       disabledUntilEnd: false,
     },
-  };
+  }
 
-  const { dispatch } = useNodeState<State>(slice);
+  const { dispatch } = useNodeState()
   const mediaPaused = useSelector<NodeState<State>, boolean>(
     (state) => state.mediaPaused
-  );
+  )
   const formValues = useSelector<NodeState<State>, any>(
     (state) => state.formValues
-  );
+  )
   const formDisabled = useSelector<NodeState<State>, boolean>(
     (state) => state.formDisabled
-  );
-
-  React.useEffect(() => {
-    if (args.response && args.response.data) {
-      dispatch(actions.setFormValues(args.response));
-      dispatch(actions.disableForm());
-    }
-
-    if (args.spec.disabledUntilEnd != undefined) {
-      if (args.spec.disabledUntilEnd) dispatch(actions.disableForm());
-      else dispatch(actions.enableForm());
-    }
-  }, []);
-
-  const handleSubmit = () => {
-    args.onSubmit(formValues, null, true);
-  };
+  )
 
   return (
     <>
@@ -59,22 +43,22 @@ export const QuestionnaireTask: React.FC<Props> = (props) => {
           <Col span={16}>
             {(() => {
               switch (args.spec.media.type) {
-                case "video":
-                  return (
-                    <VideojsPlayer
-                      {...args.spec.media}
-                      onEnded={actions.enableForm}
-                    />
-                  );
-                case "audio":
-                  return (
-                    <WaveSurferPlayer
-                      media={args.spec.media}
-                      onEnded={actions.enableForm}
-                    />
-                  );
-                default:
-                  return <p>Unrecognized media type.</p>;
+              case "video":
+                return (
+                  <VideojsPlayer
+                    {...args.spec.media}
+                    onEnded={actions.enableForm}
+                  />
+                )
+              case "audio":
+                return (
+                  <WaveSurferPlayer
+                    media={args.spec.media}
+                    onEnded={actions.enableForm}
+                  />
+                )
+              default:
+                return <p>Unrecognized media type.</p>
               }
             })()}
           </Col>
@@ -87,15 +71,14 @@ export const QuestionnaireTask: React.FC<Props> = (props) => {
             setValues={(v) => dispatch(actions.setFormValues(v))}
             withSubmitButton={true}
             renderSubmitButton={args.renderSubmitButton}
-            onSubmit={handleSubmit}
           />
         </Col>
       </Row>
     </>
-  );
-};
+  )
+}
 
 export default {
   taskComponent: QuestionnaireTask,
   taskReducer: slice.reducer,
-} as TaskExport;
+} as TaskExport

@@ -1,12 +1,15 @@
 from __future__ import annotations
 import datetime
-from typing import TYPE_CHECKING, Dict, Any
+from typing import TYPE_CHECKING, Dict, Any, Optional
 
 import numpy as np
 from flask import current_app as app
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
+from covfee.server.orm.node import NodeInstanceStatus
+
+from .. import tasks
 from .base import Base
 from ..tasks.base import BaseCovfeeTask
 
@@ -30,6 +33,13 @@ class TaskResponse(Base):
     submitted: Mapped[bool]
     valid: Mapped[bool]
     # data: Mapped[Dict[str, Any]]
+
+    created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        default=datetime.datetime.now, onupdate=datetime.datetime.now
+    )
+    created_at: Mapped[Optional[datetime.datetime]]
+
     # created_at = Column(DateTime, default=datetime.datetime.now)
     # updated_at = Column(DateTime, onupdate=datetime.datetime.now)
     # submitted_at = Column(DateTime)
@@ -79,23 +89,22 @@ class TaskResponse(Base):
 
     def validate(self):
         task_object = self.get_task_object()
-        chunk_data, chunk_logs = self.get_ndarray()
-        self.valid = task_object.validate(self.data, chunk_data, chunk_logs)
+        self.valid = task_object.validate(self)
         return self.valid
 
     def submit(self, response=None):
-        validation_result = self.validate()
+        valid, reason = self.validate()
 
         if response is not None:
-            self.data = response
+            self.state = response["state"]
         self.submitted = True
         self.submitted_at = datetime.datetime.now()
-        self.valid = validation_result == True
-        self.task.has_unsubmitted_response = False
+        self.valid = valid
+        self.task.status = NodeInstanceStatus.FINISHED
 
         res = {"status": "success", "valid": self.valid, "response": self.to_dict()}
 
         if not self.valid:
-            res["reason"] = validation_result
+            res["reason"] = reason
 
         return res

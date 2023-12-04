@@ -16,7 +16,7 @@ from .. import tasks
 from ..tasks.base import BaseCovfeeTask
 from . import utils
 
-from .node import NodeSpec, NodeInstance
+from .node import NodeInstanceStatus, NodeSpec, NodeInstance
 from covfee.shared.schemata import schemata
 
 
@@ -67,7 +67,6 @@ class TaskInstance(NodeInstance):
 
     def __init__(self):
         super().__init__()
-        self.has_unsubmitted_response = False
         self.aux = {}
         self.add_response()  # add initial empty response
 
@@ -88,18 +87,8 @@ class TaskInstance(NodeInstance):
         return task_object
 
     def to_dict(self):
-        # merge task and spec dicts
-        # task_dict = {
-        #     c.name: utils.to_dict(getattr(self, c.name))
-        #     for c in self.__table__.columns
-        #     if c not in ["responses"]
-        # }
-        # spec_dict = self.spec.to_dict()
-
         task_dict = {
             **super().to_dict(),
-            # **spec_dict,
-            # **task_dict,
             "responses": [response.to_dict() for response in self.responses],
             "taskSpecific": self.get_task_object().get_task_specific_props(),
         }
@@ -112,6 +101,7 @@ class TaskInstance(NodeInstance):
     def add_response(self):
         response = TaskResponse()
         self.responses.append(response)
+        self.status = NodeInstanceStatus.INIT
         return response
 
     def stream_download(self, z, base_path, index, csv=False):

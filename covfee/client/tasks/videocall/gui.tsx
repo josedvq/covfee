@@ -6,7 +6,7 @@ import NoVideo from "./novideo.svg";
 import { AudioMutedOutlined, AudioOutlined, VideoCameraOutlined } from '@ant-design/icons';
 
 
-const GridContainer = styled.div<{columns: number}>`
+const GridContainer = styled.div<{rows: number, columns: number}>`
   display: grid;
   grid-template-columns: ${props => `repeat(${props.columns}, 1fr)`};
   grid-gap: 0;
@@ -18,15 +18,16 @@ const GridContainer = styled.div<{columns: number}>`
 
 const VideoElement = styled.video`
   width: 100%;
-  max-height: inherit;
+  height: 100%;
   object-fit: contain;
 `;
 
-const VideoContainer = styled.div<{columns: number}>`
+const VideoContainer = styled.div<{rows: number, columns: number}>`
+  height: ${props => `calc((100vh - 46px) / ${props.rows})`};
   align-self: stretch;
   position: relative;
-  max-height: ${props=> `${(100/props.columns)}%`};
-  display: flex;
+  /* max-height: ${props=> `${(100/props.columns)}%`}; */
+  /* display: flex; */
   align-items: center;
 `
 
@@ -106,10 +107,11 @@ export const VideocallGUI: React.FC<Props> = (props) => {
   )
 
   const numColumns = Math.ceil(Math.sqrt(args.subscribers.length))
+  const numRows = Math.floor(args.subscribers.length / numColumns)
   return (
-    <GridContainer columns={numColumns}>
+    <GridContainer rows={numRows} columns={numColumns}>
       {args.subscribers.map((subscriber, index) => (
-        <VideoContainer key={index} columns={numColumns}>
+        <VideoContainer key={index} rows={numRows} columns={numColumns}>
           <VideoElement  ref={e=>{if(e) {subscriber(e)}}}/>
         </VideoContainer>
       ))}

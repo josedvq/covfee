@@ -52,6 +52,7 @@ export function useNodeFns(node: NodeType) {
 export function useNode(data: NodeType, socket: MainSocket = null) {
   const [node, setNode] = useState<NodeType>(data)
   const [response, setResponse] = useState<TaskResponseType>(null)
+
   const {
     getAdminUrl: getUrl,
     fetchResponse: fetchResponseFn,
@@ -89,9 +90,10 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
       })
       socket.on("join", (data) => {
         console.log(`IO: join`, data)
+
         setNode(node=>({
           ...node,
-          taskData: data['task_data']
+          taskData: data.task_data
         }))
       })
       return () => {

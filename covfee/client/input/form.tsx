@@ -83,7 +83,7 @@ interface Props extends FormSpec<InputSpec> {
   /**
    * Called with the field values when the form is submitted and validated
    */
-  onSubmit: (arg0: any) => void
+  onSubmit?: (arg0: any) => void
 }
 
 export class Form extends React.Component<Props> {
@@ -109,8 +109,8 @@ export class Form extends React.Component<Props> {
             field.input.defaultValue !== undefined
               ? field.input.defaultValue
               : field.input.defaultChecked !== undefined
-              ? field.input.defaultChecked
-              : null
+                ? field.input.defaultChecked
+                : null
           this.initialValues[field.name] = undefined
         })
       }

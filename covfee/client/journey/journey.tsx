@@ -208,21 +208,9 @@ export const _JourneyPage: React.FC<Props> = (props) => {
     else return false
   }
 
-  const renderTaskSubmitButton = (extraProps: any) => {
-    return (
-      <Button type="primary" htmlType="submit" {...extraProps}>
-        Submit
-      </Button>
-    )
-  }
+  
 
-  const renderTaskNextButton = (extraProps: any) => {
-    return (
-      <Button type="primary" onClick={gotoNextNode} {...extraProps}>
-        Next
-      </Button>
-    )
-  }
+
 
   // return (
   //   <Modal
@@ -319,11 +307,7 @@ export const _JourneyPage: React.FC<Props> = (props) => {
             node={nodeProps}
             disabled={false}
             previewMode={props.previewMode}
-            // render props
-            renderSubmitButton={renderTaskSubmitButton}
-            renderNextButton={renderTaskNextButton}
             // callbacks
-            onClickNext={gotoNextNode}
             onSubmit={handleNodeSubmitted}
           />
         </Row>
@@ -338,7 +322,7 @@ const SidebarContainer = styled.div<any>`
   display: inline-block;
   vertical-align: top;
   top: 46px;
-  height: ${() => Math.floor(window.innerHeight) - 46 + "px;"};
+  height: calc(100vh - 46px);
   width: 25%;
   overflow: auto;
 `
@@ -349,7 +333,7 @@ const ContentContainer = styled.div<any>`
   right: 0;
   display: inline-block;
   vertical-align: top;
-  height: ${() => Math.floor(window.innerHeight) - 46 + "px;"};
+  height: calc(100vh - 46px);
   width: calc(100% - 25%);
   overflow: auto;
 `

@@ -101,10 +101,6 @@ export const useHitInstances = (
     };
   }, [socket, hits]);
 
-  React.useEffect(() => {
-    console.log(hits);
-  }, [hits]);
-
   const setCollapsed = async (value: boolean) => {
     return update({ collapsed: value });
   };

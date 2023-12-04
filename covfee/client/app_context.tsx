@@ -31,7 +31,9 @@ export interface ServerToClientEvents {
     num_connections: number
   }) => void
   join: (arg0: {
-    task_data: any
+    error?: string,
+    load_task?: boolean,
+    task_data?: any
   }) => void
   action: (arg0: ActionResponse) => void
   state: (arg0: StateResponse) => void

@@ -5,7 +5,7 @@ from typing import Dict
 from covfee.server.orm.chat import Chat, ChatMessage
 
 from .. import tasks
-from ..tasks.base import BaseCovfeeTask
+from ..tasks.base import BaseCovfeeTask, CriticalError
 from flask import current_app as app, session
 from flask_socketio import SocketIO, send, emit, join_room, leave_room, Namespace
 from covfee.server.orm import (
@@ -123,9 +123,25 @@ def on_join(data):
     # update the journey and node status
     curr_journey.set_curr_node(curr_node)
     task_object = get_task_object(int(curr_response_id))
-    task_data = task_object.on_join(curr_journey)
-    emit("join", {"task_data": task_data})
-    app.logger.info(f'socketio: join: {str({"task_data": task_data})}')
+
+    try:
+        join_payload = {"task_data": task_object.on_join(curr_journey)}
+    except CriticalError as ex:
+        join_payload = {
+            "error": ex.msg,
+            "load_task": ex.load_task,
+        }
+    except Exception as ex:
+        join_payload = {
+            "error": f"Unknown exception while executing on_join for task {task_object.__class__.__name__}",
+            "load_task": True,
+        }
+        app.logger.error(
+            f"Error running on_join for task {task_object.__class__.__name__}"
+        )
+
+    emit("join", join_payload)
+    app.logger.info(f"socketio: join: {str(join_payload)}")
     app.session.commit()
 
     # update previous node status

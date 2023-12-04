@@ -32,7 +32,7 @@ export interface NodeType extends AllPropsRequired<BaseNodeSpec> {
    * Status of the node
    */
   status: NodeStatus
-  taskData: any,
+  taskData: any
   num_journeys: number
   curr_journeys: string[]
   valid: boolean
@@ -55,10 +55,6 @@ export interface TaskType extends BaseTaskSpec {
    * number of times the task has been submitted
    */
   num_submissions: number
-  /**
-   * Sent when the latest response to the task is unsubmitted (used for resuming)
-   */
-  has_unsubmitted_responses: boolean
   /**
    * True if the task is a user task (can be edited)
    */
