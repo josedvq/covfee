@@ -4,7 +4,7 @@ import { Select, Typography, Empty, Button } from "antd"
 import Constants from "Constants"
 import { getAllProjects, getProject, useProject } from "../models/Project"
 import { ProjectType } from "types/project"
-import { HitBlock } from "./hit_block"
+import { HitBlock } from "./hit_block/hit_block"
 import { appContext } from "../app_context"
 
 interface Props {

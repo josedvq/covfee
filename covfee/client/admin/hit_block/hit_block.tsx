@@ -1,18 +1,10 @@
 import * as React from "react"
 import styled from "styled-components"
 
-import { HitInstanceType } from "../types/hit"
-import { JourneyType } from "../types/journey"
-import { NodeStatus, NodeStatuses, NodeType } from "../types/node"
-import {
-  DownOutlined,
-  LinkOutlined,
-  NodeIndexOutlined,
-  WechatOutlined,
-} from "@ant-design/icons"
-import { useJourneyFns } from "../models/Journey"
-import { useNodeFns } from "../models/Node"
-import { appContext } from "../app_context"
+import { HitInstanceType } from "../../types/hit"
+import { NodeStatus } from "../../types/node"
+import { NodeIndexOutlined } from "@ant-design/icons"
+import { appContext } from "../../app_context"
 import {
   JourneyColorStatus,
   JourneyColorStatuses,
@@ -23,10 +15,13 @@ import {
   StatusIcon,
   getJourneyStatus,
   getNodeStatus,
-} from "./utils"
+} from "../utils"
 import classNames from "classnames"
-import { ForceGraph } from "./force_graph"
-import { chatContext } from "../chat_context"
+import { ForceGraph } from "../force_graph"
+import { NodeButtons, NodeRow } from "./node_buttons"
+import { HoveringButtons } from "./utils"
+import type { HoveringButtonsArgs } from "./utils"
+import { JourneyRow } from "./journey_buttons"
 
 interface Props {
   hit: HitInstanceType
@@ -49,8 +44,8 @@ export const HitBlock = (props: Props) => {
   const [focusedNode, setFocusedNode] = React.useState<number>(null)
   const [focusedJourney, setFocusedJourney] = React.useState<number>(null)
   const [hoveringButtonProps, setHoveringButtonProps] = React.useState<
-    Omit<HoveringNodeButtonsProps, "node"> & { nodeIndex: number }
-  >({ nodeIndex: null, hide: false, x: 100, y: 100 })
+    HoveringButtonsArgs & { nodeIndex: number }
+  >({ nodeIndex: null, hide: true, x: 100, y: 100 })
 
   const startHoveringButtonsTimeout = () => {
     timeout.current = setTimeout(() => {
@@ -146,6 +141,7 @@ export const HitBlock = (props: Props) => {
                       key={index}
                       node={node}
                       focus={focusedNode == index}
+                      danger={node.paused}
                       onFocus={() => {
                         setFocusedNode(index)
                       }}
@@ -200,9 +196,18 @@ export const HitBlock = (props: Props) => {
           </div>
         </div>
       )}
-      <HoveringNodeButtons
-        node={props.hit.nodes[hoveringButtonProps.nodeIndex]}
+      <HoveringButtons
         {...hoveringButtonProps}
+        content={() => {
+          console.log("called")
+          console.log(hoveringButtonProps.hide)
+          console.log(hoveringButtonProps.nodeIndex)
+          return (
+            <NodeButtons
+              node={props.hit.nodes[hoveringButtonProps.nodeIndex]}
+            ></NodeButtons>
+          )
+        }}
         onFocus={() => {
           handleNodeHover(hoveringButtonProps.nodeIndex)
         }}
@@ -251,32 +256,6 @@ const NodesList = styled.div`
   > ul {
     list-style-type: none;
     padding-left: 0;
-  }
-
-  > ul > li {
-    display: block;
-    margin: 0;
-    padding: 5px 0;
-    display: flex;
-    flex-direction: row;
-
-    > * {
-      flex: 1 0 auto;
-    }
-
-    > a {
-      width: 150px;
-      max-width: 200px;
-    }
-
-    > .button {
-      flex: 0 0 auto;
-      width: 30px;
-    }
-
-    &.focus {
-      background-color: rgba(0, 0, 0, 0.05);
-    }
   }
 
   > h2 {
@@ -330,152 +309,3 @@ const JourneysList = styled.div`
     }
   }
 `
-
-type JourneyRowProps = {
-  journey: JourneyType
-  focus: boolean
-  onFocus: () => void
-  onBlur: () => void
-}
-const JourneyRow = ({ journey, focus, onFocus, onBlur }: JourneyRowProps) => {
-  const { addChats } = React.useContext(chatContext)
-  const { getUrl } = useJourneyFns(journey)
-
-  return (
-    <li
-      onMouseOver={onFocus}
-      onMouseOut={onBlur}
-      className={classNames({ focus })}
-    >
-      <a href={getUrl()}>
-        <span>
-          <StatusIcon color={JourneyStatusToColor[getJourneyStatus(journey)]} />
-        </span>
-        <span>
-          {journey.id.substring(0, 10)} [{journey.num_connections}]
-        </span>{" "}
-        <LinkOutlined />
-      </a>
-      <span className="button">
-        <button
-          onClick={() => {
-            addChats([journey.chat_id])
-          }}
-        >
-          <WechatOutlined />
-        </button>
-      </span>
-    </li>
-  )
-}
-
-type NodeRowProps = {
-  node: NodeType
-  focus: boolean
-  onFocus: () => void
-  onBlur: () => void
-}
-const NodeRow = ({
-  node,
-  focus = false,
-  onFocus = () => {},
-  onBlur = () => {},
-}: NodeRowProps) => {
-  const { getAdminUrl: getUrl } = useNodeFns(node)
-
-  return (
-    <li
-      onMouseOver={onFocus}
-      onMouseOut={onBlur}
-      className={classNames({ focus })}
-    >
-      <a href={getUrl()}>
-        <span>
-          <StatusIcon color={NodeStatusToColor[getNodeStatus(node)]} />
-        </span>
-        {node.name}[{node.id}] - {node.status}
-      </a>
-      <NodeButtons node={node} />
-    </li>
-  )
-}
-
-type NodeButtonsProps = {
-  node: NodeType
-}
-export const NodeButtons = ({ node }: NodeButtonsProps) => {
-  const { addChats } = React.useContext(chatContext)
-  const { getAdminUrl: getUrl } = useNodeFns(node)
-
-  return (
-    <NodeButtonsContainer>
-      <li>
-        <a href={getUrl()}>
-          <button>
-            <LinkOutlined />
-          </button>
-        </a>
-      </li>
-      <li>
-        <button
-          onClick={() => {
-            addChats([node.chat_id])
-          }}
-        >
-          <WechatOutlined />
-        </button>
-      </li>
-    </NodeButtonsContainer>
-  )
-}
-
-const NodeButtonsContainer = styled.ul`
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-
-  > li {
-    display: inline-block;
-    margin: 0 0.2em;
-
-    button {
-      cursor: pointer;
-    }
-  }
-`
-
-type HoveringNodeButtonsProps = {
-  node: NodeType
-  x: number
-  y: number
-  hide: boolean
-  onFocus: () => void
-  onBlur: () => void
-}
-export const HoveringNodeButtons = ({
-  node,
-  x,
-  y,
-  hide = false,
-  onFocus = () => {},
-  onBlur = () => {},
-}: HoveringNodeButtonsProps) => {
-  if (!hide && node)
-    return (
-      <div
-        style={{
-          zIndex: 100,
-          position: "fixed",
-          top: y,
-          left: x,
-          backgroundColor: "#ddd",
-          borderRadius: "5px",
-          padding: "3px",
-        }}
-        onMouseEnter={onFocus}
-        onMouseLeave={onBlur}
-      >
-        <NodeButtons node={node} />
-      </div>
-    )
-}

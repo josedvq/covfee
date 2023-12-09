@@ -104,6 +104,24 @@ class TaskInstance(NodeInstance):
         self.status = NodeInstanceStatus.INIT
         return response
 
+    def make_status_payload(self, prev_status: NodeInstanceStatus = None):
+        if prev_status is None:
+            prev_status = self.status
+        return {
+            "id": self.id,
+            "hit_id": self.hit_id.hex(),
+            "prev": prev_status,
+            "new": self.status,
+            "paused": self.paused,
+            "response_id": self.responses[-1].id,
+            "curr_journeys": [j.id.hex() for j in self.curr_journeys],
+        }
+
+    def pause(self, pause: bool):
+        super().pause(pause)
+        self.paused = pause
+        self.get_task_object().on_admin_pause()
+
     def stream_download(self, z, base_path, index, csv=False):
         responses = [resp for resp in self.responses if resp.submitted]
 

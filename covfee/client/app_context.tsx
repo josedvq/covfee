@@ -18,6 +18,8 @@ export interface ServerToClientEvents {
     hit_id: string
     prev: NodeStatus
     new: NodeStatus
+    paused: boolean
+    response_id?: number
     curr_journeys: string[]
   }) => void
   journey_connect: (arg0: {
@@ -30,11 +32,7 @@ export interface ServerToClientEvents {
     journey_id: string
     num_connections: number
   }) => void
-  join: (arg0: {
-    error?: string,
-    load_task?: boolean,
-    task_data?: any
-  }) => void
+  join: (arg0: { error?: string; load_task?: boolean; task_data?: any }) => void
   action: (arg0: ActionResponse) => void
   state: (arg0: StateResponse) => void
 }
@@ -45,7 +43,6 @@ interface ClientToServerEvents {
   join: (arg0: {
     journeyId: string
     nodeId: number
-    responseId: number
     useSharedState: boolean
   }) => void
 

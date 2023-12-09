@@ -7,6 +7,7 @@ from ..orm.journey import JourneyInstance
 from ...logger import logger
 
 if TYPE_CHECKING:
+    from covfee.server.orm.task import TaskInstance
     from covfee.server.orm.response import TaskResponse
 
 
@@ -24,13 +25,8 @@ class CriticalError(Exception):
 
 
 class BaseCovfeeTask:
-    def __init__(self, response=None, task=None):
-        self.response = response
-
-        if response:
-            self.task = response.task
-        else:
-            self.task = task
+    def __init__(self, task: TaskInstance = None):
+        self.task = task
 
     def get_task_specific_props(self) -> dict:
         """Used to extend the dict that is send to the browser as props for the task element.
@@ -107,6 +103,14 @@ class BaseCovfeeTask:
             [type]: [description]
         """
         return True, None
+
+    def on_status_change(self):
+        """Called when the task changes status"""
+        logger.info("BaseCovfeeTask: on_status_change")
+
+    def on_admin_pause(self):
+        """Called when the task is paused by an admin"""
+        logger.info("BaseCovfeeTask: on_admin_pause")
 
     def on_create(self):
         """Called when the task is created

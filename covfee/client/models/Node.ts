@@ -15,18 +15,36 @@ export function useNodeFns(node: NodeType) {
     return Constants.admin.home_url + "/nodes/" + node.id
   }, [node.id])
 
-  const submitResponse = useCallback((responseUrl: string, data: any) => {
-    const url = responseUrl + "/submit?" + new URLSearchParams({})
+  const pause = useCallback(
+    (pause: boolean) => {
+      const url = node.url + "/pause/" + (pause ? "1" : "0")
 
-    const requestOptions = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    }
+      return fetcher(url).then(throwBadResponse)
+    },
+    [node.url]
+  )
 
-    // now send the task results
-    return fetcher(url, requestOptions).then(throwBadResponse)
-  }, [])
+  const restart = useCallback(() => {
+    const url = node.url + "/restart"
+
+    return fetcher(url).then(throwBadResponse)
+  }, [node.url])
+
+  const submitResponse = useCallback(
+    (responseUrl: string, data: any) => {
+      const url = node.url + "/submit?" + new URLSearchParams({})
+
+      const requestOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }
+
+      // now send the task results
+      return fetcher(url, requestOptions).then(throwBadResponse)
+    },
+    [node.url]
+  )
 
   const makeResponse = useCallback(
     (response: TaskResponseType, data: any) => {
@@ -46,6 +64,8 @@ export function useNodeFns(node: NodeType) {
     getAdminUrl,
     submitResponse,
     makeResponse,
+    pause,
+    restart,
   }
 }
 
@@ -81,19 +101,20 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
   useEffect(() => {
     if (socket) {
       socket.on("status", (data) => {
-        console.log(`IO: status`, data)
-        setNode(node=>({
+        console.log("IO: status", data)
+        setNode((node) => ({
           ...node,
           status: data.new,
+          paused: data.paused,
           curr_journeys: data.curr_journeys,
         }))
       })
       socket.on("join", (data) => {
-        console.log(`IO: join`, data)
+        console.log("IO: join", data)
 
-        setNode(node=>({
+        setNode((node) => ({
           ...node,
-          taskData: data.task_data
+          taskData: data.task_data,
         }))
       })
       return () => {

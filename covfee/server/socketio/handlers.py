@@ -1,50 +1,29 @@
-import hashlib
-import hmac
-from typing import Dict
+from typing import Union
 
-from covfee.server.orm.chat import Chat, ChatMessage
-
-from .. import tasks
-from ..tasks.base import BaseCovfeeTask, CriticalError
 from flask import current_app as app, session
-from flask_socketio import SocketIO, send, emit, join_room, leave_room, Namespace
+from flask_socketio import send, emit, join_room, leave_room
+
+from .socket import socketio, store
 from covfee.server.orm import (
     NodeInstance,
     TaskResponse,
     JourneyInstance,
-    NodeInstanceStatus,
 )
-from covfee.server.socketio.redux_store import ReduxStoreClient
-
-socketio = SocketIO()
-store = ReduxStoreClient()
+from covfee.server.orm.chat import Chat
+from covfee.server.orm.task import TaskInstance
+from ..tasks.base import CriticalError
 
 
 def get_journey(jid: str) -> JourneyInstance:
     return app.session.query(JourneyInstance).get(bytes.fromhex(jid))
 
 
-def get_node(nodeId: int) -> NodeInstance:
+def get_node(nodeId: int) -> Union[NodeInstance, TaskInstance]:
     return app.session.query(NodeInstance).get(nodeId)
-
-
-def get_response(responseId: int) -> TaskResponse:
-    return app.session.query(TaskResponse).get(responseId)
 
 
 def get_chat(chatId: int) -> Chat:
     return app.session.query(Chat).get(chatId)
-
-
-def get_task_object(responseId: int):
-    response = app.session.query(TaskResponse).get(responseId)
-    if response is None:
-        return None
-
-    task = response.task
-    task_class = getattr(tasks, task.spec.spec["type"], BaseCovfeeTask)
-    task_object = task_class(response=response)
-    return task_object
 
 
 @socketio.on("connect")
@@ -64,16 +43,7 @@ def on_connect(data):
         "num_connections": journey.num_connections,
     }
     emit("journey_connect", payload, namespace="/admin", broadcast=True)
-
-
-def make_node_status_payload(prev_status: NodeInstanceStatus, node: NodeInstance):
-    return {
-        "id": node.id,
-        "hit_id": node.hit_id.hex(),
-        "prev": prev_status,
-        "new": node.status,
-        "curr_journeys": [j.id.hex() for j in node.curr_journeys],
-    }
+    join_room(journey.id.hex())
 
 
 @socketio.on("join")
@@ -84,9 +54,6 @@ def on_join(data):
 
     curr_node_id = int(data["nodeId"])
     curr_node = get_node(curr_node_id)
-
-    curr_response_id = int(data["responseId"])
-    response = get_response(curr_response_id)
 
     use_shared_state = data["useSharedState"]
 
@@ -100,45 +67,45 @@ def on_join(data):
             f"Unable to join nodeId={curr_node_id} is not in journey journeyId={curr_journey_id}"
         )
 
-    if "responseId" in session:
+    if "nodeId" in session:
         # user comes from another node
-        prev_response_id = str(session["responseId"])
-        leave_room(prev_response_id)
-        session["responseId"] = None  # just in case
-
         prev_node_id = str(session["nodeId"])
+        leave_room(prev_node_id)
+        session["nodeId"] = None  # just in case
+
         prev_node = get_node(prev_node_id)
         prev_node_prev_status = prev_node.status
 
         if "useSharedState" in session and session["useSharedState"]:
-            leave_store(prev_response_id)
+            leave_store(prev_node_id)
     else:
         prev_response_id = None
         prev_node = None
         prev_node_prev_status = None
 
-    join_room(curr_response_id)
+    join_room(curr_node_id)
     curr_node_prev_status = curr_node.status
 
     # update the journey and node status
     curr_journey.set_curr_node(curr_node)
-    task_object = get_task_object(int(curr_response_id))
+    task_object = curr_node.get_task_object()
 
-    try:
-        join_payload = {"task_data": task_object.on_join(curr_journey)}
-    except CriticalError as ex:
-        join_payload = {
-            "error": ex.msg,
-            "load_task": ex.load_task,
-        }
-    except Exception as ex:
-        join_payload = {
-            "error": f"Unknown exception while executing on_join for task {task_object.__class__.__name__}",
-            "load_task": True,
-        }
-        app.logger.error(
-            f"Error running on_join for task {task_object.__class__.__name__}"
-        )
+    if task_object is not None:
+        try:
+            join_payload = {"task_data": task_object.on_join(curr_journey)}
+        except CriticalError as ex:
+            join_payload = {
+                "error": ex.msg,
+                "load_task": ex.load_task,
+            }
+        except Exception as ex:
+            join_payload = {
+                "error": f"Unknown exception while executing on_join for task {task_object.__class__.__name__}",
+                "load_task": True,
+            }
+            app.logger.error(
+                f"Error running on_join for task {task_object.__class__.__name__}"
+            )
 
     emit("join", join_payload)
     app.logger.info(f"socketio: join: {str(join_payload)}")
@@ -146,24 +113,22 @@ def on_join(data):
 
     # update previous node status
     if prev_node is not None:
-        payload = make_node_status_payload(prev_node_prev_status, prev_node)
-        emit("status", payload, to=prev_response_id)
+        payload = prev_node.make_status_payload(prev_node_prev_status)
+        emit("status", payload, to=prev_node_id)
         emit("status", payload, namespace="/admin", broadcast=True)
 
     # update current node status
-    payload = make_node_status_payload(curr_node_prev_status, curr_node)
-    emit("status", payload, to=curr_response_id)
+    payload = curr_node.make_status_payload(curr_node_prev_status)
+    emit("status", payload, to=curr_node_id)
     emit("status", payload, namespace="/admin", broadcast=True)
 
     session["journeyId"] = curr_journey_id
     session["nodeId"] = curr_node_id
-    session["responseId"] = curr_response_id
     session["useSharedState"] = use_shared_state
 
-    if use_shared_state:
-        res = store.join(
-            curr_response_id, response.task.spec.spec["type"], response.state
-        )
+    if isinstance(curr_node, TaskInstance) and use_shared_state:
+        response = curr_node.responses[-1]
+        res = store.join(curr_node_id, curr_node.spec.spec["type"], response.state)
         if res["success"]:
             emit("state", res)
         else:
@@ -174,22 +139,19 @@ def on_join(data):
 @socketio.on("join", namespace="/admin")
 def on_admin_join(data):
     curr_node_id = int(data["nodeId"])
-    curr_response_id = int(data["responseId"])
-    response = get_response(curr_response_id)
+    curr_node = get_node(curr_node_id)
 
     use_shared_state = data["useSharedState"]
 
-    join_room(curr_response_id, namespace="/admin")
+    join_room(curr_node_id, namespace="/admin")
 
     session["nodeId"] = curr_node_id
-    session["responseId"] = curr_response_id
     session["useSharedState"] = use_shared_state
 
-    if use_shared_state:
+    if isinstance(curr_node, TaskInstance) and use_shared_state:
         # task may not be running so we need to pass the state
-        res = store.join(
-            curr_response_id, response.task.spec.spec["type"], response.state
-        )
+        response = curr_node.responses[-1]
+        res = store.join(curr_node_id, curr_node.spec.spec["type"], response.state)
         if res["success"]:
             emit("state", res, namespace="/admin", broadcast=True)
 
@@ -198,30 +160,31 @@ def on_admin_join(data):
             #     get_task_object(int(room)).on_first_join()
 
         else:
-            send(f"Unable to join room id={curr_response_id}")
+            send(f"Unable to join store node_id={curr_node_id}")
 
 
 @socketio.on("action")
 def on_action(data):
     action = data["action"]
-    responseId = str(data["responseId"])
+    nodeId = int(data["nodeId"])
+    # responseId = int(data["responseId"])
     # if responseId != session["responseId"]:
     #     return send(
     #         f'data["responseId"] does not match session\'s responseId variable. {responseId} != {session["responseId"]}'
     #     )
 
-    res = store.action(responseId, action)
+    res = store.action(nodeId, action)
     if res["success"]:
-        emit("action", action, to=responseId)
-        emit("action", action, to=responseId, namespace="/admin")
+        emit("action", action, to=nodeId)
+        emit("action", action, to=nodeId, namespace="/admin")
 
 
-def leave_store(responseId):
-    logger.info(f"Leaving response {responseId}")
-    res = store.leave(responseId)
+def leave_store(nodeId):
+    app.logger.info(f"Leaving node {nodeId}")
+    res = store.leave(nodeId)
     if res["success"]:
         # save state to database
-        response = get_response(responseId)
+        response = get_node(nodeId).responses[-1]
         response.state = res["state"]
         app.session.commit()
 
@@ -247,53 +210,13 @@ def disconnect():
     emit("journey_connect", payload, namespace="/admin", broadcast=True)
 
     # now update node
-    if "responseId" not in session:
+    if not isinstance(node, TaskInstance):
         return
-    response_id = int(session["responseId"])
 
     if "useSharedState" in session and session["useSharedState"]:
-        leave_store(response_id)
+        leave_store(node.responses[-1].id)
 
     if node:
-        payload = make_node_status_payload(prev_status, node)
-        emit("status", payload, to=response_id)
+        payload = node.make_status_payload(prev_status)
+        emit("status", payload, to=node.id)
         emit("status", payload, namespace="/admin", broadcast=True)
-
-
-### CHAT ###
-
-
-def on_chat(data: Dict):
-    if "chatId" not in data:
-        return send(f"chatId not sent")
-
-    chatId = int(data["chatId"])
-    message = ChatMessage(data["message"])
-    chat = get_chat(chatId)
-    if chat is None:
-        return send(f"chat not found")
-    chat.messages.append(message)
-    app.session.commit()
-
-    # emit the message
-    emit("message", message.to_dict(), to=chatId, namespace="/chat")
-
-    # broadcast to admins
-    emit("message", message.to_dict(), namespace="/admin_chat", broadcast=True)
-
-
-socketio.on_event("message", on_chat, namespace="/chat")
-socketio.on_event("message", on_chat, namespace="/admin_chat")
-socketio.on_event("message", on_chat, namespace="/admin")
-
-
-@socketio.on("join_chat", namespace="/chat")
-def on_join_chat(data):
-    chatId = data["chatId"]
-    chat = get_chat(chatId)
-
-    if chat is None:
-        return send(f"Unable to join, chatId={chatId}")
-
-    join_room(chat.id, namespace="/chat")
-    session["chatId"] = chatId

@@ -1,45 +1,43 @@
-import { styled } from "styled-components";
-import { JourneyType } from "../types/journey";
-import { NodeType } from "../types/node";
+import { styled } from "styled-components"
+import { JourneyType } from "../types/journey"
+import { NodeType } from "../types/node"
 
 export const NodeColorStatuses = [
   "INIT",
-  "PAUSED",
   "RUNNING",
-  "WAITING",
+  "PAUSED",
   "FINISHED",
-] as const;
-export type NodeColorStatus = (typeof NodeColorStatuses)[number];
+] as const
+export type NodeColorStatus = (typeof NodeColorStatuses)[number]
 export const JourneyColorStatuses = [
   "INIT",
-  "FINISHED",
   "DISABLED",
   "ONLINE",
   "OFFLINE",
-] as const;
-export type JourneyColorStatus = (typeof JourneyColorStatuses)[number];
+  "FINISHED",
+] as const
+export type JourneyColorStatus = (typeof JourneyColorStatuses)[number]
 
 export const NodeStatusToColor: Record<NodeColorStatus, string> = {
   INIT: "gray",
-  PAUSED: "red",
-  RUNNING: "green",
-  WAITING: "orange",
-  FINISHED: "blue",
-};
+  RUNNING: "#6495ED",
+  PAUSED: "orange",
+  FINISHED: "#7dc238",
+}
 
 export const JourneyStatusToColor: Record<JourneyColorStatus, string> = {
   INIT: "red",
   DISABLED: "black",
-  ONLINE: "green",
+  ONLINE: "#6495ED",
   OFFLINE: "red",
-  FINISHED: "blue",
-};
+  FINISHED: "#7dc238",
+}
 
 export const getNodeStatus = (
   node: Pick<NodeType, "status">
 ): NodeColorStatus => {
-  return node.status;
-};
+  return node.status
+}
 
 export const getJourneyStatus = (
   journey: Pick<JourneyType, "status" | "num_connections">
@@ -49,14 +47,14 @@ export const getJourneyStatus = (
     journey.status == "DISABLED" ||
     journey.status == "FINISHED"
   ) {
-    return journey.status;
+    return journey.status
   }
   if (journey.num_connections > 0) {
-    return "ONLINE";
+    return "ONLINE"
   } else {
-    return "OFFLINE";
+    return "OFFLINE"
   }
-};
+}
 
 export const StatusIcon = styled.span<{ color: string }>`
   display: inline-block;
@@ -66,4 +64,4 @@ export const StatusIcon = styled.span<{ color: string }>`
   border-radius: 0.5em;
   background-color: ${(props) => props.color};
   vertical-align: middle;
-`;
+`

@@ -30,6 +30,7 @@ import {
 } from "@covfee-shared/spec/tasks/questionnaire"
 import { FormInstance } from "antd/lib/form"
 import { StarOutlined, ThunderboltFilled } from "@ant-design/icons"
+import { AllPropsRequired } from "../types/utils"
 
 const antd_components: { [key: string]: any } = {
   // 'Cascader': Cascader,

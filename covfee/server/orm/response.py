@@ -62,11 +62,6 @@ class TaskResponse(Base):
 
         return response_dict
 
-    def get_task_object(self):
-        task_class = getattr(tasks, self.task.spec.spec["type"], BaseCovfeeTask)
-        task_object = task_class(response=self)
-        return task_object
-
     def get_dataframe(self):
         task_object = self.get_task_object()
         chunk_data, chunk_logs = self.get_ndarray()
@@ -88,7 +83,7 @@ class TaskResponse(Base):
             return f'{task_index}_{self.task.spec.spec["name"]}_{response_index:d}'
 
     def validate(self):
-        task_object = self.get_task_object()
+        task_object = self.task.get_task_object()
         self.valid = task_object.validate(self)
         return self.valid
 

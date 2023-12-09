@@ -115,6 +115,8 @@ class JourneyInstance(Base):
 
     instance_counter = 0
 
+    disabled: Mapped[bool] = mapped_column(default=False)
+
     # dates
     # submitted: Mapped[datetime.datetime] = mapped_column(nullable=True)
     created: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)

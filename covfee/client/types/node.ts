@@ -5,13 +5,7 @@ import React, { Reducer } from "react"
 import { AllPropsRequired } from "./utils"
 import { BaseTaskProps } from "../tasks/base"
 
-export const NodeStatuses = [
-  "INIT",
-  "WAITING",
-  "RUNNING",
-  "PAUSED",
-  "FINISHED",
-] as const
+export const NodeStatuses = ["INIT", "RUNNING", "PAUSED", "FINISHED"] as const
 export type NodeStatus = (typeof NodeStatuses)[number]
 /**
  * Node spec augmented with database status
@@ -36,6 +30,7 @@ export interface NodeType extends AllPropsRequired<BaseNodeSpec> {
   num_journeys: number
   curr_journeys: string[]
   valid: boolean
+  paused: boolean
 }
 
 export interface TaskResponseType {

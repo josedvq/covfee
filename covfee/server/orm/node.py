@@ -85,17 +85,14 @@ class NodeInstanceStatus(enum.Enum):
     # task has been initialized.
     INIT = 0
 
-    # subject in the node. Waiting for others.
-    WAITING = 1
-
     # start conditions full-filled. task has started.
-    RUNNING = 2
+    RUNNING = 1
 
     # pause condition fullfilled. Waiting for resume conditions.
-    PAUSED = 3
+    PAUSED = 2
 
     # task/node has ran and is finalized.
-    FINISHED = 4
+    FINISHED = 3
 
 
 class NodeInstance(Base):
@@ -131,6 +128,7 @@ class NodeInstance(Base):
 
     # status code
     status: Mapped[NodeInstanceStatus] = mapped_column(default=NodeInstanceStatus.INIT)
+    paused: Mapped[bool] = mapped_column(default=False)
 
     started_at: Mapped[Optional[datetime]]
 
@@ -141,13 +139,10 @@ class NodeInstance(Base):
 
     def update_status(self):
         # check if the start conditions have been fullfilled
-        if self.status in [NodeInstanceStatus.INIT, NodeInstanceStatus.WAITING]:
+        if self.status in [NodeInstanceStatus.INIT]:
             conditions = self.spec.settings.get("start", [])
             if utils.test_conditions(conditions, self):
                 self.status = NodeInstanceStatus.RUNNING
-            else:
-                if len(self.curr_journeys) > 0:
-                    self.status = NodeInstanceStatus.WAITING
         elif self.status in [NodeInstanceStatus.RUNNING]:
             conditions = self.spec.settings.get("stop", [])
             if utils.test_conditions(conditions, self):
@@ -162,9 +157,24 @@ class NodeInstance(Base):
             **spec_dict,
             **instance_dict,
             "chat_id": self.chat.id,
-            "url": f'{app.config["API_URL"]}/tasks/{self.id}',
+            "url": f'{app.config["API_URL"]}/nodes/{self.id}',
             "num_journeys": len(self.journeys),
             "curr_journeys": [j.id.hex() for j in self.curr_journeys],
         }
 
         return instance_dict
+
+    def make_status_payload(self, prev_status: NodeInstanceStatus = None):
+        if prev_status is None:
+            prev_status = self.status
+        return {
+            "id": self.id,
+            "hit_id": self.hit_id.hex(),
+            "prev": prev_status,
+            "new": self.status,
+            "paused": self.paused,
+            "curr_journeys": [j.id.hex() for j in self.curr_journeys],
+        }
+
+    def pause(self, pause: bool):
+        self.paused = pause

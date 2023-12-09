@@ -1,28 +1,28 @@
-import React, { useState } from "react";
-import { HitInstanceType } from "../types/hit";
-import { fetcher, throwBadResponse } from "../utils";
-import Constants from "Constants";
-import { MainSocket, ServerToClientEvents } from "../app_context";
-import { JourneyType } from "./Journey";
-import { NodeType } from "../types/node";
+import React, { useState } from "react"
+import { HitInstanceType } from "../types/hit"
+import { fetcher, throwBadResponse } from "../utils"
+import Constants from "Constants"
+import { MainSocket, ServerToClientEvents } from "../app_context"
+import { JourneyType } from "./Journey"
+import { NodeType } from "../types/node"
 
 export const useHitInstances = (
   data: HitInstanceType[],
   socket: MainSocket = null
 ) => {
-  const [hits, setHits] = useState(data);
+  const [hits, setHits] = useState(data)
 
   const hitIdToIndex = Object.fromEntries(
     data.map((hit, index) => [hit.id, index])
-  );
+  )
 
   const journeyIdToIndex = data.map((hit) =>
     Object.fromEntries(hit.journeys.map((j, i) => [j.id, i]))
-  );
+  )
 
   const nodeIdToIndex = data.map((hit) =>
     Object.fromEntries(hit.nodes.map((node, i) => [node.id, i]))
-  );
+  )
 
   React.useEffect(() => {
     const setHitData = (hitIndex: number, data: Partial<HitInstanceType>) => {
@@ -33,8 +33,8 @@ export const useHitInstances = (
             ...data,
           },
         })
-      );
-    };
+      )
+    }
 
     const setNodeData = (
       hitIndex: number,
@@ -48,8 +48,8 @@ export const useHitInstances = (
             ...data,
           },
         }),
-      });
-    };
+      })
+    }
 
     const setJourneyData = (
       hitIndex: number,
@@ -66,65 +66,67 @@ export const useHitInstances = (
             ...data,
           },
         }),
-      });
-    };
+      })
+    }
 
     const statusListener: ServerToClientEvents["status"] = (data) => {
-      if (!(data.hit_id in hitIdToIndex)) return;
-      const hitIndex = hitIdToIndex[data.hit_id];
-      const nodeIndex = nodeIdToIndex[hitIndex][data.id];
+      console.log("IO: join", data)
+      if (!(data.hit_id in hitIdToIndex)) return
+      const hitIndex = hitIdToIndex[data.hit_id]
+      const nodeIndex = nodeIdToIndex[hitIndex][data.id]
 
       setNodeData(hitIndex, nodeIndex, {
         status: data.new,
+        paused: data.paused,
         curr_journeys: data.curr_journeys,
-      });
-    };
+      })
+    }
 
     const journeyConnectListener: ServerToClientEvents["journey_connect"] = ({
       hit_id,
       journey_id,
       num_connections,
     }) => {
-      if (!(hit_id in hitIdToIndex)) return;
-      const hitIndex = hitIdToIndex[hit_id];
-      const journeyIndex = journeyIdToIndex[hitIndex][journey_id];
-      setJourneyData(hitIndex, journeyIndex, { num_connections });
-    };
+      if (!(hit_id in hitIdToIndex)) return
+      const hitIndex = hitIdToIndex[hit_id]
+      const journeyIndex = journeyIdToIndex[hitIndex][journey_id]
+      setJourneyData(hitIndex, journeyIndex, { num_connections })
+    }
 
     if (socket) {
-      socket.on("status", statusListener);
-      socket.on("journey_connect", journeyConnectListener);
+      socket.on("status", statusListener)
+      socket.on("journey_connect", journeyConnectListener)
     }
     return () => {
-      socket.removeListener("status", statusListener);
-      socket.removeListener("journey_connect", journeyConnectListener);
-    };
-  }, [socket, hits]);
+      socket.removeListener("status", statusListener)
+      socket.removeListener("journey_connect", journeyConnectListener)
+    }
+  }, [socket, hits])
 
   const setCollapsed = async (value: boolean) => {
-    return update({ collapsed: value });
-  };
+    return update({ collapsed: value })
+  }
 
   const setShowGraph = async (value: boolean) => {
-    return update({ show_graph: value });
-  };
+    return update({ show_graph: value })
+  }
 
   const setShowJourneys = async (value: boolean) => {
-    return update({ show_journeys: value });
-  };
+    return update({ show_journeys: value })
+  }
 
   const setShowNodes = async (value: boolean) => {
-    return update({ show_nodes: value });
-  };
+    return update({ show_nodes: value })
+  }
 
   const update = async (hit: Partial<HitInstanceType>) => {
-    const url = hits.api_url + "/edit?" + new URLSearchParams({});
+    const url = hits.api_url + "/edit?" + new URLSearchParams({})
 
     const requestOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(hit),
-    };
+    }
 
     return fetcher(url, requestOptions)
       .then(throwBadResponse)
@@ -132,9 +134,9 @@ export const useHitInstances = (
         setHits((curr) => ({
           ...curr,
           ...res,
-        }));
-      });
-  };
+        }))
+      })
+  }
 
   return {
     hits,
@@ -144,8 +146,8 @@ export const useHitInstances = (
     setShowGraph,
     setShowJourneys,
     setShowNodes,
-  };
-};
+  }
+}
 
 export function getHit(id: number) {
   const url =
@@ -156,9 +158,9 @@ export function getHit(id: number) {
     new URLSearchParams({
       with_instances: "1",
       with_instance_nodes: "1",
-    });
+    })
 
-  fetcher(url).then(throwBadResponse);
+  fetcher(url).then(throwBadResponse)
 }
 
 export function getHitInstance(id: string) {
@@ -169,7 +171,7 @@ export function getHitInstance(id: string) {
     "?" +
     new URLSearchParams({
       with_nodes: "1",
-    });
+    })
 
-  return fetcher(url).then(throwBadResponse);
+  return fetcher(url).then(throwBadResponse)
 }

@@ -27,6 +27,10 @@ export const InstructionsTask: React.FC<Props> = (props) => {
     (state) => state.formDisabled
   )
 
+  React.useEffect(() => {
+    console.log(formValues)
+  }, [formValues])
+
   return (
     <Row style={{ margin: "2em 0" }}>
       <Col

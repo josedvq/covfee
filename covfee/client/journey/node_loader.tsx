@@ -61,6 +61,8 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
 
   const [isLoading, setIsLoading] = React.useState(true)
   const [instructionsVisible, setInstructionsVisible] = React.useState(false)
+  const [reloadCount, setReloadCount] = React.useState<number>(0)
+  const [reloadMessage, setReloadMessage] = React.useState<string>(null)
   const [overlayVisible, setOverlayVisible] = React.useState(false)
   const [error, setError] = React.useState<{
     error: boolean
@@ -95,8 +97,19 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
   }, [fetchResponse])
 
   React.useEffect(() => {
+    if (socket) {
+      socket.emit("join", {
+        journeyId,
+        nodeId: args.node.id,
+        useSharedState,
+      })
+    }
+  }, [socket, journeyId, useSharedState, args.node.id])
+
+  React.useEffect(() => {
     if (response) {
       // update the state when the response is loaded
+      console.log("Updating reduxStore", response.state)
       const action = { type: "task/setState", payload: response.state }
       reduxStore.current.dispatch(action)
     }
@@ -104,42 +117,65 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
 
   React.useEffect(() => {
     if (response && socket) {
-      socket.emit("join", {
-        journeyId,
-        nodeId: node.id,
-        responseId: response.id,
-        useSharedState,
-      })
-
-      socket.on("join", (data) => {
-        if (data.error) {
-          console.error("IO: on_join returned server error", data)
-          setError({
-            error: true,
-            show: true,
-            message: data.error,
-            abort: data.load_task,
-          })
+      socket.on("status", (data) => {
+        console.log("IO: status", data)
+        if (data.response_id !== response.id) {
+          // the task was reset or a new response was created
+          // fetch the new one and let the user know
+          // fetchResponse()
+          setReloadCount(10)
+          setReloadMessage(
+            "The task has been reset by the admin. Restarting..."
+          )
+          setTimeout(() => {
+            window.location.reload()
+          }, 10000)
         }
-        setIsLoading(false)
       })
-
-      socket.on("action", (action) => {
-        reduxStore.current.dispatch(action)
-      })
-
-      socket.on("state", (state) => {
-        const action = { type: "task/setState", payload: state.state }
-        reduxStore.current.dispatch(action)
-      })
-
-      return () => {
-        socket.removeAllListeners("join")
-        socket.removeAllListeners("action")
-        socket.removeAllListeners("state")
-      }
     }
-  }, [journeyId, node.id, response, socket, useSharedState])
+  }, [fetchResponse, response, socket])
+
+  React.useEffect(() => {
+    // Only set up the interval if count is greater than 0
+    if (reloadCount > 0) {
+      const timerId = setInterval(() => {
+        setReloadCount(reloadCount - 1)
+      }, 1000)
+
+      // Clear the interval on component unmount or when the count changes
+      return () => clearInterval(timerId)
+    }
+  }, [reloadCount])
+
+  React.useEffect(() => {
+    socket.on("join", (data) => {
+      if (data.error) {
+        console.error("IO: on_join returned server error", data)
+        setError({
+          error: true,
+          show: true,
+          message: data.error,
+          abort: data.load_task,
+        })
+      }
+      setIsLoading(false)
+    })
+
+    socket.on("action", (action) => {
+      reduxStore.current.dispatch(action)
+    })
+
+    socket.on("state", (state) => {
+      const action = { type: "task/setState", payload: state.state }
+      reduxStore.current.dispatch(action)
+    })
+
+    return () => {
+      socket.removeAllListeners("join")
+      socket.removeAllListeners("action")
+      socket.removeAllListeners("state")
+    }
+  }, [socket])
 
   // React.useEffect(()=>{
   //   console.log([node, response])
@@ -262,22 +298,14 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
     return renderErrorMessage()
   }
 
+  if (reloadCount > 0) {
+    return <NodeOverlayReload counter={reloadCount} message={reloadMessage} />
+  }
+
   if (node.status == "INIT") {
     return (
       <NodeLoaderMessage>
         <h1>Waiting for subjects...</h1>
-        <Spin />
-        <p>
-          {node.curr_journeys.length} / {node.num_journeys} subjects present
-        </p>
-      </NodeLoaderMessage>
-    )
-  }
-
-  if (node.status == "WAITING") {
-    return (
-      <NodeLoaderMessage>
-        <h1>Waiting for task start</h1>
         <Spin />
         <p>
           {node.curr_journeys.length} / {node.num_journeys} subjects present
@@ -300,6 +328,8 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
         {/* {renderErrorModal()} */}
         <div ref={nodeInstructionsRef}></div>
         <div style={{ width: "100%", height: "100%", position: "relative" }}>
+          {node.paused && <NodeOverlayPaused />}
+
           <StoreProvider store={reduxStore.current}>
             <nodeContext.Provider value={{ node, useSharedState, response }}>
               {(() => {
@@ -321,7 +351,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
                 )
 
                 console.log(
-                  `${args.node.spec.type} built with status=${node.status}`,
+                  `${args.node.spec.type} built with status=${node.status}, paused=${node.paused}`,
                   nodeProps
                 )
 
@@ -341,12 +371,72 @@ interface NodeLoaderMessageProps {
 export const NodeLoaderMessage = (props: NodeLoaderMessageProps) => {
   const args: AllPropsRequired<NodeLoaderMessageProps> = { ...props }
 
+  return <NodeOverlay>{args.children}</NodeOverlay>
+}
+
+interface NodeOverlayProps {
+  children: React.ReactNode
+}
+export const NodeOverlay = (props: NodeOverlayProps) => {
+  const args: AllPropsRequired<NodeOverlayProps> = { ...props }
+
   return (
-    <MessageContainer>
+    <OverlayContainer>
       <div>{args.children}</div>
-    </MessageContainer>
+    </OverlayContainer>
   )
 }
+
+export const NodeOverlayPaused = () => {
+  return (
+    <NodeOverlay>
+      <h2>The task has been paused by the admin</h2>
+      <p>
+        Please wait for instructions in the chat or for this message to
+        dissapear.
+      </p>
+    </NodeOverlay>
+  )
+}
+
+interface NodeOverlayReloadProps {
+  counter: number
+  message: string
+}
+
+export const NodeOverlayReload = ({
+  counter,
+  message,
+}: NodeOverlayReloadProps) => {
+  return (
+    <NodeOverlay>
+      <h2>{counter}</h2>
+      <p>{message}</p>
+    </NodeOverlay>
+  )
+}
+
+const OverlayContainer = styled.div`
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 10;
+
+  > div {
+    width: 70%;
+    padding: 5%;
+    border-radius: 10px;
+    background-color: #ddd;
+    margin: 0 auto;
+    text-align: center;
+  }
+`
 
 const MessageContainer = styled.div`
   display: flex;
