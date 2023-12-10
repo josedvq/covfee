@@ -86,15 +86,13 @@ def project_download(pid):
     Returns:
         [type]: stream response with a compressed archive. 204 if the project has no responses
     """
-    is_csv = bool(request.args.get("csv", False))
-
-    project = app.session.query(Project).get(bytes.fromhex(pid))
+    project = app.session.query(Project).get(pid)
     if project is None:
         return {"msg": "not found"}, 404
 
     def generator():
         z = zipstream.ZipFile(mode="w", compression=zipstream.ZIP_DEFLATED)
-        for chunk in project.stream_download(z, "./", csv=is_csv):
+        for chunk in project.stream_download(z, "./"):
             yield chunk
         yield from z
 

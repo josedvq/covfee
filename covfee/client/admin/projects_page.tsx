@@ -14,6 +14,7 @@ import { HitBlock } from "./hit_block/hit_block"
 import { appContext } from "../app_context"
 import { Project } from "./project"
 import { chatContext } from "../chat_context"
+import { AdminProvider } from "./admin_provider"
 
 interface Props {}
 

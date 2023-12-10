@@ -70,7 +70,7 @@ export const useHitInstances = (
     }
 
     const statusListener: ServerToClientEvents["status"] = (data) => {
-      console.log("IO: join", data)
+      console.log("IO: status", data)
       if (!(data.hit_id in hitIdToIndex)) return
       const hitIndex = hitIdToIndex[data.hit_id]
       const nodeIndex = nodeIdToIndex[hitIndex][data.id]
@@ -98,8 +98,8 @@ export const useHitInstances = (
       socket.on("journey_connect", journeyConnectListener)
     }
     return () => {
-      socket.removeListener("status", statusListener)
-      socket.removeListener("journey_connect", journeyConnectListener)
+      socket.off("status", statusListener)
+      socket.off("journey_connect", journeyConnectListener)
     }
   }, [socket, hits])
 

@@ -16,6 +16,8 @@ class Continuous1DTaskSpec(CovfeeTask):
     instructions_type: str
     # Maximum number of submissions a user can make for the task.
     max_submissions: float
+    # Conditions for task pause
+    pause: str
     # Node is marked as a prerrequisite
     # Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
     prerequisite: bool
@@ -23,10 +25,10 @@ class Continuous1DTaskSpec(CovfeeTask):
     required: bool
     # Enable player's countdown animation
     showCountdown: bool
-    # Conditions for task start
-    start: List[Union[Any,Any,Any]]
+    # Condition for task start
+    start: str
     # Conditions for task end
-    stop: List[Union[Any,Any]]
+    stop: str
     # Uses requestAnimationFrame as trigger for data reads.
     # requestAnimationFrame normally fires at close to 60Hz
     # Setting to true can improve the quality for lower framerate media by capturing data points between frames.
@@ -36,7 +38,7 @@ class Continuous1DTaskSpec(CovfeeTask):
     # This applies both to multiple clients in the same journey and across journeys.
     # Internally covfee uses socketio to synchronize task state.
     useSharedState: bool
-    def __init__(self, intensityInput, media, name, controls = None, instructions = None, instructions_type = 'default', max_submissions = 0, prerequisite = False, required = True, showCountdown = None, start = None, stop = None, useRequestAnimationFrame = False, useSharedState = False):
+    def __init__(self, intensityInput, media, name, controls = None, instructions = None, instructions_type = 'default', max_submissions = 0, pause = None, prerequisite = False, required = True, showCountdown = None, start = 'N >= NJOURNEYS', stop = None, useRequestAnimationFrame = False, useSharedState = False):
         """
         ### Parameters
         0. intensityInput : Union[Any,Any,Any,Any,Any,Any,Any]
@@ -52,23 +54,25 @@ class Continuous1DTaskSpec(CovfeeTask):
             - How the instructions will be displayed
         6. max_submissions : float
             - Maximum number of submissions a user can make for the task.
-        7. prerequisite : bool
+        7. pause : str
+            - Conditions for task pause
+        8. prerequisite : bool
             - Node is marked as a prerrequisite
 Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
-        8. required : bool
+        9. required : bool
             - If true, this node must have a valid submission before the HIT can be submitted
-        9. showCountdown : bool
+        10. showCountdown : bool
             - Enable player's countdown animation
-        10. start : List[Union[Any,Any,Any]]
-            - Conditions for task start
-        11. stop : List[Union[Any,Any]]
+        11. start : str
+            - Condition for task start
+        12. stop : str
             - Conditions for task end
-        12. useRequestAnimationFrame : bool
+        13. useRequestAnimationFrame : bool
             - Uses requestAnimationFrame as trigger for data reads.
 requestAnimationFrame normally fires at close to 60Hz
 Setting to true can improve the quality for lower framerate media by capturing data points between frames.
 If enabled, data annotations may not align with media frame times.
-        13. useSharedState : bool
+        14. useSharedState : bool
             - If true, the task state will be synced between clients.
 This applies both to multiple clients in the same journey and across journeys.
 Internally covfee uses socketio to synchronize task state.
@@ -83,6 +87,7 @@ Internally covfee uses socketio to synchronize task state.
         self.instructions = instructions
         self.instructions_type = instructions_type
         self.max_submissions = max_submissions
+        self.pause = pause
         self.prerequisite = prerequisite
         self.required = required
         self.showCountdown = showCountdown
@@ -105,20 +110,22 @@ class ContinuousKeypointTaskSpec(CovfeeTask):
     instructions_type: str
     # Maximum number of submissions a user can make for the task.
     max_submissions: float
+    # Conditions for task pause
+    pause: str
     # Node is marked as a prerrequisite
     # Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
     prerequisite: bool
     # If true, this node must have a valid submission before the HIT can be submitted
     required: bool
-    # Conditions for task start
-    start: List[Union[Any,Any,Any]]
+    # Condition for task start
+    start: str
     # Conditions for task end
-    stop: List[Union[Any,Any]]
+    stop: str
     # If true, the task state will be synced between clients.
     # This applies both to multiple clients in the same journey and across journeys.
     # Internally covfee uses socketio to synchronize task state.
     useSharedState: bool
-    def __init__(self, media, name, controls = None, instructions = None, instructions_type = 'default', max_submissions = 0, prerequisite = False, required = True, start = None, stop = None, useSharedState = False):
+    def __init__(self, media, name, controls = None, instructions = None, instructions_type = 'default', max_submissions = 0, pause = None, prerequisite = False, required = True, start = 'N >= NJOURNEYS', stop = None, useSharedState = False):
         """
         ### Parameters
         0. media : Any
@@ -132,16 +139,18 @@ class ContinuousKeypointTaskSpec(CovfeeTask):
             - How the instructions will be displayed
         5. max_submissions : float
             - Maximum number of submissions a user can make for the task.
-        6. prerequisite : bool
+        6. pause : str
+            - Conditions for task pause
+        7. prerequisite : bool
             - Node is marked as a prerrequisite
 Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
-        7. required : bool
+        8. required : bool
             - If true, this node must have a valid submission before the HIT can be submitted
-        8. start : List[Union[Any,Any,Any]]
-            - Conditions for task start
-        9. stop : List[Union[Any,Any]]
+        9. start : str
+            - Condition for task start
+        10. stop : str
             - Conditions for task end
-        10. useSharedState : bool
+        11. useSharedState : bool
             - If true, the task state will be synced between clients.
 This applies both to multiple clients in the same journey and across journeys.
 Internally covfee uses socketio to synchronize task state.
@@ -155,6 +164,7 @@ Internally covfee uses socketio to synchronize task state.
         self.instructions = instructions
         self.instructions_type = instructions_type
         self.max_submissions = max_submissions
+        self.pause = pause
         self.prerequisite = prerequisite
         self.required = required
         self.start = start
@@ -171,20 +181,22 @@ class IncrementCounterTaskSpec(CovfeeTask):
     instructions_type: str
     # Maximum number of submissions a user can make for the task.
     max_submissions: float
+    # Conditions for task pause
+    pause: str
     # Node is marked as a prerrequisite
     # Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
     prerequisite: bool
     # If true, this node must have a valid submission before the HIT can be submitted
     required: bool
-    # Conditions for task start
-    start: List[Union[Any,Any,Any]]
+    # Condition for task start
+    start: str
     # Conditions for task end
-    stop: List[Union[Any,Any]]
+    stop: str
     # If true, the task state will be synced between clients.
     # This applies both to multiple clients in the same journey and across journeys.
     # Internally covfee uses socketio to synchronize task state.
     useSharedState: bool
-    def __init__(self, name, instructions = None, instructions_type = 'default', max_submissions = 0, prerequisite = False, required = True, start = None, stop = None, useSharedState = False):
+    def __init__(self, name, instructions = None, instructions_type = 'default', max_submissions = 0, pause = None, prerequisite = False, required = True, start = 'N >= NJOURNEYS', stop = None, useSharedState = False):
         """
         ### Parameters
         0. name : str
@@ -194,16 +206,18 @@ class IncrementCounterTaskSpec(CovfeeTask):
             - How the instructions will be displayed
         3. max_submissions : float
             - Maximum number of submissions a user can make for the task.
-        4. prerequisite : bool
+        4. pause : str
+            - Conditions for task pause
+        5. prerequisite : bool
             - Node is marked as a prerrequisite
 Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
-        5. required : bool
+        6. required : bool
             - If true, this node must have a valid submission before the HIT can be submitted
-        6. start : List[Union[Any,Any,Any]]
-            - Conditions for task start
-        7. stop : List[Union[Any,Any]]
+        7. start : str
+            - Condition for task start
+        8. stop : str
             - Conditions for task end
-        8. useSharedState : bool
+        9. useSharedState : bool
             - If true, the task state will be synced between clients.
 This applies both to multiple clients in the same journey and across journeys.
 Internally covfee uses socketio to synchronize task state.
@@ -215,6 +229,7 @@ Internally covfee uses socketio to synchronize task state.
         self.instructions = instructions
         self.instructions_type = instructions_type
         self.max_submissions = max_submissions
+        self.pause = pause
         self.prerequisite = prerequisite
         self.required = required
         self.start = start
@@ -235,20 +250,22 @@ class InstructionsTaskSpec(CovfeeTask):
     instructions_type: str
     # Maximum number of submissions a user can make for the task.
     max_submissions: float
+    # Conditions for task pause
+    pause: str
     # Node is marked as a prerrequisite
     # Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
     prerequisite: bool
     # If true, this node must have a valid submission before the HIT can be submitted
     required: bool
-    # Conditions for task start
-    start: List[Union[Any,Any,Any]]
+    # Condition for task start
+    start: str
     # Conditions for task end
-    stop: List[Union[Any,Any]]
+    stop: str
     # If true, the task state will be synced between clients.
     # This applies both to multiple clients in the same journey and across journeys.
     # Internally covfee uses socketio to synchronize task state.
     useSharedState: bool
-    def __init__(self, content, name, form = None, instructions = None, instructions_type = 'default', max_submissions = 0, prerequisite = False, required = True, start = None, stop = None, useSharedState = False):
+    def __init__(self, content, name, form = None, instructions = None, instructions_type = 'default', max_submissions = 0, pause = None, prerequisite = False, required = True, start = 'N >= NJOURNEYS', stop = None, useSharedState = False):
         """
         ### Parameters
         0. content : Union[Any,Any]
@@ -262,16 +279,18 @@ class InstructionsTaskSpec(CovfeeTask):
             - How the instructions will be displayed
         5. max_submissions : float
             - Maximum number of submissions a user can make for the task.
-        6. prerequisite : bool
+        6. pause : str
+            - Conditions for task pause
+        7. prerequisite : bool
             - Node is marked as a prerrequisite
 Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
-        7. required : bool
+        8. required : bool
             - If true, this node must have a valid submission before the HIT can be submitted
-        8. start : List[Union[Any,Any,Any]]
-            - Conditions for task start
-        9. stop : List[Union[Any,Any]]
+        9. start : str
+            - Condition for task start
+        10. stop : str
             - Conditions for task end
-        10. useSharedState : bool
+        11. useSharedState : bool
             - If true, the task state will be synced between clients.
 This applies both to multiple clients in the same journey and across journeys.
 Internally covfee uses socketio to synchronize task state.
@@ -285,6 +304,7 @@ Internally covfee uses socketio to synchronize task state.
         self.instructions = instructions
         self.instructions_type = instructions_type
         self.max_submissions = max_submissions
+        self.pause = pause
         self.prerequisite = prerequisite
         self.required = required
         self.start = start
@@ -307,20 +327,22 @@ class QuestionnaireTaskSpec(CovfeeTask):
     max_submissions: float
     # Media file to be displayed.
     media: Union[Any,Any]
+    # Conditions for task pause
+    pause: str
     # Node is marked as a prerrequisite
     # Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
     prerequisite: bool
     # If true, this node must have a valid submission before the HIT can be submitted
     required: bool
-    # Conditions for task start
-    start: List[Union[Any,Any,Any]]
+    # Condition for task start
+    start: str
     # Conditions for task end
-    stop: List[Union[Any,Any]]
+    stop: str
     # If true, the task state will be synced between clients.
     # This applies both to multiple clients in the same journey and across journeys.
     # Internally covfee uses socketio to synchronize task state.
     useSharedState: bool
-    def __init__(self, form, name, disabledUntilEnd = None, instructions = None, instructions_type = 'default', max_submissions = 0, media = None, prerequisite = False, required = True, start = None, stop = None, useSharedState = False):
+    def __init__(self, form, name, disabledUntilEnd = None, instructions = None, instructions_type = 'default', max_submissions = 0, media = None, pause = None, prerequisite = False, required = True, start = 'N >= NJOURNEYS', stop = None, useSharedState = False):
         """
         ### Parameters
         0. form : Any
@@ -336,16 +358,18 @@ class QuestionnaireTaskSpec(CovfeeTask):
             - Maximum number of submissions a user can make for the task.
         6. media : Union[Any,Any]
             - Media file to be displayed.
-        7. prerequisite : bool
+        7. pause : str
+            - Conditions for task pause
+        8. prerequisite : bool
             - Node is marked as a prerrequisite
 Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
-        8. required : bool
+        9. required : bool
             - If true, this node must have a valid submission before the HIT can be submitted
-        9. start : List[Union[Any,Any,Any]]
-            - Conditions for task start
-        10. stop : List[Union[Any,Any]]
+        10. start : str
+            - Condition for task start
+        11. stop : str
             - Conditions for task end
-        11. useSharedState : bool
+        12. useSharedState : bool
             - If true, the task state will be synced between clients.
 This applies both to multiple clients in the same journey and across journeys.
 Internally covfee uses socketio to synchronize task state.
@@ -360,6 +384,7 @@ Internally covfee uses socketio to synchronize task state.
         self.instructions_type = instructions_type
         self.max_submissions = max_submissions
         self.media = media
+        self.pause = pause
         self.prerequisite = prerequisite
         self.required = required
         self.start = start
@@ -380,22 +405,24 @@ class ThreeImagesTaskSpec(CovfeeTask):
     instructions_type: str
     # Maximum number of submissions a user can make for the task.
     max_submissions: float
+    # Conditions for task pause
+    pause: str
     # Node is marked as a prerrequisite
     # Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
     prerequisite: bool
     # If true, this node must have a valid submission before the HIT can be submitted
     required: bool
-    # Conditions for task start
-    start: List[Union[Any,Any,Any]]
+    # Condition for task start
+    start: str
     # Conditions for task end
-    stop: List[Union[Any,Any]]
+    stop: str
     # Text to display before the images
     text: str
     # If true, the task state will be synced between clients.
     # This applies both to multiple clients in the same journey and across journeys.
     # Internally covfee uses socketio to synchronize task state.
     useSharedState: bool
-    def __init__(self, form, images, name, instructions = None, instructions_type = 'default', max_submissions = 0, prerequisite = False, required = True, start = None, stop = None, text = None, useSharedState = False):
+    def __init__(self, form, images, name, instructions = None, instructions_type = 'default', max_submissions = 0, pause = None, prerequisite = False, required = True, start = 'N >= NJOURNEYS', stop = None, text = None, useSharedState = False):
         """
         ### Parameters
         0. form : Any
@@ -409,18 +436,20 @@ class ThreeImagesTaskSpec(CovfeeTask):
             - How the instructions will be displayed
         5. max_submissions : float
             - Maximum number of submissions a user can make for the task.
-        6. prerequisite : bool
+        6. pause : str
+            - Conditions for task pause
+        7. prerequisite : bool
             - Node is marked as a prerrequisite
 Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
-        7. required : bool
+        8. required : bool
             - If true, this node must have a valid submission before the HIT can be submitted
-        8. start : List[Union[Any,Any,Any]]
-            - Conditions for task start
-        9. stop : List[Union[Any,Any]]
+        9. start : str
+            - Condition for task start
+        10. stop : str
             - Conditions for task end
-        10. text : str
+        11. text : str
             - Text to display before the images
-        11. useSharedState : bool
+        12. useSharedState : bool
             - If true, the task state will be synced between clients.
 This applies both to multiple clients in the same journey and across journeys.
 Internally covfee uses socketio to synchronize task state.
@@ -434,6 +463,7 @@ Internally covfee uses socketio to synchronize task state.
         self.instructions = instructions
         self.instructions_type = instructions_type
         self.max_submissions = max_submissions
+        self.pause = pause
         self.prerequisite = prerequisite
         self.required = required
         self.start = start
@@ -461,15 +491,17 @@ class VideocallTaskSpec(CovfeeTask):
     max_submissions: float
     # Videocall is muted
     muted: bool
+    # Conditions for task pause
+    pause: str
     # Node is marked as a prerrequisite
     # Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
     prerequisite: bool
     # If true, this node must have a valid submission before the HIT can be submitted
     required: bool
-    # Conditions for task start
-    start: List[Union[Any,Any,Any]]
+    # Condition for task start
+    start: str
     # Conditions for task end
-    stop: List[Union[Any,Any]]
+    stop: str
     # If true, the task state will be synced between clients.
     # This applies both to multiple clients in the same journey and across journeys.
     # Internally covfee uses socketio to synchronize task state.
@@ -477,7 +509,7 @@ class VideocallTaskSpec(CovfeeTask):
     # Call is audio only
     # video is always off
     videoOff: bool
-    def __init__(self, name, allowMute = True, allowScreenShare = True, allowStopVideo = True, instructions = None, instructions_type = 'default', max_submissions = 0, muted = False, prerequisite = False, required = True, start = None, stop = None, useSharedState = False, videoOff = False):
+    def __init__(self, name, allowMute = True, allowScreenShare = True, allowStopVideo = True, instructions = None, instructions_type = 'default', max_submissions = 0, muted = False, pause = None, prerequisite = False, required = True, start = 'N >= NJOURNEYS', stop = None, useSharedState = False, videoOff = False):
         """
         ### Parameters
         0. name : str
@@ -495,20 +527,22 @@ class VideocallTaskSpec(CovfeeTask):
             - Maximum number of submissions a user can make for the task.
         7. muted : bool
             - Videocall is muted
-        8. prerequisite : bool
+        8. pause : str
+            - Conditions for task pause
+        9. prerequisite : bool
             - Node is marked as a prerrequisite
 Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
-        9. required : bool
+        10. required : bool
             - If true, this node must have a valid submission before the HIT can be submitted
-        10. start : List[Union[Any,Any,Any]]
-            - Conditions for task start
-        11. stop : List[Union[Any,Any]]
+        11. start : str
+            - Condition for task start
+        12. stop : str
             - Conditions for task end
-        12. useSharedState : bool
+        13. useSharedState : bool
             - If true, the task state will be synced between clients.
 This applies both to multiple clients in the same journey and across journeys.
 Internally covfee uses socketio to synchronize task state.
-        13. videoOff : bool
+        14. videoOff : bool
             - Call is audio only
 video is always off
         """
@@ -523,6 +557,7 @@ video is always off
         self.instructions_type = instructions_type
         self.max_submissions = max_submissions
         self.muted = muted
+        self.pause = pause
         self.prerequisite = prerequisite
         self.required = required
         self.start = start

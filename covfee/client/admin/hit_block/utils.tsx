@@ -54,7 +54,6 @@ export const HoveringButtons = ({
         onMouseLeave={onBlur}
       >
         {(() => {
-          console.log(content())
           return content()
         })()}
       </div>

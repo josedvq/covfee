@@ -8,26 +8,29 @@ import { ChatProvider } from "../chat_context"
 import ProjectsPage from "./projects_page"
 import { LoginPage } from "./login"
 import { AdminLayout } from "./layout"
-import { NodePage } from "./node_page"
 import { useChats } from "../models/Chat"
+import { AdminProvider } from "./admin_provider"
+import { NodeOverlay } from "./node_overlay"
 
 export const Root: React.FC<void> = (props) => {
   return (
     <Router>
       <AppProvider admin={true}>
-        <ChatProvider>
-          <AdminLayout>
-            <Routes>
-              <Route
-                path="/projects/:projectId"
-                element={<ProjectsPage />}
-              ></Route>
-              <Route path="/nodes/:nodeId" element={<NodePage />}></Route>
-              <Route path="/login" element={<LoginPage />}></Route>
-              <Route path="/" element={<ProjectsPage />}></Route>
-            </Routes>
-          </AdminLayout>
-        </ChatProvider>
+        <AdminProvider>
+          <ChatProvider>
+            <AdminLayout>
+              <NodeOverlay />
+              <Routes>
+                <Route
+                  path="/projects/:projectId"
+                  element={<ProjectsPage />}
+                ></Route>
+                <Route path="/login" element={<LoginPage />}></Route>
+                <Route path="/" element={<ProjectsPage />}></Route>
+              </Routes>
+            </AdminLayout>
+          </ChatProvider>
+        </AdminProvider>
       </AppProvider>
     </Router>
   )

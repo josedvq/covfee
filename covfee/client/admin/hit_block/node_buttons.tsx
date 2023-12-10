@@ -10,12 +10,14 @@ import {
   PlayCircleOutlined,
   RedoOutlined,
   WechatOutlined,
+  EyeOutlined,
 } from "@ant-design/icons"
 import { useNodeFns } from "../../models/Node"
 import { NodeStatusToColor, StatusIcon, getNodeStatus } from "../utils"
 import classNames from "classnames"
 import { chatContext } from "../../chat_context"
 import { ButtonsContainer, Row } from "./utils"
+import { adminContext } from "../admin_context"
 
 type NodeRowProps = {
   node: NodeType
@@ -55,16 +57,19 @@ type NodeButtonsProps = {
 }
 export const NodeButtons = ({ node }: NodeButtonsProps) => {
   const { addChats } = React.useContext(chatContext)
-  const { getAdminUrl: getUrl, pause, restart } = useNodeFns(node)
+  const { setNodeId: openNode } = React.useContext(adminContext)
+  const { pause, restart } = useNodeFns(node)
 
   return (
     <ButtonsContainer>
       <li>
-        <a href={getUrl()}>
-          <button>
-            <LinkOutlined />
-          </button>
-        </a>
+        <button
+          onClick={() => {
+            openNode(node.id)
+          }}
+        >
+          <EyeOutlined />
+        </button>
       </li>
       <li>
         <button

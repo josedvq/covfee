@@ -11,13 +11,21 @@ from covfee.server.orm import (
 )
 from covfee.shared.schemata import schemata
 from covfee.logger import logger
+from covfee.server.orm.condition_parser import parse_expression
+
+
+class PostInitCaller(type):
+    def __call__(cls, *args, **kwargs):
+        obj = type.__call__(cls, *args, **kwargs)
+        obj.__post_init__()
+        return obj
 
 
 class BaseDataclass:
     pass
 
 
-class CovfeeTask(BaseDataclass):
+class CovfeeTask(BaseDataclass, metaclass=PostInitCaller):
     def __init__(self):
         super().__init__()
         self._orm_task = None
@@ -34,11 +42,21 @@ class CovfeeTask(BaseDataclass):
         logger.debug(f"Created ORM task: {str(self._orm_task)}")
         return self._orm_task
 
+    def __post_init__(self):
+        for cond in ["start", "stop", "pause"]:
+            expression = getattr(self, cond, None)
+            if expression is not None:
+                try:
+                    parse_expression(expression)
+                except Exception as ex:
+                    raise ValueError(f'Invalid {cond} condition "{expression}"')
+
 
 class Journey(BaseDataclass):
-    def __init__(self, nodes=None):
+    def __init__(self, nodes=None, name: str = None):
         super().__init__()
         self.nodes = nodes if nodes is not None else list()
+        self.name = name
 
     def orm(self):
         journey = OrmJourney([n.orm() for n in self.nodes])
@@ -77,13 +95,6 @@ class Project(BaseDataclass):
         project = OrmProject(self.name, self.email, [h.orm() for h in self.hits])
         logger.debug(f"Created ORM Project: {str(project)}")
         return project
-
-    # def launch(self, num_instances=1):
-    #     orm_project = self.orm()
-    #     for spec in orm_project.hitspecs:
-    #         spec.instantiate(num_instances)
-    #     l = launcher.Launcher([orm_project])
-    #     l.launch(mode="dev")
 
 
 class CovfeeApp(BaseDataclass):

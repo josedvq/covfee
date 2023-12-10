@@ -10,6 +10,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .base import Base
 from .chat import Chat
 from . import utils
+from .condition_parser import eval_string, parse_expression, eval_expression
 
 if TYPE_CHECKING:
     from .journey import JourneySpec, JourneyInstance
@@ -57,12 +58,12 @@ class NodeSpec(Base):
     def __init__(self, settings: Dict):
         super().__init__()
         # default start settings
-        if settings["start"] is None or (
-            isinstance(settings["start"], list) and len(settings["start"]) == 0
-        ):
-            settings["start"] = [{"type": "all_journeys"}]
-        if settings["stop"] is None:
-            settings["stop"] = []
+        for cond in ["start", "stop", "pause"]:
+            if cond in settings and settings[cond] is not None:
+                try:
+                    parse_expression(settings[cond])
+                except Exception as ex:
+                    raise ValueError(f"Invalid {cond} condition")
         self.settings = settings
 
     def instantiate(self):
@@ -137,16 +138,40 @@ class NodeInstance(Base):
         self.chat = Chat()
         self.submitted = False
 
+    def eval_expression(self, expression):
+        var_values = {
+            "N": len(self.curr_journeys),
+            "NJOURNEYS": len([j for j in self.journeys if not j.disabled]),
+        }
+        return eval_string(expression, var_values)
+
+    def eval_condition(self, condition_name: str):
+        expression = self.spec.settings[condition_name]
+        if expression is None:
+            return None
+        else:
+            return self.eval_expression(expression)
+
     def update_status(self):
+        if self.paused:  # status frozen when node paused by the admin
+            return
         # check if the start conditions have been fullfilled
         if self.status in [NodeInstanceStatus.INIT]:
-            conditions = self.spec.settings.get("start", [])
-            if utils.test_conditions(conditions, self):
+            if self.eval_condition("start"):
                 self.status = NodeInstanceStatus.RUNNING
         elif self.status in [NodeInstanceStatus.RUNNING]:
-            conditions = self.spec.settings.get("stop", [])
-            if utils.test_conditions(conditions, self):
+            if self.eval_condition("stop"):
                 self.status = NodeInstanceStatus.FINISHED
+            else:
+                if self.eval_condition("pause"):
+                    self.status = NodeInstanceStatus.PAUSED
+        elif self.status in [NodeInstanceStatus.PAUSED]:
+            if self.eval_condition("stop"):
+                self.status = NodeInstanceStatus.FINISHED
+            else:
+                pause = self.eval_condition("pause")
+                if pause == False:
+                    self.status = NodeInstanceStatus.RUNNING
 
     def to_dict(self):
         instance_dict = super().to_dict()
@@ -175,6 +200,9 @@ class NodeInstance(Base):
             "paused": self.paused,
             "curr_journeys": [j.id.hex() for j in self.curr_journeys],
         }
+
+    def make_results_dict(self):
+        return {}
 
     def pause(self, pause: bool):
         self.paused = pause

@@ -47,14 +47,14 @@ class VideocallTask(BaseCovfeeTask):
         response.raise_for_status()
         return response.json()["token"]
 
-    def on_join(self, journey):
+    def on_join(self, journey=None):
         logger.info("VideocallTask:on_join")
         # retrieve or request a session ID for the call / room
 
         try:
             session_id = self._request_session_id()
             connection_token = self._request_connection_token(
-                session_id, journey.id.hex()
+                session_id, journey.id.hex() if journey is not None else None
             )
         except Exception:
             raise CriticalError(load_task=True)

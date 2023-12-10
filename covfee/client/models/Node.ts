@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react"
 import { NodeStatus, NodeType, TaskResponseType } from "../types/node"
 import { fetcher, throwBadResponse } from "../utils"
-import { MainSocket } from "../app_context"
+import { MainSocket, ServerToClientEvents } from "../app_context"
 import Constants from "Constants"
 
 export function useNodeFns(node: NodeType) {
@@ -99,27 +99,31 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
   const submitResponse = (data: any) => submitResponseFn(response.url, data)
 
   useEffect(() => {
-    if (socket) {
-      socket.on("status", (data) => {
-        console.log("IO: status", data)
-        setNode((node) => ({
-          ...node,
-          status: data.new,
-          paused: data.paused,
-          curr_journeys: data.curr_journeys,
-        }))
-      })
-      socket.on("join", (data) => {
-        console.log("IO: join", data)
+    const handleStatus: ServerToClientEvents["status"] = (data) => {
+      console.log("IO: status", data)
+      setNode((node) => ({
+        ...node,
+        status: data.new,
+        paused: data.paused,
+        curr_journeys: data.curr_journeys,
+      }))
+    }
 
-        setNode((node) => ({
-          ...node,
-          taskData: data.task_data,
-        }))
-      })
+    const handleJoin: ServerToClientEvents["join"] = (data) => {
+      console.log("IO: join", data)
+
+      setNode((node) => ({
+        ...node,
+        taskData: data.task_data,
+      }))
+    }
+
+    if (socket) {
+      socket.on("status", handleStatus)
+      socket.on("join", handleJoin)
       return () => {
-        socket.removeAllListeners("status")
-        socket.removeAllListeners("join")
+        socket.off("status", handleStatus)
+        socket.off("join", handleJoin)
       }
     }
   }, [socket])

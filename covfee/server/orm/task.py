@@ -122,43 +122,7 @@ class TaskInstance(NodeInstance):
         self.paused = pause
         self.get_task_object().on_admin_pause()
 
-    def stream_download(self, z, base_path, index, csv=False):
-        responses = [resp for resp in self.responses if resp.submitted]
-
-        for i, response in enumerate(responses):
-            if csv:
-                # write the CSV data
-                df = response.get_dataframe()
-                if df is not None:
-                    stream = BytesIO()
-                    df.to_csv(stream, mode="wb")
-                    stream.seek(0)
-                    z.write_iter(
-                        os.path.join(
-                            base_path,
-                            response.get_download_filename(
-                                task_index=index, response_index=i
-                            )
-                            + ".csv",
-                        ),
-                        stream,
-                    )
-
-            # write the json response
-            response_dict = response.get_json(with_chunk_data=not csv)  # important
-            stream = BytesIO()
-            stream.write(json.dumps(response_dict).encode())
-            stream.seek(0)
-            z.write_iter(
-                os.path.join(
-                    base_path,
-                    response.get_download_filename(task_index=index, response_index=i)
-                    + ".json",
-                ),
-                stream,
-            )
-
-            yield from z.flush()
-
-        for child in self.children:
-            yield from child.stream_download(z, base_path, csv)
+    def make_results_dict(self):
+        return {
+            "responses": [response.make_results_dict() for response in self.responses]
+        }

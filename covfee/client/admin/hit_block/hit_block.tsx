@@ -199,9 +199,6 @@ export const HitBlock = (props: Props) => {
       <HoveringButtons
         {...hoveringButtonProps}
         content={() => {
-          console.log("called")
-          console.log(hoveringButtonProps.hide)
-          console.log(hoveringButtonProps.nodeIndex)
           return (
             <NodeButtons
               node={props.hit.nodes[hoveringButtonProps.nodeIndex]}

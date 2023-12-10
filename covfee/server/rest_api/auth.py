@@ -87,8 +87,7 @@ def login_user(user):
     access_token = create_access_token(identity=user)
     refresh_token = create_refresh_token(identity=user)
 
-    res = jsonify(
-        {"id": user.id, "username": user.username, "roles": user.roles})
+    res = jsonify({"id": user.id, "username": user.username, "roles": user.roles})
     set_access_cookies(res, access_token)
     set_refresh_cookies(res, refresh_token)
     return res, 200
@@ -156,16 +155,3 @@ def logout():
     res = jsonify({"success": True})
     unset_jwt_cookies(res)
     return res, 200
-
-
-# USER MANAGEMENT
-@auth.route("/users/<uid>/delete")
-@admin_required
-def user_delete(uid):
-    # Get the new user
-    user = app.session.query(User).get(bytes.fromhex(uid))
-    if user is None:
-        return jsonify({"msg": "invalid user"}), 400
-    app.session.delete(user)
-    app.session.commit()
-    return jsonify({"success": True}), 200

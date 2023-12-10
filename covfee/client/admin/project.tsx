@@ -18,7 +18,6 @@ export const Project = (props: Props) => {
   return (
     <>
       <div style={{ margin: "2em 1em" }}>
-        Project:{" "}
         <Button
           type="primary"
           href={Constants.api_url + "/projects/" + project.id + "/csv"}
@@ -30,7 +29,7 @@ export const Project = (props: Props) => {
             Constants.api_url + "/projects/" + project.id + "/download?csv=1"
           }
         >
-          Download results (CSV)
+          Download results (JSON)
         </Button>
       </div>
 

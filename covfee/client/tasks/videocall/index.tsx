@@ -1,35 +1,22 @@
 import * as React from "react"
 import * as openvidu from "openvidu-browser"
 import { useState, useEffect, useRef } from "react"
-import styled from "styled-components"
 import { BaseTaskProps } from "../base"
 
 import { slice, actions } from "./slice"
 import { VideocallTaskSpec } from "@covfee-shared/spec/tasks/videocall"
 
-import {
-  AudioMutedOutlined,
-  AudioOutlined,
-  CalculatorFilled,
-  CalendarTwoTone,
-  FundProjectionScreenOutlined,
-  VideoCameraOutlined,
-} from "@ant-design/icons"
 import { TaskExport } from "../../types/node"
-import ThreeImagesTask from "../three_images"
 import { AllPropsRequired } from "../../types/utils"
 import { VideocallGUI } from "./gui"
 
-
 interface Props extends BaseTaskProps {
-  spec: VideocallTaskSpec;
+  spec: VideocallTaskSpec
   taskData: {
-    session_id: string,
+    session_id: string
     connection_token: string
   }
 }
-
-interface State {}
 
 export const VideocallTask: React.FC<Props> = (props) => {
   const args: AllPropsRequired<Props> = React.useMemo(
@@ -37,7 +24,7 @@ export const VideocallTask: React.FC<Props> = (props) => {
       spec: {
         muted: false,
         videoOff: false,
-        ...props.spec
+        ...props.spec,
       },
       ...props,
     }),
@@ -48,8 +35,11 @@ export const VideocallTask: React.FC<Props> = (props) => {
   const [OV, setOV] = React.useState(new openvidu.OpenVidu())
   const [session, setSession] = React.useState<openvidu.Session>(null)
   const [publisher, setPublisher] = React.useState<openvidu.Publisher>(null)
-  const [subscribers, setSubscribers] = React.useState<openvidu.Subscriber[]>([])
-  const [currentVideoDevice, setCurrentVideoDevice] = React.useState<openvidu.Device>(null)
+  const [subscribers, setSubscribers] = React.useState<openvidu.Subscriber[]>(
+    []
+  )
+  const [currentVideoDevice, setCurrentVideoDevice] =
+    React.useState<openvidu.Device>(null)
 
   const [muted, setMuted] = React.useState(false)
   const [videoStopped, setStopVideo] = React.useState(false)
@@ -57,7 +47,7 @@ export const VideocallTask: React.FC<Props> = (props) => {
   const leaveSession = React.useCallback(() => {
     // --- 7) Leave the session by calling 'disconnect' method over the Session object ---
     // Empty all properties...
-    setSession(session => {
+    setSession((session) => {
       if (session) {
         session.disconnect()
       }
@@ -69,32 +59,34 @@ export const VideocallTask: React.FC<Props> = (props) => {
   useEffect(() => {
     // takes care of leaving the session when the user closes the tab.
     // this is not called by the effect's cleanup fn
-    window.addEventListener('beforeunload', leaveSession);
+    window.addEventListener("beforeunload", leaveSession)
 
     return () => {
-      window.removeEventListener('beforeunload', leaveSession);
-    };
+      window.removeEventListener("beforeunload", leaveSession)
+    }
   })
 
-  React.useEffect(()=>{
+  React.useEffect(() => {
     const session = OV.initSession()
-    console.log(`OV.current.initSession() called`)
+    console.log("OV.current.initSession() called")
     setSession(session)
 
     // On every new Stream received...
     session.on("streamCreated", (event) => {
-      console.log(`ON: streamCreated`)
+      console.log("ON: streamCreated")
       // Subscribe to the Stream to receive it. Second parameter is undefined
       // so OpenVidu doesn't create an HTML video by its own
       var subscriber = session.subscribe(event.stream, undefined)
 
       // Update the state with the new subscribers
-      setSubscribers(subscribers=>[...subscribers, subscriber])
+      setSubscribers((subscribers) => [...subscribers, subscriber])
     })
 
     // On every Stream destroyed...
     session.on("streamDestroyed", (event) => {
-      setSubscribers(subscribers => subscribers.filter(s => s != event.stream.streamManager))
+      setSubscribers((subscribers) =>
+        subscribers.filter((s) => s != event.stream.streamManager)
+      )
     })
 
     // On every asynchronous exception...
@@ -102,11 +94,10 @@ export const VideocallTask: React.FC<Props> = (props) => {
       console.warn(exception)
     })
 
-    
     console.log(`OV: connecting with token: ${args.taskData.connection_token}`)
-    session.connect(args.taskData.connection_token, { })
+    session
+      .connect(args.taskData.connection_token, {})
       .then(async () => {
-
         // --- 5) Get your own camera stream ---
 
         // Init a publisher passing undefined as targetElement (we don't want OpenVidu to insert a video
@@ -128,47 +119,66 @@ export const VideocallTask: React.FC<Props> = (props) => {
 
         // Obtain the current video device in use
         var devices = await OV.getDevices()
-        var videoDevices = devices.filter(device => device.kind === "videoinput")
-        var currentVideoDeviceId = _publisher.stream.getMediaStream().getVideoTracks()[0].getSettings().deviceId
-        var _currentVideoDevice = videoDevices.find(device => device.deviceId === currentVideoDeviceId)
+        var videoDevices = devices.filter(
+          (device) => device.kind === "videoinput"
+        )
+        var currentVideoDeviceId = _publisher.stream
+          .getMediaStream()
+          .getVideoTracks()[0]
+          .getSettings().deviceId
+        var _currentVideoDevice = videoDevices.find(
+          (device) => device.deviceId === currentVideoDeviceId
+        )
 
         // Set the main video in the page to display our webcam and store our Publisher
         setCurrentVideoDevice(_currentVideoDevice)
         setPublisher(_publisher)
-      }).catch((error) => {
-        console.log("There was an error connecting to the session:", error.code, error.message)
+      })
+      .catch((error) => {
+        console.log(
+          "There was an error connecting to the session:",
+          error.code,
+          error.message
+        )
       })
 
     return () => {
       leaveSession()
     }
-  }, [OV, args.spec.muted, args.spec.videoOff, args.taskData.connection_token, leaveSession])
-
+  }, [
+    OV,
+    args.spec.muted,
+    args.spec.videoOff,
+    args.taskData.connection_token,
+    leaveSession,
+  ])
 
   const toggleMuted = () => {
-    console.log(`toggleMuted`)
-    setMuted(muted => {
-      publisher.publishAudio(!!muted);
+    console.log("toggleMuted")
+    setMuted((muted) => {
+      publisher.publishAudio(!!muted)
       return !muted
     })
   }
 
   const toggleVideo = () => {
-    setStopVideo(videoStopped => {
-      publisher.publishVideo(!!videoStopped);
+    setStopVideo((videoStopped) => {
+      publisher.publishVideo(!!videoStopped)
       return !videoStopped
     })
   }
 
-
   const switchCamera = async () => {
     try {
       const devices = await OV.current.getDevices()
-      var videoDevices = devices.filter(device => device.kind === "videoinput")
+      var videoDevices = devices.filter(
+        (device) => device.kind === "videoinput"
+      )
 
       if (videoDevices && videoDevices.length > 1) {
-
-        var newVideoDevice = videoDevices.filter(device => device.deviceId !== currentVideoDevice.deviceId)
+        var newVideoDevice = videoDevices.filter(
+          (device) => device.deviceId !== currentVideoDevice.deviceId
+        )
 
         if (newVideoDevice.length > 0) {
           // Creating a new publisher with specific videoSource
@@ -177,7 +187,7 @@ export const VideocallTask: React.FC<Props> = (props) => {
             videoSource: newVideoDevice[0].deviceId,
             publishAudio: true,
             publishVideo: true,
-            mirror: true
+            mirror: true,
           })
 
           //newPublisher.once("accessAllowed", () => {
@@ -193,19 +203,19 @@ export const VideocallTask: React.FC<Props> = (props) => {
     }
   }
 
-
   return (
     <VideocallGUI
-      subscribers={subscribers.map(s=>s.addVideoElement.bind(s))}
-      clientSubscriber={publisher ? publisher.addVideoElement.bind(publisher) : null}
+      subscribers={subscribers.map((s) => s.addVideoElement.bind(s))}
+      clientSubscriber={
+        publisher ? publisher.addVideoElement.bind(publisher) : null
+      }
       muted={muted}
       videoStopped={videoStopped}
       onMute={toggleMuted}
-      onStopVideo={toggleVideo}/>
+      onStopVideo={toggleVideo}
+    />
   )
 }
-
-
 
 export default {
   taskComponent: VideocallTask,

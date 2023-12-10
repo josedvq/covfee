@@ -1,4 +1,6 @@
 from __future__ import annotations
+from io import BytesIO
+import json
 import os
 import hmac
 import binascii
@@ -159,22 +161,6 @@ class HITInstance(Base):
     def get_url(self):
         return f'{app.config["APP_URL"]}/hits/{self.id.hex():s}'
 
-    def get_preview_url(self):
-        return f'{app.config["APP_URL"]}/hits/{self.preview_id.hex():s}?preview=1'
-
-    def get_completion_info(self):
-        completion = {
-            "completionCode": self.hit.config.get(
-                "completionCode",
-                sha256((self.id.hex() + app.config["COVFEE_SECRET_KEY"]).encode())
-                .digest()
-                .hex()[:12],
-            ),
-            "redirectName": self.hit.config.get("redirectName", None),
-            "redirectUrl": self.hit.config.get("redirectUrl", None),
-        }
-        return completion
-
     def get_hmac(self):
         h = hmac.new(
             app.config["COVFEE_SECRET_KEY"].encode("utf-8"), self.id, hashlib.sha256
@@ -213,20 +199,29 @@ class HITInstance(Base):
             # get the journeys
             instance_dict["journeys"] = [j.to_dict() for j in self.journeys]
 
-        # if with_tasks:
-        # prerequisite_tasks = [task for task in self.tasks if task.spec.prerequisite]
-        # prerequisites_completed = all([task.has_valid_response() for task in prerequisite_tasks])
-        # instance_dict['prerequisites_completed'] = prerequisites_completed
-        # if prerequisites_completed:
-        #     instance_dict['tasks'] = [task.to_dict() for task in self.tasks]
-        # else:
-        #     instance_dict['tasks'] = [task.to_dict() for task in prerequisite_tasks]
-
         return instance_dict
 
-    def stream_download(self, z, base_path, csv=False):
-        for i, task in enumerate(self.tasks):
-            yield from task.stream_download(z, base_path, i, csv)
+    def make_results_dict(self):
+        return {
+            "hit_id": self.id.hex(),
+            "nodes": {node.id: node.make_results_dict() for node in self.nodes},
+            "journeys": [journey.make_results_dict() for journey in self.journeys],
+        }
+
+    def stream_download(self, z, base_path):
+        results_dict = self.make_results_dict()
+        stream = BytesIO()
+        stream.write(json.dumps(results_dict).encode())
+        stream.seek(0)
+        z.write_iter(
+            os.path.join(
+                base_path,
+                self.id.hex() + ".json",
+            ),
+            stream,
+        )
+
+        yield from z.flush()
 
     def update(self, d):
         for key, value in d.items():

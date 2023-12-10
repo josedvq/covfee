@@ -77,13 +77,11 @@ def pause_node(nid, pause):
     pause = bool(int(pause))
     node = app.session.query(NodeInstance).get(int(nid))
     node.paused = pause
-
+    node.update_status()
     app.session.commit()
 
     # notify users and admins
     payload = node.make_status_payload()
-    print(payload)
-    print(node.id)
     socketio.emit("status", payload, to=node.id)
     socketio.emit("status", payload, namespace="/admin", broadcast=True)
     return "", 200

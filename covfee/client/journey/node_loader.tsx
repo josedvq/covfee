@@ -14,7 +14,7 @@ import { AllPropsRequired } from "../types/utils"
 import { nodeContext } from "./node_context"
 import { Provider as StoreProvider, useDispatch } from "react-redux"
 import { configureStore } from "@reduxjs/toolkit"
-import { appContext } from "../app_context"
+import { ServerToClientEvents, appContext } from "../app_context"
 
 interface Props {
   /**
@@ -22,14 +22,9 @@ interface Props {
    */
   node: NodeType
   /**
-   * If true, the task cannot be interacted with
+   * Observer mode. The task cannot be edited but updates can be seen.
    */
-  disabled?: boolean
-  /**
-   * If true, the task is only previewed: submission and server communication are disabled.
-   * Used for previews and playground where no server is available.
-   */
-  previewMode?: boolean
+  creep: boolean
 
   // CALLBACKS
   /**
@@ -40,8 +35,6 @@ interface Props {
 
 export const NodeLoader: React.FC<Props> = (props: Props) => {
   const args: AllPropsRequired<Props> = {
-    disabled: false,
-    previewMode: false,
     onSubmit: () => {},
     ...props,
   }
@@ -109,7 +102,6 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
   React.useEffect(() => {
     if (response) {
       // update the state when the response is loaded
-      console.log("Updating reduxStore", response.state)
       const action = { type: "task/setState", payload: response.state }
       reduxStore.current.dispatch(action)
     }
@@ -148,7 +140,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
   }, [reloadCount])
 
   React.useEffect(() => {
-    socket.on("join", (data) => {
+    const handleJoin: ServerToClientEvents["join"] = (data) => {
       if (data.error) {
         console.error("IO: on_join returned server error", data)
         setError({
@@ -159,21 +151,27 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
         })
       }
       setIsLoading(false)
-    })
+    }
 
-    socket.on("action", (action) => {
+    const handleAction: ServerToClientEvents["action"] = (action) => {
       reduxStore.current.dispatch(action)
-    })
+    }
 
-    socket.on("state", (state) => {
+    const handleState: ServerToClientEvents["state"] = (state) => {
       const action = { type: "task/setState", payload: state.state }
       reduxStore.current.dispatch(action)
-    })
+    }
+
+    socket.on("join", handleJoin)
+
+    socket.on("action", handleAction)
+
+    socket.on("state", handleState)
 
     return () => {
-      socket.removeAllListeners("join")
-      socket.removeAllListeners("action")
-      socket.removeAllListeners("state")
+      socket.off("join", handleJoin)
+      socket.off("action", handleAction)
+      socket.off("state", handleState)
     }
   }, [socket])
 
@@ -337,7 +335,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
                   spec: node.spec,
                   taskData: node.taskData,
                   response: response,
-                  disabled: args.disabled || node.status == "FINISHED",
+                  disabled: node.status == "FINISHED",
                   onSubmit: handleTaskSubmit,
                   renderSubmitButton: renderTaskSubmitButton,
                 }

@@ -1,25 +1,3 @@
-export type StartCondition =
-  | {
-      type: "moment"
-      datetime: string
-    }
-  | {
-      type: "all_journeys"
-    }
-  | {
-      type: "n_journeys"
-      n: number
-    }
-
-export type StopCondition =
-  | {
-      type: "moment"
-      datetime: string
-    }
-  | {
-      type: "timer"
-      seconds: number
-    }
 /**
  * @TJS-additionalProperties false
  */
@@ -60,14 +38,16 @@ export interface BaseNodeSpec {
   useSharedState?: boolean
 
   /**
-   * Conditions for task start
+   * Condition for task start
+   * @default 'N >= NJOURNEYS'
    */
-  start?: StartCondition[]
-
+  start?: string
   /**
    * Conditions for task end
    */
-  stop?: StopCondition[]
-
-  
+  stop?: string
+  /**
+   * Conditions for task pause
+   */
+  pause?: string
 }

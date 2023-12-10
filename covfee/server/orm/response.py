@@ -72,16 +72,6 @@ class TaskResponse(Base):
         task_object = self.get_task_object()
         return task_object.to_dict(with_chunk_data)
 
-    def get_download_filename(self, task_index, response_index):
-        if self.task.parent:
-            # start with the parent name for children tasks
-            return f'{self.task.parent.spec.spec["name"]}-{self.task.spec.spec["name"]}_{response_index:d}'
-        else:
-            # use the task id if available
-            if self.task.spec.spec.get("id", False):
-                return f'{task_index}_{self.task.spec.spec["id"]}_{response_index:d}'
-            return f'{task_index}_{self.task.spec.spec["name"]}_{response_index:d}'
-
     def validate(self):
         task_object = self.task.get_task_object()
         self.valid = task_object.validate(self)
@@ -103,3 +93,10 @@ class TaskResponse(Base):
             res["reason"] = reason
 
         return res
+
+    def make_results_dict(self):
+        return {
+            "created": str(self.created_at),
+            "submitted": str(self.submitted),
+            "state": self.state,
+        }

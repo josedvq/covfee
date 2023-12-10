@@ -118,7 +118,7 @@ class BaseCovfeeTask:
         """
         logger.info("BaseCovfeeTask: on_create")
 
-    def on_join(self, journey: JourneyInstance):
+    def on_join(self, journey: JourneyInstance = None):
         """Called when any visitor joins the task.
         May be called multiple times per journey.
         (for socketio-enabled tasks)

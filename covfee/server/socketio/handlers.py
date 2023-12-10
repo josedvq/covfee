@@ -26,6 +26,28 @@ def get_chat(chatId: int) -> Chat:
     return app.session.query(Chat).get(chatId)
 
 
+def get_on_join_payload(task_object, journey):
+    if task_object is not None:
+        try:
+            join_payload = {"task_data": task_object.on_join(journey)}
+        except CriticalError as ex:
+            join_payload = {
+                "error": ex.msg,
+                "load_task": ex.load_task,
+            }
+        except Exception as ex:
+            join_payload = {
+                "error": f"Unknown exception while executing on_join for task {task_object.__class__.__name__}",
+                "load_task": True,
+            }
+            app.logger.error(
+                f"Error running on_join for task {task_object.__class__.__name__}"
+            )
+    else:
+        join_payload = {}
+    return join_payload
+
+
 @socketio.on("connect")
 def on_connect(data):
     app.logger.info(f"socketio: connect {str(data)}")
@@ -89,23 +111,7 @@ def on_join(data):
     # update the journey and node status
     curr_journey.set_curr_node(curr_node)
     task_object = curr_node.get_task_object()
-
-    if task_object is not None:
-        try:
-            join_payload = {"task_data": task_object.on_join(curr_journey)}
-        except CriticalError as ex:
-            join_payload = {
-                "error": ex.msg,
-                "load_task": ex.load_task,
-            }
-        except Exception as ex:
-            join_payload = {
-                "error": f"Unknown exception while executing on_join for task {task_object.__class__.__name__}",
-                "load_task": True,
-            }
-            app.logger.error(
-                f"Error running on_join for task {task_object.__class__.__name__}"
-            )
+    join_payload = get_on_join_payload(task_object, curr_journey)
 
     emit("join", join_payload)
     app.logger.info(f"socketio: join: {str(join_payload)}")
@@ -130,14 +136,17 @@ def on_join(data):
         response = curr_node.responses[-1]
         res = store.join(curr_node_id, curr_node.spec.spec["type"], response.state)
         if res["success"]:
-            emit("state", res)
+            emit("state", res, to=curr_node_id)
+            emit("state", res, to=curr_node_id, namespace="/admin")
         else:
             app.logger.error(f"Redux store returned error")
 
 
 # admin joins a node
+# to support creep mode
 @socketio.on("join", namespace="/admin")
 def on_admin_join(data):
+    app.logger.info(f"socketio(admin): join {str(data)}")
     curr_node_id = int(data["nodeId"])
     curr_node = get_node(curr_node_id)
 
@@ -147,6 +156,12 @@ def on_admin_join(data):
 
     session["nodeId"] = curr_node_id
     session["useSharedState"] = use_shared_state
+
+    task_object = curr_node.get_task_object()
+    join_payload = get_on_join_payload(task_object, None)
+
+    emit("join", join_payload)
+    app.logger.info(f"socketio(admin): join: {str(join_payload)}")
 
     if isinstance(curr_node, TaskInstance) and use_shared_state:
         # task may not be running so we need to pass the state
@@ -167,11 +182,6 @@ def on_admin_join(data):
 def on_action(data):
     action = data["action"]
     nodeId = int(data["nodeId"])
-    # responseId = int(data["responseId"])
-    # if responseId != session["responseId"]:
-    #     return send(
-    #         f'data["responseId"] does not match session\'s responseId variable. {responseId} != {session["responseId"]}'
-    #     )
 
     res = store.action(nodeId, action)
     if res["success"]:

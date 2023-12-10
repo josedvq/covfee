@@ -1,1 +1,0 @@
-Sample file in Markdown with annotator instructions

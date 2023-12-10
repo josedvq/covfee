@@ -39,21 +39,25 @@ class Project(Base):
         self._filename = None
 
     def get_dataframe(self):
-        list_of_instances = list()
+        rows = list()
         for hit in self.hitspecs:
             for instance in hit.instances:
-                list_of_instances.append(
-                    {
-                        "hit_name": hit.name,
-                        "id": instance.id.hex(),
-                        "url": instance.get_url(),
-                        "preview_url": instance.get_preview_url(),
-                        "completion_code": instance.get_completion_code(),
-                    }
-                )
+                for journey in instance.journeys:
+                    rows.append(
+                        {
+                            "hit_name": hit.name,
+                            "hit_id": instance.id.hex(),
+                            "journey_name": journey.spec.name
+                            if journey.spec.name is not None
+                            else "unnamed",
+                            "journey_id": journey.id,
+                            "url": journey.get_url(),
+                            "completion_code": journey.get_completion_code(),
+                        }
+                    )
         df = pd.DataFrame(
-            list_of_instances,
-            columns=["hit_name", "id", "url", "preview_url", "completion_code"],
+            rows,
+            columns=["hit_name", "id", "url", "completion_code"],
         )
 
         return df
@@ -76,14 +80,10 @@ class Project(Base):
 
         return Project(**proj_dict)
 
-    def stream_download(self, z, base_path, submitted_only=True, csv=False):
+    def stream_download(self, z, base_path, submitted_only=True):
         for hit in self.hitspecs:
             for instance in hit.instances:
-                if submitted_only and not instance.submitted:
-                    continue
-                yield from instance.stream_download(
-                    z, os.path.join(base_path, instance.id.hex()), csv=csv
-                )
+                yield from instance.stream_download(z, base_path)
 
     def to_dict(self, with_hits=True, with_hitspecs=True, with_hit_nodes=False):
         project_dict = super().to_dict()
