@@ -44,9 +44,8 @@ setup(
         "pyzmq == 22.*",
         "numpy == 1.*",
         "zipstream-new == 1.*",
-        # "construct == 2.*",
-        # "google-auth == 2.*",
         "requests == 2.*",
+        "APScheduler == 3.10.*",
     ],
     python_requires=">=3.6",
 )

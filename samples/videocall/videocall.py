@@ -33,6 +33,7 @@ spec_consent_form = {
             },
         ]
     },
+    "timer": 10,
 }
 
 spec_instructions = {

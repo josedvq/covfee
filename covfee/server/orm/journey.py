@@ -5,17 +5,18 @@ import datetime
 import hmac
 import secrets
 import hashlib
-from typing import List, Dict, Any, TYPE_CHECKING, Optional
+from typing import List, Dict, Any, TYPE_CHECKING, Optional, Tuple
 from typing_extensions import Annotated
 
 # from ..db import Base
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 from flask import current_app as app
 
 from .base import Base
 from .chat import Chat
-from .node import journeyspec_nodespec_table, journey_node_table
+from .node import JourneyNode, JourneySpecNodeSpec
 
 if TYPE_CHECKING:
     from .hit import HITSpec, HITInstance
@@ -33,8 +34,13 @@ class JourneySpec(Base):
     hitspec: Mapped[HITSpec] = relationship(back_populates="journeyspecs")
 
     # down
-    nodespecs: Mapped[List[NodeSpec]] = relationship(
-        secondary=journeyspec_nodespec_table, back_populates="journeyspecs"
+    nodespec_associations: Mapped[List[JourneySpecNodeSpec]] = relationship(
+        back_populates="journeyspec", order_by=JourneySpecNodeSpec.order
+    )
+    nodespecs: AssociationProxy[List[NodeSpec]] = association_proxy(
+        "nodespec_associations",
+        "nodespec",
+        creator=lambda obj: JourneySpecNodeSpec(nodespec=obj),
     )
 
     # instance relationships
@@ -42,9 +48,12 @@ class JourneySpec(Base):
         back_populates="spec", cascade="all,delete"
     )
 
-    def __init__(self, nodespecs: List[NodeSpec] = [], name: str = None):
-        super().__init__()
-        self.nodespecs = nodespecs
+    def __init__(self, nodespecs: List[Tuple[NodeSpec, int]] = [], name: str = None):
+        super().init()
+        self.nodespec_associations = [
+            JourneySpecNodeSpec(nodespec=n, player=p, order=i)
+            for i, (n, p) in enumerate(nodespecs)
+        ]
         self.name = name
 
     def instantiate(self):
@@ -94,9 +103,16 @@ class JourneyInstance(Base):
     # chat relationship
     chat: Mapped[Chat] = relationship(back_populates="journey", cascade="all,delete")
 
-    nodes: Mapped[List[NodeInstance]] = relationship(
-        secondary=journey_node_table, back_populates="journeys"
+    # down
+    node_associations: Mapped[List[JourneyNode]] = relationship(
+        back_populates="journey", order_by=JourneyNode.order
     )
+    nodes: AssociationProxy[List[NodeInstance]] = association_proxy(
+        "node_associations",
+        "node",
+        creator=lambda obj: JourneyNode(node=obj),
+    )
+
     interface: Mapped[Dict[str, Any]] = mapped_column()
 
     # submitted = Mapped[bool]
@@ -142,6 +158,7 @@ class JourneyInstance(Base):
         return id
 
     def __init__(self):
+        super().init()
         self.id = JourneyInstance.get_id()
         self.preview_id = hashlib.sha256((self.id + "preview".encode())).digest()
         self.submitted = False

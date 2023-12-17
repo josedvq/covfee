@@ -100,6 +100,8 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
 
   useEffect(() => {
     const handleStatus: ServerToClientEvents["status"] = (data) => {
+      if (data.id !== node.id) return
+
       console.log("IO: status", data)
       setNode((node) => ({
         ...node,
@@ -133,6 +135,7 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
     setNode,
     getUrl,
     response,
+    setResponse,
     setStatus,
     fetchResponse,
     submitResponse,

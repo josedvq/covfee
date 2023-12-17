@@ -1,4 +1,9 @@
 /**
+ * @TJS-additionalProperties false
+ */
+export interface TaskJourneys<T> {}
+
+/**
  *
  * Props for raw Markdown/HTML data
  * @TJS-additionalProperties false
@@ -8,11 +13,11 @@ export interface MarkdownContentRawSpec {
   /**
    * @default "raw"
    */
-  type: "raw";
+  type: "raw"
   /**
    * A valid Markdown/HTML string
    */
-  content: string;
+  content: string
 }
 
 /**
@@ -24,13 +29,13 @@ export interface MarkdownContentLinkSpec {
   /**
    * @default "link"
    */
-  type: "link";
+  type: "link"
   /**
    * A url pointing to a valid Markdown/HTML file.
    */
-  url: string;
+  url: string
 }
 
 export type MarkdownContentSpec =
   | MarkdownContentRawSpec
-  | MarkdownContentLinkSpec;
+  | MarkdownContentLinkSpec

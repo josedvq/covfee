@@ -3,7 +3,7 @@ import { io, Socket } from "socket.io-client"
 import { UserContextMethods, UserState } from "./app_provider"
 import { UseChats } from "models/Chat"
 import { ChatMessage } from "./types/chat"
-import { NodeStatus } from "./types/node"
+import { NodeStatus, TaskResponseType } from "./types/node"
 import {
   State as StateResponse,
   Action as ActionResponse,
@@ -32,7 +32,12 @@ export interface ServerToClientEvents {
     journey_id: string
     num_connections: number
   }) => void
-  join: (arg0: { error?: string; load_task?: boolean; task_data?: any }) => void
+  join: (arg0: {
+    response: TaskResponseType
+    error?: string
+    load_task?: boolean
+    task_data?: any
+  }) => void
   action: (arg0: ActionResponse) => void
   state: (arg0: StateResponse) => void
 }

@@ -4,6 +4,7 @@ import { BaseTaskSpec, NodeSpec, TaskSpec } from "@covfee-spec/task"
 import React, { Reducer } from "react"
 import { AllPropsRequired } from "./utils"
 import { BaseTaskProps } from "../tasks/base"
+import { Slice } from "@reduxjs/toolkit"
 
 export const NodeStatuses = ["INIT", "RUNNING", "PAUSED", "FINISHED"] as const
 export type NodeStatus = (typeof NodeStatuses)[number]
@@ -27,7 +28,6 @@ export interface NodeType extends AllPropsRequired<BaseNodeSpec> {
    */
   status: NodeStatus
   taskData: any
-  num_journeys: number
   curr_journeys: string[]
   valid: boolean
   paused: boolean
@@ -75,6 +75,6 @@ export type NodeState<T> = T
 
 export interface TaskExport {
   taskComponent: React.FC<BaseTaskProps>
-  taskReducer: Reducer<any, any>
+  taskSlice: Slice<any, any>
   useSharedState?: boolean
 }

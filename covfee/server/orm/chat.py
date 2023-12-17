@@ -37,7 +37,7 @@ class Chat(Base):
     )
 
     def __init__(self):
-        super().__init__()
+        super().init()
 
     def to_dict(self):
         chat_dict = super().to_dict()
@@ -60,5 +60,5 @@ class ChatMessage(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
 
     def __init__(self, message):
-        super().__init__()
+        super().init()
         self.message = message

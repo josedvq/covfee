@@ -5,12 +5,9 @@ import os
 
 # GENERAL SETTINGS
 BASE_URL = "http://localhost:5000"
-SOCKETIO_ENABLED = False
 
 #  Security: Used as salt used for generating hash links and for json web tokens (JWT_SECRET_KEY)
 COVFEE_SECRET_KEY = "CHANGE_ME"
-
-GOOGLE_CLIENT_ID = None
 
 # sqlalchemy settings
 SQLALCHEMY_ENGINE_OPTIONS = {"isolation_level": "READ UNCOMMITTED"}
@@ -50,6 +47,5 @@ PROJECT_WWW_PATH = os.path.join(os.getcwd(), "www")
 # enables the www server
 SERVE_WWW = True
 
-
-# for temporary (download) files
-TMP_PATH = os.path.join(os.getcwd(), "tmp")
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin"

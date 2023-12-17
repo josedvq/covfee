@@ -23,11 +23,7 @@ import {
   Button,
 } from "antd"
 import { log } from "../utils"
-import {
-  FieldSpec,
-  FormSpec,
-  InputSpec,
-} from "@covfee-shared/spec/tasks/questionnaire"
+import { FormSpec, InputSpec } from "@covfee-shared/spec/form"
 import { FormInstance } from "antd/lib/form"
 import { StarOutlined, ThunderboltFilled } from "@ant-design/icons"
 import { AllPropsRequired } from "../types/utils"
@@ -87,47 +83,38 @@ interface Props extends FormSpec<InputSpec> {
   onSubmit?: (arg0: any) => void
 }
 
-export class Form extends React.Component<Props> {
-  formRef = React.createRef<FormInstance>()
-
-  static defaultProps = {
-    layout: "vertical",
+export const Form: React.FC<React.PropsWithChildren<Props>> = (props) => {
+  const args: AllPropsRequired<Props> = {
     disabled: false,
     withSubmitButton: false,
+    ...props,
   }
 
-  initialValues: { [key: string]: any } = {}
+  const formRef = React.useRef()
 
-  constructor(props: Props) {
-    super(props)
-
-    if (this.props.values) {
-      this.initialValues = this.props.values
+  const initialValues = React.useMemo(() => {
+    let initialValues: { [key: string]: any } = {}
+    if (args.values) {
+      initialValues = args.values
     } else {
-      if (props.fields) {
-        props.fields.forEach((field, idx) => {
-          const initialValue =
-            field.input.defaultValue !== undefined
-              ? field.input.defaultValue
-              : field.input.defaultChecked !== undefined
-                ? field.input.defaultChecked
-                : null
-          this.initialValues[field.name] = undefined
-        })
+      if (args.fields) {
+        initialValues = Object.fromEntries(
+          args.fields.map((field) => {
+            const defaultValue =
+              field.input.defaultValue !== undefined
+                ? field.input.defaultValue
+                : field.input.defaultChecked !== undefined
+                  ? field.input.defaultChecked
+                  : null
+            return [field.name, defaultValue]
+          })
+        )
       }
     }
-    this.props.setValues(this.initialValues)
-  }
+    return initialValues
+  }, [args.fields, args.values])
 
-  componentDidMount() {
-    // this.formRef.current.resetFields()
-  }
-
-  handleFinish = (values: any) => {
-    this.props.onSubmit(values)
-  }
-
-  renderInputElement = (
+  const renderInputElement = (
     inputType: string,
     elementProps: any,
     disabled: boolean
@@ -153,19 +140,19 @@ export class Form extends React.Component<Props> {
     return elem
   }
 
-  evalCondition = (condition: string) => {
-    if (!this.props.values || !condition) return true
+  const evalCondition = (condition: string) => {
+    if (!args.values || !condition) return true
 
-    if (!(condition in this.props.values)) {
+    if (!(condition in args.values)) {
       log.warn(`Unable to resolve condition ${condition}`)
       return true
     }
 
-    return this.props.values[condition]
+    return args.values[condition]
   }
 
-  patchProps = (props: any) => {
-    const marks = {}
+  const patchProps = (props: any) => {
+    const marks: { [key: string]: React.ReactNode } = {}
     if (props["inputType"] == "Slider" && props["marks"]) {
       for (const [key, value] of Object.entries(props["marks"])) {
         marks[key] = (
@@ -176,7 +163,7 @@ export class Form extends React.Component<Props> {
               fontSize: "0.8em",
             }}
           >
-            {value}
+            {value as string}
           </div>
         )
       }
@@ -184,67 +171,65 @@ export class Form extends React.Component<Props> {
     return { ...props, marks: marks }
   }
 
-  render() {
-    return (
-      <AntdForm
-        ref={this.formRef}
-        layout={this.props.layout}
-        style={{ margin: "1em" }}
-        initialValues={this.initialValues}
-        onValuesChange={(changedValues, allValues) => {
-          this.props.setValues(changedValues)
-        }}
-        onFinish={this.handleFinish}
-      >
-        {this.props.fields &&
-          this.props.fields.map((field, index) => {
-            // do not render if the condition is not met
-            if (!this.evalCondition(field.condition)) return null
+  return (
+    <AntdForm
+      ref={formRef}
+      layout={props.layout}
+      style={{ margin: "1em" }}
+      initialValues={initialValues}
+      onValuesChange={(changedValues, allValues) => {
+        args.setValues(changedValues)
+      }}
+      // onFinish={handleFinish}
+    >
+      {args.fields &&
+        args.fields.map((field, index) => {
+          // do not render if the condition is not met
+          if (!evalCondition(field.condition)) return null
 
-            return (
-              <AntdForm.Item
-                key={index}
-                name={field.name}
-                label={field.label}
-                required={field.required}
-                rules={
-                  field.required && [
-                    { required: true, message: "This field is required." },
-                  ]
-                }
-                valuePropName={
-                  ["Switch", "Checkbox"].includes(field.input.inputType)
-                    ? "checked"
-                    : "value"
-                }
-              >
-                {(() => {
-                  if (!(field.input.inputType in antd_components))
-                    return <p>Unimplemented input element!</p>
+          return (
+            <AntdForm.Item
+              key={index}
+              name={field.name}
+              label={field.label}
+              required={field.required}
+              rules={
+                field.required && [
+                  { required: true, message: "This field is required." },
+                ]
+              }
+              valuePropName={
+                ["Switch", "Checkbox"].includes(field.input.inputType)
+                  ? "checked"
+                  : "value"
+              }
+            >
+              {(() => {
+                if (!(field.input.inputType in antd_components))
+                  return <p>Unimplemented input element!</p>
 
-                  const elementProps = this.patchProps({ ...field.input })
-                  delete elementProps["inputType"]
-                  delete elementProps["defaultValue"]
-                  delete elementProps["defaultChecked"]
-                  return this.renderInputElement(
-                    field.input.inputType,
-                    elementProps,
-                    this.props.disabled
-                  )
-                })()}
-              </AntdForm.Item>
-            )
-          })}
+                const elementProps = patchProps({ ...field.input })
+                delete elementProps["inputType"]
+                delete elementProps["defaultValue"]
+                delete elementProps["defaultChecked"]
+                return renderInputElement(
+                  field.input.inputType,
+                  elementProps,
+                  args.disabled
+                )
+              })()}
+            </AntdForm.Item>
+          )
+        })}
 
-        {this.props.renderSubmitButton && (
-          <AntdForm.Item>
-            {this.props.renderSubmitButton({ disabled: this.props.disabled })}
-            {/* <Button type="primary" htmlType="submit" disabled={this.props.disabled}>
-                    {this.props.submitButtonText}
-                </Button>     */}
-          </AntdForm.Item>
-        )}
-      </AntdForm>
-    )
-  }
+      {args.renderSubmitButton && (
+        <AntdForm.Item>
+          {args.renderSubmitButton({ disabled: args.disabled })}
+          {/* <Button type="primary" htmlType="submit" disabled={this.props.disabled}>
+                  {this.props.submitButtonText}
+              </Button>     */}
+        </AntdForm.Item>
+      )}
+    </AntdForm>
+  )
 }

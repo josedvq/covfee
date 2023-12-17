@@ -1,40 +1,39 @@
-import * as React from "react";
+import * as React from "react"
 
-import { Form, Input, Button, Alert, Divider } from "antd";
+import { Form, Input, Button, Alert, Divider } from "antd"
 
-import { appContext } from "./app_context";
-import "./login_form.scss";
+import { appContext } from "./app_context"
 
 interface Props {
-  onSuccess: () => void;
-  onError?: () => void;
+  onSuccess: () => void
+  onError?: () => void
 }
 
 export const LoginForm: React.FC<Props> = (props) => {
-  const { login } = React.useContext(appContext);
-  const [error, setError] = React.useState<string>();
-  const [submitting, setSubmitting] = React.useState<boolean>(false);
+  const { login } = React.useContext(appContext)
+  const [error, setError] = React.useState<string>()
+  const [submitting, setSubmitting] = React.useState<boolean>(false)
 
   const handleFormSubmit = (values: any) => {
-    setSubmitting(true);
+    setSubmitting(true)
 
     login(values)
       .then((data) => {
-        props.onSuccess(data);
+        props.onSuccess(data)
       })
       .catch((error) => {
-        setError(error.toString());
-        setSubmitting(false);
-      });
-  };
+        setError(error.toString())
+        setSubmitting(false)
+      })
+  }
 
   const layout = {
     labelCol: { span: 8 },
     wrapperCol: { span: 16 },
-  };
+  }
   const tailLayout = {
     wrapperCol: { offset: 8, span: 16 },
-  };
+  }
 
   return (
     <>
@@ -77,5 +76,5 @@ export const LoginForm: React.FC<Props> = (props) => {
         </Form.Item>
       </Form>
     </>
-  );
-};
+  )
+}

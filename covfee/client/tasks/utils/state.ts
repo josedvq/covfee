@@ -19,6 +19,7 @@ export function createSlice<CaseReducers extends SliceCaseReducers<any>>(
   return reduxCreateSlice({
     name: "task",
     initialState,
+    // @ts-ignore
     reducers: {
       ...covfeeReducers,
       ...reducers,

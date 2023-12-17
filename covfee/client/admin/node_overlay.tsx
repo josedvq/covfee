@@ -22,7 +22,7 @@ export const NodeOverlay: React.FC<React.PropsWithChildren<{}>> = () => {
   if (node !== null)
     return (
       <OverlayContainer>
-        <CloseButton onClick={() => setNode(null)} />
+        <CloseButton onClick={() => setNodeId(null)} />
         <NodeLoader node={node} creep={true} />
       </OverlayContainer>
     )

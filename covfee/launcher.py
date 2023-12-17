@@ -17,6 +17,7 @@ import covfee.server.orm as orm
 from covfee.shared.validator.ajv_validator import AjvValidator
 from covfee.server.app import create_app
 from covfee.cli.utils import working_directory
+from covfee.server.socketio.redux_store import ReduxStoreService
 
 
 class ProjectExistsException(Exception):
@@ -66,22 +67,20 @@ class Launcher:
 
         self.commit()
 
-    def launch(self):
+    def launch(self, unsafe=None):
         if self.environment != "dev":
             self.link_bundles()
-        self.start_server("dev")
+        if unsafe is None:
+            unsafe = False if self.environment == "deploy" else True
+        self.start_server(unsafe)
 
     def create_tables(self):
         orm.Base.metadata.create_all(self.engine)
 
-    def start_server(self, no_browser=False):
-        """
-        Starts covfee in local mode by default.
-        Use deploy or dev to start deployment (public) or development servers.
-        """
+    def start_server(self, unsafe=False):
         socketio, app = create_app(self.environment, self.session_local)
         with app.app_context():
-            app.config["UNSAFE_MODE_ON"] = True
+            app.config["UNSAFE_MODE_ON"] = unsafe
             self._start_server(socketio, app)
 
     def _start_server(self, socketio, app, host="0.0.0.0"):
@@ -102,10 +101,6 @@ class Launcher:
             socketio.run(app, host=host, **ssl_options)
         else:
             raise f"unrecognized self.environment {self.environment}"
-
-        # from covfee.server.socketio.redux_store import ReduxStoreService
-        # redux_store = ReduxStoreService()
-        # redux_store.run()
 
     def launch_browser(self, unsafe=False):
         target_url = self.config["ADMIN_URL"] if unsafe else self.config["LOGIN_URL"]

@@ -28,7 +28,6 @@ export interface UserState {
 
 export interface UserContextMethods {
   login: (info: LoginInfo) => Promise<any>
-  loginWithGoogle: (token: string) => Promise<any>
   logout: () => Promise<void>
 }
 
@@ -45,14 +44,16 @@ export const AppProvider: React.FC<Props> = (props) => {
 
   const getSocket = () => {
     if (args.admin) {
-      console.log('IO: connect: /admin')
+      console.log("IO: connect: /admin")
       return io("/admin")
     } else {
       if (routeParams.journeyId) {
-        console.log('IO: connect', { auth: { journeyId: routeParams.journeyId } })
+        console.log("IO: connect", {
+          auth: { journeyId: routeParams.journeyId },
+        })
         return io({ auth: { journeyId: routeParams.journeyId } })
       } else {
-        console.log('IO: connect', {})
+        console.log("IO: connect", {})
         return io()
       }
     }
@@ -60,10 +61,10 @@ export const AppProvider: React.FC<Props> = (props) => {
 
   const getChocket = () => {
     if (args.admin) {
-      console.log('IO: connect: /admin_chat')
+      console.log("IO: connect: /admin_chat")
       return io("/admin_chat")
     } else {
-      console.log('IO: connect: /chat')
+      console.log("IO: connect: /chat")
       return io("/chat")
     }
   }
@@ -166,28 +167,6 @@ export const AppProvider: React.FC<Props> = (props) => {
 
       res
         .then((data) => {
-          _onLogin(data)
-        })
-        .catch(() => {
-          _onFailure()
-        })
-
-      return res
-    },
-
-    loginWithGoogle: (token: string) => {
-      const url = Constants.auth_url + "/login-google"
-      const requestOptions = {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: token }),
-      }
-
-      let res = fetcher(url, requestOptions).then(throwBadResponse)
-
-      res
-        .then((data) => {
-          log.debug(`/auth/login-google responded with ${JSON.stringify(data)}`)
           _onLogin(data)
         })
         .catch(() => {

@@ -37,17 +37,38 @@ export interface BaseNodeSpec {
    */
   useSharedState?: boolean
 
+  // /**
+  //  * Condition for task start
+  //  */
+  // alerts?: {
+  //   message: string
+  //   condition: string
+  // }[]
+
   /**
-   * Condition for task start
-   * @default 'N >= NJOURNEYS'
+   * Number of jorneys required to start task
    */
-  start?: string
+  n_start?: number
+
   /**
-   * Conditions for task end
+   * If the number of subjects is n_pause or less, the task will be paused
    */
-  stop?: string
+  n_pause?: number
+
   /**
-   * Conditions for task pause
+   * Time to complete the task
    */
-  pause?: string
+  timer?: number
+
+  /**
+   * Pause timer is started every time the task enters paused state
+   * If timer reaches zero, the task is set to finished state.
+   */
+  timer_pause?: number
+
+  /**
+   * Empty timer is started everytime the task is empty (no journeys online)
+   * If the timer reaches zero, the task is set to finished state.
+   */
+  timer_empty?: number
 }

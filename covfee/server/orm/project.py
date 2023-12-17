@@ -29,7 +29,7 @@ class Project(Base):
     def __init__(
         self, name="Sample", email="example@example.com", hitspecs: List[HITSpec] = []
     ):
-        super().__init__()
+        super().init()
         self.name = name
         self.email = email
         self.hitspecs = hitspecs

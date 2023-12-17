@@ -11,7 +11,7 @@ class Base(DeclarativeBase):
     # random unique ID to use as hash key
     _unique_id: int
 
-    def __init__(self):
+    def init(self):
         self._unique_id = random.getrandbits(256)
 
     def to_dict(self):

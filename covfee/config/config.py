@@ -75,8 +75,6 @@ class Config(flask.Config):
             "env": "production"
             if self["COVFEE_ENV"] in ["local", "deploy"]
             else "development",
-            "socketio_enabled": self["SOCKETIO_ENABLED"],
-            "google_client_id": self["GOOGLE_CLIENT_ID"],
             "www_url": self["PROJECT_WWW_URL"],
             "app_url": self["APP_URL"],
             "base_url": self["BASE_URL"],

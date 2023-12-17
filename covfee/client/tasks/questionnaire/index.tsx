@@ -80,5 +80,5 @@ export const QuestionnaireTask: React.FC<Props> = (props) => {
 
 export default {
   taskComponent: QuestionnaireTask,
-  taskReducer: slice.reducer,
+  taskSlice: slice,
 } as TaskExport

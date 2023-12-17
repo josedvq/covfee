@@ -13,7 +13,7 @@ import { NodeStatuses, NodeType } from "../types/node"
 import { AllPropsRequired } from "../types/utils"
 import { nodeContext } from "./node_context"
 import { Provider as StoreProvider, useDispatch } from "react-redux"
-import { configureStore } from "@reduxjs/toolkit"
+import { Store, configureStore } from "@reduxjs/toolkit"
 import { ServerToClientEvents, appContext } from "../app_context"
 
 interface Props {
@@ -46,6 +46,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
     node,
     setNode,
     response,
+    setResponse,
     makeResponse,
     setStatus: setNodeStatus,
     fetchResponse,
@@ -68,7 +69,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
 
   const {
     taskComponent,
-    taskReducer,
+    taskSlice,
     useSharedState: taskRequestsSharedState,
   } = getTask(args.node.spec.type)
 
@@ -79,53 +80,94 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
       ? args.node.useSharedState
       : taskuseSharedState
 
-  const reduxStore = React.useRef(
-    configureStore({
-      reducer: taskReducer,
-    })
-  )
+  const reduxStore = React.useRef<Store>(null)
 
-  React.useEffect(() => {
-    fetchResponse()
-  }, [fetchResponse])
+  /**
+   * Triggers a 'join'
+   * Called when:
+   *   the component loads
+   *   the response must be reloaded
+   */
+  const emitJoin = React.useCallback(() => {
+    socket.emit("join", {
+      journeyId,
+      nodeId: args.node.id,
+      useSharedState,
+    })
+  }, [args.node.id, journeyId, socket, useSharedState])
 
   React.useEffect(() => {
     if (socket) {
-      socket.emit("join", {
-        journeyId,
-        nodeId: args.node.id,
-        useSharedState,
+      emitJoin()
+    }
+  }, [socket, emitJoin])
+
+  React.useEffect(() => {
+    const handleJoin: ServerToClientEvents["join"] = (data) => {
+      if (data.error) {
+        console.error("IO: on_join returned server error", data)
+        setError({
+          error: true,
+          show: true,
+          message: data.error,
+          abort: data.load_task,
+        })
+      }
+      setResponse(data.response)
+
+      // We create the reduxStore here to ensure that the initial state is accessible to the task on first render
+      const initialState =
+        data.response.state !== null
+          ? data.response.state
+          : taskSlice.getInitialState()
+
+      reduxStore.current = configureStore({
+        reducer: taskSlice.reducer,
+        preloadedState: initialState,
       })
+      setIsLoading(false)
     }
-  }, [socket, journeyId, useSharedState, args.node.id])
+
+    socket.on("join", handleJoin)
+
+    return () => {
+      socket.off("join", handleJoin)
+    }
+  }, [reduxStore, setResponse, socket, taskSlice])
+
+  // React.useEffect(() => {
+  //   if (response) {
+  //     // update the state when the response is loaded
+
+  //   }
+  // }, [response])
 
   React.useEffect(() => {
-    if (response) {
-      // update the state when the response is loaded
-      const action = { type: "task/setState", payload: response.state }
-      reduxStore.current.dispatch(action)
-    }
-  }, [response])
+    const handleStatus: ServerToClientEvents["status"] = (data) => {
+      if (data.id !== node.id) return
 
-  React.useEffect(() => {
+      console.log("IO: status", data)
+      console.log([data.response_id, response.id])
+      if (data.response_id != response.id) {
+        // the task was reset or a new response was created
+        // fetch the new one and let the user know
+        // fetchResponse()
+        setReloadCount(10)
+        setReloadMessage("The task has been reset by the admin. Restarting...")
+        setTimeout(() => {
+          emitJoin()
+        }, 10000)
+      }
+    }
+
     if (response && socket) {
-      socket.on("status", (data) => {
-        console.log("IO: status", data)
-        if (data.response_id !== response.id) {
-          // the task was reset or a new response was created
-          // fetch the new one and let the user know
-          // fetchResponse()
-          setReloadCount(10)
-          setReloadMessage(
-            "The task has been reset by the admin. Restarting..."
-          )
-          setTimeout(() => {
-            window.location.reload()
-          }, 10000)
-        }
-      })
+      socket.on("status", handleStatus)
+
+      return () => {
+        socket.off("status", handleStatus)
+      }
     }
-  }, [fetchResponse, response, socket])
+  }, [node.id, emitJoin, fetchResponse, response, socket])
 
   React.useEffect(() => {
     // Only set up the interval if count is greater than 0
@@ -139,20 +181,10 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
     }
   }, [reloadCount])
 
+  /**
+   * REDUX SYNC
+   */
   React.useEffect(() => {
-    const handleJoin: ServerToClientEvents["join"] = (data) => {
-      if (data.error) {
-        console.error("IO: on_join returned server error", data)
-        setError({
-          error: true,
-          show: true,
-          message: data.error,
-          abort: data.load_task,
-        })
-      }
-      setIsLoading(false)
-    }
-
     const handleAction: ServerToClientEvents["action"] = (action) => {
       reduxStore.current.dispatch(action)
     }
@@ -162,14 +194,11 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
       reduxStore.current.dispatch(action)
     }
 
-    socket.on("join", handleJoin)
-
     socket.on("action", handleAction)
 
     socket.on("state", handleState)
 
     return () => {
-      socket.off("join", handleJoin)
       socket.off("action", handleAction)
       socket.off("state", handleState)
     }

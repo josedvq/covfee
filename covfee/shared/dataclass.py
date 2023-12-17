@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Tuple
 import random
 from pprint import pformat
 
@@ -29,6 +29,7 @@ class CovfeeTask(BaseDataclass, metaclass=PostInitCaller):
     def __init__(self):
         super().__init__()
         self._orm_task = None
+        self._player_count = -1
 
     def orm(self):
         if self._orm_task is not None:
@@ -42,26 +43,39 @@ class CovfeeTask(BaseDataclass, metaclass=PostInitCaller):
         logger.debug(f"Created ORM task: {str(self._orm_task)}")
         return self._orm_task
 
+    def _count(self):
+        self._player_count += 1
+        return self._player_count
+
     def __post_init__(self):
-        for cond in ["start", "stop", "pause"]:
-            expression = getattr(self, cond, None)
-            if expression is not None:
-                try:
-                    parse_expression(expression)
-                except Exception as ex:
-                    raise ValueError(f'Invalid {cond} condition "{expression}"')
+        pass
+        # TODO: check alert conditions
+        # expression = getattr(self, cond, None)
+        # if expression is not None:
+        #     try:
+        #         parse_expression(expression)
+        #     except Exception as ex:
+        #         raise ValueError(f'Invalid {cond} condition "{expression}"')
 
 
 class Journey(BaseDataclass):
-    def __init__(self, nodes=None, name: str = None):
+    def __init__(self, nodes: List[CovfeeTask] = None, name: str = None):
         super().__init__()
-        self.nodes = nodes if nodes is not None else list()
+        if nodes is not None:
+            self.nodes_players = [(n, n._count()) for n in nodes]
+        else:
+            self.nodes_players: List[Tuple[CovfeeTask, int]] = list()
         self.name = name
 
     def orm(self):
-        journey = OrmJourney([n.orm() for n in self.nodes])
+        journey = OrmJourney([(n.orm(), p) for n, p in self.nodes_players])
         logger.debug(f"Created ORM journey: {str(journey)}")
         return journey
+
+    def add_node(self, node: CovfeeTask, player: int = None):
+        self.nodes_players.append((node, player))
+
+    extend = add_node
 
 
 class HIT(BaseDataclass):

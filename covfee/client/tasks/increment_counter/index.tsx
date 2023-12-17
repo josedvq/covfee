@@ -1,17 +1,17 @@
-import * as React from "react";
+import * as React from "react"
 
-import { useNodeState } from "../../journey/state";
-import { State } from "./slice";
-import { slice, actions } from "./slice";
-import { useSelector } from "react-redux";
-import { TaskExport, TaskType } from "types/node";
-import { BaseTaskProps } from "tasks/base";
+import { useNodeState } from "../../journey/state"
+import { State } from "./slice"
+import { slice, actions } from "./slice"
+import { useSelector } from "react-redux"
+import { TaskExport, TaskType } from "types/node"
+import { BaseTaskProps } from "tasks/base"
 
 interface Props extends TaskType, BaseTaskProps {}
 
 function IncrementCounterTask(props: Props) {
-  const counter = useSelector((state) => state.counter);
-  const { dispatch } = useNodeState<State>(slice);
+  const counter = useSelector((state) => state.counter)
+  const { dispatch } = useNodeState<State>(slice)
 
   return (
     <>
@@ -19,18 +19,18 @@ function IncrementCounterTask(props: Props) {
 
       <button
         onClick={() => {
-          console.log(actions.incrementValue());
-          dispatch(actions.incrementValue());
+          console.log(actions.incrementValue())
+          dispatch(actions.incrementValue())
         }}
       >
         Increment
       </button>
     </>
-  );
+  )
 }
 
 export default {
   taskComponent: IncrementCounterTask,
-  taskReducer: slice.reducer,
+  taskSlice: slice,
   useSharedState: true,
-} as TaskExport;
+} as TaskExport

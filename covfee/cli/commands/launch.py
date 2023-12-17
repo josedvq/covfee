@@ -4,6 +4,7 @@ These commands launch or build covfee and are supported for the typical use case
 """
 import os
 from pathlib import Path
+import subprocess
 import sys
 from colorama import init as colorama_init, Fore
 import click
@@ -19,7 +20,7 @@ from covfee.launcher import Launcher, ProjectExistsException
 from halo.halo import Halo
 from covfee.shared.validator.validation_errors import JavascriptError, ValidationError
 from covfee.shared.schemata import Schemata
-from covfee.cli.utils import NPMPackage
+from covfee.cli.utils import NPMPackage, working_directory
 from covfee.launcher import launch_webpack
 from covfee.config import Config
 
@@ -47,6 +48,34 @@ def webpack(host):
         host if host is not None else config.get("WEBPACK_DEVSERVER_HOST", "localhost")
     )
     launch_webpack(config["COVFEE_CLIENT_PATH"], host)
+
+
+@covfee_cli.command()
+@click.option(
+    "--port",
+    default=5555,
+    help="Port for the redux store service",
+)
+@click.option("--daemon", is_flag=True, help="Run as a daemon.")
+def store(port, daemon):
+    """
+    Launches a webpack instance for use in dev mode
+    """
+    config = Config("dev")
+
+    with working_directory(os.path.join(config["COVFEE_SERVER_PATH"], "socketio")):
+        if daemon:
+            res = subprocess.Popen(
+                ["npx", "ts-node", "reduxStore.ts", str(port)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.STDOUT,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+            print(f"Running reduxStore. PID = {res.pid}")
+        else:
+            res = subprocess.Popen(["npx", "ts-node", "reduxStore.ts", str(port)])
+            res.wait()
 
 
 @covfee_cli.command()
@@ -121,16 +150,21 @@ def get_start_message(url):
 @covfee_cli.command()
 @click.option("--force", is_flag=True, help="Specify to overwrite existing databases.")
 @click.option("--dev", is_flag=True, help="Run in dev mode.")
+@click.option("--deploy", is_flag=True, help="Run covfee in deployment mode")
 @click.option("--safe", is_flag=True, help="Enable authentication in local mode.")
 @click.option("--rms", is_flag=True, help="Re-makes the schemata for validation.")
 @click.option(
     "--no-launch", is_flag=True, help="Do not launch covfee, only make the DB"
 )
 @click.argument("project_spec_file")
-def make(force, dev, safe, rms, no_launch, project_spec_file):
-    environment = "dev" if dev else "local"
-    unsafe = False if environment == "deploy" else (not safe)
-    config = Config(environment)
+def make(force, dev, deploy, safe, rms, no_launch, project_spec_file):
+    mode = "local"
+    if dev:
+        mode = "dev"
+    if deploy:
+        mode = "deploy"
+    unsafe = False if mode == "deploy" else (not safe)
+    config = Config(mode)
 
     install_npm_packages()
 
@@ -138,7 +172,7 @@ def make(force, dev, safe, rms, no_launch, project_spec_file):
         loader = Loader(project_spec_file)
         projects = loader.process(with_spinner=True)
 
-        launcher = Launcher(environment, projects, Path(project_spec_file).parent)
+        launcher = Launcher(mode, projects, Path(project_spec_file).parent)
         launcher.make_database(force, with_spinner=True)
         if not no_launch:
             print(
@@ -146,7 +180,7 @@ def make(force, dev, safe, rms, no_launch, project_spec_file):
                     url=config["ADMIN_URL"] if unsafe else config["LOGIN_URL"]
                 )
             )
-            launcher.launch()
+            launcher.launch(unsafe)
     except FileNotFoundError:
         pass
     except JavascriptError as err:

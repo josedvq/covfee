@@ -1,16 +1,11 @@
-import { BaseTaskSpec } from '../task'
+import { BaseTaskSpec } from "../task"
 
 /**
-* @TJS-additionalProperties false
-*/
-export interface IncrementCounterTaskBaseSpec {
-    /**
-     * @default "IncrementCounterTask"
-     */
-    type: 'IncrementCounterTask'
+ * @TJS-additionalProperties false
+ */
+export interface IncrementCounterTaskSpec extends BaseTaskSpec {
+  /**
+   * @default "IncrementCounterTask"
+   */
+  type: "IncrementCounterTask"
 }
-
-/**
-* @TJS-additionalProperties false
-*/
-export interface IncrementCounterTaskSpec extends IncrementCounterTaskBaseSpec, BaseTaskSpec {}

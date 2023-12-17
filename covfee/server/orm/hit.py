@@ -19,7 +19,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .base import Base
 from .journey import JourneySpec, JourneyInstance
 from .project import Project
-from .node import NodeInstance, NodeSpec
+from .node import JourneyNode, NodeInstance, NodeSpec
 
 
 class HITSpec(Base):
@@ -47,13 +47,15 @@ class HITSpec(Base):
     )
 
     def __init__(self, name=None, journeyspecs: List[JourneySpec] = []):
-        super().__init__()
+        super().init()
         # TODO: remove name column?
         if name is None:
             name = binascii.b2a_hex(os.urandom(8)).decode("utf-8")
         self.name = name
         self.journeyspecs = journeyspecs
+        print(f"HIT: {len(journeyspecs)}")
         self.nodespecs = [n for js in journeyspecs for n in js.nodespecs]
+        print(f"HIT: {len(self.nodespecs)}")
 
     def make_journey(self):
         journeyspec = JourneySpec()
@@ -133,7 +135,7 @@ class HITInstance(Base):
     )
 
     def __init__(self, id: bytes, journeyspecs: List[JourneySpec] = []):
-        super().__init__()
+        super().init()
         self.id = id
         self.preview_id = sha256((id + "preview".encode())).digest()
         self.submitted = False
@@ -144,14 +146,19 @@ class HITInstance(Base):
             journey = journeyspec.instantiate()
             journey.hit_id = self.id
 
-            for nodespec in journeyspec.nodespecs:
+            for j, nodespec_assoc in enumerate(journeyspec.nodespec_associations):
+                nodespec = nodespec_assoc.nodespec
                 if nodespec._unique_id in nodespec_to_nodeinstance:
                     node_instance = nodespec_to_nodeinstance[nodespec._unique_id]
                 else:
                     node_instance = nodespec.instantiate()
                     nodespec_to_nodeinstance[nodespec._unique_id] = node_instance
 
-                journey.nodes.append(node_instance)
+                journey.node_associations.append(
+                    JourneyNode(
+                        node=node_instance, player=nodespec_assoc.player, order=j
+                    )
+                )
             self.journeys.append(journey)
         self.nodes = list(nodespec_to_nodeinstance.values())
 

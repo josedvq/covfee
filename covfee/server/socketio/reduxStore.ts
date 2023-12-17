@@ -1,8 +1,8 @@
 // Node.js require:
-import { configureStore, Slice, Store } from "@reduxjs/toolkit";
-import winston from "winston";
-const zmq = require("zeromq");
-import slices from "../../client/tasks/slices";
+import { configureStore, Slice, Store } from "@reduxjs/toolkit"
+import winston from "winston"
+const zmq = require("zeromq")
+import slices from "../../client/tasks/slices"
 import type {
   Request,
   JoinResponse,
@@ -10,22 +10,22 @@ import type {
   Action,
   ActionResponse,
   StateResponse,
-} from "./types";
+} from "./types"
 
 const logger = winston.createLogger({
   level: "info",
   format: winston.format.json(),
   transports: [new winston.transports.Console()],
-});
+})
 
 class StoreService {
   rooms: {
     [key: number]: {
-      store: Store;
-      actionIndex: number;
-      numConnections: number;
-    };
-  } = {};
+      store: Store
+      actionIndex: number
+      numConnections: number
+    }
+  } = {}
 
   constructor() {}
 
@@ -35,11 +35,11 @@ class StoreService {
    */
   _getSlice(taskName: string): Slice {
     if (!(taskName in slices)) {
-      logger.info(`Could not find slice for task name ${taskName}`);
-      return undefined;
+      logger.info(`Could not find slice for task name ${taskName}`)
+      return undefined
     }
 
-    return slices[taskName];
+    return slices[taskName]
   }
 
   /**
@@ -48,12 +48,12 @@ class StoreService {
    *
    */
   _load(taskName: string, responseId: number, dbState: null | object): boolean {
-    const slice = this._getSlice(taskName);
+    const slice = this._getSlice(taskName)
     if (!slice) {
       logger.warn(
         `Could not find slice but found DB state for responseId ${responseId}`
-      );
-      return false;
+      )
+      return false
     }
 
     this.rooms[responseId] = {
@@ -63,8 +63,8 @@ class StoreService {
       }),
       actionIndex: 0,
       numConnections: 0,
-    };
-    return true;
+    }
+    return true
   }
 
   /**
@@ -85,85 +85,85 @@ class StoreService {
   ): Promise<JoinResponse> {
     if (!(responseId in this.rooms)) {
       if (!this._load(taskName, responseId, dbState)) {
-        return { err: `Could not load state responseId ${responseId}` };
+        return { err: `Could not load state responseId ${responseId}` }
       }
     }
 
-    this.rooms[responseId].numConnections += 1;
+    this.rooms[responseId].numConnections += 1
 
-    return this.state(responseId);
+    return this.state(responseId)
   }
 
   async leave(responseId: number): Promise<LeaveResponse> {
     if (!(responseId in this.rooms)) {
-      return { err: `Could not find responseId ${responseId}` };
+      return { err: `Could not find responseId ${responseId}` }
     }
 
-    this.rooms[responseId].numConnections -= 1;
-    const state = await this.state(responseId);
+    this.rooms[responseId].numConnections -= 1
+    const state = await this.state(responseId)
     if (this.rooms[responseId].numConnections <= 0) {
-      delete this.rooms[responseId];
+      delete this.rooms[responseId]
     }
     return {
       ...state,
-    };
+    }
   }
 
   async action(responseId: number, action: Action): Promise<ActionResponse> {
-    if (!(responseId in this.rooms)) return { err: "Task store not found." };
+    if (!(responseId in this.rooms)) return { err: "Task store not found." }
 
-    const dispatchedAction = this.rooms[responseId].store.dispatch(action);
+    const dispatchedAction = this.rooms[responseId].store.dispatch(action)
     return {
       actionIndex: this.rooms[responseId].actionIndex++,
-    };
+    }
   }
 
   state(responseId: number): StateResponse {
-    if (!(responseId in this.rooms)) return { err: "Task store not found." };
+    if (!(responseId in this.rooms)) return { err: "Task store not found." }
 
     return {
       numConnections: this.rooms[responseId].numConnections,
       actionIndex: this.rooms[responseId].actionIndex,
       state: this.rooms[responseId].store.getState(),
-    };
+    }
   }
 
   async run(port) {
-    const sock = new zmq.Reply();
-    await sock.bind(`tcp://*:${port}`);
-    logger.info(`Running at tcp://localhost:${port}`);
+    const sock = new zmq.Reply()
+    await sock.bind(`tcp://*:${port}`)
+    logger.info(`Running at tcp://localhost:${port}`)
     for await (const [buffer] of sock) {
-      const req = JSON.parse(buffer.toString("utf-8")) as Request;
-      let res;
+      const req = JSON.parse(buffer.toString("utf-8")) as Request
+      let res
 
-      logger.info(req);
+      logger.info(req)
       switch (req["command"]) {
-        case "join":
-          const { responseId, taskName, currState } = req;
-          res = await this.join(taskName, responseId, currState);
-          break;
-        case "leave":
-          res = await this.leave(req["responseId"]);
-          break;
-        case "action":
-          res = await this.action(req["responseId"], req["action"]);
-          break;
-        case "state":
-          res = await this.state(req["responseId"]);
-          break;
-        default:
-          res = { err: "Unrecognized command." };
+      case "join":
+        const { responseId, taskName, currState } = req
+        res = await this.join(taskName, responseId, currState)
+        break
+      case "leave":
+        res = await this.leave(req["responseId"])
+        break
+      case "action":
+        res = await this.action(req["responseId"], req["action"])
+        break
+      case "state":
+        res = await this.state(req["responseId"])
+        break
+      default:
+        res = { err: "Unrecognized command." }
       }
 
-      res["success"] = !("err" in res);
-      logger.info(res);
-      await sock.send(JSON.stringify(res));
+      res["success"] = !("err" in res)
+      logger.info(res)
+      await sock.send(JSON.stringify(res))
     }
   }
 }
 
-const args = process.argv.slice(2);
-const port = parseInt(args[0]);
+const args = process.argv.slice(2)
+const port = parseInt(args[0])
 
-const store = new StoreService();
-store.run(port);
+const store = new StoreService()
+store.run(port)

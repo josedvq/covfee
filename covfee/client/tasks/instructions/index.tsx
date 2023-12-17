@@ -55,5 +55,5 @@ export const InstructionsTask: React.FC<Props> = (props) => {
 
 export default {
   taskComponent: InstructionsTask,
-  taskReducer: slice.reducer,
+  taskSlice: slice,
 } as TaskExport

@@ -8,6 +8,7 @@ from sqlalchemy.orm import scoped_session
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from flask_session import Session
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from covfee.config import Config
 
@@ -68,11 +69,19 @@ def create_app(mode, session_local=None):
     jwt.user_identity_loader(user_identity_lookup)
     jwt.user_lookup_loader(user_loader_callback)
 
+    # APScheduler
+    app.scheduler = BackgroundScheduler()
+
+    # @app.before_first_request
+    # def start_scheduler():
+    #     app.scheduler.start()
+
     @app.teardown_request
     def teardown_request(exception):
         if exception:
             app.session.rollback()
         app.session.remove()
+        app.scheduler.shutdown()
 
     return socketio, app
 

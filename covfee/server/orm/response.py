@@ -48,7 +48,7 @@ class TaskResponse(Base):
     # extra: Mapped[Dict[str, Any]]
 
     def __init__(self):
-        super().__init__()
+        super().init()
         self.submitted = False
         self.valid = False
         self.state = None

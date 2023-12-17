@@ -26,17 +26,18 @@ def get_chat(chatId: int) -> Chat:
     return app.session.query(Chat).get(chatId)
 
 
-def get_on_join_payload(task_object, journey):
+def get_on_join_payload(node: TaskInstance, journey: JourneyInstance):
+    task_object = node.get_task_object()
     if task_object is not None:
         try:
-            join_payload = {"task_data": task_object.on_join(journey)}
+            payload = {"task_data": task_object.on_join(journey)}
         except CriticalError as ex:
-            join_payload = {
+            payload = {
                 "error": ex.msg,
                 "load_task": ex.load_task,
             }
         except Exception as ex:
-            join_payload = {
+            payload = {
                 "error": f"Unknown exception while executing on_join for task {task_object.__class__.__name__}",
                 "load_task": True,
             }
@@ -44,8 +45,10 @@ def get_on_join_payload(task_object, journey):
                 f"Error running on_join for task {task_object.__class__.__name__}"
             )
     else:
-        join_payload = {}
-    return join_payload
+        payload = {}
+
+    payload = {"response": node.responses[-1].to_dict(), **payload}
+    return payload
 
 
 @socketio.on("connect")
@@ -76,7 +79,6 @@ def on_join(data):
 
     curr_node_id = int(data["nodeId"])
     curr_node = get_node(curr_node_id)
-
     use_shared_state = data["useSharedState"]
 
     if curr_journey is None or curr_node is None:
@@ -100,28 +102,24 @@ def on_join(data):
 
         if "useSharedState" in session and session["useSharedState"]:
             leave_store(prev_node_id)
-    else:
-        prev_response_id = None
-        prev_node = None
-        prev_node_prev_status = None
+
+        # update previous node status
+        payload = prev_node.make_status_payload(prev_node_prev_status)
+        app.logger.info(f"emit: status {str(payload)}")
+        emit("status", payload, to=prev_node_id)
+        emit("status", payload, namespace="/admin", broadcast=True)
 
     join_room(curr_node_id)
     curr_node_prev_status = curr_node.status
 
     # update the journey and node status
     curr_journey.set_curr_node(curr_node)
-    task_object = curr_node.get_task_object()
-    join_payload = get_on_join_payload(task_object, curr_journey)
+
+    join_payload = get_on_join_payload(curr_node, curr_journey)
 
     emit("join", join_payload)
     app.logger.info(f"socketio: join: {str(join_payload)}")
     app.session.commit()
-
-    # update previous node status
-    if prev_node is not None:
-        payload = prev_node.make_status_payload(prev_node_prev_status)
-        emit("status", payload, to=prev_node_id)
-        emit("status", payload, namespace="/admin", broadcast=True)
 
     # update current node status
     payload = curr_node.make_status_payload(curr_node_prev_status)
@@ -157,8 +155,7 @@ def on_admin_join(data):
     session["nodeId"] = curr_node_id
     session["useSharedState"] = use_shared_state
 
-    task_object = curr_node.get_task_object()
-    join_payload = get_on_join_payload(task_object, None)
+    join_payload = get_on_join_payload(curr_node, None)
 
     emit("join", join_payload)
     app.logger.info(f"socketio(admin): join: {str(join_payload)}")

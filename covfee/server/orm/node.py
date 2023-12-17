@@ -1,11 +1,12 @@
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, TYPE_CHECKING, Optional
 import enum
 from flask import current_app as app
 
 from sqlalchemy import Table, Column, ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 
 from .base import Base
 from .chat import Chat
@@ -16,19 +17,39 @@ if TYPE_CHECKING:
     from .journey import JourneySpec, JourneyInstance
     from .hit import HITSpec, HITInstance
 
-journeyspec_nodespec_table = Table(
-    "journeyspec_nodespec",
-    Base.metadata,
-    Column("journeyspec", ForeignKey("journeyspecs.id")),
-    Column("nodespec", ForeignKey("nodespecs.id")),
-)
 
-journey_node_table = Table(
-    "journey_node",
-    Base.metadata,
-    Column("journey", ForeignKey("journeyinstances.id")),
-    Column("node", ForeignKey("nodeinstances.id")),
-)
+class JourneySpecNodeSpec(Base):
+    __tablename__ = "journeyspec_nodespec"
+    journeyspec_id: Mapped[int] = mapped_column(
+        ForeignKey("journeyspecs.id"), primary_key=True
+    )
+    nodespec_id: Mapped[int] = mapped_column(
+        ForeignKey("nodespecs.id"), primary_key=True
+    )
+
+    journeyspec: Mapped[JourneySpec] = relationship(
+        back_populates="nodespec_associations"
+    )
+    nodespec: Mapped[NodeSpec] = relationship(back_populates="journeyspec_associations")
+
+    order: Mapped[int]  # order of the node within the journey
+    player: Mapped[int]  # order of the node within the journey
+
+
+class JourneyNode(Base):
+    __tablename__ = "journey_node"
+    journey_id: Mapped[int] = mapped_column(
+        ForeignKey("journeyinstances.id"), primary_key=True
+    )
+    node_id: Mapped[int] = mapped_column(
+        ForeignKey("nodeinstances.id"), primary_key=True
+    )
+
+    journey: Mapped[JourneyInstance] = relationship(back_populates="node_associations")
+    node: Mapped[NodeInstance] = relationship(back_populates="journey_associations")
+
+    order: Mapped[int]
+    player: Mapped[int]
 
 
 class NodeSpec(Base):
@@ -48,22 +69,21 @@ class NodeSpec(Base):
     hitspec: Mapped[HITSpec] = relationship(back_populates="nodespecs")
 
     # spec relationships
-    journeyspecs: Mapped[List[JourneySpec]] = relationship(
-        secondary=journeyspec_nodespec_table, back_populates="nodespecs"
+    journeyspec_associations: Mapped[List[JourneySpecNodeSpec]] = relationship(
+        back_populates="nodespec"
+    )
+    journeyspecs: AssociationProxy[List[JourneySpec]] = association_proxy(
+        "journeyspec_associations",
+        "journeyspec",
+        creator=lambda obj: JourneySpecNodeSpec(journeyspec=obj),
     )
 
     # instance relationships
     nodes: Mapped[List[NodeInstance]] = relationship(back_populates="spec")
 
     def __init__(self, settings: Dict):
-        super().__init__()
+        super().init()
         # default start settings
-        for cond in ["start", "stop", "pause"]:
-            if cond in settings and settings[cond] is not None:
-                try:
-                    parse_expression(settings[cond])
-                except Exception as ex:
-                    raise ValueError(f"Invalid {cond} condition")
         self.settings = settings
 
     def instantiate(self):
@@ -111,12 +131,17 @@ class NodeInstance(Base):
     spec: Mapped[NodeSpec] = relationship(back_populates="nodes")
 
     # instance relationships
-    journeys: Mapped[List[JourneyInstance]] = relationship(
-        secondary=journey_node_table, back_populates="nodes"
+    journey_associations: Mapped[List[JourneyNode]] = relationship(
+        back_populates="node"
     )
+    journeys: AssociationProxy[List[JourneyInstance]] = association_proxy(
+        "journey_associations",
+        "journey",
+        creator=lambda obj: JourneyNode(journey=obj),
+    )
+
     # one HitInstance -> many JourneyInstance
     hit_id: Mapped[bytes] = mapped_column(ForeignKey("hitinstances.id"))
-    # hit_id = Column(Integer, ForeignKey('hitinstances.id'))
     hit: Mapped[HITInstance] = relationship(back_populates="nodes")
 
     # status: journeys currently at this node
@@ -131,10 +156,13 @@ class NodeInstance(Base):
     status: Mapped[NodeInstanceStatus] = mapped_column(default=NodeInstanceStatus.INIT)
     paused: Mapped[bool] = mapped_column(default=False)
 
-    started_at: Mapped[Optional[datetime]]
+    dt_start: Mapped[Optional[datetime]]
+    dt_pause: Mapped[Optional[datetime]]
+    dt_empty: Mapped[Optional[datetime]]
+    dt_finish: Mapped[Optional[datetime]]
 
     def __init__(self):
-        super().__init__()
+        super().init()
         self.chat = Chat()
         self.submitted = False
 
@@ -152,26 +180,62 @@ class NodeInstance(Base):
         else:
             return self.eval_expression(expression)
 
-    def update_status(self):
-        if self.paused:  # status frozen when node paused by the admin
+    def set_status(self, status: NodeInstanceStatus):
+        if (
+            self.paused
+            or self.status == NodeInstanceStatus.FINISHED
+            or self.status == status
+        ):  # status frozen when node paused by the admin
             return
-        # check if the start conditions have been fullfilled
+
+        if (
+            self.status == NodeInstanceStatus.INIT
+            and status == NodeInstanceStatus.RUNNING
+        ):
+            self.dt_start = datetime.now
+
+        if status == NodeInstanceStatus.PAUSED:
+            self.dt_pause = datetime.now
+
+        if status == NodeInstanceStatus.FINISHED:
+            self.dt_finish = datetime.now
+
+        self.status = status
+
+    def update_status(self):
+        if (
+            self.paused or self.status == NodeInstanceStatus.FINISHED
+        ):  # status frozen when node paused by the admin
+            return
+
+        # check timers
+        timer = self.spec.settings.get("timer", None)
+        if timer is not None and self.dt_start is not None:
+            if datetime.now > self.dt_start + timedelta(seconds=timer):
+                self.set_status(NodeInstanceStatus.FINISHED)
+
+        timer_pause = self.spec.settings.get("timer_pause", None)
+        if timer_pause is not None and self.dt_pause is not None:
+            if datetime.now > self.dt_pause + timedelta(seconds=timer_pause):
+                self.set_status(NodeInstanceStatus.FINISHED)
+
+        timer_empty = self.spec.settings.get("timer_empty", None)
+        if timer_empty is not None and self.dt_pause is not None:
+            if datetime.now > self.dt_empty + timedelta(seconds=timer_empty):
+                self.set_status(NodeInstanceStatus.FINISHED)
+
+        # task lifecycle logic
         if self.status in [NodeInstanceStatus.INIT]:
-            if self.eval_condition("start"):
-                self.status = NodeInstanceStatus.RUNNING
+            if len(self.curr_journeys) >= self.spec.settings["n_start"]:
+                self.set_status(NodeInstanceStatus.RUNNING)
+
         elif self.status in [NodeInstanceStatus.RUNNING]:
-            if self.eval_condition("stop"):
-                self.status = NodeInstanceStatus.FINISHED
-            else:
-                if self.eval_condition("pause"):
-                    self.status = NodeInstanceStatus.PAUSED
+            if len(self.curr_journeys) <= self.spec.settings["n_pause"]:
+                self.set_status(NodeInstanceStatus.PAUSED)
+
         elif self.status in [NodeInstanceStatus.PAUSED]:
-            if self.eval_condition("stop"):
-                self.status = NodeInstanceStatus.FINISHED
-            else:
-                pause = self.eval_condition("pause")
-                if pause == False:
-                    self.status = NodeInstanceStatus.RUNNING
+            if len(self.curr_journeys) > self.spec.settings["n_pause"]:
+                self.set_status(NodeInstanceStatus.RUNNING)
 
     def to_dict(self):
         instance_dict = super().to_dict()
