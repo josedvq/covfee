@@ -37,14 +37,6 @@ export interface BaseNodeSpec {
    */
   useSharedState?: boolean
 
-  // /**
-  //  * Condition for task start
-  //  */
-  // alerts?: {
-  //   message: string
-  //   condition: string
-  // }[]
-
   /**
    * Number of jorneys required to start task
    */
@@ -59,6 +51,11 @@ export interface BaseNodeSpec {
    * Time to complete the task
    */
   timer?: number
+
+  /**
+   * If true, the timer will pause when the task is paused.
+   */
+  timer_pausable?: boolean
 
   /**
    * Pause timer is started every time the task enters paused state

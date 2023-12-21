@@ -11,6 +11,7 @@ import {
   StateRequestPayload,
 } from "../server/socketio/types"
 import { UserConfig } from "./user_config"
+import { Action } from "@reduxjs/toolkit"
 
 export interface ServerToClientEvents {
   status: (arg0: {
@@ -21,6 +22,9 @@ export interface ServerToClientEvents {
     paused: boolean
     response_id?: number
     curr_journeys: string[]
+    dt_start: string
+    dt_play: string
+    t_elapsed: number
   }) => void
   journey_connect: (arg0: {
     hit_id: string
@@ -42,9 +46,9 @@ export interface ServerToClientEvents {
   state: (arg0: StateResponse) => void
 }
 
-interface ClientToServerEvents {
-  action: (arg0: ActionRequestPayload) => void
-  state: (arg0: StateRequestPayload) => void
+export interface ClientToServerEvents {
+  action: (arg0: { nodeId: number; action: Action }) => void
+  state: (arg0: { nodeId: number; state: any }) => void
   join: (arg0: {
     journeyId: string
     nodeId: number

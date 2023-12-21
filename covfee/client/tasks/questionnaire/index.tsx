@@ -8,7 +8,7 @@ import { QuestionnaireTaskSpec } from "@covfee-shared/spec/tasks/questionnaire"
 import { State, slice, actions } from "./slice"
 import { TaskExport, TaskType, NodeState } from "types/node"
 import { useSelector } from "react-redux"
-import { useNodeState } from "../../journey/state"
+import { useDispatch } from "../../journey/state"
 import { AllPropsRequired } from "types/utils"
 
 interface Props extends BaseTaskProps {
@@ -25,7 +25,7 @@ export const QuestionnaireTask: React.FC<Props> = (props) => {
     },
   }
 
-  const { dispatch } = useNodeState()
+  const dispatch = useDispatch()
   const mediaPaused = useSelector<NodeState<State>, boolean>(
     (state) => state.mediaPaused
   )

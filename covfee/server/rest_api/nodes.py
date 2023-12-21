@@ -10,7 +10,7 @@ from .api import api
 from .auth import admin_required
 from .utils import jsonify_or_404
 from ..orm import TaskSpec, TaskInstance, TaskResponse, NodeInstanceStatus
-from ..socketio import socketio
+from covfee.server.socketio.socket import socketio
 
 # TASKS
 

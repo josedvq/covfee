@@ -7,6 +7,10 @@ if TYPE_CHECKING:
     from .node import NodeInstance
 
 
+def datetime_to_str(dt: datetime):
+    return dt.isoformat()
+
+
 def to_dict(attrib):
     if isinstance(attrib, bytes):
         return attrib.hex()
@@ -14,5 +18,7 @@ def to_dict(attrib):
         return attrib.name
     if isinstance(attrib, date):
         return str(attrib)
+    if isinstance(attrib, datetime):
+        return datetime_to_str(attrib)
     else:
         return attrib

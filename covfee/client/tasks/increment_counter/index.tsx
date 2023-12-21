@@ -1,6 +1,6 @@
 import * as React from "react"
 
-import { useNodeState } from "../../journey/state"
+import { useDispatch } from "../../journey/state"
 import { State } from "./slice"
 import { slice, actions } from "./slice"
 import { useSelector } from "react-redux"
@@ -11,7 +11,7 @@ interface Props extends TaskType, BaseTaskProps {}
 
 function IncrementCounterTask(props: Props) {
   const counter = useSelector((state) => state.counter)
-  const { dispatch } = useNodeState<State>(slice)
+  const dispatch = useDispatch()
 
   return (
     <>

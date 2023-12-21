@@ -14,7 +14,12 @@ import { CovfeeMenuItem } from "../gui"
 import { Sidebar } from "./sidebar"
 // import ButtonEventManagerContext from "../input/button_manager";
 
-import { JourneyContext, JourneyContextType } from "./journey_context"
+import {
+  JourneyContext,
+  JourneyContextType,
+  TimerState,
+  defaultTimerState,
+} from "./journey_context"
 import { NodeLoader } from "./node_loader"
 
 import "./journey.scss"
@@ -33,6 +38,7 @@ import { AppProvider } from "../app_provider"
 import { ChatProvider, chatContext } from "../chat_context"
 import { io } from "socket.io-client"
 import { Chat } from "../types/chat"
+import { Timer } from "./timer"
 
 type Props = {
   journey: FullJourney
@@ -78,9 +84,13 @@ export const _JourneyPage: React.FC<Props> = (props) => {
 
   const [loadingNode, setLoadingNode] = useState(true)
   const [currKey, setCurrKey] = useState(0)
+
+  const [timer, setTimer] = useState<TimerState>(defaultTimerState)
   const journeyContext: JourneyContextType = {
     id: routeParams.journeyId,
     socket,
+    timer,
+    setTimer,
   }
 
   // React.useEffect(() => {
@@ -208,10 +218,6 @@ export const _JourneyPage: React.FC<Props> = (props) => {
     else return false
   }
 
-  
-
-
-
   // return (
   //   <Modal
   //     title={
@@ -243,9 +249,12 @@ export const _JourneyPage: React.FC<Props> = (props) => {
           <CovfeeMenuItem />
         </Menu.Item>
         <Menu.Item key="task" disabled>
-          <Text strong style={{ color: "white" }}>
-            {nodeProps.name}
-          </Text>
+          {/* <Text strong style={{ color: "white" }}> */}
+          {nodeProps.name}
+          {/* </Text> */}
+        </Menu.Item>
+        <Menu.Item>
+          <Timer />
         </Menu.Item>
         {hitExtra && (
           <Menu.Item key="extra" icon={<PlusOutlined />}>

@@ -115,6 +115,9 @@ class TaskInstance(NodeInstance):
             "paused": self.paused,
             "response_id": self.responses[-1].id,
             "curr_journeys": [j.id.hex() for j in self.curr_journeys],
+            "dt_start": utils.datetime_to_str(self.dt_start),
+            "dt_play": utils.datetime_to_str(self.dt_play),
+            "t_elapsed": self.t_elapsed,
         }
 
     def pause(self, pause: bool):

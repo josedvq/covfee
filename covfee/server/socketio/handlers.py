@@ -3,7 +3,7 @@ from typing import Union
 from flask import current_app as app, session
 from flask_socketio import send, emit, join_room, leave_room
 
-from .socket import socketio, store
+from covfee.server.socketio.socket import socketio, store
 from covfee.server.orm import (
     NodeInstance,
     TaskResponse,
@@ -173,6 +173,20 @@ def on_admin_join(data):
 
         else:
             send(f"Unable to join store node_id={curr_node_id}")
+
+
+@socketio.on("state")
+def on_state(data):
+    """state is sent directly from the client
+    used when useSharedState==False for autosave feature
+    """
+    app.logger.info(f"socketio: state {str(data)}")
+    nodeId = int(data["nodeId"])
+    state = data["state"]
+
+    response = get_node(nodeId).responses[-1]
+    response.state = state
+    app.session.commit()
 
 
 @socketio.on("action")

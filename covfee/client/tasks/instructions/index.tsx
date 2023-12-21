@@ -6,7 +6,7 @@ import { BaseTaskProps } from "../base"
 import { Form } from "../../input/form"
 import { AllPropsRequired } from "types/utils"
 import { State, slice, actions } from "./slice"
-import { useNodeState } from "../../journey/state"
+import { useDispatch } from "../../journey/state"
 import { NodeState, TaskExport } from "types/node"
 import { useSelector } from "react-redux"
 
@@ -18,7 +18,7 @@ export const InstructionsTask: React.FC<Props> = (props) => {
     ...props,
   }
 
-  const { dispatch } = useNodeState()
+  const dispatch = useDispatch()
 
   const formValues = useSelector<NodeState<State>, any>(
     (state) => state.formValues
@@ -26,10 +26,6 @@ export const InstructionsTask: React.FC<Props> = (props) => {
   const formDisabled = useSelector<NodeState<State>, boolean>(
     (state) => state.formDisabled
   )
-
-  React.useEffect(() => {
-    console.log(formValues)
-  }, [formValues])
 
   return (
     <Row style={{ margin: "2em 0" }}>

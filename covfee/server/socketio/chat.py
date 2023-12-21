@@ -1,6 +1,6 @@
 from typing import Dict
 
-from covfee.server.socketio import socketio
+from .socket import socketio
 from covfee.server.orm.chat import ChatMessage
 from covfee.server.socketio.handlers import get_chat
 

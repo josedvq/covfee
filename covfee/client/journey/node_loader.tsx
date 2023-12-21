@@ -3,7 +3,7 @@ import styled from "styled-components"
 import ReactDOM from "react-dom"
 import { Button, Modal, Popover, Result, Spin } from "antd"
 
-import { JourneyContext } from "./journey_context"
+import { JourneyContext, TimerState } from "./journey_context"
 import { myerror } from "../utils"
 import { getTask } from "../task_utils"
 import { QuestionCircleOutlined } from "@ant-design/icons"
@@ -15,6 +15,7 @@ import { nodeContext } from "./node_context"
 import { Provider as StoreProvider, useDispatch } from "react-redux"
 import { Store, configureStore } from "@reduxjs/toolkit"
 import { ServerToClientEvents, appContext } from "../app_context"
+import { NodeProvider } from "./node_provider"
 
 interface Props {
   /**
@@ -40,7 +41,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
   }
 
   const { socket, chocket } = React.useContext(appContext)
-  const { id: journeyId } = React.useContext(JourneyContext)
+  const { id: journeyId, setTimer } = React.useContext(JourneyContext)
 
   const {
     node,
@@ -96,6 +97,16 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
     })
   }, [args.node.id, journeyId, socket, useSharedState])
 
+  const emitState = React.useCallback(() => {
+    if (reduxStore.current === null) {
+      return console.error("emitState called when reduxStore is null")
+    }
+
+    const state = reduxStore.current.getState()
+    socket.emit("state", { nodeId: node.id, state })
+    console.log("emit: state", state)
+  }, [node.id, socket])
+
   React.useEffect(() => {
     if (socket) {
       emitJoin()
@@ -135,20 +146,14 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
     }
   }, [reduxStore, setResponse, socket, taskSlice])
 
-  // React.useEffect(() => {
-  //   if (response) {
-  //     // update the state when the response is loaded
-
-  //   }
-  // }, [response])
-
   React.useEffect(() => {
     const handleStatus: ServerToClientEvents["status"] = (data) => {
+      console.log("IO: status", data)
+
       if (data.id !== node.id) return
 
       console.log("IO: status", data)
-      console.log([data.response_id, response.id])
-      if (data.response_id != response.id) {
+      if (response && data.response_id != response.id) {
         // the task was reset or a new response was created
         // fetch the new one and let the user know
         // fetchResponse()
@@ -158,16 +163,53 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
           emitJoin()
         }, 10000)
       }
+
+      if (node.timer !== null) {
+        // the task is timed
+        let freezeTimer, sinceDatestring
+        if (node.timer_pausable) {
+          freezeTimer = data.new !== "RUNNING"
+          sinceDatestring = data.dt_play
+        } else {
+          freezeTimer = data.new === "FINISHED" || data.new === "INIT"
+          sinceDatestring = data.dt_start
+        }
+
+        const sinceTimestamp = Math.floor(
+          new Date(sinceDatestring).getTime() / 1000
+        )
+
+        console.log(node.timer)
+        console.log(data)
+        const timerState: TimerState = {
+          show: true,
+          freeze: freezeTimer,
+          init: data.t_elapsed,
+          since: sinceTimestamp,
+          max: node.timer,
+        }
+        setTimer(timerState)
+        console.log("setTimer called", timerState)
+      }
     }
 
-    if (response && socket) {
+    if (socket) {
       socket.on("status", handleStatus)
 
       return () => {
         socket.off("status", handleStatus)
       }
     }
-  }, [node.id, emitJoin, fetchResponse, response, socket])
+  }, [
+    node.id,
+    emitJoin,
+    fetchResponse,
+    response,
+    socket,
+    node.spec.timer,
+    node.timer_pausable,
+    setTimer,
+  ])
 
   React.useEffect(() => {
     // Only set up the interval if count is greater than 0
@@ -335,7 +377,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
         <h1>Waiting for subjects...</h1>
         <Spin />
         <p>
-          {node.curr_journeys.length} / {node.num_journeys} subjects present
+          {node.curr_journeys.length} / {node.n_start} subjects present
         </p>
       </NodeLoaderMessage>
     )
@@ -358,7 +400,12 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
           {node.paused && <NodeOverlayPaused />}
 
           <StoreProvider store={reduxStore.current}>
-            <nodeContext.Provider value={{ node, useSharedState, response }}>
+            <NodeProvider
+              node={node}
+              response={response}
+              useSharedState={useSharedState}
+              emitState={emitState}
+            >
               {(() => {
                 const nodeProps: BaseTaskProps = {
                   spec: node.spec,
@@ -384,7 +431,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
 
                 return taskElement
               })()}
-            </nodeContext.Provider>
+            </NodeProvider>
           </StoreProvider>
         </div>
       </>

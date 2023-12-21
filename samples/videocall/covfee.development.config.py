@@ -1,4 +1,4 @@
-WEBPACK_DEVSERVER_HOST = "0.0.0.0"
+WEBPACK_DEVSERVER_HOST = "localhost"
 
-BASE_URL = "http://192.168.0.22:5000"
-DEV_BUNDLES_URL = "http://192.168.0.22:8085"
+BASE_URL = "http://localhost:5000"
+DEV_BUNDLES_URL = "http://localhost:8085"

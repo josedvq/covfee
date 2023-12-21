@@ -8,6 +8,8 @@ from sqlalchemy import Table, Column, ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 
+from covfee.server.scheduler.timers import schedule_timer, stop_timer
+
 from .base import Base
 from .chat import Chat
 from . import utils
@@ -84,6 +86,7 @@ class NodeSpec(Base):
     def __init__(self, settings: Dict):
         super().init()
         # default start settings
+
         self.settings = settings
 
     def instantiate(self):
@@ -158,13 +161,31 @@ class NodeInstance(Base):
 
     dt_start: Mapped[Optional[datetime]]
     dt_pause: Mapped[Optional[datetime]]
+    dt_play: Mapped[Optional[datetime]]
     dt_empty: Mapped[Optional[datetime]]
     dt_finish: Mapped[Optional[datetime]]
 
+    t_elapsed: Mapped[Optional[int]]  # keep track of time elapsed (excluding pauses)
+
     def __init__(self):
         super().init()
+        self.reset()
+
+    def reset(self):
         self.chat = Chat()
         self.submitted = False
+        self.dt_start = None
+        self.dt_pause = None
+        self.dt_play = None
+        self.dt_empty = None
+        self.dt_finish = None
+        self.t_elapsed = 0
+
+        try:
+            stop_timer(self, "finish")
+            stop_timer(self, "pause")
+        except RuntimeError:
+            pass
 
     def eval_expression(self, expression):
         var_values = {
@@ -180,61 +201,95 @@ class NodeInstance(Base):
         else:
             return self.eval_expression(expression)
 
-    def set_status(self, status: NodeInstanceStatus):
+    @property
+    def timer_pausable(self):
+        return self.spec.settings.get("timer_pausable", False)
+
+    def set_status(self, to_status: NodeInstanceStatus, stop_timers=True):
         if (
             self.paused
             or self.status == NodeInstanceStatus.FINISHED
-            or self.status == status
+            or self.status == to_status
         ):  # status frozen when node paused by the admin
             return
 
-        if (
-            self.status == NodeInstanceStatus.INIT
-            and status == NodeInstanceStatus.RUNNING
-        ):
-            self.dt_start = datetime.now
+        from_status = self.status
 
-        if status == NodeInstanceStatus.PAUSED:
-            self.dt_pause = datetime.now
+        if to_status == NodeInstanceStatus.PAUSED:
+            self.dt_pause = datetime.now()
+            self.t_elapsed += (self.dt_pause - self.dt_play).seconds
+            schedule_timer(self, "pause")
+            if self.timer_pausable:
+                stop_timer(self, "finish")
 
-        if status == NodeInstanceStatus.FINISHED:
-            self.dt_finish = datetime.now
+        if to_status == NodeInstanceStatus.RUNNING:
+            if from_status == NodeInstanceStatus.INIT:
+                self.dt_start = datetime.now()
+                if not self.timer_pausable:
+                    schedule_timer(self, "finish")
+            self.dt_play = datetime.now()
+            stop_timer(self, "pause")
+            if self.timer_pausable:
+                schedule_timer(self, "finish")
 
-        self.status = status
+        if to_status == NodeInstanceStatus.FINISHED:
+            self.dt_finish = datetime.now()
+            self.t_elapsed += (self.dt_finish - self.dt_play).seconds
+            if stop_timers:
+                stop_timer(self, "pause")
+                stop_timer(self, "finish")
 
-    def update_status(self):
+        self.status = to_status
+
+    def check_timers(self):
+        if self.status == NodeInstanceStatus.FINISHED:
+            app.logger.warn(
+                f"check_timers called after task finished. Some timers not cancelled?"
+            )
+        # check timers
+        timer = self.spec.settings.get("timer", None)
+        if timer is not None and self.dt_start is not None:
+            if self.timer_pausable:
+                # count elapsed time
+                elapsed_time = self.t_elapsed + (datetime.now() - self.dt_play).seconds
+                if elapsed_time > timer:
+                    self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
+            else:
+                if datetime.now() > self.dt_start + timedelta(seconds=timer):
+                    self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
+
+        timer_pause = self.spec.settings.get("timer_pause", None)
+        if timer_pause is not None and self.dt_pause is not None:
+            if datetime.now() > self.dt_pause + timedelta(seconds=timer_pause):
+                self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
+
+        timer_empty = self.spec.settings.get("timer_empty", None)
+        if timer_empty is not None and self.dt_pause is not None:
+            if datetime.now() > self.dt_empty + timedelta(seconds=timer_empty):
+                self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
+
+    def check_n(self):
         if (
             self.paused or self.status == NodeInstanceStatus.FINISHED
         ):  # status frozen when node paused by the admin
             return
 
-        # check timers
-        timer = self.spec.settings.get("timer", None)
-        if timer is not None and self.dt_start is not None:
-            if datetime.now > self.dt_start + timedelta(seconds=timer):
-                self.set_status(NodeInstanceStatus.FINISHED)
-
-        timer_pause = self.spec.settings.get("timer_pause", None)
-        if timer_pause is not None and self.dt_pause is not None:
-            if datetime.now > self.dt_pause + timedelta(seconds=timer_pause):
-                self.set_status(NodeInstanceStatus.FINISHED)
-
-        timer_empty = self.spec.settings.get("timer_empty", None)
-        if timer_empty is not None and self.dt_pause is not None:
-            if datetime.now > self.dt_empty + timedelta(seconds=timer_empty):
-                self.set_status(NodeInstanceStatus.FINISHED)
-
         # task lifecycle logic
         if self.status in [NodeInstanceStatus.INIT]:
-            if len(self.curr_journeys) >= self.spec.settings["n_start"]:
+            n_start = self.spec.settings.get("n_start")
+            if n_start is None:
+                n_start = len(self.journeys)
+            if len(self.curr_journeys) >= n_start:
                 self.set_status(NodeInstanceStatus.RUNNING)
 
         elif self.status in [NodeInstanceStatus.RUNNING]:
-            if len(self.curr_journeys) <= self.spec.settings["n_pause"]:
+            n_pause = self.spec.settings["n_pause"]
+            if n_pause is not None and len(self.curr_journeys) <= n_pause:
                 self.set_status(NodeInstanceStatus.PAUSED)
 
         elif self.status in [NodeInstanceStatus.PAUSED]:
-            if len(self.curr_journeys) > self.spec.settings["n_pause"]:
+            n_pause = self.spec.settings["n_pause"]
+            if n_pause is not None and len(self.curr_journeys) > n_pause:
                 self.set_status(NodeInstanceStatus.RUNNING)
 
     def to_dict(self):
@@ -254,16 +309,7 @@ class NodeInstance(Base):
         return instance_dict
 
     def make_status_payload(self, prev_status: NodeInstanceStatus = None):
-        if prev_status is None:
-            prev_status = self.status
-        return {
-            "id": self.id,
-            "hit_id": self.hit_id.hex(),
-            "prev": prev_status,
-            "new": self.status,
-            "paused": self.paused,
-            "curr_journeys": [j.id.hex() for j in self.curr_journeys],
-        }
+        raise NotImplementedError()
 
     def make_results_dict(self):
         return {}

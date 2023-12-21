@@ -46,6 +46,8 @@ setup(
         "zipstream-new == 1.*",
         "requests == 2.*",
         "APScheduler == 3.10.*",
+        "pyparsing == 3.1.1",
+        "json-ref-dict == 0.7.2"
     ],
     python_requires=">=3.6",
 )

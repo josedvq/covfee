@@ -176,7 +176,7 @@ class JourneyInstance(Base):
     def set_curr_node(self, node):
         self.curr_node = node
         if node is not None:
-            node.update_status()
+            node.check_n()
 
     def get_completion_code(self):
         return self.config.get(

@@ -2,14 +2,17 @@ import os
 import json
 
 import greenlet
+import eventlet
+
+eventlet.monkey_patch(thread=True, time=True)
 from flask import current_app as app
 from flask import Flask, Blueprint, render_template, send_from_directory
 from sqlalchemy.orm import scoped_session
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from flask_session import Session
-from apscheduler.schedulers.background import BackgroundScheduler
 
+from .scheduler.apscheduler import scheduler
 from covfee.config import Config
 
 
@@ -36,12 +39,14 @@ def create_app(mode, session_local=None):
             in_memory=False, db_path=config["DATABASE_PATH"]
         )
 
+    app.sessionmaker = session_local
     app.session = scoped_session(session_local, scopefunc=greenlet.getcurrent)
     from .orm import set_session
 
     set_session(app.session)
     # socketio = SocketIO(app, cors_allowed_origins="*")
-    from .socketio import socketio
+    from .socketio.socket import socketio
+    from .socketio import chat, handlers
 
     # important: here, set socketio json implementation too
     socketio.init_app(app, manage_session=True, json=app.json)
@@ -70,18 +75,15 @@ def create_app(mode, session_local=None):
     jwt.user_lookup_loader(user_loader_callback)
 
     # APScheduler
-    app.scheduler = BackgroundScheduler()
-
-    # @app.before_first_request
-    # def start_scheduler():
-    #     app.scheduler.start()
+    # app.scheduler = BackgroundScheduler()
+    scheduler.start()
 
     @app.teardown_request
     def teardown_request(exception):
         if exception:
             app.session.rollback()
         app.session.remove()
-        app.scheduler.shutdown()
+        # app.scheduler.shutdown()
 
     return socketio, app
 
