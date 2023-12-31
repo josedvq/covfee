@@ -6,13 +6,29 @@ import { AllPropsRequired } from "./utils"
 import { BaseTaskProps } from "../tasks/base"
 import { Slice } from "@reduxjs/toolkit"
 
-export const NodeStatuses = ["INIT", "RUNNING", "PAUSED", "FINISHED"] as const
+export const NodeStatuses = [
+  "INIT",
+  "COUNTDOWN",
+  "RUNNING",
+  "PAUSED",
+  "FINISHED",
+] as const
 export type NodeStatus = (typeof NodeStatuses)[number]
+
+export type JourneyAssoc = {
+  journey_id: string
+  player: number
+  ready: boolean
+  online: boolean
+}
+
 /**
  * Node spec augmented with database status
  */
 export interface NodeType extends AllPropsRequired<BaseNodeSpec> {
   id: number
+  index?: number
+  journey_id?: string
   /**
    * URL to task api endpoint
    */
@@ -28,9 +44,16 @@ export interface NodeType extends AllPropsRequired<BaseNodeSpec> {
    */
   status: NodeStatus
   taskData: any
-  curr_journeys: string[]
+  journeys: JourneyAssoc[]
   valid: boolean
   paused: boolean
+  dt_start: string
+  dt_pause: string
+  dt_count: string
+  dt_play: string
+  dt_empty: string
+  dt_finish: string
+  t_elapsed: number
 }
 
 export interface TaskResponseType {

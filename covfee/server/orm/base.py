@@ -11,6 +11,10 @@ class Base(DeclarativeBase):
     # random unique ID to use as hash key
     _unique_id: int
 
+    # keeps a reference to the app's sessionmaker
+    # necessary to create sessions from apscheduler
+    sessionmaker = None
+
     def init(self):
         self._unique_id = random.getrandbits(256)
 

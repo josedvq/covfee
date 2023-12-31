@@ -6,13 +6,13 @@ from flask import (
     stream_with_context,
     current_app as app,
 )
-from flask_socketio import emit
 import zipstream
 
 from .api import api
 from .auth import admin_required
 from .utils import jsonify_or_404
 from ..orm import JourneyInstance
+from covfee.server.socketio.socket import socketio
 
 # Journeys
 
@@ -40,8 +40,8 @@ def journey_pause(jid, pause):
 
         # notify users and admins
         payload = node.make_status_payload(node)
-        emit("status", payload, to=node.id)
-        emit("status", payload, namespace="/admin", broadcast=True)
+        socketio.emit("status", payload, to=node.id)
+        socketio.emit("status", payload, namespace="/admin", broadcast=True)
     app.session.commit()
     return "", 200
 
@@ -56,7 +56,28 @@ def journey_disable(jid, disable):
     app.session.commit()
 
     payload = journey.make_status_payload()
-    emit("journey_status", payload, to=journey.id)
-    emit("journey_status", payload, namespace="/admin", broadcast=True)
+    socketio.emit("journey_status", payload, to=journey.id)
+    socketio.emit("journey_status", payload, namespace="/admin", broadcast=True)
+
+    return "", 200
+
+
+@api.route("/journeys/<jid>/nodes/<nidx>/ready/<value>")
+@admin_required
+def node_ready(jid, nidx, value):
+    journey = app.session.query(JourneyInstance).get(bytes.fromhex(jid))
+
+    node_index = int(nidx)
+    ready = value == "1"
+    journey.node_associations[node_index].ready = ready
+    node = journey.node_associations[node_index].node
+
+    prev_status = node.status
+    node.check_n()
+    app.session.commit()
+
+    payload = node.make_status_payload(prev_status)
+    socketio.emit("status", payload, to=node.id)
+    socketio.emit("status", payload, namespace="/admin", broadcast=True)
 
     return "", 200

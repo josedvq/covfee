@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, TYPE_CHECKING, Optional
+from typing import Any, Dict, List, TYPE_CHECKING, Literal, Optional
 import enum
 from flask import current_app as app
 
@@ -8,7 +8,7 @@ from sqlalchemy import Table, Column, ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 
-from covfee.server.scheduler.timers import schedule_timer, stop_timer
+from covfee.server.scheduler.timers import TimerName, schedule_timer, stop_timer
 
 from .base import Base
 from .chat import Chat
@@ -52,6 +52,7 @@ class JourneyNode(Base):
 
     order: Mapped[int]
     player: Mapped[int]
+    ready: Mapped[bool] = mapped_column(default=False)
 
 
 class NodeSpec(Base):
@@ -109,14 +110,17 @@ class NodeInstanceStatus(enum.Enum):
     # task has been initialized.
     INIT = 0
 
+    # countdown to start
+    COUNTDOWN = 1
+
     # start conditions full-filled. task has started.
-    RUNNING = 1
+    RUNNING = 2
 
     # pause condition fullfilled. Waiting for resume conditions.
-    PAUSED = 2
+    PAUSED = 3
 
     # task/node has ran and is finalized.
-    FINISHED = 3
+    FINISHED = 4
 
 
 class NodeInstance(Base):
@@ -161,6 +165,7 @@ class NodeInstance(Base):
 
     dt_start: Mapped[Optional[datetime]]
     dt_pause: Mapped[Optional[datetime]]
+    dt_count: Mapped[Optional[datetime]]
     dt_play: Mapped[Optional[datetime]]
     dt_empty: Mapped[Optional[datetime]]
     dt_finish: Mapped[Optional[datetime]]
@@ -176,6 +181,7 @@ class NodeInstance(Base):
         self.submitted = False
         self.dt_start = None
         self.dt_pause = None
+        self.dt_count = None
         self.dt_play = None
         self.dt_empty = None
         self.dt_finish = None
@@ -205,7 +211,8 @@ class NodeInstance(Base):
     def timer_pausable(self):
         return self.spec.settings.get("timer_pausable", False)
 
-    def set_status(self, to_status: NodeInstanceStatus, stop_timers=True):
+    def set_status(self, to_status: NodeInstanceStatus, stop_timers=False):
+        """' Timer logic"""
         if (
             self.paused
             or self.status == NodeInstanceStatus.FINISHED
@@ -215,60 +222,93 @@ class NodeInstance(Base):
 
         from_status = self.status
 
-        if to_status == NodeInstanceStatus.PAUSED:
-            self.dt_pause = datetime.now()
-            self.t_elapsed += (self.dt_pause - self.dt_play).seconds
-            schedule_timer(self, "pause")
-            if self.timer_pausable:
-                stop_timer(self, "finish")
+        if to_status == NodeInstanceStatus.COUNTDOWN:
+            stop_timer(self, "pause")
+            stop_timer(self, "empty")
+
+            timer_countdown = self.spec.settings.get("countdown", 0)
+            if timer_countdown == 0:
+                # set running status instead.
+                self.set_status(NodeInstanceStatus.RUNNING)
+            else:
+                self.dt_count = datetime.now()
+                schedule_timer(self, "count")
 
         if to_status == NodeInstanceStatus.RUNNING:
-            if from_status == NodeInstanceStatus.INIT:
+            if self.dt_start is None:
                 self.dt_start = datetime.now()
                 if not self.timer_pausable:
                     schedule_timer(self, "finish")
+
             self.dt_play = datetime.now()
-            stop_timer(self, "pause")
             if self.timer_pausable:
                 schedule_timer(self, "finish")
 
+        if to_status == NodeInstanceStatus.PAUSED:
+            stop_timer(self, "count")
+            if self.timer_pausable:
+                stop_timer(self, "finish")
+
+            self.dt_pause = datetime.now()
+            self.t_elapsed += (self.dt_pause - self.dt_play).seconds
+            schedule_timer(self, "pause")
+
         if to_status == NodeInstanceStatus.FINISHED:
+            stop_timer(self, "pause")
+            stop_timer(self, "empty")
+
             self.dt_finish = datetime.now()
             self.t_elapsed += (self.dt_finish - self.dt_play).seconds
+
             if stop_timers:
-                stop_timer(self, "pause")
                 stop_timer(self, "finish")
 
         self.status = to_status
 
-    def check_timers(self):
+    def check_timer(self, timer: TimerName):
+        """State transitions caused by timers."""
+        print(f"check_timer called with timer={timer}")
         if self.status == NodeInstanceStatus.FINISHED:
             app.logger.warn(
                 f"check_timers called after task finished. Some timers not cancelled?"
             )
         # check timers
-        timer = self.spec.settings.get("timer", None)
-        if timer is not None and self.dt_start is not None:
-            if self.timer_pausable:
-                # count elapsed time
-                elapsed_time = self.t_elapsed + (datetime.now() - self.dt_play).seconds
-                if elapsed_time > timer:
-                    self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
-            else:
-                if datetime.now() > self.dt_start + timedelta(seconds=timer):
+        if timer == "finish":
+            timer_finish = self.spec.settings.get("timer", None)
+            if timer_finish is not None and self.dt_start is not None:
+                if self.timer_pausable:
+                    # count elapsed time
+                    elapsed_time = (
+                        self.t_elapsed + (datetime.now() - self.dt_play).seconds
+                    )
+                    if elapsed_time > timer_finish:
+                        self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
+                else:
+                    if datetime.now() > self.dt_start + timedelta(seconds=timer_finish):
+                        self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
+
+        elif timer == "count":
+            timer_countdown = self.spec.settings.get("countdown", 0)
+            if datetime.now() > self.dt_count + timedelta(seconds=timer_countdown):
+                self.set_status(NodeInstanceStatus.RUNNING, stop_timers=False)
+
+        elif timer == "pause":
+            timer_pause = self.spec.settings.get("timer_pause", None)
+            if timer_pause is not None and self.dt_pause is not None:
+                if datetime.now() > self.dt_pause + timedelta(seconds=timer_pause):
                     self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
 
-        timer_pause = self.spec.settings.get("timer_pause", None)
-        if timer_pause is not None and self.dt_pause is not None:
-            if datetime.now() > self.dt_pause + timedelta(seconds=timer_pause):
-                self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
+        elif timer == "empty":
+            timer_empty = self.spec.settings.get("timer_empty", None)
+            if timer_empty is not None and self.dt_pause is not None:
+                if datetime.now() > self.dt_empty + timedelta(seconds=timer_empty):
+                    self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
 
-        timer_empty = self.spec.settings.get("timer_empty", None)
-        if timer_empty is not None and self.dt_pause is not None:
-            if datetime.now() > self.dt_empty + timedelta(seconds=timer_empty):
-                self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
+        else:
+            raise NotImplementedError()
 
     def check_n(self):
+        """State transitions caused by user connections / disconnections."""
         if (
             self.paused or self.status == NodeInstanceStatus.FINISHED
         ):  # status frozen when node paused by the admin
@@ -279,31 +319,56 @@ class NodeInstance(Base):
             n_start = self.spec.settings.get("n_start")
             if n_start is None:
                 n_start = len(self.journeys)
-            if len(self.curr_journeys) >= n_start:
-                self.set_status(NodeInstanceStatus.RUNNING)
+
+            wait_for_ready = self.spec.settings.get("wait_for_ready", False)
+            if wait_for_ready:
+                num_ready = len([j for j in self.journey_associations if j.ready])
+            else:
+                num_ready = len(self.curr_journeys)
+            if num_ready >= n_start:
+                self.set_status(NodeInstanceStatus.COUNTDOWN, stop_timers=True)
+
+        elif self.status in [NodeInstanceStatus.COUNTDOWN]:
+            n_pause = self.spec.settings["n_pause"]
+            if n_pause is not None and len(self.curr_journeys) <= n_pause:
+                self.set_status(NodeInstanceStatus.PAUSED, stop_timers=True)
 
         elif self.status in [NodeInstanceStatus.RUNNING]:
             n_pause = self.spec.settings["n_pause"]
             if n_pause is not None and len(self.curr_journeys) <= n_pause:
-                self.set_status(NodeInstanceStatus.PAUSED)
+                self.set_status(NodeInstanceStatus.PAUSED, stop_timers=True)
 
         elif self.status in [NodeInstanceStatus.PAUSED]:
             n_pause = self.spec.settings["n_pause"]
             if n_pause is not None and len(self.curr_journeys) > n_pause:
-                self.set_status(NodeInstanceStatus.RUNNING)
+                self.set_status(NodeInstanceStatus.COUNTDOWN, stop_timers=True)
+
+        else:
+            raise NotImplementedError()
+
+    def make_journey_status_dict(self):
+        journeys_in_node = set([j.id for j in self.curr_journeys])
+        journey_assocs = []
+        for row in self.journey_associations:
+            row_dict = row.to_dict()
+            row_dict["online"] = row.journey_id in journeys_in_node
+            journey_assocs.append(row_dict)
+        return journey_assocs
 
     def to_dict(self):
         instance_dict = super().to_dict()
         spec_dict = self.spec.to_dict()
 
         # merge spec and instance dicts
+
         instance_dict = {
             **spec_dict,
             **instance_dict,
             "chat_id": self.chat.id,
             "url": f'{app.config["API_URL"]}/nodes/{self.id}',
-            "num_journeys": len(self.journeys),
-            "curr_journeys": [j.id.hex() for j in self.curr_journeys],
+            # "num_journeys": len(self.journeys),
+            # "curr_journeys": [j.id.hex() for j in self.curr_journeys],
+            "journeys": self.make_journey_status_dict(),
         }
 
         return instance_dict

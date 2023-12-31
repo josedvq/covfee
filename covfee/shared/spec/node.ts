@@ -68,4 +68,15 @@ export interface BaseNodeSpec {
    * If the timer reaches zero, the task is set to finished state.
    */
   timer_empty?: number
+
+  /**
+   * If true, all journeys must click ready to start the task
+   */
+  wait_for_ready?: boolean
+
+  /**
+   * Seconds countdown after start condition met.
+   * @default 0
+   */
+  countdown?: number
 }

@@ -59,6 +59,24 @@ export function useNodeFns(node: NodeType) {
     [node.url]
   )
 
+  const setReady = useCallback(
+    (value: boolean) => {
+      if (!node.journey_id) {
+        console.error("setReady called but node.journey_id is not set")
+      }
+      const url =
+        Constants.api_url +
+        "/journeys/" +
+        node.journey_id +
+        "/nodes/" +
+        node.index +
+        "/ready/" +
+        (value ? "1" : "0")
+      return fetcher(url)
+    },
+    [node.index, node.journey_id]
+  )
+
   return {
     fetchResponse,
     getAdminUrl,
@@ -66,6 +84,7 @@ export function useNodeFns(node: NodeType) {
     makeResponse,
     pause,
     restart,
+    setReady,
   }
 }
 
@@ -73,12 +92,32 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
   const [node, setNode] = useState<NodeType>(data)
   const [response, setResponse] = useState<TaskResponseType>(null)
 
+  // extract the journey association (JourneyNode) data
+  // includes ready status
+  const journeyData = React.useMemo(() => {
+    if (!node.journey_id) return null
+
+    const curr = node.journeys.filter((j) => j.journey_id == node.journey_id)
+    if (curr.length == 0) return null
+
+    return curr[0]
+  }, [node.journey_id, node.journeys])
+
   const {
     getAdminUrl: getUrl,
     fetchResponse: fetchResponseFn,
     makeResponse,
     submitResponse: submitResponseFn,
+    setReady,
   } = useNodeFns(node)
+
+  const numOnlineJourneys: number = React.useMemo(() => {
+    const onlineArr = node.journeys.map((j) => j.online)
+    const trueCount = onlineArr.reduce((accumulator, currentValue) => {
+      return accumulator + (currentValue === true ? 1 : 0)
+    }, 0)
+    return trueCount
+  }, [node.journeys])
 
   const setStatus = (status: NodeStatus) => {
     setNode((node) => ({
@@ -107,7 +146,12 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
         ...node,
         status: data.new,
         paused: data.paused,
-        curr_journeys: data.curr_journeys,
+        journeys: data.journeys,
+        dt_start: data.dt_start,
+        dt_play: data.dt_play,
+        dt_count: data.dt_count,
+        dt_finish: data.dt_finish,
+        t_elapsed: data.t_elapsed,
       }))
     }
 
@@ -128,10 +172,12 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
         socket.off("join", handleJoin)
       }
     }
-  }, [socket])
+  }, [node.id, socket])
 
   return {
     node,
+    journeyData,
+    numOnlineJourneys,
     setNode,
     getUrl,
     response,
@@ -140,6 +186,7 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
     fetchResponse,
     submitResponse,
     makeResponse,
+    setReady,
   }
 }
 

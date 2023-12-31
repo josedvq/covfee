@@ -78,7 +78,7 @@ export const useHitInstances = (
       setNodeData(hitIndex, nodeIndex, {
         status: data.new,
         paused: data.paused,
-        curr_journeys: data.curr_journeys,
+        journeys: data.journeys,
       })
     }
 

@@ -9,5 +9,5 @@ from .user import *
 from .chat import *
 
 
-def set_session(session):
-    Base.session = session
+def set_sessionmaker(sessionmaker):
+    Base.sessionmaker = sessionmaker

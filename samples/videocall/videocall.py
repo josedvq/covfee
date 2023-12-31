@@ -33,7 +33,9 @@ spec_consent_form = {
             },
         ]
     },
-    "timer": 10,
+    "wait_for_ready": True,
+    "countdown": 3,
+    "timer": 5,
 }
 
 spec_instructions = {
@@ -89,7 +91,9 @@ j2_consent = tasks.InstructionsTaskSpec(**spec_consent_form)
 j2_instructions = tasks.InstructionsTaskSpec(**spec_instructions)
 j2_final = tasks.QuestionnaireTaskSpec(**spec_final_survey)
 
-videocall_task = tasks.VideocallTaskSpec(**spec_videocall)
+# videocall_task = tasks.VideocallTaskSpec(**spec_videocall)
+
+videocall_task = tasks.IncrementCounterTaskSpec(**spec_videocall)
 
 hit = HIT("Joint counter")
 j1 = hit.add_journey(nodes=[j1_consent, j1_instructions, videocall_task, j1_final])

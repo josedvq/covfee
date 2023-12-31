@@ -76,7 +76,7 @@ export const _JourneyPage: React.FC<Props> = (props) => {
   const { addChats, removeChats, hasChat } = useContext(chatContext)
   const { journey, setJourney } = useJourney<FullJourney>(args.journey)
 
-  const [currNode, setCurrNode] = useState(
+  const [currNodeIndex, setCurrNodeIndex] = useState(
     routeParams.nodeId !== undefined ? parseInt(routeParams.nodeId) : 0
   )
 
@@ -105,11 +105,11 @@ export const _JourneyPage: React.FC<Props> = (props) => {
   }, [addChats, hasChat, journey.chat_id])
 
   React.useEffect(() => {
-    if (!hasChat(journey.nodes[currNode].chat_id)) {
+    if (!hasChat(journey.nodes[currNodeIndex].chat_id)) {
       removeChats((chat: Chat) => chat.node_id !== null)
-      addChats([journey.nodes[currNode].chat_id])
+      addChats([journey.nodes[currNodeIndex].chat_id])
     }
-  }, [addChats, currNode, hasChat, journey.nodes, removeChats])
+  }, [addChats, currNodeIndex, hasChat, journey.nodes, removeChats])
 
   React.useEffect(() => {
     window.history.pushState(
@@ -118,13 +118,13 @@ export const _JourneyPage: React.FC<Props> = (props) => {
       "#" +
         generatePath("/journeys/:journeyId/:nodeId", {
           journeyId: routeParams.journeyId,
-          nodeId: currNode.toString(),
+          nodeId: currNodeIndex.toString(),
         })
     )
-  }, [currNode, routeParams.journeyId])
+  }, [currNodeIndex, routeParams.journeyId])
 
   const changeActiveNode = React.useCallback((nodeIndex: number) => {
-    setCurrNode(nodeIndex)
+    setCurrNodeIndex(nodeIndex)
     setCurrKey((k) => k + 1)
   }, [])
 
@@ -185,13 +185,13 @@ export const _JourneyPage: React.FC<Props> = (props) => {
 
   const gotoNextNode = React.useCallback(() => {
     // if done with nodes
-    if (currNode === journey.nodes.length - 1) {
+    if (currNodeIndex === journey.nodes.length - 1) {
       handleSubmit()
     } else {
       // go to next node
-      changeActiveNode(currNode + 1)
+      changeActiveNode(currNodeIndex + 1)
     }
-  }, [changeActiveNode, currNode, handleSubmit, journey])
+  }, [changeActiveNode, currNodeIndex, handleSubmit, journey])
 
   const handleNodeSubmitted = () => {
     gotoNextNode()
@@ -233,7 +233,7 @@ export const _JourneyPage: React.FC<Props> = (props) => {
   //   </Modal>
   // );
 
-  const nodeProps = journey.nodes[currNode]
+  const nodeProps = journey.nodes[currNodeIndex]
   const hitExtra = getHitExtra()
 
   return (
@@ -265,7 +265,7 @@ export const _JourneyPage: React.FC<Props> = (props) => {
       <SidebarContainer height={window.innerHeight}>
         <Sidebar
           nodes={journey.nodes}
-          currNode={currNode}
+          currNode={currNodeIndex}
           onChangeActiveTask={changeActiveNode}
         >
           {journey.submitted && (
@@ -313,9 +313,9 @@ export const _JourneyPage: React.FC<Props> = (props) => {
           )}
           <NodeLoader
             key={currKey}
+            index={currNodeIndex}
             node={nodeProps}
-            disabled={false}
-            previewMode={props.previewMode}
+            observer={props.previewMode}
             // callbacks
             onSubmit={handleNodeSubmitted}
           />

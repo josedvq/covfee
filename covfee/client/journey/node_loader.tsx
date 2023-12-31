@@ -16,8 +16,13 @@ import { Provider as StoreProvider, useDispatch } from "react-redux"
 import { Store, configureStore } from "@reduxjs/toolkit"
 import { ServerToClientEvents, appContext } from "../app_context"
 import { NodeProvider } from "./node_provider"
+import { Lobby } from "./lobby"
 
 interface Props {
+  /**
+   * Index of the node within the journey
+   */
+  index?: number
   /**
    * Task props and specification
    */
@@ -25,7 +30,7 @@ interface Props {
   /**
    * Observer mode. The task cannot be edited but updates can be seen.
    */
-  creep: boolean
+  observer: boolean
 
   // CALLBACKS
   /**
@@ -36,6 +41,7 @@ interface Props {
 
 export const NodeLoader: React.FC<Props> = (props: Props) => {
   const args: AllPropsRequired<Props> = {
+    index: null,
     onSubmit: () => {},
     ...props,
   }
@@ -45,6 +51,8 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
 
   const {
     node,
+    journeyData,
+    numOnlineJourneys,
     setNode,
     response,
     setResponse,
@@ -52,6 +60,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
     setStatus: setNodeStatus,
     fetchResponse,
     submitResponse,
+    setReady,
   } = useNode(args.node, socket)
 
   const [isLoading, setIsLoading] = React.useState(true)
@@ -147,6 +156,42 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
   }, [reduxStore, setResponse, socket, taskSlice])
 
   React.useEffect(() => {
+    if (node.timer !== null) {
+      // the task is timed
+      let freezeTimer, sinceDatestring
+      if (node.timer_pausable) {
+        freezeTimer = node.status !== "RUNNING"
+        sinceDatestring = node.dt_play
+      } else {
+        freezeTimer = node.status === "FINISHED" || node.status === "INIT"
+        sinceDatestring = node.dt_start
+      }
+
+      const sinceTimestamp = Math.floor(
+        new Date(sinceDatestring).getTime() / 1000
+      )
+
+      const timerState: TimerState = {
+        show: true,
+        freeze: freezeTimer,
+        init: node.t_elapsed,
+        since: sinceTimestamp,
+        max: node.timer,
+      }
+      setTimer(timerState)
+      console.log("setTimer called", timerState)
+    }
+  }, [
+    node.dt_play,
+    node.dt_start,
+    node.status,
+    node.t_elapsed,
+    node.timer,
+    node.timer_pausable,
+    setTimer,
+  ])
+
+  React.useEffect(() => {
     const handleStatus: ServerToClientEvents["status"] = (data) => {
       console.log("IO: status", data)
 
@@ -162,34 +207,6 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
         setTimeout(() => {
           emitJoin()
         }, 10000)
-      }
-
-      if (node.timer !== null) {
-        // the task is timed
-        let freezeTimer, sinceDatestring
-        if (node.timer_pausable) {
-          freezeTimer = data.new !== "RUNNING"
-          sinceDatestring = data.dt_play
-        } else {
-          freezeTimer = data.new === "FINISHED" || data.new === "INIT"
-          sinceDatestring = data.dt_start
-        }
-
-        const sinceTimestamp = Math.floor(
-          new Date(sinceDatestring).getTime() / 1000
-        )
-
-        console.log(node.timer)
-        console.log(data)
-        const timerState: TimerState = {
-          show: true,
-          freeze: freezeTimer,
-          init: data.t_elapsed,
-          since: sinceTimestamp,
-          max: node.timer,
-        }
-        setTimer(timerState)
-        console.log("setTimer called", timerState)
       }
     }
 
@@ -209,6 +226,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
     node.spec.timer,
     node.timer_pausable,
     setTimer,
+    node.timer,
   ])
 
   React.useEffect(() => {
@@ -371,16 +389,28 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
     return <NodeOverlayReload counter={reloadCount} message={reloadMessage} />
   }
 
-  if (node.status == "INIT") {
+  if (
+    node.status == "INIT" ||
+    node.status == "COUNTDOWN" ||
+    node.status == "PAUSED"
+  ) {
     return (
-      <NodeLoaderMessage>
-        <h1>Waiting for subjects...</h1>
-        <Spin />
-        <p>
-          {node.curr_journeys.length} / {node.n_start} subjects present
-        </p>
-      </NodeLoaderMessage>
+      <Lobby
+        observer={args.observer}
+        node={node}
+        journeyData={journeyData}
+        handleReady={setReady}
+      />
     )
+    // return (
+    //   <NodeLoaderMessage>
+    //     <h1>Waiting for subjects...</h1>
+    //     <Spin />
+    //     <p>
+    //       {numOnlineJourneys} / {node.n_start} subjects present
+    //     </p>
+    //   </NodeLoaderMessage>
+    // )
   }
 
   if (node.status == "RUNNING" || node.status == "FINISHED") {

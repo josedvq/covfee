@@ -135,13 +135,12 @@ def on_join(data):
         res = store.join(curr_node_id, curr_node.spec.spec["type"], response.state)
         if res["success"]:
             emit("state", res, to=curr_node_id)
-            emit("state", res, to=curr_node_id, namespace="/admin")
         else:
             app.logger.error(f"Redux store returned error")
 
 
 # admin joins a node
-# to support creep mode
+# to support observer mode
 @socketio.on("join", namespace="/admin")
 def on_admin_join(data):
     app.logger.info(f"socketio(admin): join {str(data)}")

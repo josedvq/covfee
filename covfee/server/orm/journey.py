@@ -119,6 +119,7 @@ class JourneyInstance(Base):
 
     # status
     # one NodeInstance -> many JourneyInstance
+    curr_node_index: Mapped[Optional[int]]
     curr_node_id: Mapped[int] = mapped_column(
         ForeignKey("nodeinstances.id"), nullable=True
     )
@@ -178,6 +179,11 @@ class JourneyInstance(Base):
         if node is not None:
             node.check_n()
 
+    def set_curr_node_index(self, index):
+        self.curr_node_index = index
+        if index is not None:
+            self.nodes[index].check_n()
+
     def get_completion_code(self):
         return self.config.get(
             "completionCode",
@@ -228,7 +234,12 @@ class JourneyInstance(Base):
         }
 
         if with_nodes:
-            instance_dict["nodes"] = [n.to_dict() for n in self.nodes]
+            nodes = [n.to_dict() for n in self.nodes]
+            for i, n in enumerate(nodes):
+                n["index"] = i
+                n["journey_id"] = self.id.hex()
+            instance_dict["nodes"] = nodes
+
         else:
             instance_dict["nodes"] = [n.id for n in self.nodes]
 

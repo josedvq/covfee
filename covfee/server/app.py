@@ -41,9 +41,9 @@ def create_app(mode, session_local=None):
 
     app.sessionmaker = session_local
     app.session = scoped_session(session_local, scopefunc=greenlet.getcurrent)
-    from .orm import set_session
+    from .orm import set_sessionmaker
 
-    set_session(app.session)
+    set_sessionmaker(session_local)
     # socketio = SocketIO(app, cors_allowed_origins="*")
     from .socketio.socket import socketio
     from .socketio import chat, handlers

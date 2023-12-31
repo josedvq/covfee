@@ -3,7 +3,7 @@ import { io, Socket } from "socket.io-client"
 import { UserContextMethods, UserState } from "./app_provider"
 import { UseChats } from "models/Chat"
 import { ChatMessage } from "./types/chat"
-import { NodeStatus, TaskResponseType } from "./types/node"
+import { JourneyAssoc, NodeStatus, TaskResponseType } from "./types/node"
 import {
   State as StateResponse,
   Action as ActionResponse,
@@ -14,18 +14,9 @@ import { UserConfig } from "./user_config"
 import { Action } from "@reduxjs/toolkit"
 
 export interface ServerToClientEvents {
-  status: (arg0: {
-    id: number
-    hit_id: string
-    prev: NodeStatus
-    new: NodeStatus
-    paused: boolean
-    response_id?: number
-    curr_journeys: string[]
-    dt_start: string
-    dt_play: string
-    t_elapsed: number
-  }) => void
+  /**
+   * Journey events: emited to admin when a client opens/closes a journey page
+   */
   journey_connect: (arg0: {
     hit_id: string
     journey_id: string
@@ -36,13 +27,45 @@ export interface ServerToClientEvents {
     journey_id: string
     num_connections: number
   }) => void
+
+  /**
+   * Node events
+   */
+
+  // response to client-to-server 'join' event
+  // latest response / state is included
   join: (arg0: {
     response: TaskResponseType
     error?: string
     load_task?: boolean
     task_data?: any
   }) => void
+
+  // whenever the status of the node changes because:
+  // - a client joins the node
+  // - a timer is triggered
+  // - admin actions
+  status: (arg0: {
+    id: number
+    hit_id: string
+    prev: NodeStatus
+    new: NodeStatus
+    paused: boolean
+    response_id?: number
+    journeys: JourneyAssoc[]
+    dt_start: string
+    dt_play: string
+    dt_count: string
+    dt_finish: string
+    t_elapsed: number
+  }) => void
+
+  // for tasks with shared state
+  // emited to node when an action is executed
   action: (arg0: ActionResponse) => void
+
+  // for tasks with shared state
+  // emited when a node
   state: (arg0: StateResponse) => void
 }
 

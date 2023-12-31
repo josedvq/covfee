@@ -114,9 +114,12 @@ class TaskInstance(NodeInstance):
             "new": self.status,
             "paused": self.paused,
             "response_id": self.responses[-1].id,
-            "curr_journeys": [j.id.hex() for j in self.curr_journeys],
+            "journeys": self.make_journey_status_dict(),
+            # "curr_journeys": [j.id.hex() for j in self.curr_journeys],
             "dt_start": utils.datetime_to_str(self.dt_start),
             "dt_play": utils.datetime_to_str(self.dt_play),
+            "dt_count": utils.datetime_to_str(self.dt_count),
+            "dt_pause": utils.datetime_to_str(self.dt_pause),
             "t_elapsed": self.t_elapsed,
         }
 
