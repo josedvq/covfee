@@ -1,7 +1,7 @@
 import * as React from "react"
 import styled from "styled-components"
 
-import { NodeType } from "../../types/node"
+import { ManualStatuses, NodeType } from "../../types/node"
 import { Modal } from "antd"
 const { confirm } = Modal
 import {
@@ -58,7 +58,7 @@ type NodeButtonsProps = {
 export const NodeButtons = ({ node }: NodeButtonsProps) => {
   const { addChats } = React.useContext(chatContext)
   const { setNodeId: openNode } = React.useContext(adminContext)
-  const { pause, restart } = useNodeFns(node)
+  const { setManualStatus, restart } = useNodeFns(node)
 
   return (
     <ButtonsContainer>
@@ -81,22 +81,29 @@ export const NodeButtons = ({ node }: NodeButtonsProps) => {
         </button>
       </li>
       <li>
-        <button
+        <ButtonManualCtrl
+          disabled={node.status == "FINISHED"}
+          $active={node.manual == "PAUSED"}
           onClick={() => {
             confirm({
-              title: node.paused
-                ? "Are you sure you want to unpause?"
-                : "Are you sure you want to pause this node?",
+              title:
+                node.manual == "PAUSED"
+                  ? "Are you sure you want to unpause?"
+                  : "Are you sure you want to pause this node?",
               content: "Data collection might be affected.",
               onOk() {
-                pause(!node.paused)
+                if (node.manual == "PAUSED") {
+                  setManualStatus("DISABLED")
+                } else {
+                  setManualStatus("PAUSED")
+                }
               },
               onCancel() {},
             })
           }}
         >
           {node.paused ? <PlayCircleOutlined /> : <PauseCircleOutlined />}
-        </button>
+        </ButtonManualCtrl>
       </li>
       <li>
         <button
@@ -117,3 +124,7 @@ export const NodeButtons = ({ node }: NodeButtonsProps) => {
     </ButtonsContainer>
   )
 }
+
+const ButtonManualCtrl = styled.button<{ $active: boolean }>`
+  background-color: ${(props) => (props.$active ? "#9243d9" : "default")};
+`

@@ -3,7 +3,7 @@ from io import BytesIO
 from flask import request, jsonify, send_file, current_app as app
 import zipstream
 
-from covfee.server.orm.node import NodeInstance
+from covfee.server.orm.node import NodeInstance, NodeInstanceManualStatus
 from flask_socketio import send, emit, join_room, leave_room
 
 from .api import api
@@ -71,19 +71,18 @@ def response_submit(nid):
 
 
 # state management
-@api.route("/nodes/<nid>/pause/<pause>")
+@api.route("/nodes/<nid>/manual/<status>")
 @admin_required
-def pause_node(nid, pause):
-    pause = bool(int(pause))
+def set_manual_status(nid, status):
     node = app.session.query(NodeInstance).get(int(nid))
-    node.paused = pause
-    node.update_status()
+
+    node.set_manual(NodeInstanceManualStatus(int(status)))
     app.session.commit()
 
     # notify users and admins
     payload = node.make_status_payload()
     socketio.emit("status", payload, to=node.id)
-    socketio.emit("status", payload, namespace="/admin", broadcast=True)
+    socketio.emit("status", payload, namespace="/admin")
     return "", 200
 
 
@@ -98,7 +97,7 @@ def restart_node(nid):
         node.add_response()
         payload = node.make_status_payload()
         socketio.emit("status", payload, to=node.id)
-        socketio.emit("status", payload, namespace="/admin", broadcast=True)
+        socketio.emit("status", payload, namespace="/admin")
 
     app.session.commit()
     return "", 200

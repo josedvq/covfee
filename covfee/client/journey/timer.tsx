@@ -14,15 +14,19 @@ export const Timer: React.FC<React.PropsWithChildren<TimerProps>> = (props) => {
   const [time, setTime] = React.useState<number>()
 
   React.useEffect(() => {
-    const unixTimestamp = Math.floor(Date.now() / 1000)
+    if (timer.freeze) {
+      setTime(timer.init)
+    } else {
+      const unixTimestamp = Math.floor(Date.now() / 1000)
 
-    setTime(Math.min(timer.max, timer.init + (unixTimestamp - timer.since)))
-    const id = setInterval(() => {
-      setTime((t) => Math.min(timer.max, t + 1))
-    }, 1000)
+      setTime(Math.min(timer.max, timer.init + (unixTimestamp - timer.since)))
+      const id = setInterval(() => {
+        setTime((t) => Math.min(timer.max, t + 1))
+      }, 1000)
 
-    return () => {
-      clearTimeout(id)
+      return () => {
+        clearTimeout(id)
+      }
     }
   }, [timer])
 

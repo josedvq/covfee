@@ -163,7 +163,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
         freezeTimer = node.status !== "RUNNING"
         sinceDatestring = node.dt_play
       } else {
-        freezeTimer = node.status === "FINISHED" || node.status === "INIT"
+        freezeTimer = node.dt_start == null || node.status === "FINISHED"
         sinceDatestring = node.dt_start
       }
 
@@ -180,6 +180,14 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
       }
       setTimer(timerState)
       console.log("setTimer called", timerState)
+    } else {
+      setTimer({
+        show: false,
+        freeze: true,
+        init: null,
+        since: null,
+        max: null,
+      })
     }
   }, [
     node.dt_play,

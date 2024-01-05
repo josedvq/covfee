@@ -1,5 +1,11 @@
 import React, { useState, useCallback, useEffect } from "react"
-import { NodeStatus, NodeType, TaskResponseType } from "../types/node"
+import {
+  ManualStatus,
+  ManualStatuses,
+  NodeStatus,
+  NodeType,
+  TaskResponseType,
+} from "../types/node"
 import { fetcher, throwBadResponse } from "../utils"
 import { MainSocket, ServerToClientEvents } from "../app_context"
 import Constants from "Constants"
@@ -15,9 +21,9 @@ export function useNodeFns(node: NodeType) {
     return Constants.admin.home_url + "/nodes/" + node.id
   }, [node.id])
 
-  const pause = useCallback(
-    (pause: boolean) => {
-      const url = node.url + "/pause/" + (pause ? "1" : "0")
+  const setManualStatus = useCallback(
+    (status: ManualStatus) => {
+      const url = node.url + "/manual/" + ManualStatuses.indexOf(status)
 
       return fetcher(url).then(throwBadResponse)
     },
@@ -82,7 +88,7 @@ export function useNodeFns(node: NodeType) {
     getAdminUrl,
     submitResponse,
     makeResponse,
-    pause,
+    setManualStatus,
     restart,
     setReady,
   }
@@ -146,6 +152,7 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
         ...node,
         status: data.new,
         paused: data.paused,
+        manual: data.manual,
         journeys: data.journeys,
         dt_start: data.dt_start,
         dt_play: data.dt_play,

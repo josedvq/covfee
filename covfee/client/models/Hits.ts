@@ -24,51 +24,51 @@ export const useHitInstances = (
     Object.fromEntries(hit.nodes.map((node, i) => [node.id, i]))
   )
 
-  React.useEffect(() => {
-    const setHitData = (hitIndex: number, data: Partial<HitInstanceType>) => {
-      setHits(
-        Object.assign([], hits, {
-          [hitIndex]: {
-            ...hits[hitIndex],
-            ...data,
-          },
-        })
-      )
-    }
+  const setHitData = (
+    hitIndex: number,
+    setter: (arg0: HitInstanceType) => HitInstanceType
+  ) => {
+    setHits((hits) =>
+      Object.assign([], hits, {
+        [hitIndex]: setter(hits[hitIndex]),
+      })
+    )
+  }
 
-    const setNodeData = (
-      hitIndex: number,
-      nodeIndex: number,
-      data: Partial<NodeType>
-    ) => {
-      setHitData(hitIndex, {
-        nodes: Object.assign([], hits[hitIndex].nodes, {
+  const setNodeData = React.useCallback(
+    (hitIndex: number, nodeIndex: number, data: Partial<NodeType>) => {
+      setHitData(hitIndex, (hit) => ({
+        ...hit,
+        nodes: Object.assign([], hit.nodes, {
           [nodeIndex]: {
-            ...hits[hitIndex].nodes[nodeIndex],
+            ...hit.nodes[nodeIndex],
             ...data,
           },
         }),
-      })
-    }
+      }))
+    },
+    []
+  )
 
-    const setJourneyData = (
-      hitIndex: number,
-      journeyIndex: number,
-      data: Partial<JourneyType>
-    ) => {
+  const setJourneyData = React.useCallback(
+    (hitIndex: number, journeyIndex: number, data: Partial<JourneyType>) => {
       // const journeyIds = Object.keys(journeyIdToIndex);
       // if (!journeyIds.includes(journeyId)) return;
       // const journeyIndex = journeyIdToIndex[journeyId];
-      setHitData(hitIndex, {
-        journeys: Object.assign([], hits[hitIndex].journeys, {
+      setHitData(hitIndex, (hit) => ({
+        ...hit,
+        journeys: Object.assign([], hit.journeys, {
           [journeyIndex]: {
-            ...hits[hitIndex].journeys[journeyIndex],
+            ...hit.journeys[journeyIndex],
             ...data,
           },
         }),
-      })
-    }
+      }))
+    },
+    []
+  )
 
+  React.useEffect(() => {
     const statusListener: ServerToClientEvents["status"] = (data) => {
       console.log("IO: status", data)
       if (!(data.hit_id in hitIdToIndex)) return
@@ -77,8 +77,14 @@ export const useHitInstances = (
 
       setNodeData(hitIndex, nodeIndex, {
         status: data.new,
+        manual: data.manual,
         paused: data.paused,
         journeys: data.journeys,
+        dt_start: data.dt_start,
+        dt_play: data.dt_play,
+        dt_count: data.dt_count,
+        dt_finish: data.dt_finish,
+        t_elapsed: data.t_elapsed,
       })
     }
 
@@ -87,6 +93,8 @@ export const useHitInstances = (
       journey_id,
       num_connections,
     }) => {
+      console.log("IO: journey_connect")
+
       if (!(hit_id in hitIdToIndex)) return
       const hitIndex = hitIdToIndex[hit_id]
       const journeyIndex = journeyIdToIndex[hitIndex][journey_id]
@@ -101,7 +109,15 @@ export const useHitInstances = (
       socket.off("status", statusListener)
       socket.off("journey_connect", journeyConnectListener)
     }
-  }, [socket, hits])
+  }, [
+    socket,
+    hits,
+    hitIdToIndex,
+    nodeIdToIndex,
+    journeyIdToIndex,
+    setNodeData,
+    setJourneyData,
+  ])
 
   const setCollapsed = async (value: boolean) => {
     return update({ collapsed: value })

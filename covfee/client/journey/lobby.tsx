@@ -7,6 +7,7 @@ import { nodeContext } from "./node_context"
 import { JourneyAssoc, NodeType } from "../types/node"
 import { Countdown } from "./timer"
 import { Switch } from "antd"
+import { PauseOutlined } from "@ant-design/icons"
 
 interface Props {
   observer: boolean
@@ -26,9 +27,9 @@ export const Lobby: React.FC<Props> = (props) => {
   return (
     <MessageContainer>
       <div>
-        {args.node.status == "INIT" && (
+        {args.node.status == "INIT" && !args.observer && (
           <ReadyBlock>
-            <ReadySubblock ready={args.journeyData.ready}>
+            <ReadySubblock $ready={args.journeyData.ready}>
               <span>{args.journeyData.ready ? "Ready" : "Not Ready"} </span>
               <Switch
                 defaultChecked={args.journeyData.ready}
@@ -41,32 +42,46 @@ export const Lobby: React.FC<Props> = (props) => {
         {args.node.status == "COUNTDOWN" && (
           <>
             <h2>Starting in.. </h2>
-            <CountdownContainer>
+            <LargeIconContainer>
               <Countdown
                 show={true}
                 countdown={args.node.countdown}
                 start={args.node.dt_count}
               />
-            </CountdownContainer>
+            </LargeIconContainer>
           </>
         )}
 
         {args.node.status == "PAUSED" && (
           <>
-            <h2>Task is paused. Waiting for subjects..</h2>
+            <LargeIconContainer>
+              <PauseOutlined />
+            </LargeIconContainer>
+
+            {args.node.manual == "PAUSED" ? (
+              <h2>
+                Task paused by the admin. Please wait for the task to resume.
+              </h2>
+            ) : (
+              <h2>Task is paused. Waiting for subjects..</h2>
+            )}
           </>
         )}
 
-        <h2>Waiting for subjects..</h2>
+        <SubjectsContainer>
+          <h2>Subjects</h2>
 
-        <PlayerList>
-          {args.node.journeys.map((journey, index) => (
-            <PlayerItem key={index} isOnline={journey.online}>
-              <StatusCircle isReady={journey.ready} />
-              <PlayerName>{journey.journey_id.substr(0, 10)}</PlayerName>
-            </PlayerItem>
-          ))}
-        </PlayerList>
+          <PlayerList>
+            {args.node.journeys.map((journey, index) => (
+              <PlayerItem key={index} $isOnline={journey.online}>
+                {args.node.status == "INIT" && args.node.wait_for_ready && (
+                  <StatusCircle $ready={journey.ready} />
+                )}
+                <PlayerName>{journey.journey_id.substr(0, 10)}</PlayerName>
+              </PlayerItem>
+            ))}
+          </PlayerList>
+        </SubjectsContainer>
       </div>
     </MessageContainer>
   )
@@ -78,9 +93,9 @@ const ReadyBlock = styled.div`
   padding: 1em;
 `
 
-const ReadySubblock = styled.div<{ ready: boolean }>`
+const ReadySubblock = styled.div<{ $ready: boolean }>`
   display: inline-block;
-  background-color: ${(props) => (props.ready ? "green" : "red")};
+  background-color: ${(props) => (props.$ready ? "green" : "red")};
   padding: 0.5em;
 
   font-size: 1.5em;
@@ -93,8 +108,8 @@ const PlayerList = styled.ul`
   padding: 0;
 `
 
-const PlayerItem = styled.li<{ isOnline: boolean }>`
-  opacity: ${(props) => (props.isOnline ? 1 : 0.3)};
+const PlayerItem = styled.li<{ $isOnline: boolean }>`
+  opacity: ${(props) => (props.$isOnline ? 1 : 0.3)};
   margin: 10px 0;
   display: flex;
   align-items: center;
@@ -103,10 +118,10 @@ const PlayerItem = styled.li<{ isOnline: boolean }>`
   padding: 0.5em 0;
 `
 
-const StatusCircle = styled.span<{ isReady: boolean }>`
+const StatusCircle = styled.span<{ $ready: boolean }>`
   height: 10px;
   width: 10px;
-  background-color: ${(props) => (props.isReady ? "green" : "red")};
+  background-color: ${(props) => (props.$ready ? "green" : "red")};
   border-radius: 50%;
   display: inline-block;
   margin-left: 10px;
@@ -130,7 +145,10 @@ const MessageContainer = styled.div`
     text-align: center;
   }
 `
-const CountdownContainer = styled.h2`
+const LargeIconContainer = styled.h2`
   text-align: center;
   font-size: 72px;
+`
+const SubjectsContainer = styled.div`
+  margin: 3em 0;
 `

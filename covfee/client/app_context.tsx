@@ -3,7 +3,12 @@ import { io, Socket } from "socket.io-client"
 import { UserContextMethods, UserState } from "./app_provider"
 import { UseChats } from "models/Chat"
 import { ChatMessage } from "./types/chat"
-import { JourneyAssoc, NodeStatus, TaskResponseType } from "./types/node"
+import {
+  JourneyAssoc,
+  ManualStatus,
+  NodeStatus,
+  TaskResponseType,
+} from "./types/node"
 import {
   State as StateResponse,
   Action as ActionResponse,
@@ -48,8 +53,8 @@ export interface ServerToClientEvents {
   status: (arg0: {
     id: number
     hit_id: string
-    prev: NodeStatus
     new: NodeStatus
+    manual: ManualStatus
     paused: boolean
     response_id?: number
     journeys: JourneyAssoc[]

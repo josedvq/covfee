@@ -4,7 +4,7 @@ from typing import Any, Dict, List, TYPE_CHECKING, Literal, Optional
 import enum
 from flask import current_app as app
 
-from sqlalchemy import Table, Column, ForeignKey
+from sqlalchemy import ForeignKey, event
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 
@@ -123,6 +123,17 @@ class NodeInstanceStatus(enum.Enum):
     FINISHED = 4
 
 
+class NodeInstanceManualStatus(enum.Enum):
+    # task has been initialized.
+    DISABLED = 0
+
+    # task set to manual run
+    RUNNING = 1
+
+    # task set to manual pause
+    PAUSED = 2
+
+
 class NodeInstance(Base):
     __tablename__ = "nodeinstances"
     __mapper_args__ = {
@@ -160,8 +171,10 @@ class NodeInstance(Base):
     chat: Mapped[Chat] = relationship(back_populates="node", cascade="all,delete")
 
     # status code
+    manual: Mapped[NodeInstanceManualStatus] = mapped_column(
+        default=NodeInstanceManualStatus.DISABLED
+    )
     status: Mapped[NodeInstanceStatus] = mapped_column(default=NodeInstanceStatus.INIT)
-    paused: Mapped[bool] = mapped_column(default=False)
 
     dt_start: Mapped[Optional[datetime]]
     dt_pause: Mapped[Optional[datetime]]
@@ -211,12 +224,81 @@ class NodeInstance(Base):
     def timer_pausable(self):
         return self.spec.settings.get("timer_pausable", False)
 
+    def stop_all_timers(self):
+        stop_timer(self, "pause")
+        stop_timer(self, "empty")
+        stop_timer(self, "finish")
+        stop_timer(self, "count")
+
+    def set_manual(self, to_status: NodeInstanceManualStatus):
+        from_status = self.manual
+
+        if from_status == to_status:
+            return
+
+        if self.status == NodeInstanceStatus.FINISHED:
+            return
+
+        if to_status == NodeInstanceManualStatus.DISABLED:
+            # here we unfreeze the node and get back to the default flow
+
+            # first check if the task is finished
+            if self.check_timer_finish():
+                return self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
+
+            # the task is not finished
+            if self.status in [
+                NodeInstanceStatus.COUNTDOWN,
+                NodeInstanceStatus.RUNNING,
+            ]:
+                self.status = NodeInstanceStatus.PAUSED
+            self.check_n()
+
+        elif to_status == NodeInstanceManualStatus.PAUSED:
+            if from_status == NodeInstanceManualStatus.DISABLED:
+                # here we freeze the node state to get back to it when
+                # manual control is disabled
+                # stop all timers
+                self.stop_all_timers()
+
+                # if the task is running, update t_elapsed
+                if self.status == NodeInstanceStatus.RUNNING:
+                    self.t_elapsed += (datetime.now() - self.dt_play).seconds
+
+                # TODO: call task on_pause
+            elif from_status == NodeInstanceManualStatus.RUNNING:
+                # RUNNING -> PAUSED
+                self.t_elapsed += (datetime.now() - self.dt_play).seconds
+            else:
+                raise ValueError()
+        elif to_status == NodeInstanceManualStatus.RUNNING:
+            if from_status == NodeInstanceManualStatus.DISABLED:
+                # DISABLED -> RUNNING
+                self.stop_all_timers()
+
+                # task may be in INIT state
+                if self.dt_start is None:
+                    self.dt_start = datetime.now()
+                self.dt_play = datetime.now()
+
+                # TODO: call task on_play?
+            elif from_status == NodeInstanceManualStatus.PAUSED:
+                # PAUSED -> RUNNING
+                self.dt_play = datetime.now()
+                if self.dt_start is None:
+                    self.dt_start = datetime.now()
+            else:
+                raise ValueError()
+
+        else:
+            raise ValueError()
+
+        self.manual = to_status
+
     def set_status(self, to_status: NodeInstanceStatus, stop_timers=False):
         """' Timer logic"""
         if (
-            self.paused
-            or self.status == NodeInstanceStatus.FINISHED
-            or self.status == to_status
+            self.status == NodeInstanceStatus.FINISHED or self.status == to_status
         ):  # status frozen when node paused by the admin
             return
 
@@ -229,7 +311,7 @@ class NodeInstance(Base):
             timer_countdown = self.spec.settings.get("countdown", 0)
             if timer_countdown == 0:
                 # set running status instead.
-                self.set_status(NodeInstanceStatus.RUNNING)
+                return self.set_status(NodeInstanceStatus.RUNNING)
             else:
                 self.dt_count = datetime.now()
                 schedule_timer(self, "count")
@@ -265,6 +347,22 @@ class NodeInstance(Base):
 
         self.status = to_status
 
+    def check_timer_finish(self) -> bool:
+        """Returns true if the finish timer is complete"""
+        timer_finish = self.spec.settings.get("timer", None)
+        if timer_finish is None or self.dt_start is None:
+            return False
+
+        if self.timer_pausable:
+            # count elapsed time
+            elapsed_time = self.t_elapsed + (datetime.now() - self.dt_play).seconds
+            if elapsed_time > timer_finish:
+                return True
+        else:
+            if datetime.now() > self.dt_start + timedelta(seconds=timer_finish):
+                return True
+        return False
+
     def check_timer(self, timer: TimerName):
         """State transitions caused by timers."""
         print(f"check_timer called with timer={timer}")
@@ -274,18 +372,8 @@ class NodeInstance(Base):
             )
         # check timers
         if timer == "finish":
-            timer_finish = self.spec.settings.get("timer", None)
-            if timer_finish is not None and self.dt_start is not None:
-                if self.timer_pausable:
-                    # count elapsed time
-                    elapsed_time = (
-                        self.t_elapsed + (datetime.now() - self.dt_play).seconds
-                    )
-                    if elapsed_time > timer_finish:
-                        self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
-                else:
-                    if datetime.now() > self.dt_start + timedelta(seconds=timer_finish):
-                        self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
+            if self.check_timer_finish():
+                self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
 
         elif timer == "count":
             timer_countdown = self.spec.settings.get("countdown", 0)
@@ -310,15 +398,15 @@ class NodeInstance(Base):
     def check_n(self):
         """State transitions caused by user connections / disconnections."""
         if (
-            self.paused or self.status == NodeInstanceStatus.FINISHED
+            self.status == NodeInstanceStatus.FINISHED
         ):  # status frozen when node paused by the admin
             return
+
+        print("HERELAKA ")
 
         # task lifecycle logic
         if self.status in [NodeInstanceStatus.INIT]:
             n_start = self.spec.settings.get("n_start")
-            if n_start is None:
-                n_start = len(self.journeys)
 
             wait_for_ready = self.spec.settings.get("wait_for_ready", False)
             if wait_for_ready:
@@ -335,6 +423,7 @@ class NodeInstance(Base):
 
         elif self.status in [NodeInstanceStatus.RUNNING]:
             n_pause = self.spec.settings["n_pause"]
+            print(n_pause)
             if n_pause is not None and len(self.curr_journeys) <= n_pause:
                 self.set_status(NodeInstanceStatus.PAUSED, stop_timers=True)
 
@@ -355,6 +444,17 @@ class NodeInstance(Base):
             journey_assocs.append(row_dict)
         return journey_assocs
 
+    def get_masked_status(self):
+        if self.status != NodeInstanceStatus.FINISHED:
+            if self.manual == NodeInstanceManualStatus.RUNNING:
+                return NodeInstanceStatus.RUNNING
+            elif self.manual == NodeInstanceManualStatus.PAUSED:
+                return NodeInstanceStatus.PAUSED
+            else:
+                return self.status
+        else:
+            return self.status
+
     def to_dict(self):
         instance_dict = super().to_dict()
         spec_dict = self.spec.to_dict()
@@ -366,10 +466,11 @@ class NodeInstance(Base):
             **instance_dict,
             "chat_id": self.chat.id,
             "url": f'{app.config["API_URL"]}/nodes/{self.id}',
-            # "num_journeys": len(self.journeys),
-            # "curr_journeys": [j.id.hex() for j in self.curr_journeys],
             "journeys": self.make_journey_status_dict(),
         }
+
+        # mask status using manual status
+        instance_dict["status"] = self.get_masked_status()
 
         return instance_dict
 
@@ -379,5 +480,13 @@ class NodeInstance(Base):
     def make_results_dict(self):
         return {}
 
-    def pause(self, pause: bool):
-        self.paused = pause
+
+@event.listens_for(NodeSpec, "before_insert", propagate=True)
+def receive_before_insert(mapper, connection, target: NodeSpec):
+    # set the n_start and n_pause variables
+    # we do it in a callback to easily get access to the journeys
+    if target.settings["n_start"] is None:
+        target.settings["n_start"] = len(target.journeyspecs)
+
+    if target.settings["n_pause"] is None:
+        target.settings["n_pause"] = max(0, len(target.journeyspecs) - 1)

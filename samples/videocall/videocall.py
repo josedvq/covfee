@@ -82,7 +82,6 @@ spec_final_survey = {
         ]
     },
 }
-
 j1_consent = tasks.InstructionsTaskSpec(**spec_consent_form)
 j1_instructions = tasks.InstructionsTaskSpec(**spec_instructions)
 j1_final = tasks.QuestionnaireTaskSpec(**spec_final_survey)

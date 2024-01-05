@@ -4,32 +4,33 @@ import { NodeType } from "../types/node"
 
 export const NodeColorStatuses = [
   "INIT",
+  "COUNTDOWN",
   "RUNNING",
   "PAUSED",
   "FINISHED",
 ] as const
 export type NodeColorStatus = (typeof NodeColorStatuses)[number]
+
 export const JourneyColorStatuses = [
   "INIT",
+  "RUNNING",
   "DISABLED",
-  "ONLINE",
-  "OFFLINE",
   "FINISHED",
 ] as const
 export type JourneyColorStatus = (typeof JourneyColorStatuses)[number]
 
 export const NodeStatusToColor: Record<NodeColorStatus, string> = {
   INIT: "gray",
+  COUNTDOWN: "#6495ED",
   RUNNING: "#6495ED",
   PAUSED: "orange",
   FINISHED: "#7dc238",
 }
 
 export const JourneyStatusToColor: Record<JourneyColorStatus, string> = {
-  INIT: "red",
-  DISABLED: "black",
-  ONLINE: "#6495ED",
-  OFFLINE: "red",
+  INIT: "gray",
+  RUNNING: "#6495ED",
+  DISABLED: "red",
   FINISHED: "#7dc238",
 }
 
@@ -42,18 +43,7 @@ export const getNodeStatus = (
 export const getJourneyStatus = (
   journey: Pick<JourneyType, "status" | "num_connections">
 ): JourneyColorStatus => {
-  if (
-    journey.status == "INIT" ||
-    journey.status == "DISABLED" ||
-    journey.status == "FINISHED"
-  ) {
-    return journey.status
-  }
-  if (journey.num_connections > 0) {
-    return "ONLINE"
-  } else {
-    return "OFFLINE"
-  }
+  return journey.status
 }
 
 export const StatusIcon = styled.span<{ color: string }>`

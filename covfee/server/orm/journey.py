@@ -72,16 +72,12 @@ class JourneySpec(Base):
 
 
 class JourneyInstanceStatus(enum.Enum):
-    # task has been initialized.
     INIT = 0
 
-    # start conditions full-filled. task has started.
-    STARTED = 1
+    RUNNING = 1
 
-    # pause condition fullfilled. Waiting for resume conditions.
     DISABLED = 2
 
-    # task/node has ran and is finalized.
     FINISHED = 3
 
 
@@ -140,8 +136,8 @@ class JourneyInstance(Base):
 
     # dates
     # submitted: Mapped[datetime.datetime] = mapped_column(nullable=True)
-    created: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
-    updated: Mapped[datetime.datetime] = mapped_column(
+    dt_created: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
+    dt_updated: Mapped[datetime.datetime] = mapped_column(
         default=datetime.datetime.now, onupdate=datetime.datetime.now
     )
 

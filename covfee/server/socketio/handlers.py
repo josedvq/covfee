@@ -125,6 +125,7 @@ def on_join(data):
     payload = curr_node.make_status_payload(curr_node_prev_status)
     emit("status", payload, to=curr_node_id)
     emit("status", payload, namespace="/admin", broadcast=True)
+    app.logger.info(f"emit: status {str(payload)}")
 
     session["journeyId"] = curr_journey_id
     session["nodeId"] = curr_node_id
@@ -218,7 +219,8 @@ def disconnect():
     journey.num_connections = max(0, journey.num_connections - 1)
     node = journey.curr_node
     prev_status = node.status if node else None
-    # journey.set_curr_node(None)
+    journey.set_curr_node(None)
+    node.check_n()
     app.session.commit()
 
     # broadcast to admins
@@ -240,3 +242,4 @@ def disconnect():
         payload = node.make_status_payload(prev_status)
         emit("status", payload, to=node.id)
         emit("status", payload, namespace="/admin", broadcast=True)
+        app.logger.info(f"emit: status {str(payload)}")

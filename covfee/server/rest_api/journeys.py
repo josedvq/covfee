@@ -41,7 +41,7 @@ def journey_pause(jid, pause):
         # notify users and admins
         payload = node.make_status_payload(node)
         socketio.emit("status", payload, to=node.id)
-        socketio.emit("status", payload, namespace="/admin", broadcast=True)
+        socketio.emit("status", payload, namespace="/admin")
     app.session.commit()
     return "", 200
 
@@ -57,7 +57,7 @@ def journey_disable(jid, disable):
 
     payload = journey.make_status_payload()
     socketio.emit("journey_status", payload, to=journey.id)
-    socketio.emit("journey_status", payload, namespace="/admin", broadcast=True)
+    socketio.emit("journey_status", payload, namespace="/admin")
 
     return "", 200
 
@@ -78,6 +78,6 @@ def node_ready(jid, nidx, value):
 
     payload = node.make_status_payload(prev_status)
     socketio.emit("status", payload, to=node.id)
-    socketio.emit("status", payload, namespace="/admin", broadcast=True)
+    socketio.emit("status", payload, namespace="/admin")
 
     return "", 200

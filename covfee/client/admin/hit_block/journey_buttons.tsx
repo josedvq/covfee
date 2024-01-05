@@ -3,6 +3,7 @@ import { JourneyType } from "../../types/journey"
 import { Modal } from "antd"
 const { confirm } = Modal
 import {
+  ApiOutlined,
   DeleteOutlined,
   LinkOutlined,
   PauseOutlined,
@@ -13,6 +14,7 @@ import { JourneyStatusToColor, StatusIcon, getJourneyStatus } from "../utils"
 import classNames from "classnames"
 import { chatContext } from "../../chat_context"
 import { ButtonsContainer } from "./utils"
+import { styled } from "styled-components"
 
 type JourneyRowProps = {
   journey: JourneyType
@@ -36,13 +38,24 @@ export const JourneyRow = ({
       className={classNames({ focus })}
     >
       <a href={getUrl()}>
-        <span>
+        <LinkContainer>
           <StatusIcon color={JourneyStatusToColor[getJourneyStatus(journey)]} />
-        </span>
-        <span>
-          {journey.id.substring(0, 10)} [{journey.num_connections}]
-        </span>{" "}
-        <LinkOutlined />
+
+          <span
+            style={{
+              color:
+                journey.num_connections == 0
+                  ? "gray"
+                  : journey.num_connections == 1
+                    ? "green"
+                    : "red",
+            }}
+          >
+            <ApiOutlined />
+          </span>
+        </LinkContainer>
+        <span> </span>
+        <span>{journey.id.substring(0, 10)}</span> <LinkOutlined />
       </a>
       <ButtonsContainer>
         <li>
@@ -87,3 +100,5 @@ export const JourneyRow = ({
     </li>
   )
 }
+
+const LinkContainer = styled.span``

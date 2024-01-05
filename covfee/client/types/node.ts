@@ -15,6 +15,9 @@ export const NodeStatuses = [
 ] as const
 export type NodeStatus = (typeof NodeStatuses)[number]
 
+export const ManualStatuses = ["DISABLED", "RUNNING", "PAUSED"] as const
+export type ManualStatus = (typeof ManualStatuses)[number]
+
 export type JourneyAssoc = {
   journey_id: string
   player: number
@@ -43,6 +46,7 @@ export interface NodeType extends AllPropsRequired<BaseNodeSpec> {
    * Status of the node
    */
   status: NodeStatus
+  manual: ManualStatus
   taskData: any
   journeys: JourneyAssoc[]
   valid: boolean
