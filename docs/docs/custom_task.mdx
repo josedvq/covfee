@@ -2,6 +2,7 @@
 title: Developing custom tasks
 ---
 
+import useBaseUrl from '@docusaurus/useBaseUrl'
 
 New custom tasks or HIT types can be added by implementing a React component meeting a few conditions. For some tasks, a Python base class must be sub-classed too. To be valid, task components must meet these conditions:
 
@@ -13,29 +14,44 @@ There are two main types of tasks in covfee:
 
 ## Task state
 
-Covfee tasks are, in their most basic form, simply React components. In other words, copy-pasting any React component as a Covfee task would "work". However, any type of online experiment we normally want to store the results of the task (eg. the answers to a questionnaire). 
+Covfee tasks are, in their most basic form, simply React components. In other words, copy-pasting any React component as a Covfee task would "work". However, in any type of online experiment we normally want to store the results of the task (eg. the answers to a questionnaire). 
 
-In covfee, task components do not explicitly store or commit these results to the server. Instead, the state of the task can be saved automatically by covfee. To make use of this, any task state that should be persisted by Covfee must be managed in a central Redux store. In other words, **implementing Covfee tasks boils down to implementing React components with a Redux store** in all cases. State that does not need to be stored can be managed separately, for example using React's `useState`.
+In covfee, task components do not explicitly store or commit these results to the server. Instead, the state of the task is stored automatically by Covfee. To make use of this, any task state that should be persisted by Covfee must be managed in a central Redux store. In other words, **implementing Covfee tasks boils down to implementing React components with a Redux state store** in all cases. This means following the Redux design phylosophy by defining actions and reducers, which produce a new state given an action and the current state:
 
-State persistance and loading will be managed internally:
+<div style={{textAlign: 'center'}}>
+<img src={useBaseUrl('/img/redux.png')} style={{width: '50%', maxWidth: '500px', textAlign: 'center'}}/>
+</div>
+
+The React component's (Interface / view) job is simply to update the DOM according to the current state, and to dispatch actions in response to browser events.
+
+State persistance and loading is managed internally by Covfee:
 - For shared state tasks, Covfee will keep the most up-to-date state in the server, which will always represent the latest state of the task.
 
 - For non-shared state tasks, the latest state is kept in the browser and persisted when necessary. Covfee submits and persists state whenever:
     - A user closes the browser tab where the task is open, or otherwise leaves the task.
     - A user presses the "submit" button in the task.
 
+State that does not need to be stored can be managed separately, for example using React's `useState`.
+
 ## Tutorial: developing your own task
 
 ### Background
-For developing custom tasks it is important to be familiar with:
-- React: functional components, hooks (useState, useEffect, useContext, useRef, useMemo), custom hooks, fetching data
-- Redux, Redux toolkit
-- Typescript, Javascript, HTML, CSS
 
-In general, **you should know how to write a React functional component using Redux for state management**.
+This tutorial requires a basic understanding of Typescript, HTML, React and Redux. For progressing to more complex custom tasks the following is recommended:
 
-Please start by following the [development install instructions](development).
+- Typescript, Javascript, HTML, CSS. For more complex tasks, a good level of CSS might be necessary.
+- React: functional components, hooks (useState, useEffect, useContext, useRef, useMemo), custom hooks, fetching data. It's important to understand the nuances behind hooks and dependencies: when do hooks run?
+- Redux, Redux toolkit. Important to understand how to think about application state and how to design the state, actions and reducers:
 
+
+In general, **you should know how to design and write a React application using Redux for state management**.
+
+
+### Installation
+Please start by following the [development install instructions](development) to install Covfee.
+
+
+### The tutorial
 In this tutorial, we will create a simple contact form asking users for their name and email. Additionally, the task will have one boolean prop (`showPhoneField`) that, if true, will add a phone number field to the form. The answers to the form will be preserved in task state. 
 
 We will place Typescript files for the task in `covfee/client/tasks`, in the following structure:
@@ -73,11 +89,11 @@ export interface TutorialTaskSpec extends BaseTaskSpec {
 }
 ```
 
-These props will be parsed by covfee so that they can be provided when the task is created. They allow the user to configure the way a task is rendered to the user. In this case, we only provide two props. One is the name of the task. This will be the name of the task's Python class and is a constant value. The other one is our only true prop `showPhoneField`, which we define to be boolean. The comments provided here will be parsed and will be available in Python when creating task objects. The line `TJS-additionalProperties false` specifies that no additional properties should be allowed when the task is validated.
+These props will be parsed by Covfee so that they can be provided when the task is created. They allow the user to configure the way a task is rendered to the user. In this case, we only provide two props. One is the name of the task. This will be the name of the task's Python class and is a constant value. The other one is our only true prop `showPhoneField`, which we define to be boolean. The comments provided here will be parsed and will be available in Python when creating task objects. The line `TJS-additionalProperties false` specifies that no additional properties should be allowed when the task is validated.
 
 ### State
 
-Tasks in covfee specify their state by creating a Redux Toolkit slice. For our purposes a slice is just an object that encapsulates the initial state and the reducers for the task. In this case, we need the state to hold the user's name and email:
+Tasks in covfee specify their state by creating a Redux Toolkit slice. For our purposes a slice is just an object that encapsulates the initial state and the reducers for the task. In this case, we need the state to hold the user's name, email and phone number. Our `slice.ts` file looks like this:
 
 ```
 import { createSlice } from "@reduxjs/toolkit"
@@ -85,11 +101,13 @@ import { createSlice } from "@reduxjs/toolkit"
 export interface State {
   name: string
   email: string
+  phone: string
 }
 
 export const initialState: State = {
   name: "",
   email: "",
+  phone: "",
 }
 
 export const slice = createSlice({
@@ -99,8 +117,11 @@ export const slice = createSlice({
     setName: (state, action) => {
       state.name = action.payload
     },
-    setPhoneNumber: (state, action) => {
+    setEmail: (state, action) => {
       state.email = action.payload
+    },
+    setPhone: (state, action) => {
+      state.phone = action.payload
     },
   },
 })
@@ -108,7 +129,11 @@ export const slice = createSlice({
 export const { actions, reducer } = slice
 ```
 
+Here we specified the type for the state, the initial state, and wrote separate reducers to set name, email and phone number. 
+
 ### React Component
+
+Following React + Redux design philosophy, the main job of the React component is to sync state with the DOM (view), by reading the state and by calling Redux actions in response to user events. In this case, because form input elements hold their own state, we are simply calling Redux actions whenever the content of the input elements changes. That's all!
 
 ```
 import React, { useState } from "react"
@@ -162,7 +187,6 @@ const TutorialTask: React.FC<Props> = (props) => {
     </form>
   )
 }
-export type { TutorialTaskSpec }
 export default {
   taskComponent: TutorialTask,
   taskSlice: slice,
@@ -171,11 +195,9 @@ export default {
 
 ```
 
-Here we are simply updating the state whenever the input elements change. That's all!
 
-Note the export statements at the end of the file. First we export the task specification, which should be available to Covfee (more on this later)
 
-Covfee expects every task to export a default object with these keys. `useSharedState` should only be set to true for "multiplayer" tasks.
+Note the expor statement at the end of the file. Covfee expects every task to export a default object with these keys. `useSharedState` should only be set to true for "multiplayer" tasks.
 
 
 ### Importing the task

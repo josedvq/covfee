@@ -3,6 +3,7 @@ module.exports = {
     "overview",
     "installation",
     "getting_started",
+    "entities",
     "output",
     "deployment",
     {
