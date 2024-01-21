@@ -1,7 +1,7 @@
-import { BaseTaskSpec } from "../task"
-import { WavesurferPlayerMedia } from "../players/wavesurfer"
-import { VideojsPlayerMedia } from "spec/players/videojs"
-import { FormSpec, InputSpec } from "../form"
+import { BaseTaskSpec } from "@covfee-shared/spec/task"
+import { WavesurferPlayerMedia } from "@covfee-shared/spec/players/wavesurfer"
+import { VideojsPlayerMedia } from "@covfee-shared/spec/players/videojs"
+import { FormSpec, InputSpec } from "@covfee-shared/spec/form"
 
 /**
  * @TJS-additionalProperties false

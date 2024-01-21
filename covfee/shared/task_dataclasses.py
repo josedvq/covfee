@@ -308,6 +308,105 @@ Internally covfee uses socketio to synchronize task state.
         self.wait_for_ready = wait_for_ready
 
 
+class TutorialTaskSpec(CovfeeTask):
+    type: str = "TutorialTask"
+    name: str
+    # Seconds countdown after start condition met.
+    countdown: float
+    # Instructions to be displayed for the node
+    instructions: str
+    # How the instructions will be displayed
+    instructions_type: str
+    # Maximum number of submissions a user can make for the task.
+    max_submissions: float
+    # If the number of subjects is n_pause or less, the task will be paused
+    n_pause: float
+    # Number of jorneys required to start task
+    n_start: float
+    # Node is marked as a prerrequisite
+    # Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
+    prerequisite: bool
+    # If true, this node must have a valid submission before the HIT can be submitted
+    required: bool
+    # Media file to be displayed.
+    showPhoneField: bool
+    # Time to complete the task
+    timer: float
+    # Empty timer is started everytime the task is empty (no journeys online)
+    # If the timer reaches zero, the task is set to finished state.
+    timer_empty: float
+    # If true, the timer will pause when the task is paused.
+    timer_pausable: bool
+    # Pause timer is started every time the task enters paused state
+    # If timer reaches zero, the task is set to finished state.
+    timer_pause: float
+    # If true, the task state will be synced between clients.
+    # This applies both to multiple clients in the same journey and across journeys.
+    # Internally covfee uses socketio to synchronize task state.
+    useSharedState: bool
+    # If true, all journeys must click ready to start the task
+    wait_for_ready: bool
+    def __init__(self, name, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, required = True, showPhoneField = None, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = False, wait_for_ready = None):
+        """
+        ### Parameters
+        0. name : str
+        1. countdown : float
+            - Seconds countdown after start condition met.
+        2. instructions : str
+            - Instructions to be displayed for the node
+        3. instructions_type : str
+            - How the instructions will be displayed
+        4. max_submissions : float
+            - Maximum number of submissions a user can make for the task.
+        5. n_pause : float
+            - If the number of subjects is n_pause or less, the task will be paused
+        6. n_start : float
+            - Number of jorneys required to start task
+        7. prerequisite : bool
+            - Node is marked as a prerrequisite
+Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
+        8. required : bool
+            - If true, this node must have a valid submission before the HIT can be submitted
+        9. showPhoneField : bool
+            - Media file to be displayed.
+        10. timer : float
+            - Time to complete the task
+        11. timer_empty : float
+            - Empty timer is started everytime the task is empty (no journeys online)
+If the timer reaches zero, the task is set to finished state.
+        12. timer_pausable : bool
+            - If true, the timer will pause when the task is paused.
+        13. timer_pause : float
+            - Pause timer is started every time the task enters paused state
+If timer reaches zero, the task is set to finished state.
+        14. useSharedState : bool
+            - If true, the task state will be synced between clients.
+This applies both to multiple clients in the same journey and across journeys.
+Internally covfee uses socketio to synchronize task state.
+        15. wait_for_ready : bool
+            - If true, all journeys must click ready to start the task
+        """
+
+
+        super().__init__()
+        self.name = name
+        self.countdown = countdown
+        self.instructions = instructions
+        self.instructions_type = instructions_type
+        self.max_submissions = max_submissions
+        self.n_pause = n_pause
+        self.n_start = n_start
+        self.prerequisite = prerequisite
+        self.required = required
+        self.showPhoneField = showPhoneField
+        self.timer = timer
+        self.timer_empty = timer_empty
+        self.timer_pausable = timer_pausable
+        self.timer_pause = timer_pause
+        self.useSharedState = useSharedState
+        self.wait_for_ready = wait_for_ready
+
+
 class VideocallTaskSpec(CovfeeTask):
     # Layout mode
     layout: str = "grid"

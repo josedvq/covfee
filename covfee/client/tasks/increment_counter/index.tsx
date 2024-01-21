@@ -5,12 +5,13 @@ import { State } from "./slice"
 import { slice, actions } from "./slice"
 import { useSelector } from "react-redux"
 import { TaskExport, TaskType } from "types/node"
-import { BaseTaskProps } from "tasks/base"
+import { BaseTaskProps, CovfeeTaskProps } from "tasks/base"
+import type { IncrementCounterTaskSpec } from "./spec"
 
-interface Props extends TaskType, BaseTaskProps {}
+interface Props extends CovfeeTaskProps<IncrementCounterTaskSpec> {}
 
 function IncrementCounterTask(props: Props) {
-  const counter = useSelector((state) => state.counter)
+  const counter = useSelector<State, number>((state) => state.counter)
   const dispatch = useDispatch()
 
   return (
@@ -29,6 +30,7 @@ function IncrementCounterTask(props: Props) {
   )
 }
 
+export type { IncrementCounterTaskSpec }
 export default {
   taskComponent: IncrementCounterTask,
   taskSlice: slice,

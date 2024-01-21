@@ -1,4 +1,4 @@
-import { BaseTaskSpec } from "../task"
+import { BaseTaskSpec } from "@covfee-shared/spec/task"
 
 /**
  * @TJS-additionalProperties false

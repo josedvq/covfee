@@ -1,6 +1,6 @@
 import { TaskSpec } from "./task"
 import { JourneySpec } from "./journey"
-import { MarkdownContentSpec } from "./tasks/utils"
+import { MarkdownContentSpec } from "./utils"
 
 type NodeSpec = TaskSpec[]
 

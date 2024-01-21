@@ -1,18 +1,17 @@
 import * as React from "react"
 import * as openvidu from "openvidu-browser"
 import { useState, useEffect, useRef } from "react"
-import { BaseTaskProps } from "../base"
+import { CovfeeTaskProps } from "../base"
 
 import { slice, actions } from "./slice"
-import { VideocallTaskSpec } from "@covfee-shared/spec/tasks/videocall"
+import type { VideocallTaskSpec } from "./spec"
 
 import { TaskExport } from "../../types/node"
 import { AllPropsRequired } from "../../types/utils"
 import { VideocallGUI } from "./gui"
 import { nodeContext } from "../../journey/node_context"
 
-interface Props extends BaseTaskProps {
-  spec: VideocallTaskSpec
+interface Props extends CovfeeTaskProps<VideocallTaskSpec> {
   taskData: {
     session_id: string
     connection_token: string
@@ -223,7 +222,7 @@ export const VideocallTask: React.FC<Props> = (props) => {
     />
   )
 }
-
+export type { VideocallTaskSpec }
 export default {
   taskComponent: VideocallTask,
   taskSlice: slice,

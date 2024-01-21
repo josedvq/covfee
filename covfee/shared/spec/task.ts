@@ -1,7 +1,12 @@
-import { InstructionsTaskSpec } from "./tasks/instructions"
-import { QuestionnaireTaskSpec } from "./tasks/questionnaire"
-import { VideocallTaskSpec } from "./tasks/videocall"
-import { IncrementCounterTaskSpec } from "./tasks/increment_counter"
+// Important: import spec from a .ts file containing the spec only (Typescript type/interface).
+// AVOID importing the spec from files containing or importing React components or other code.
+// This could cause bugs when creating the schemata.
+import { QuestionnaireTaskSpec } from "@covfee-client/tasks/questionnaire/spec"
+import { InstructionsTaskSpec } from "@covfee-client/tasks/instructions/spec"
+import { IncrementCounterTaskSpec } from "@covfee-client/tasks/increment_counter/spec"
+import { VideocallTaskSpec } from "@covfee-client/tasks/videocall/spec"
+import { TutorialTaskSpec } from "@covfee-client/tasks/tutorial/spec"
+
 import { BaseNodeSpec } from "./node"
 
 export interface BaseTaskSpec extends BaseNodeSpec {
@@ -16,5 +21,6 @@ export type TaskSpec =
   | InstructionsTaskSpec
   | QuestionnaireTaskSpec
   | VideocallTaskSpec
+  | TutorialTaskSpec
 
 export type NodeSpec = TaskSpec

@@ -53,3 +53,7 @@ export interface BaseTaskProps {
    */
   renderSubmitButton: (arg0?: any) => React.ReactNode
 }
+
+export interface CovfeeTaskProps<T> extends BaseTaskProps {
+  spec: T
+}

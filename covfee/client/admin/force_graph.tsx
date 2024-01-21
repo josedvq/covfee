@@ -1,25 +1,25 @@
-import * as React from "react";
-import * as d3 from "d3";
-import type { SimulationNodeDatum, Simulation } from "d3";
-import { NodeStatusToColor, getNodeStatus } from "./utils";
-import { NodeType } from "../types/node";
-import { HitInstanceType } from "../types/hit";
-import { JourneyType, ReducedJourney } from "../models/Journey";
+import * as React from "react"
+import * as d3 from "d3"
+import type { SimulationNodeDatum, Simulation } from "d3"
+import { NodeStatusToColor, getNodeStatus } from "./utils"
+import { NodeType } from "../types/node"
+import { HitInstanceType } from "../types/hit"
+import { JourneyType, ReducedJourney } from "../models/Journey"
 
 const getDimensions = (nodes: SimulationNode[], nodeRadius: number) => {
   let minX = Infinity,
-    maxX = -Infinity;
+    maxX = -Infinity
   let minY = Infinity,
-    maxY = -Infinity;
+    maxY = -Infinity
   for (const node of nodes) {
-    minX = Math.min(minX, node.x);
-    maxX = Math.max(maxX, node.x);
-    minY = Math.min(minY, node.y);
-    maxY = Math.max(maxY, node.y);
+    minX = Math.min(minX, node.x)
+    maxX = Math.max(maxX, node.x)
+    minY = Math.min(minY, node.y)
+    maxY = Math.max(maxY, node.y)
   }
 
-  return [maxX - minX + 2 * nodeRadius, maxY - minY + 2 * (nodeRadius + 50)];
-};
+  return [maxX - minX + 2 * nodeRadius, maxY - minY + 2 * (nodeRadius + 50)]
+}
 
 const createNodes = (nodes: NodeType[], focusedNode: number) => {
   const res = nodes.map((n, index) => ({
@@ -27,68 +27,68 @@ const createNodes = (nodes: NodeType[], focusedNode: number) => {
     name: n.name,
     focused: focusedNode == index,
     color: NodeStatusToColor[getNodeStatus(n)],
-  }));
+  }))
 
-  return res;
-};
+  return res
+}
 
 const createLinks = (journeys: ReducedJourney[]) => {
-  const links: Link[] = [];
+  const links: Link[] = []
   journeys.forEach((journey, index) => {
-    links.push({ source: -1, target: journey.nodes[0], group: -1 });
+    links.push({ source: -1, target: journey.nodes[0], group: -1 })
     for (let i = 0; i < journey.nodes.length - 1; i++) {
       links.push({
         source: journey.nodes[i],
         target: journey.nodes[i + 1],
         group: index,
-      });
+      })
     }
     links.push({
       source: journey.nodes[journey.nodes.length - 1],
       target: -2,
       group: -2,
-    });
-  });
-  return links;
-};
+    })
+  })
+  return links
+}
 
-export type GraphPath = number[];
+export type GraphPath = number[]
 export type Node = {
-  id: number;
-  name: string;
-  color: string;
-  focused: boolean;
-};
+  id: number
+  name: string
+  color: string
+  focused: boolean
+}
 
 export type Link = {
-  source: number;
-  target: number;
-  group: number;
-};
+  source: number
+  target: number
+  group: number
+}
 
 export type SimulationLink = {
-  source: SimulationNodeDatum;
-  target: SimulationNodeDatum;
-  group: number;
-};
+  source: SimulationNodeDatum
+  target: SimulationNodeDatum
+  group: number
+}
 
 interface SimulationNode extends SimulationNodeDatum {
-  id: number;
+  id: number
 }
 
 export type Options = {
-  nodeStrength?: number;
-  linkStrokeWidth?: number; // given d in links, returns a stroke width in pixels
-  linkStrength?: number;
-  onNodeFocus?: (index: number, x: number, y: number) => void;
-  onNodeBlur?: (index: number) => void;
-};
+  nodeStrength?: number
+  linkStrokeWidth?: number // given d in links, returns a stroke width in pixels
+  linkStrength?: number
+  onNodeFocus?: (index: number, x: number, y: number) => void
+  onNodeBlur?: (index: number) => void
+}
 
 type Props = Options & {
-  hit: HitInstanceType;
-  focusedNode: number;
-  focusedJourney: number;
-};
+  hit: HitInstanceType
+  focusedNode: number
+  focusedJourney: number
+}
 
 export const ForceGraph = ({
   hit,
@@ -100,16 +100,16 @@ export const ForceGraph = ({
   onNodeFocus = () => {},
   onNodeBlur = () => {},
 }: Props) => {
-  const svgRef = React.useRef<SVGSVGElement>();
+  const svgRef = React.useRef<SVGSVGElement>()
 
   const nodesRefs =
     React.useRef<d3.Selection<SVGGElement, SimulationNode, SVGGElement, any>>(
       null
-    );
+    )
   const linksRefs =
     React.useRef<
       d3.Selection<SVGLineElement, SimulationLink, SVGGElement, any>
-    >(null);
+    >(null)
 
   const updateNodes = (nodes: Node[]) => {
     nodesRefs.current
@@ -117,107 +117,90 @@ export const ForceGraph = ({
       .attr("fill", ({ index }) => nodes[index].color)
       .attr("stroke-opacity", ({ index }) =>
         nodes[index].focused ? "0.1" : "0.01"
-      );
-
-    //   .style("text-anchor", "middle")
-    //   .attr("fill", "black")
-    //   .attr("x", (d) => d.x)
-    //   .attr("y", (d) => d.y)
-    //   .text(({ index }) => {
-    //     console.log(nodes[index].name);
-    //     return nodes[index].name;
-    //   });
-  };
+      )
+  }
 
   React.useEffect(() => {
     if (nodesRefs.current) {
-      updateNodes(createNodes(hit.nodes, focusedNode));
+      updateNodes(createNodes(hit.nodes, focusedNode))
     }
     if (linksRefs.current) {
       linksRefs.current.attr("stroke-width", ({ group }) => {
-        return group == focusedJourney ? "5" : "1.5";
-      });
+        return group == focusedJourney ? "5" : "1.5"
+      })
     }
-  }, [hit, focusedNode, focusedJourney]);
+  }, [hit, focusedNode, focusedJourney])
 
   React.useEffect(() => {
     // Compute values.
-    const startingWidth = 1000;
-    const nodes = createNodes(hit.nodes, focusedNode);
-    const links = createLinks(hit.journeys);
+    const startingWidth = 1000
+    const nodes = createNodes(hit.nodes, focusedNode)
+    const links = createLinks(hit.journeys)
     const longestPathLength = Math.max(
       ...hit.journeys.map((p) => p.nodes.length)
-    );
-    const nodeRadius = startingWidth / (6 * longestPathLength);
-    const collideRadius = (2 * startingWidth) / (6 * longestPathLength);
-    const linkDistance = startingWidth / (2 * longestPathLength);
+    )
+    const nodeRadius = startingWidth / (6 * longestPathLength)
+    const collideRadius = (2 * startingWidth) / (6 * longestPathLength)
+    const linkDistance = startingWidth / (2 * longestPathLength)
 
     console.log(
       `longestPathLength=${longestPathLength}, nodeRadius=${nodeRadius}, linkDistance=${linkDistance}`
-    );
+    )
+
+    // Main steps
+    // 1. Set up the simulation
+    // 2. Run the simulation
+    // 3. Stop
+    // 4. Read the positions and draw in SVG
 
     // Replace the input nodes and links with mutable objects for the simulation.
-    let _nodes: SimulationNode[] = d3.map(nodes, (n) => ({ id: n.id }));
+    let _nodes: SimulationNode[] = d3.map(nodes, (n) => ({ id: n.id }))
     // add source and sync to simulation
-    _nodes.push({ id: -1 }); // source
-    _nodes.push({ id: -2 }); // sink
+    _nodes.push({ id: -1 }) // source
+    _nodes.push({ id: -2 }) // sink
 
-    let _links = d3.map(links, (l, i) => ({ ...l })) as SimulationLink[];
+    let _links = d3.map(links, (l, i) => ({ ...l })) as SimulationLink[]
 
     // Construct the forces.
-    // const forceY = d3.forceY();
-    const forceNode = d3.forceManyBody();
-    const forceLink = d3.forceLink(_links).id(({ index: i }) => _nodes[i].id);
-    forceLink.distance((_) => linkDistance);
-    if (nodeStrength !== undefined) forceNode.strength(nodeStrength);
-    if (linkStrength !== undefined) forceLink.strength(2);
-    const forceCollide = d3.forceCollide(collideRadius);
+    const forceNode = d3.forceManyBody() // nodes repel each other
+    const forceLink = d3.forceLink(_links).id(({ index: i }) => _nodes[i].id) // links pull nodes together
+    forceLink.distance((_) => linkDistance)
+    if (nodeStrength !== undefined) forceNode.strength(nodeStrength)
+    if (linkStrength !== undefined) forceLink.strength(2)
+    const forceCollide = d3.forceCollide(collideRadius) // prevents nodes from overlapping
 
     const simulation = d3
       .forceSimulation(_nodes)
-      // .force("y-axis", forceY)
       .force("collide", forceCollide)
       .force("link", forceLink)
       .force("charge", forceNode)
       .force("endpoints", () => {
+        // fix the source and sink in place using this custom force
         for (const node of _nodes) {
           if (node.id == -1) {
-            node.x = -startingWidth / 2;
-            node.y = 0;
+            node.x = -startingWidth / 2
+            node.y = 0
           }
           if (node.id == -2) {
-            node.x = startingWidth / 2;
-            node.y = 0;
+            node.x = startingWidth / 2
+            node.y = 0
           }
         }
       })
-      // .force("center", d3.forceCenter())
-      .on("tick", () => {
-        linksRefs.current
-          .attr("x1", (d) => d.source.x)
-          .attr("y1", (d) => d.source.y)
-          .attr("x2", (d) => d.target.x)
-          .attr("y2", (d) => d.target.y);
+      // here we run the simulation for 500 ticks
+      // this should mean it is in steady state now
 
-        nodesRefs.current
-          .selectChildren("circle")
-          .attr("cx", (d) => d.x)
-          .attr("cy", (d) => d.y);
-        nodesRefs.current
-          .selectChildren("text")
-          .attr("x", (d) => d.x)
-          .attr("y", (d) => d.y);
-      })
-      .tick(100);
+      .tick(500)
+      .stop()
 
-    console.log(_nodes);
-    // remove the source and sync
-    _nodes = _nodes.filter((n) => n.id != -1 && n.id != -2);
-    console.log(_links);
-    _links = _links.filter((l) => l.source.id != -1 && l.target.id != -2);
-    console.log(_links);
+    // now we can remove the source and the sync
+    _nodes = _nodes.filter((n) => n.id != -1 && n.id != -2)
+    _links = _links.filter((l) => l.source.id != -1 && l.target.id != -2)
 
-    const [width, height] = getDimensions(_nodes, nodeRadius);
+    // We get the bounding box of the nodes
+    const [width, height] = getDimensions(_nodes, nodeRadius)
+
+    // and we draw in SVG
     const svg = d3
       .select(svgRef.current)
       .attr("width", width)
@@ -226,7 +209,7 @@ export const ForceGraph = ({
       .attr(
         "style",
         "width: 500px; max-width: 100%; height: auto; height: intrinsic;"
-      );
+      )
 
     linksRefs.current = svg
       .append("g")
@@ -239,14 +222,18 @@ export const ForceGraph = ({
       .attr("stroke-linecap", "round")
       .selectAll("line")
       .data(_links)
-      .join("line");
+      .join("line")
+      .attr("x1", (d) => d.source.x)
+      .attr("y1", (d) => d.source.y)
+      .attr("x2", (d) => d.target.x)
+      .attr("y2", (d) => d.target.y)
 
     nodesRefs.current = svg
       .append("g")
       .selectAll("g")
       .data(_nodes)
       .enter()
-      .append("g");
+      .append("g")
 
     nodesRefs.current.each(function (d) {
       d3.select(this)
@@ -255,23 +242,27 @@ export const ForceGraph = ({
         .attr("stroke", "#000")
         .attr("stroke-opacity", "0.01")
         .attr("stroke-width", "50px")
+        .attr("cx", (d) => d.x)
+        .attr("cy", (d) => d.y)
         .on("mouseover", function (d, { index }) {
-          onNodeFocus(index, d.clientX, d.clientY);
+          onNodeFocus(index, d.clientX, d.clientY)
         })
         .on("mouseout", function (d, { index }) {
-          onNodeBlur(index);
-        });
+          onNodeBlur(index)
+        })
       d3.select(this)
         .append("text")
         .attr("paint-order", "stroke")
         .attr("fill", "#000")
         .attr("stroke", "#fff")
         .attr("stroke-width", "5px")
-        .text(({ index }) => nodes[index].name);
-    });
+        .attr("x", (d) => d.x)
+        .attr("y", (d) => d.y)
+        .text(({ index }) => nodes[index].name)
+    })
 
-    updateNodes(nodes);
-  }, []);
+    updateNodes(nodes)
+  }, [])
 
-  return <svg ref={svgRef} style={{ width: "400px", height: "intrinsic" }} />;
-};
+  return <svg ref={svgRef} style={{ width: "400px", height: "intrinsic" }} />
+}

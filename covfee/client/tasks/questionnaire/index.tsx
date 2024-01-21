@@ -3,17 +3,15 @@ import { Row, Col } from "antd"
 import VideojsPlayer from "../../players/videojs"
 import WaveSurferPlayer from "../../players/wavesurfer"
 import { Form } from "../../input/form"
-import { BaseTaskProps } from "../base"
-import { QuestionnaireTaskSpec } from "@covfee-shared/spec/tasks/questionnaire"
+import { BaseTaskProps, CovfeeTaskProps } from "../base"
+import type { QuestionnaireTaskSpec } from "./spec"
 import { State, slice, actions } from "./slice"
 import { TaskExport, TaskType, NodeState } from "types/node"
 import { useSelector } from "react-redux"
 import { useDispatch } from "../../journey/state"
 import { AllPropsRequired } from "types/utils"
 
-interface Props extends BaseTaskProps {
-  spec: QuestionnaireTaskSpec
-}
+interface Props extends CovfeeTaskProps<QuestionnaireTaskSpec> {}
 
 export const QuestionnaireTask: React.FC<Props> = (props) => {
   const args: AllPropsRequired<Props> = {
@@ -77,6 +75,8 @@ export const QuestionnaireTask: React.FC<Props> = (props) => {
     </>
   )
 }
+
+export type { QuestionnaireTaskSpec }
 
 export default {
   taskComponent: QuestionnaireTask,

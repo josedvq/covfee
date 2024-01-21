@@ -11,14 +11,20 @@
     "jsx": "react",
     "baseUrl": "./",
     "paths": {
+      "@covfee-client/*": ["../client/*"],
+      "@covfee-shared/*": ["./*"],
       "@tasks/*": ["../client/tasks/*"]
     }
   },
   "include": [
-    "**/*.ts",
-    "../client/tasks/*.tsx",
-    "node_modules/@types/**/*.d.ts",
-    "../client/tasks/instructions/index.tsx"
+    "index.ts"
+    // "../client/tasks/**/spec.ts",
+    // "node_modules/@types/**/*.d.ts"
+    // "../client/tasks/instructions/index.tsx",
+    // "../client/tasks/instructions/spec.ts",
+    // "../client/tasks/questionnaire/spec.ts",
+    // "../client/tasks/tutorial/spec.ts",
+    // "../client/tasks/videocall/spec.ts"
   ],
   "exclude": ["spec/*.ts", "node_modules", "dist"]
 }

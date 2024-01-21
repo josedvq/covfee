@@ -1,8 +1,8 @@
 import * as React from "react"
 import { Row, Col } from "antd"
-import { InstructionsTaskSpec } from "@covfee-shared/spec/tasks/instructions"
+import type { InstructionsTaskSpec } from "./spec"
 import { MarkdownLoader } from "../utils/markdown_loader"
-import { BaseTaskProps } from "../base"
+import { CovfeeTaskProps } from "../base"
 import { Form } from "../../input/form"
 import { AllPropsRequired } from "types/utils"
 import { State, slice, actions } from "./slice"
@@ -10,9 +10,7 @@ import { useDispatch } from "../../journey/state"
 import { NodeState, TaskExport } from "types/node"
 import { useSelector } from "react-redux"
 
-interface Props extends BaseTaskProps {
-  spec: InstructionsTaskSpec
-}
+interface Props extends CovfeeTaskProps<InstructionsTaskSpec> {}
 export const InstructionsTask: React.FC<Props> = (props) => {
   const args: AllPropsRequired<Props> = {
     ...props,
@@ -48,7 +46,7 @@ export const InstructionsTask: React.FC<Props> = (props) => {
     </Row>
   )
 }
-
+export type { InstructionsTaskSpec }
 export default {
   taskComponent: InstructionsTask,
   taskSlice: slice,
