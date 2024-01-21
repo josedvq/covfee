@@ -1,56 +1,62 @@
-import os
-import time
-import signal
-import subprocess
-
+import requests
 from flask import current_app as app
-from ..orm import db
 
-from .base import BaseCovfeeTask
-from ..utils.agora.rtc_token_builder import RtcTokenBuilder, Role_Attendee
+from .base import BaseCovfeeTask, CriticalError
+from covfee.logger import logger
+
+OPENVIDU_URL = "http://192.168.0.22:4443/"
+OPENVIDU_SECRET = "MY_SECRET"
+
 
 class VideocallTask(BaseCovfeeTask):
-    def get_task_specific_props(self) -> dict:
+    def _request_session_id(self):
+        try:
+            response = requests.post(
+                OPENVIDU_URL + "openvidu/api/sessions",
+                verify=False,
+                auth=("OPENVIDUAPP", OPENVIDU_SECRET),
+                headers={"Content-type": "application/json"},
+                json={
+                    "mediaMode": "ROUTED",
+                    "recordingMode": "MANUAL",
+                    "customSessionId": str(self.task.id),
+                },
+                timeout=(3.05, 5),
+            )
+            response.raise_for_status()
+            return response.json()["sessionId"]
+        except requests.exceptions.HTTPError as err:
+            if err.response.status_code == 409:
+                # Session already exists in OpenVidu
+                app.logger.warn(
+                    f"_request_session_id called but session already exists for session_id {str(self.task.id)}"
+                )
+                return str(self.task.id)
+            else:
+                raise err
 
-        if 'AGORA_APPID' not in app.config or 'AGORA_CERT' not in app.config:
-            return {}
+    def _request_connection_token(self, session_id, journey_id):
+        response = requests.post(
+            OPENVIDU_URL + "openvidu/api/sessions/" + session_id + "/connection",
+            verify=False,
+            auth=("OPENVIDUAPP", OPENVIDU_SECRET),
+            headers={"Content-type": "application/json"},
+            json={"data": journey_id},
+            timeout=(3.05, 5),
+        )
+        response.raise_for_status()
+        return response.json()["token"]
 
-        # token valid for 10 hours
-        privilegeExpiredTs = int(time.time()) + 10*60*60 # in seconds
-        return {
-            'agoraAppId': app.config['AGORA_APPID'],
-            'agoraToken': RtcTokenBuilder.buildTokenWithUid(app.config['AGORA_APPID'], app.config['AGORA_CERT'], str(self.task.id), 0, Role_Attendee, privilegeExpiredTs)
-        }
+    def on_join(self, journey=None):
+        logger.info("VideocallTask:on_join")
+        # retrieve or request a session ID for the call / room
 
-    def on_first_join(self):
-        ''' Starts the recording script
-        '''
-        recording_dir = os.path.join(app.config["PROJECT_WWW_PATH"], self.task.hitinstance.id.hex(), f'{self.task.id}_{str(self.response.id)}')
-        if not os.path.exists(recording_dir):
-            os.makedirs(recording_dir)
+        try:
+            session_id = self._request_session_id()
+            connection_token = self._request_connection_token(
+                session_id, journey.id.hex() if journey is not None else None
+            )
+        except Exception:
+            raise CriticalError(load_task=True)
 
-        cmd =  [f'{app.config["AGORA_RECORDER_PATH"]}',
-                f' --appId {app.config["AGORA_APPID"]}',
-                f' --channel {self.response.id}',
-                f' --recordFileRootDir {recording_dir}',
-                f' --triggerMode 1',
-                f' --uid 0',
-                f' --channelProfile 0',
-                f' --appliteDir {app.config["AGORA_APPLITEDIR"]}']
-
-        p = subprocess.Popen(cmd)
-        print(' '.join(cmd))
-        self.response.extra['recorder_pid'] = p.pid
-        db.session.commit()
-        # os.system(f'kill -s 10 {p.pid}')
-        os.kill(p.pid, 10)
-
-
-    def on_last_leave(self):
-        ''' Stops the recording script
-        '''
-        if 'recorder_pid' in self.response.extra:
-            os.kill(self.response.extra['recorder_pid'], 12)
-            del self.response.extra['recorder_pid']
-            db.session.commit()
-
+        return {"session_id": session_id, "connection_token": connection_token}

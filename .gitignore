@@ -3,6 +3,7 @@
 covfee.egg-info
 build
 dist
+**/*/flask_session
 
 #js
 node_modules
@@ -10,6 +11,7 @@ covfee/client/bundles
 covfee/client/node_modules
 docs/node_modules
 yarn.lock
+yarn-error.log
 lerna-debug.log
 
 # generated files

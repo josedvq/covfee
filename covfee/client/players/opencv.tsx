@@ -3,7 +3,7 @@ declare global {
     var cv: any
 }
 import * as React from 'react'
-import { OpencvFlowPlayerMedia, OpencvFlowPlayerOptions } from '@covfee-types/players/opencv'
+import { OpencvFlowPlayerMedia, OpencvFlowPlayerOptions } from '@covfee-shared/spec/players/opencv'
 import { urlReplacer } from '../utils'
 import { CovfeeContinuousPlayer, ContinuousPlayerProps } from './base'
 import { CaretRightOutlined, CloseOutlined, RiseOutlined } from '@ant-design/icons'

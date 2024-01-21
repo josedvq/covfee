@@ -1,99 +1,106 @@
-
-import datetime
-from hashlib import sha256
+from __future__ import annotations
 import os
 import json
+from pprint import pformat
+from typing import TYPE_CHECKING, List
 
 import pandas as pd
-from flask import current_app as app
+from sqlalchemy import select
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
-from .db import db
-from .hit import HIT
+# from ..db import Base
+from .base import Base
+import covfee.launcher as launcher
+
+if TYPE_CHECKING:
+    from .hit import HITSpec
 
 
-class Project(db.Model):
-    """ Represents a set of HITs which make up an experiment or annotation project """
-    __tablename__ = 'projects'
+class Project(Base):
+    __tablename__ = "projects"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
 
-    id = db.Column(db.LargeBinary, primary_key=True)
-    name = db.Column(db.String)
-    email = db.Column(db.String)
-    hits = db.relationship("HIT", backref="project", cascade="all, delete-orphan")
+    # one project -> many HitSpec
+    hitspecs: Mapped[List[HITSpec]] = relationship(
+        back_populates="project", cascade="all,delete"
+    )
 
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
-
-    def __init__(self, id, name, email, hits, **kwargs):
-        hashstr = Project.get_hashtr(id)
-        self.id = sha256(hashstr.encode()).digest()
+    def __init__(
+        self, name="Sample", email="example@example.com", hitspecs: List[HITSpec] = []
+    ):
+        super().init()
         self.name = name
         self.email = email
+        self.hitspecs = hitspecs
 
-        hashstr = Project.get_hashtr(id)
-        for hit_dict in hits:
-            hit = HIT(**hit_dict, project_id=id)
-            self.hits.append(hit)
-
-            repeats = hit_dict.get('repeat', 1)
-            for r in range(repeats):
-                hit.instantiate()
+        # to keep track of info at launch time
+        self._conflicts = False
+        self._filename = None
 
     def get_dataframe(self):
-        list_of_instances = list()
-        for hit in self.hits:
+        rows = list()
+        for hit in self.hitspecs:
             for instance in hit.instances:
-                list_of_instances.append({
-                    'hit_name': hit.name,
-                    'id': instance.id.hex(),
-                    'url': instance.get_url(),
-                    'preview_url': instance.get_preview_url(),
-                    'completion_code': instance.get_completion_code()
-                })
-        df = pd.DataFrame(list_of_instances, columns=['hit_name', 'id', 'url', 'preview_url', 'completion_code'])
-        
+                for journey in instance.journeys:
+                    rows.append(
+                        {
+                            "hit_name": hit.name,
+                            "hit_id": instance.id.hex(),
+                            "journey_name": journey.spec.name
+                            if journey.spec.name is not None
+                            else "unnamed",
+                            "journey_id": journey.id,
+                            "url": journey.get_url(),
+                            "completion_code": journey.get_completion_code(),
+                        }
+                    )
+        df = pd.DataFrame(
+            rows,
+            columns=["hit_name", "id", "url", "completion_code"],
+        )
+
         return df
 
-    def as_dict(self, with_hits=False, with_instances=False, with_config=False):
-        project_dict = {c.name: getattr(self, c.name)
-                        for c in self.__table__.columns}
-        project_dict['id'] = project_dict['id'].hex()
-        if with_hits:
-            project_dict['hits'] = [hit.as_dict(with_instances=with_instances, with_config=with_config) for hit in self.hits]
-        return project_dict
-
-    def info(self):
-        txt = f'{self.name}\nID: {self.id.hex():s}\n'
-        for tl in self.hits:
-            txt += tl.showinfo()
-        return txt
-
-    def __str__(self):
-        txt = f'{self.name} - ID: {self.id.hex():s}\n'
-        for tl in self.hits:
-            txt += str(tl)
-        return txt
-
     @staticmethod
-    def get_hashtr(id):
-        return id + app.config['COVFEE_SECRET_KEY']
-
-    @staticmethod
-    def get_id(id):
-        return sha256(Project.get_hashtr(id).encode()).digest()
+    def from_name(session, name: str):
+        return (
+            session.execute(select(Project).where(Project.name == name))
+            .scalars()
+            .first()
+        )
 
     @staticmethod
     def from_json(fpath: str):
-        '''
+        """
         Loads a project into ORM objects from a project json file.
-        '''
-        with open(fpath, 'r') as f:
+        """
+        with open(fpath, "r") as f:
             proj_dict = json.load(f)
 
         return Project(**proj_dict)
 
-    def stream_download(self, z, base_path, submitted_only=True, csv=False):
-        for hit in self.hits:
+    def stream_download(self, z, base_path, submitted_only=True):
+        for hit in self.hitspecs:
             for instance in hit.instances:
-                if submitted_only and not instance.submitted:
-                    continue
-                yield from instance.stream_download(z, os.path.join(base_path, instance.id.hex()), csv=csv)
+                yield from instance.stream_download(z, base_path)
+
+    def to_dict(self, with_hits=True, with_hitspecs=True, with_hit_nodes=False):
+        project_dict = super().to_dict()
+        if with_hitspecs:
+            project_dict["hitSpecs"] = [hit.to_dict() for hit in self.hitspecs]
+        if with_hits:
+            hit_instances = [h for hitspec in self.hitspecs for h in hitspec.instances]
+            project_dict["hits"] = [
+                hit.to_dict(
+                    with_nodes=with_hit_nodes,
+                )
+                for hit in hit_instances
+            ]
+        return project_dict
+
+    def __repr__(self):
+        pass
+
+    def __str__(self):
+        return pformat({"id": self.id, "name": self.name})

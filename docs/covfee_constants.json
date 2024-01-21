@@ -1,6 +1,5 @@
 {
   "env": "development",
-  "socketio_enabled": true,
   "app_url": "http://127.0.0.1:5000/#",
   "base_url": "http://127.0.0.1:5000",
   "api_url": "http://127.0.0.1:5000/api",
@@ -10,6 +9,6 @@
   "admin": {
     "unsafe_mode_on": false,
     "home_url": "http://127.0.0.1:5000/admin#",
-    "login_url": "http://127.0.0.1:5000/admin#login"
+    "login_url": "http://127.0.0.1:5000/admin#/login"
   }
 }

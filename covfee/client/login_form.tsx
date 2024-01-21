@@ -1,117 +1,80 @@
-import * as React from 'react';
+import * as React from "react"
 
-import {
-    Form,
-    Input,
-    Button,
-    Layout,
-    Row,
-    Col, Alert, Divider
-} from 'antd'
-import {GoogleLoginButton} from 'react-social-login-buttons'
+import { Form, Input, Button, Alert, Divider } from "antd"
 
-import userContext from './userContext'
-import Constants from 'Constants'
-import CovfeeLogo from './art/logo.svg'
-import { GoogleLogin } from 'react-google-login'
-import './login_form.scss'
-
-import { log } from './utils'
-
+import { appContext } from "./app_context"
 
 interface Props {
-    onSuccess: () => void
-    onError?: () => void
+  onSuccess: () => void
+  onError?: () => void
 }
 
-export default class LoginForm extends React.Component<Props> {
-    state = {
-        error: null,
-        submitting: false,
-    }
+export const LoginForm: React.FC<Props> = (props) => {
+  const { login } = React.useContext(appContext)
+  const [error, setError] = React.useState<string>()
+  const [submitting, setSubmitting] = React.useState<boolean>(false)
 
-    handleFormSubmit = (values: any) => {
-        this.setState({ submitting: true })
+  const handleFormSubmit = (values: any) => {
+    setSubmitting(true)
 
-        this.context.login(values)
-            .then(data => {
-                this.props.onSuccess(data)
-            })
-            .catch(error => {
-                this.setState({ error: error.toString(), submitting: false })
-            })
-    }
+    login(values)
+      .then((data) => {
+        props.onSuccess(data)
+      })
+      .catch((error) => {
+        setError(error.toString())
+        setSubmitting(false)
+      })
+  }
 
-    onSuccessGoogle = (response: any) => {
-        log.debug(response)
-        log.debug(Constants.google_client_id)
-        this.context.loginWithGoogle(response.tokenId)
-            .then(data => {
-                this.props.onSuccess(data)
-            })
-            .catch(error => {
-                this.setState({ error: error.toString(), submitting: false })
-            })
-    }
+  const layout = {
+    labelCol: { span: 8 },
+    wrapperCol: { span: 16 },
+  }
+  const tailLayout = {
+    wrapperCol: { offset: 8, span: 16 },
+  }
 
-    onFailureGoogle = () => {
+  return (
+    <>
+      <Divider />
+      <Form
+        {...layout}
+        name="basic"
+        initialValues={{ remember: true }}
+        onFinish={handleFormSubmit}
+      >
+        <Form.Item
+          label="Username"
+          name="username"
+          rules={[{ required: true, message: "Please input your username!" }]}
+        >
+          <Input />
+        </Form.Item>
 
-    }
+        <Form.Item
+          label="Password"
+          name="password"
+          rules={[{ required: true, message: "Please input your password!" }]}
+        >
+          <Input.Password />
+        </Form.Item>
 
-    render() {
-        const layout = {
-            labelCol: { span: 8 },
-            wrapperCol: { span: 16 },
-        }
-        const tailLayout = {
-            wrapperCol: { offset: 8, span: 16 },
-        }
+        {error != null && (
+          <Alert
+            message={error}
+            type="error"
+            style={{ marginBottom: "1em" }}
+            showIcon
+          />
+        )}
 
-        return <>
-
-            <GoogleLogin
-                clientId={Constants.google_client_id}
-                responseType='id_token'
-                buttonText="Sign in with Google"
-                onSuccess={this.onSuccessGoogle}
-                onFailure={this.onFailureGoogle}
-                cookiePolicy={'single_host_origin'}
-                theme='light'
-                className='login-google-btn'/>
-
-            <Divider />
-            <Form
-                {...layout}
-                name="basic"
-                initialValues={{ remember: true }}
-                onFinish={this.handleFormSubmit}>
-                    <Form.Item
-                        label="Username"
-                        name="username"
-                        rules={[{ required: true, message: 'Please input your username!' }]}
-                    >
-                        <Input />
-                    </Form.Item>
-
-                    <Form.Item
-                        label="Password"
-                        name="password"
-                        rules={[{ required: true, message: 'Please input your password!' }]}
-                    >
-                        <Input.Password />
-                    </Form.Item>
-
-                    {this.state.error != null &&
-                        <Alert message={this.state.error} type="error" style={{marginBottom: '1em'}} showIcon />}
-                    
-                    <Form.Item {...tailLayout}>
-                        <Button type="primary" htmlType="submit">
-                            Log in
-                        </Button>
-                    </Form.Item>
-            </Form>
-        </>
-    }
+        <Form.Item {...tailLayout}>
+          <Button type="primary" htmlType="submit">
+            Log in
+          </Button>
+        </Form.Item>
+      </Form>
+    </>
+  )
 }
-
-LoginForm.contextType = userContext

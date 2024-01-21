@@ -4,7 +4,7 @@ import { myerror } from '../utils'
 import { 
     Trace1DInputSpec,
     RankTraceInputSpec
-} from '@covfee-types/input/1d_trace'
+} from '@covfee-shared/spec/input/1d_trace'
 import { ButtonManagerClient } from './button_manager';
 
 interface Props {
