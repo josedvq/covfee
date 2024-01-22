@@ -164,11 +164,8 @@ class JourneyInstance(Base):
         self.config = {}
         self.chat = Chat()
 
-    def get_api_url(self):
-        return f'{app.config["API_URL"]}/instances/{self.id.hex():s}'
-
     def get_url(self):
-        return f'{app.config["APP_URL"]}/hits/{self.id.hex():s}'
+        return f'{app.config["APP_URL"]}/journeys/{self.id.hex():s}'
 
     def set_curr_node(self, node):
         self.curr_node = node

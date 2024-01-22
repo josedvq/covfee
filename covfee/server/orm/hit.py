@@ -165,9 +165,6 @@ class HITInstance(Base):
     def get_api_url(self):
         return f'{app.config["API_URL"]}/instances/{self.id.hex():s}'
 
-    def get_url(self):
-        return f'{app.config["APP_URL"]}/hits/{self.id.hex():s}'
-
     def get_hmac(self):
         h = hmac.new(
             app.config["COVFEE_SECRET_KEY"].encode("utf-8"), self.id, hashlib.sha256
