@@ -117,6 +117,16 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
   }, [node.id, socket])
 
   React.useEffect(() => {
+    // emit state when the component unmounts
+    if (!useSharedState) {
+      return () => {
+        console.log("Node Loader UNMOUNT")
+        emitState()
+      }
+    }
+  }, [emitState, useSharedState])
+
+  React.useEffect(() => {
     if (socket) {
       emitJoin()
     }
@@ -410,15 +420,6 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
         handleReady={setReady}
       />
     )
-    // return (
-    //   <NodeLoaderMessage>
-    //     <h1>Waiting for subjects...</h1>
-    //     <Spin />
-    //     <p>
-    //       {numOnlineJourneys} / {node.n_start} subjects present
-    //     </p>
-    //   </NodeLoaderMessage>
-    // )
   }
 
   if (node.status == "RUNNING" || node.status == "FINISHED") {

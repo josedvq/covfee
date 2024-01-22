@@ -93,13 +93,6 @@ export const _JourneyPage: React.FC<Props> = (props) => {
     setTimer,
   }
 
-  // React.useEffect(() => {
-  //   const nodeIndex =
-  //     routeParams.nodeId !== undefined ? parseInt(routeParams.nodeId) : 0
-
-  //   if(currNode == null)
-  // }, [routeParams.nodeId, addChats, journey.chat_id, journey.nodes])
-
   React.useEffect(() => {
     if (!hasChat(journey.chat_id)) addChats([journey.chat_id])
   }, [addChats, hasChat, journey.chat_id])

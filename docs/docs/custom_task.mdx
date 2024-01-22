@@ -9,8 +9,8 @@ New custom tasks or HIT types can be added by implementing a React component mee
 ## Types of tasks
 There are two main types of tasks in covfee:
 
-- Tasks with shared state, or "multiplayer" tasks are meant to be visited by multiple users at the same time. A chess game, or a collaborative live view form to be filled by multiple users at the same time is an example of a shared state task. Covfee internally manages state synchronization and persistence. A copy of the latest state is kept in the server.
-- Tasks without shared state, or "single player" tasks are meant to be visited by a single user. A standard form is a good example.
+- Tasks with shared state, or *multiplayer* tasks are meant to be visited by multiple users at the same time. A chess game, or a collaborative live view form to be filled by multiple users at the same time is an example of a shared state task. Covfee internally manages state synchronization and persistence. A copy of the latest state is kept in the server. If the task is opened in multiple clients (windows/tabs), they will all be kept in sync and changes can be observed *live*.
+- Tasks without shared state, or "single player" tasks are meant to be visited by a single user. A standard form is a good example. If these tasks are opened in multiple clients (windows/tabs) they will not be kept in sync. Their state will diverge when multiple users make changes.
 
 ## Task state
 
@@ -28,8 +28,9 @@ State persistance and loading is managed internally by Covfee:
 - For shared state tasks, Covfee will keep the most up-to-date state in the server, which will always represent the latest state of the task.
 
 - For non-shared state tasks, the latest state is kept in the browser and persisted when necessary. Covfee submits and persists state whenever:
-    - A user closes the browser tab where the task is open, or otherwise leaves the task.
-    - A user presses the "submit" button in the task.
+    - When a certain time has passed after the last state change. The default is 3s.
+    - The user moves to the next or previous task or otherwise leaves the task. An exception is if the user abruptly closes the browser window/tab where the task is open. In this case the state may not sent to the server.
+    - The user presses the "submit" button in the task.
 
 State that does not need to be stored can be managed separately, for example using React's `useState`.
 
@@ -89,7 +90,7 @@ export interface TutorialTaskSpec extends BaseTaskSpec {
 }
 ```
 
-These props will be parsed by Covfee so that they can be provided when the task is created. They allow the user to configure the way a task is rendered to the user. In this case, we only provide two props. One is the name of the task. This will be the name of the task's Python class and is a constant value. The other one is our only true prop `showPhoneField`, which we define to be boolean. The comments provided here will be parsed and will be available in Python when creating task objects. The line `TJS-additionalProperties false` specifies that no additional properties should be allowed when the task is validated.
+These props will be parsed by Covfee so that they can be provided in Python when the task is created. They allow the user to configure the way a task is rendered to the user. In this case, we only provide two props. One is the name of the task. This will be the name of the task's Python class and is a constant value. The other one is our only true prop `showPhoneField`, which we define to be boolean. The comments provided here will be parsed and will be available in Python when creating task objects. The line `TJS-additionalProperties false` specifies that no additional properties should be allowed when the task is validated.
 
 ### State
 
@@ -133,27 +134,40 @@ Here we specified the type for the state, the initial state, and wrote separate 
 
 ### React Component
 
-Following React + Redux design philosophy, the main job of the React component is to sync state with the DOM (view), by reading the state and by calling Redux actions in response to user events. In this case, because form input elements hold their own state, we are simply calling Redux actions whenever the content of the input elements changes. That's all!
+Following React + Redux design philosophy, the main job of the React component is to sync state with the DOM (view), by reading the state and by calling Redux actions in response to user events. In this case we read the state variables using `useSelector` in the same way it is used in Redux, and we call Redux actions whenever the content of the input elements changes. That's all!
 
 ```
-import React, { useState } from "react"
-import { slice, actions } from "./slice"
+import React from "react"
+import { slice, actions, State } from "./slice"
 import { TaskExport } from "../../types/node"
 import { CovfeeTaskProps } from "../base"
 import type { TutorialTaskSpec } from "./spec"
 import { AllPropsRequired } from "../../types/utils"
+import { useDispatch } from "../../journey/state"
+import { useSelector } from "react-redux"
 
 interface Props extends CovfeeTaskProps<TutorialTaskSpec> {}
 
 const TutorialTask: React.FC<Props> = (props) => {
+  // here we set the defaults for the task props
+  // we could use useMemo to avoid recomputing on every render
   const args: AllPropsRequired<Props> = {
     ...props,
     spec: {
-      ...props.spec,
       showPhoneField: true,
+      ...props.spec,
     },
   }
 
+  // we read the state using useSelector
+  const name = useSelector<State, string>((state) => state.name)
+  const email = useSelector<State, string>((state) => state.email)
+  const phoneNumber = useSelector<State, string>((state) => state.phone)
+
+  // this is a custom dispatch function provided by Covfee
+  const dispatch = useDispatch()
+
+  // and we render the component
   return (
     <form>
       <div>
@@ -161,7 +175,8 @@ const TutorialTask: React.FC<Props> = (props) => {
         <input
           type="text"
           id="name"
-          onChange={(e) => actions.setName(e.target.value)}
+          value={name}
+          onChange={(e) => dispatch(actions.setName(e.target.value))}
           required
         />
       </div>
@@ -170,7 +185,8 @@ const TutorialTask: React.FC<Props> = (props) => {
         <input
           type="email"
           id="email"
-          onChange={(e) => actions.setEmail(e.target.value)}
+          value={email}
+          onChange={(e) => dispatch(actions.setEmail(e.target.value))}
           required
         />
       </div>
@@ -180,13 +196,15 @@ const TutorialTask: React.FC<Props> = (props) => {
           <input
             type="tel"
             id="phone"
-            onChange={(e) => actions.setPhone(e.target.value)}
+            value={phoneNumber}
+            onChange={(e) => dispatch(actions.setPhone(e.target.value))}
           />
         </div>
       )}
     </form>
   )
 }
+
 export default {
   taskComponent: TutorialTask,
   taskSlice: slice,
@@ -197,10 +215,11 @@ export default {
 
 
 
-Note the expor statement at the end of the file. Covfee expects every task to export a default object with these keys. `useSharedState` should only be set to true for "multiplayer" tasks.
+Note the *export* statement at the end of the file. Covfee expects every task to export a default object with these keys. `useSharedState` should only be set to true for *multiplayer* tasks.
 
 
 ### Importing the task
+
 Now that the task is created, the task should be imported into Covfee source files. To do this, modify the file at `/covfee/client/tasks/index.ts` to import your custom task. Simply follow the same pattern as for the rest of the imports in the file. The task props specification (*spec*) should also be imported in `/covfee/shared/spec/task.ts`.
 
 
