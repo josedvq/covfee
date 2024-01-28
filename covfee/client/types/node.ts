@@ -101,7 +101,6 @@ export interface EditableTaskFields {
 export type NodeState<T> = T
 
 export interface TaskExport {
-  taskSpec: BaseTaskSpec
   taskComponent: React.FC<BaseTaskProps>
   taskSlice: Slice<any, any>
   useSharedState?: boolean

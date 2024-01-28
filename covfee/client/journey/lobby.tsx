@@ -1,9 +1,7 @@
 import * as React from "react"
 
-import { VideocallTaskSpec } from "@covfee-shared/spec/tasks/videocall"
 import { AllPropsRequired } from "../types/utils"
 import { styled } from "styled-components"
-import { nodeContext } from "./node_context"
 import { JourneyAssoc, NodeType } from "../types/node"
 import { Countdown } from "./timer"
 import { Switch } from "antd"
@@ -25,7 +23,7 @@ export const Lobby: React.FC<Props> = (props) => {
   )
 
   return (
-    <MessageContainer>
+    <LobbyContainer>
       <div>
         {args.node.status == "INIT" && !args.observer && (
           <ReadyBlock>
@@ -83,7 +81,7 @@ export const Lobby: React.FC<Props> = (props) => {
           </PlayerList>
         </SubjectsContainer>
       </div>
-    </MessageContainer>
+    </LobbyContainer>
   )
 }
 
@@ -113,7 +111,7 @@ const PlayerItem = styled.li<{ $isOnline: boolean }>`
   margin: 10px 0;
   display: flex;
   align-items: center;
-  border: 1px solid #ddd;
+  border: 1px solid #c0c0c0;
   margin: 0.2em 0;
   padding: 0.5em 0;
 `
@@ -130,19 +128,28 @@ const StatusCircle = styled.span<{ $ready: boolean }>`
 const PlayerName = styled.span`
   margin-left: 5px;
 `
-const MessageContainer = styled.div`
+const LobbyContainer = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: row;
   align-items: center;
   width: 100%;
   height: 100%;
+  z-index: 100;
+  background-color: rgba(0, 0, 0, 0.8);
 
   > div {
     width: 80%;
     min-height: 500px;
     border-radius: 10px;
     margin: 0 auto;
+    padding: 3em;
     text-align: center;
+    background-color: #d8d8d8;
   }
 `
 const LargeIconContainer = styled.h2`

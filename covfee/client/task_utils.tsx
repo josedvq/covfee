@@ -1,5 +1,6 @@
 import CovfeeTasks from "./tasks"
 import CovfeePlayers from "./players"
+import { TaskExport } from "./types/node"
 
 export const getTask = (type: string) => {
   if (type in CovfeeTasks) {
@@ -11,7 +12,11 @@ export const getTask = (type: string) => {
     ) {
       return taskImport
     } else {
-      return { taskComponent: taskImport, taskSlice: null }
+      return {
+        taskComponent: taskImport,
+        taskSlice: null,
+        useSharedState: false,
+      } as TaskExport
     }
   } else {
     return null

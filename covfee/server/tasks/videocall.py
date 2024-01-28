@@ -10,6 +10,7 @@ OPENVIDU_SECRET = "MY_SECRET"
 
 class VideocallTask(BaseCovfeeTask):
     def _request_session_id(self):
+        # https://openvidu.discourse.group/t/session-lifecycle/103/2
         try:
             response = requests.post(
                 OPENVIDU_URL + "openvidu/api/sessions",

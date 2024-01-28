@@ -407,76 +407,67 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
     return <NodeOverlayReload counter={reloadCount} message={reloadMessage} />
   }
 
-  if (
-    node.status == "INIT" ||
-    node.status == "COUNTDOWN" ||
-    node.status == "PAUSED"
-  ) {
+  if (node.type != "TaskInstance") {
     return (
-      <Lobby
-        observer={args.observer}
-        node={node}
-        journeyData={journeyData}
-        handleReady={setReady}
-      />
+      <NodeLoaderMessage>
+        <h1>Unimplemented</h1>
+      </NodeLoaderMessage>
     )
   }
 
-  if (node.status == "RUNNING" || node.status == "FINISHED") {
-    if (node.type != "TaskInstance") {
-      return (
-        <NodeLoaderMessage>
-          <h1>Unimplemented</h1>
-        </NodeLoaderMessage>
-      )
-    }
+  return (
+    <>
+      {/* {renderErrorModal()} */}
+      <div ref={nodeInstructionsRef}></div>
+      <div style={{ width: "100%", height: "100%", position: "relative" }}>
+        {["INIT", "COUNTDOWN", "PAUSED"].includes(node.status) && (
+          <Lobby
+            observer={args.observer}
+            node={node}
+            journeyData={journeyData}
+            handleReady={setReady}
+          />
+        )}
 
-    return (
-      <>
-        {/* {renderErrorModal()} */}
-        <div ref={nodeInstructionsRef}></div>
-        <div style={{ width: "100%", height: "100%", position: "relative" }}>
-          {node.paused && <NodeOverlayPaused />}
+        <StoreProvider store={reduxStore.current}>
+          <NodeProvider
+            node={node}
+            paused={node.status == "PAUSED"}
+            disabled={args.observer}
+            response={response}
+            useSharedState={useSharedState}
+            emitState={emitState}
+          >
+            {(() => {
+              const nodeProps: BaseTaskProps = {
+                spec: node.spec,
+                taskData: node.taskData,
+                response: response,
+                disabled: node.status == "FINISHED",
+                onSubmit: handleTaskSubmit,
+                renderSubmitButton: renderTaskSubmitButton,
+              }
 
-          <StoreProvider store={reduxStore.current}>
-            <NodeProvider
-              node={node}
-              disabled={args.observer}
-              response={response}
-              useSharedState={useSharedState}
-              emitState={emitState}
-            >
-              {(() => {
-                const nodeProps: BaseTaskProps = {
-                  spec: node.spec,
-                  taskData: node.taskData,
-                  response: response,
-                  disabled: node.status == "FINISHED",
-                  onSubmit: handleTaskSubmit,
-                  renderSubmitButton: renderTaskSubmitButton,
-                }
+              const taskElement = React.createElement(
+                taskComponent,
+                {
+                  ...nodeProps,
+                },
+                null
+              )
 
-                const taskElement = React.createElement(
-                  taskComponent,
-                  {
-                    ...nodeProps,
-                  },
-                  null
-                )
+              console.log(
+                `${args.node.spec.type} built with disabled=${args.observer} status=${node.status}, usedSharedState=${useSharedState}, paused=${node.paused}`,
+                nodeProps
+              )
 
-                console.log(
-                  `${args.node.spec.type} built with disabled=${args.observer} status=${node.status}, usedSharedState=${useSharedState}, paused=${node.paused}`,
-                  nodeProps
-                )
-
-                return taskElement
-              })()}
-            </NodeProvider>
-          </StoreProvider>
-        </div>
-      </>
-    )
-  }
+              return taskElement
+            })()}
+          </NodeProvider>
+        </StoreProvider>
+      </div>
+    </>
+  )
 }
 
 interface NodeLoaderMessageProps {
@@ -498,18 +489,6 @@ export const NodeOverlay = (props: NodeOverlayProps) => {
     <OverlayContainer>
       <div>{args.children}</div>
     </OverlayContainer>
-  )
-}
-
-export const NodeOverlayPaused = () => {
-  return (
-    <NodeOverlay>
-      <h2>The task has been paused by the admin</h2>
-      <p>
-        Please wait for instructions in the chat or for this message to
-        dissapear.
-      </p>
-    </NodeOverlay>
   )
 }
 

@@ -1,13 +1,7 @@
 import React from "react"
 import styled from "styled-components"
 import { AllPropsRequired } from "../../types/utils"
-// eslint-disable-next-line semi
-import NoVideo from "./novideo.svg"
-import {
-  AudioMutedOutlined,
-  AudioOutlined,
-  VideoCameraOutlined,
-} from "@ant-design/icons"
+import { AudioOutlined, VideoCameraOutlined } from "@ant-design/icons"
 
 const GridContainer = styled.div<{ $rows: number; $columns: number }>`
   display: grid;

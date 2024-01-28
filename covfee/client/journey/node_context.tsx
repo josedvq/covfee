@@ -5,6 +5,7 @@ import { Action } from "@reduxjs/toolkit"
 
 export type NodeContextType = {
   node: NodeType
+  paused: boolean
   disabled: boolean
   response?: TaskResponseType
   dispatch: (arg0: Action) => void
@@ -13,6 +14,7 @@ export type NodeContextType = {
 
 export const nodeContext = createContext<NodeContextType>({
   node: null,
+  paused: false,
   disabled: false,
   response: null,
   dispatch: (_) => {},

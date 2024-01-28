@@ -6,9 +6,11 @@ import { useDispatch } from "react-redux"
 import { Action } from "@reduxjs/toolkit"
 import { ClientToServerEvents } from "../app_context"
 import { AllPropsRequired } from "../types/utils"
+import { PauseOutlined } from "@ant-design/icons"
 
 export interface NodeProviderProps {
   node: NodeType
+  paused: boolean
   /**
    * The node is disabled
    * Used in admin mode
@@ -75,6 +77,7 @@ export const NodeProvider: React.FC<
     <nodeContext.Provider
       value={{
         node: args.node,
+        paused: args.paused,
         disabled: args.disabled,
         response: args.response,
         dispatch,

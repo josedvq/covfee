@@ -402,8 +402,6 @@ class NodeInstance(Base):
         ):  # status frozen when node paused by the admin
             return
 
-        print("HERELAKA ")
-
         # task lifecycle logic
         if self.status in [NodeInstanceStatus.INIT]:
             n_start = self.spec.settings.get("n_start")
