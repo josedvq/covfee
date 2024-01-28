@@ -308,7 +308,7 @@ export const _JourneyPage: React.FC<Props> = (props) => {
             key={currKey}
             index={currNodeIndex}
             node={nodeProps}
-            observer={props.previewMode}
+            observer={args.previewMode}
             // callbacks
             onSubmit={handleNodeSubmitted}
           />

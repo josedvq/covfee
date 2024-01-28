@@ -43,15 +43,16 @@ export const VideocallTask: React.FC<Props> = (props) => {
 
   const [muted, setMuted] = React.useState(false)
   const [videoStopped, setStopVideo] = React.useState(false)
-  const {
-    player: { active: isActive },
-  } = React.useContext(nodeContext)
+  const { disabled } = React.useContext(nodeContext)
 
   const publishStream = React.useCallback(async () => {
-    if (!isActive)
+    if (disabled)
       return console.warn(
-        "publishStream called when isActive = False. Nothing will be done"
+        "publishStream called when disabled = True. Nothing will be done"
       )
+
+    console.log("Publishing stream..")
+    console.log(disabled)
     // --- 5) Get your own camera stream ---
     // Init a publisher passing undefined as targetElement (we don't want OpenVidu to insert a video
     // element: we will manage it on our own) and with the desired properties
@@ -84,7 +85,7 @@ export const VideocallTask: React.FC<Props> = (props) => {
     // Set the main video in the page to display our webcam and store our Publisher
     setCurrentVideoDevice(_currentVideoDevice)
     setPublisher(_publisher)
-  }, [OV, args.spec.muted, args.spec.videoOff, isActive, session])
+  }, [OV, args.spec.muted, args.spec.videoOff, disabled, session])
 
   const leaveSession = React.useCallback(() => {
     // --- 7) Leave the session by calling 'disconnect' method over the Session object ---
@@ -108,38 +109,61 @@ export const VideocallTask: React.FC<Props> = (props) => {
     }
   })
 
+  /**
+   * Here we create the session object and
+   * store it in state
+   */
   React.useEffect(() => {
-    const session = OV.initSession()
-    console.log("OV.current.initSession() called")
-    setSession(session)
+    if (session !== null) return
+
+    console.log("OV.initSession()")
+
+    const sess = OV.initSession()
 
     // On every new Stream received...
-    session.on("streamCreated", (event) => {
+    sess.on("streamCreated", (event) => {
       console.log("ON: streamCreated")
       // Subscribe to the Stream to receive it. Second parameter is undefined
       // so OpenVidu doesn't create an HTML video by its own
-      var subscriber = session.subscribe(event.stream, undefined)
+      var subscriber = sess.subscribe(event.stream, undefined)
 
       // Update the state with the new subscribers
       setSubscribers((subscribers) => [...subscribers, subscriber])
     })
 
     // On every Stream destroyed...
-    session.on("streamDestroyed", (event) => {
+    sess.on("streamDestroyed", (event) => {
       setSubscribers((subscribers) =>
         subscribers.filter((s) => s != event.stream.streamManager)
       )
     })
 
     // On every asynchronous exception...
-    session.on("exception", (exception) => {
+    sess.on("exception", (exception) => {
       console.warn(exception)
     })
+
+    setSession(sess)
+  }, [
+    OV,
+    args.spec.muted,
+    args.spec.videoOff,
+    args.taskData.connection_token,
+    publishStream,
+    session,
+  ])
+
+  /**
+   * When the session is set
+   * we call connect and publish our stream
+   */
+  React.useEffect(() => {
+    if (session === null) return
 
     console.log(`OV: connecting with token: ${args.taskData.connection_token}`)
     session
       .connect(args.taskData.connection_token, {})
-      .then(() => {})
+      .then(publishStream)
       .catch((error) => {
         console.error(
           "There was an error connecting to the session:",
@@ -147,17 +171,13 @@ export const VideocallTask: React.FC<Props> = (props) => {
           error.message
         )
       })
+  }, [args.taskData.connection_token, publishStream, session])
 
+  React.useEffect(() => {
     return () => {
       leaveSession()
     }
-  }, [
-    OV,
-    args.spec.muted,
-    args.spec.videoOff,
-    args.taskData.connection_token,
-    leaveSession,
-  ])
+  }, [])
 
   const toggleMuted = () => {
     console.log("toggleMuted")
@@ -215,6 +235,7 @@ export const VideocallTask: React.FC<Props> = (props) => {
       clientSubscriber={
         publisher ? publisher.addVideoElement.bind(publisher) : null
       }
+      disabled={disabled}
       muted={muted}
       videoStopped={videoStopped}
       onMute={toggleMuted}

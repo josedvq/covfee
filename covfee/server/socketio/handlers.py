@@ -214,13 +214,17 @@ def leave_store(nodeId):
 def disconnect():
     if "journeyId" not in session:
         return
+
+    # important: same journey can have multiple connections (tabs)
     journey_id = session["journeyId"]
     journey = get_journey(journey_id)
     journey.num_connections = max(0, journey.num_connections - 1)
     node = journey.curr_node
-    prev_status = node.status if node else None
+
+    if node is not None:
+        prev_status = node.status if node else None
+        node.check_n()
     journey.set_curr_node(None)
-    node.check_n()
     app.session.commit()
 
     # broadcast to admins

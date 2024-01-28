@@ -1,41 +1,41 @@
-import * as React from "react";
-import styled from "styled-components";
-import classNames from "classnames";
+import * as React from "react"
+import styled from "styled-components"
+import classNames from "classnames"
 
-import { NodeType } from "../types/node";
+import { NodeType } from "../types/node"
 
 interface NodeButtonSpec {
   // index: number,
-  name: string;
-  active: boolean;
-  status: "default" | "active" | "valid" | "invalid";
+  name: string
+  active: boolean
+  status: "default" | "active" | "valid" | "invalid"
 }
 
 interface NodeButtonProps extends NodeButtonSpec {
-  innerRef: (el: HTMLDivElement) => void;
-  onClickActivate: () => void;
-  className?: object;
+  innerRef: (el: HTMLDivElement) => void
+  onClickActivate: () => void
+  className?: object
 }
 
 type AllPropsRequired<Object> = {
-  [Property in keyof Object]-?: Object[Property];
-};
+  [Property in keyof Object]-?: Object[Property]
+}
 
 export const NodeButton: React.FunctionComponent<NodeButtonProps> = (props) => {
   const args: AllPropsRequired<NodeButtonProps> = {
     className: {},
     ...props,
-  };
+  }
 
-  const containerRef = React.useRef<HTMLDivElement>();
+  const containerRef = React.useRef<HTMLDivElement>()
 
   const scrollIntoView = () => {
     if (containerRef.current)
       containerRef.current.scrollIntoView({
         behavior: "smooth",
         block: "center",
-      });
-  };
+      })
+  }
 
   return (
     <SidebarButton
@@ -45,44 +45,44 @@ export const NodeButton: React.FunctionComponent<NodeButtonProps> = (props) => {
     >
       <div className="btn-name">{args.name}</div>
     </SidebarButton>
-  );
-};
+  )
+}
 
 interface Props {
   /**
    * Id of the task that is currently active
    */
-  currNode: number;
+  currNode: number
   /**
    * List of tasks to display in the list
    */
-  nodes: NodeType[];
+  nodes: NodeType[]
   /**
    * Called when the user changes the active task
    */
-  onChangeActiveTask: (arg0: number) => void;
-  children?: React.ReactNode;
+  onChangeActiveTask: (arg0: number) => void
+  children?: React.ReactNode
 }
 interface State {}
 
 export const Sidebar: React.FC<Props> = (props) => {
-  const taskElementRefs = React.useRef<HTMLElement[]>([]);
+  const taskElementRefs = React.useRef<HTMLElement[]>([])
 
   React.useEffect(() => {
     if (taskElementRefs.current[props.currNode]) {
       taskElementRefs.current[props.currNode].scrollIntoView({
         behavior: "smooth",
         block: "center",
-      });
+      })
     }
-  }, [props.currNode]);
+  }, [props.currNode])
 
   React.useEffect(() => {
     taskElementRefs.current = taskElementRefs.current.slice(
       0,
       props.nodes.length
-    );
-  }, [props.nodes]);
+    )
+  }, [props.nodes])
 
   return (
     <SidebarContainer>
@@ -93,19 +93,19 @@ export const Sidebar: React.FC<Props> = (props) => {
           <NodeButton
             key={index}
             innerRef={(el) => (taskElementRefs.current[index] = el)}
-            name={"jhkljdsf"}
+            name={node.name}
             className={{ "btn-parent": true }}
             status={props.currNode === index ? "active" : "default"}
             active={props.currNode === index}
             onClickActivate={() => {
-              props.onChangeActiveTask(index);
+              props.onChangeActiveTask(index)
             }}
           />
         ))}
       </SidebarScrollable>
     </SidebarContainer>
-  );
-};
+  )
+}
 
 const SidebarButton = styled.nav`
   border: 1px solid #d9d9d9;
@@ -150,7 +150,7 @@ const SidebarButton = styled.nav`
   &.btn-invalid {
     background-color: #cf6565;
   }
-`;
+`
 
 /* Sidebar buttons */
 const SidebarContainer = styled.nav`
@@ -167,7 +167,7 @@ const SidebarContainer = styled.nav`
   &.bottom {
     margin-top: auto;
   }
-`;
+`
 
 const SidebarHead = styled.nav`
   background-color: #464646;
@@ -176,14 +176,13 @@ const SidebarHead = styled.nav`
   > button {
     border-radius: 0;
   }
-`;
+`
 
 const SidebarScrollable = styled.div`
   flex: 2;
   padding: 2 0 2 2;
   overflow-y: scroll;
   scrollbar-width: 12px;
-  scrollbar-color: rgb(244, 63, 94) rgb(99, 102, 241);
 
   &::-webkit-scrollbar {
     width: 12px;
@@ -197,4 +196,4 @@ const SidebarScrollable = styled.div`
     border-radius: 6px;
     border: 2px solid #a6a6a6;
   }
-`;
+`

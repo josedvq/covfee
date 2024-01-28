@@ -33,7 +33,6 @@ export interface BaseNodeSpec {
    * If true, the task state will be synced between clients.
    * This applies both to multiple clients in the same journey and across journeys.
    * Internally covfee uses socketio to synchronize task state.
-   * @default False
    */
   useSharedState?: boolean
 

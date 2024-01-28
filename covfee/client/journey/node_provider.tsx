@@ -9,6 +9,11 @@ import { AllPropsRequired } from "../types/utils"
 
 export interface NodeProviderProps {
   node: NodeType
+  /**
+   * The node is disabled
+   * Used in admin mode
+   */
+  disabled: boolean
   useSharedState: boolean
   emitState: () => any
 
@@ -70,6 +75,7 @@ export const NodeProvider: React.FC<
     <nodeContext.Provider
       value={{
         node: args.node,
+        disabled: args.disabled,
         response: args.response,
         dispatch,
         useSharedState: args.useSharedState,

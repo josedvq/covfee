@@ -37,7 +37,7 @@ class IncrementCounterTaskSpec(CovfeeTask):
     useSharedState: bool
     # If true, all journeys must click ready to start the task
     wait_for_ready: bool
-    def __init__(self, name, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = False, wait_for_ready = None):
+    def __init__(self, name, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, wait_for_ready = None):
         """
         ### Parameters
         0. name : str
@@ -135,7 +135,7 @@ class InstructionsTaskSpec(CovfeeTask):
     useSharedState: bool
     # If true, all journeys must click ready to start the task
     wait_for_ready: bool
-    def __init__(self, content, name, countdown = 0, form = None, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = False, wait_for_ready = None):
+    def __init__(self, content, name, countdown = 0, form = None, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, wait_for_ready = None):
         """
         ### Parameters
         0. content : Union[Any,Any]
@@ -241,7 +241,7 @@ class QuestionnaireTaskSpec(CovfeeTask):
     useSharedState: bool
     # If true, all journeys must click ready to start the task
     wait_for_ready: bool
-    def __init__(self, form, name, countdown = 0, disabledUntilEnd = None, instructions = None, instructions_type = 'default', max_submissions = 0, media = None, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = False, wait_for_ready = None):
+    def __init__(self, form, name, countdown = 0, disabledUntilEnd = None, instructions = None, instructions_type = 'default', max_submissions = 0, media = None, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, wait_for_ready = None):
         """
         ### Parameters
         0. form : Any
@@ -346,7 +346,7 @@ class TutorialTaskSpec(CovfeeTask):
     useSharedState: bool
     # If true, all journeys must click ready to start the task
     wait_for_ready: bool
-    def __init__(self, name, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, required = True, showPhoneField = None, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = False, wait_for_ready = None):
+    def __init__(self, name, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, required = True, showPhoneField = None, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, wait_for_ready = None):
         """
         ### Parameters
         0. name : str
@@ -456,7 +456,7 @@ class VideocallTaskSpec(CovfeeTask):
     videoOff: bool
     # If true, all journeys must click ready to start the task
     wait_for_ready: bool
-    def __init__(self, name, allowMute = True, allowScreenShare = True, allowStopVideo = True, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, muted = False, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = False, videoOff = False, wait_for_ready = None):
+    def __init__(self, name, allowMute = True, allowScreenShare = True, allowStopVideo = True, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, muted = False, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, videoOff = False, wait_for_ready = None):
         """
         ### Parameters
         0. name : str

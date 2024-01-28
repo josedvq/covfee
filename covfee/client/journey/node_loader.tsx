@@ -86,7 +86,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
   const taskuseSharedState =
     taskRequestsSharedState !== undefined ? taskRequestsSharedState : false
   const useSharedState =
-    args.node.useSharedState !== undefined
+    args.node.useSharedState !== null
       ? args.node.useSharedState
       : taskuseSharedState
 
@@ -441,6 +441,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
           <StoreProvider store={reduxStore.current}>
             <NodeProvider
               node={node}
+              disabled={args.observer}
               response={response}
               useSharedState={useSharedState}
               emitState={emitState}
@@ -464,7 +465,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
                 )
 
                 console.log(
-                  `${args.node.spec.type} built with status=${node.status}, paused=${node.paused}`,
+                  `${args.node.spec.type} built with disabled=${args.observer} status=${node.status}, usedSharedState=${useSharedState}, paused=${node.paused}`,
                   nodeProps
                 )
 
