@@ -7,6 +7,7 @@ export type ChatContextProps = UseChats
 export const chatContext = React.createContext<ChatContextProps>(null) // Create a context object
 
 interface Props {
+  journeyId?: string
   children: React.ReactNode
 }
 export const ChatProvider: React.FC<Props> = (props) => {
@@ -15,6 +16,7 @@ export const ChatProvider: React.FC<Props> = (props) => {
   } = React.useContext(appContext)
 
   const chats = useChats({
+    journeyId: props.journeyId,
     initialChatOpen: getConfig("initialChatOpen", false),
     initialChatIds: getConfig("initialChatIds", []),
   })

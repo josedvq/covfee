@@ -23,10 +23,32 @@ export const ChatPopup: React.FC<{}> = (props) => {
     ...props,
   }
 
-  const { chats, chatOpen, setChatOpen, getNumberUnreadMessages } =
-    useContext(chatContext)
+  const {
+    chats,
+    chatOpen,
+    setChatOpen,
+    getNumberUnreadMessages,
+    totalUnreadMessages,
+    markChatRead,
+  } = useContext(chatContext)
 
   const [currChat, setCurrChat] = React.useState(0)
+
+  const changeChat = React.useCallback(
+    (index: number) => {
+      setCurrChat(index)
+      if (chatOpen && chats.length) {
+        const id = setTimeout(() => {
+          markChatRead(chats[currChat].id)
+        }, 3000)
+
+        return () => {
+          clearTimeout(id)
+        }
+      }
+    },
+    [chatOpen, chats, currChat, markChatRead]
+  )
 
   return (
     <>
@@ -38,14 +60,14 @@ export const ChatPopup: React.FC<{}> = (props) => {
                 key={index}
                 className={classNames({ active: currChat == index })}
                 onClick={() => {
-                  setCurrChat(index)
+                  changeChat(index)
                 }}
               >
                 {getChatName(chat)} ({getNumberUnreadMessages(chat.id)})
               </button>
             ))}
           </ChatSelection>
-          {chats.length && <Chatbox chat={chats[currChat]} />}
+          {!!chats.length && <Chatbox chat={chats[currChat]} />}
         </PopupContainer>
       )}
       <ChatButton
@@ -53,6 +75,7 @@ export const ChatPopup: React.FC<{}> = (props) => {
           setChatOpen(!chatOpen)
         }}
         $chatOpen
+        $numUnread={totalUnreadMessages}
       >
         <WechatOutlined />
       </ChatButton>
@@ -73,7 +96,7 @@ const PopupContainer = styled.div<any>`
   border-radius: 8px;
 `
 
-const ChatButton = styled.button<{ $chatOpen: boolean }>`
+const ChatButton = styled.button<{ $chatOpen: boolean; $numUnread: number }>`
   cursor: pointer;
   position: fixed;
   right: 1vw;
@@ -87,6 +110,22 @@ const ChatButton = styled.button<{ $chatOpen: boolean }>`
   border-bottom: 0;
   padding: 3px;
   border-radius: 8px 8px 0 0;
+
+  &::before {
+    position: fixed;
+    right: calc(1vw + 50px);
+    bottom: 0;
+    height: 50px;
+    /* content: "E+AKJHFA"; */
+    content: "${(props) => `${props.$numUnread} unread messages`}";
+    color: white;
+    background-color: red;
+    padding: 0 2em;
+    font-size: 16px;
+    vertical-align: middle;
+    text-align: center;
+    border-top-left-radius: 8px;
+  }
 `
 
 const ChatSelection = styled.div<any>`
@@ -175,6 +214,7 @@ const ChatboxContainer = styled.div<any>`
     list-style-type: none;
     padding: 0;
     height: calc(100% - 60px);
+    overflow-y: scroll;
   }
   #empty {
     width: 100%;

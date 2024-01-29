@@ -187,10 +187,12 @@ class NodeInstance(Base):
 
     def __init__(self):
         super().init()
-        self.reset()
 
     def reset(self):
-        self.chat = Chat()
+        """Called until the graph is available
+        so that Chat has access to all ORM links
+        """
+        self.chat = Chat(self)
         self.submitted = False
         self.dt_start = None
         self.dt_pause = None

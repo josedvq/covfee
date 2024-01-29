@@ -9,7 +9,6 @@ import {
   getCookieValue,
   myerror,
 } from "./utils"
-import { useChats } from "./models/Chat"
 import { AllPropsRequired } from "./types/utils"
 import { useParams } from "react-router-dom"
 import { useUserConfig } from "./user_config"

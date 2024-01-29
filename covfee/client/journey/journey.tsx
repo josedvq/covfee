@@ -4,15 +4,11 @@ import { generatePath } from "react-router"
 import { ArrowRightOutlined, PlusOutlined } from "@ant-design/icons"
 import { Row, Col, Typography, Menu, Button, Modal, Progress } from "antd"
 import "antd/dist/reset.css"
-import Collapsible from "react-collapsible"
-const { Text } = Typography
 
-import Constants from "Constants"
 import { myerror } from "../utils"
 import { MarkdownLoader } from "../tasks/utils/markdown_loader"
 import { CovfeeMenuItem } from "../gui"
 import { Sidebar } from "./sidebar"
-// import ButtonEventManagerContext from "../input/button_manager";
 
 import {
   JourneyContext,
@@ -23,12 +19,7 @@ import {
 import { NodeLoader } from "./node_loader"
 
 import "./journey.scss"
-import {
-  FullJourney,
-  JourneyType,
-  fetchJourney,
-  useJourney,
-} from "../models/Journey"
+import { FullJourney, fetchJourney, useJourney } from "../models/Journey"
 import { useState, useContext } from "react"
 import { AllPropsRequired } from "../types/utils"
 import { appContext } from "../app_context"
@@ -36,7 +27,6 @@ import { useParams } from "react-router-dom"
 import { ChatPopup } from "../chat/chat"
 import { AppProvider } from "../app_provider"
 import { ChatProvider, chatContext } from "../chat_context"
-import { io } from "socket.io-client"
 import { Chat } from "../types/chat"
 import { Timer } from "./timer"
 
@@ -359,7 +349,7 @@ export const JourneyPage: React.FC<{}> = () => {
 
   return (
     <AppProvider>
-      <ChatProvider>
+      <ChatProvider journeyId={routeParams.journeyId}>
         <_JourneyPage journey={journey}></_JourneyPage>
       </ChatProvider>
     </AppProvider>

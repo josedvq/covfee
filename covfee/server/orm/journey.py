@@ -15,7 +15,7 @@ from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
 from flask import current_app as app
 
 from .base import Base
-from .chat import Chat
+from .chat import Chat, ChatJourney
 from .node import JourneyNode, JourneySpecNodeSpec
 
 if TYPE_CHECKING:
@@ -96,8 +96,13 @@ class JourneyInstance(Base):
     hit_id: Mapped[bytes] = mapped_column(ForeignKey("hitinstances.id"))
     hit: Mapped[HITInstance] = relationship(back_populates="journeys")
 
-    # chat relationship
+    # primary chat associated to this journey
     chat: Mapped[Chat] = relationship(back_populates="journey", cascade="all,delete")
+    # journey association (many-to-many)
+    # used to store info associated to (chat, journey) like read status
+    chat_associations: Mapped[List[ChatJourney]] = relationship(
+        back_populates="journey"
+    )
 
     # down
     node_associations: Mapped[List[JourneyNode]] = relationship(
@@ -162,7 +167,7 @@ class JourneyInstance(Base):
         self.interface = {}
         self.aux = {}
         self.config = {}
-        self.chat = Chat()
+        self.chat = Chat(self)
 
     def get_url(self):
         return f'{app.config["APP_URL"]}/journeys/{self.id.hex():s}'

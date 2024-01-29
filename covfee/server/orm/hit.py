@@ -162,6 +162,11 @@ class HITInstance(Base):
             self.journeys.append(journey)
         self.nodes = list(nodespec_to_nodeinstance.values())
 
+        # call node.reset when the graph is ready
+        # ie. when all the links are set in the ORM
+        for node in self.nodes:
+            node.reset()
+
     def get_api_url(self):
         return f'{app.config["API_URL"]}/instances/{self.id.hex():s}'
 

@@ -8,7 +8,6 @@ import { ChatProvider } from "../chat_context"
 import ProjectsPage from "./projects_page"
 import { LoginPage } from "./login"
 import { AdminLayout } from "./layout"
-import { useChats } from "../models/Chat"
 import { AdminProvider } from "./admin_provider"
 import { NodeOverlay } from "./node_overlay"
 

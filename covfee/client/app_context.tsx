@@ -2,7 +2,7 @@ import * as React from "react"
 import { io, Socket } from "socket.io-client"
 import { UserContextMethods, UserState } from "./app_provider"
 import { UseChats } from "models/Chat"
-import { ChatMessage } from "./types/chat"
+import { Chat, ChatMessage } from "./types/chat"
 import {
   JourneyAssoc,
   ManualStatus,
@@ -91,12 +91,14 @@ export interface ClientToServerEvents {
   }) => void
 }
 
-interface ChatServerToClientEvents {
+export interface ChatServerToClientEvents {
   message: (msg: ChatMessage) => void
+  chat_update: (chat: Partial<Chat>) => void
 }
 
-interface ChatClientToServerEvents {
+export interface ChatClientToServerEvents {
   message: (arg0: { message: string; chatId: number }) => void
+  read: (arg0: { chatId: number; journeyId?: string }) => void
   join_chat: (arg0: { chatId: number }) => void
 }
 
