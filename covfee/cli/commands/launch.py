@@ -2,6 +2,7 @@
 
 These commands launch or build covfee and are supported for the typical use case.
 """
+
 import os
 from pathlib import Path
 import subprocess
@@ -157,7 +158,15 @@ def get_start_message(url):
     "--no-launch", is_flag=True, help="Do not launch covfee, only make the DB"
 )
 @click.argument("project_spec_file")
-def make(force, dev, deploy, safe, rms, no_launch, project_spec_file):
+def make(
+    force: bool,
+    dev: bool,
+    deploy: bool,
+    safe: bool,
+    rms: bool,
+    no_launch: bool,
+    project_spec_file: str,
+):
     mode = "local"
     if dev:
         mode = "dev"
@@ -212,3 +221,21 @@ def install_npm_packages(force=False):
     npm_package = NPMPackage(shared_path)
     if force or not npm_package.is_installed():
         npm_package.install()
+
+
+if __name__ == "__main__":
+
+    # The following code is intended to run a specific covfee command, such as "make"
+    # from the command line, so it is configurable with a debugger (like in VSCode).
+    # For example, running `python launch.py --debug-covfee-command make <args>`
+    DEBUG_COMMAND: str = "--debug-covfee-command"
+    if DEBUG_COMMAND in sys.argv:
+        debug_command_index = sys.argv.index(DEBUG_COMMAND) + 1
+        if debug_command_index < len(sys.argv):
+            debug_command = sys.argv[debug_command_index]
+            # Note: covfee uses "click" to parse command line parameters. We remove
+            #       DEBUG_COMMAND, which is not recognized by either of the available
+            #       covfee functions.
+            sys.argv.pop(debug_command_index)
+            sys.argv.remove(DEBUG_COMMAND)
+            globals()[debug_command]()
