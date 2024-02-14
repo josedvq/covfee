@@ -6,6 +6,7 @@ import type { ActionAnnotationTaskSpec } from "./spec"
 import { AllPropsRequired } from "../../types/utils"
 import { useDispatch } from "../../journey/state"
 import { useSelector } from "react-redux"
+import VideojsPlayer from "../../players/videojs"
 
 interface Props extends CovfeeTaskProps<ActionAnnotationTaskSpec> {}
 
@@ -28,6 +29,11 @@ const ActionAnnotationTask: React.FC<Props> = (props) => {
   
   // this is a custom dispatch function provided by Covfee
   const dispatch = useDispatch()
+
+  const my_video = {
+    type: "video",
+    url: "https://mdn.github.io/learning-area/html/multimedia-and-embedding/video-and-audio-content/rabbit320.mp4",
+  }
 
   // and we render the component
   return (
@@ -57,6 +63,11 @@ const ActionAnnotationTask: React.FC<Props> = (props) => {
           Laughing          
         </button>
       </div>
+      <VideojsPlayer
+        // {...args.spec.media}
+        {...my_video}
+        // onEnded={actions.enableForm}
+      />
     </form>
   )
 }
