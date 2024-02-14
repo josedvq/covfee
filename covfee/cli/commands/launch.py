@@ -15,7 +15,7 @@ from flask import current_app as app
 from flask.cli import FlaskGroup, pass_script_info
 
 from covfee.server.app import create_app
-from ...loader import Loader
+from covfee.loader import Loader
 from covfee.launcher import Launcher, ProjectExistsException
 from halo.halo import Halo
 from covfee.shared.validator.validation_errors import JavascriptError, ValidationError
