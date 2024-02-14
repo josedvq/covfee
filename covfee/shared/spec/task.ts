@@ -6,6 +6,7 @@ import { InstructionsTaskSpec } from "@covfee-client/tasks/instructions/spec"
 import { IncrementCounterTaskSpec } from "@covfee-client/tasks/increment_counter/spec"
 import { VideocallTaskSpec } from "@covfee-client/tasks/videocall/spec"
 import { TutorialTaskSpec } from "@covfee-client/tasks/tutorial/spec"
+import { ActionAnnotationTaskSpec } from "@covfee-client/tasks/action_annotation/spec"
 
 import { BaseNodeSpec } from "./node"
 
@@ -22,5 +23,6 @@ export type TaskSpec =
   | QuestionnaireTaskSpec
   | VideocallTaskSpec
   | TutorialTaskSpec
+  | ActionAnnotationTaskSpec
 
 export type NodeSpec = TaskSpec
