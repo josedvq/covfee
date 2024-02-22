@@ -1,0 +1,31 @@
+.action-annotation-task {
+    text-align: center;
+    font-size: calc(10px + 2vmin);
+    display: flex;
+  }
+
+  .sidebar {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    width: 20%; /* Adjust as needed */
+    min-width: 200px; /* Set a minimum width */
+    background-color: #f0f0f0; /* Example background color */
+  }
+  
+  .main-content {
+    background-color: #ffffff; /* Example background color */
+    width: 80%;
+    flex-direction: column;
+  }
+  
+  .videoPlayer{
+    width: 50%;
+  }
+
+  .dropdown{
+    background-color: red;
+  }
