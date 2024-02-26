@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 from flask import Blueprint
 from flask import current_app as app
 from flask import jsonify, request
-from sqlalchemy import Column, DateTime, ForeignKey, select
+from sqlalchemy import ForeignKey, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from covfee.server.orm import Base
@@ -87,15 +87,6 @@ def update_annotation(annotid):
     return jsonify_or_404(annot)
 
 
-# # update the data of an annotation
-# @bp.route("/annotations/<annotid>/data", methods=["UPDATE"])
-# def submit_annotation_data(tid, annotid):
-#     annot = app.session.query(Annotation).get(int(annotid))
-#     annot.data = request.data
-#     session.commit()
-#     return "", 200
-
-
 # delete an annotation
 @bp.route("/annotations/<annotid>", methods=["DELETE"])
 def delete_annotation(annotid):
@@ -120,11 +111,9 @@ class Annotation(Base):
 
     name: Mapped[str]
     interface: Mapped[Dict[str, Any]]  # json column
-    # data: Mapped[Optional[bytes]]
     data_json: Mapped[Optional[Dict[str, Any]]]
 
-    created_at = Column(DateTime, default=datetime.datetime.now)
-    updated_at = Column(DateTime, onupdate=datetime.datetime.now)
-
-    def to_dict(self):
-        return super().to_dict()
+    created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        default=datetime.datetime.now, onupdate=datetime.datetime.now
+    )
