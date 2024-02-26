@@ -3,9 +3,8 @@ from __future__ import annotations
 import datetime
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from flask import Blueprint
+from flask import Blueprint, jsonify, request
 from flask import current_app as app
-from flask import jsonify, request
 from sqlalchemy import ForeignKey, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -71,7 +70,7 @@ def submit_annotation():
     return jsonify_or_404(annot)
 
 
-# update an annotation (without the data)
+# update an annotation
 @bp.route("/annotations/<annotid>", methods=["UPDATE"])
 def update_annotation(annotid):
     annot = app.session.query(Annotation).get(int(annotid))
