@@ -1,23 +1,18 @@
 from __future__ import annotations
-import json
-import os
-import sys
-from io import BytesIO
+
 from pprint import pformat
-from typing import Any, Dict, List, TYPE_CHECKING
+from typing import Any, Dict, List
 
-import numpy as np
-from flask import current_app as app
-from sqlalchemy import JSON
-from sqlalchemy.orm import backref, relationship, Mapped
+from sqlalchemy import event
+from sqlalchemy.orm import Mapped, object_session, relationship
 
-from .response import TaskResponse
+from covfee.shared.schemata import schemata
+
 from .. import tasks
 from ..tasks.base import BaseCovfeeTask
 from . import utils
-
-from .node import NodeInstanceStatus, NodeSpec, NodeInstance
-from covfee.shared.schemata import schemata
+from .node import NodeInstance, NodeInstanceStatus, NodeSpec
+from .response import TaskResponse
 
 
 class TaskSpec(NodeSpec):
@@ -46,6 +41,12 @@ class TaskSpec(NodeSpec):
 
     def validate(str):
         pass
+
+    def to_dict(self):
+        res = super().to_dict()
+        # url of the custom API of this task type (if any)
+        res["customApiBase"] = f'/custom/{self.spec["type"]}'
+        return res
 
     def __repr__(self):
         pass
@@ -83,7 +84,7 @@ class TaskInstance(NodeInstance):
 
     def get_task_object(self):
         task_class = getattr(tasks, self.spec.spec["type"], BaseCovfeeTask)
-        task_object = task_class(task=self)
+        task_object = task_class(task=self, session=object_session(self))
         return task_object
 
     def to_dict(self):
@@ -131,3 +132,10 @@ class TaskInstance(NodeInstance):
         return {
             "responses": [response.make_results_dict() for response in self.responses]
         }
+
+
+# after a TaskInstance is inserted, we attach its
+@event.listens_for(TaskInstance, "after_insert")
+def create_permissions(mapper, connection, instance: TaskInstance):
+    obj = instance.get_task_object()
+    obj.on_create()

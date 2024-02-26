@@ -1,16 +1,13 @@
-from io import BytesIO
-
-from flask import request, jsonify, send_file, current_app as app
-import zipstream
+from flask import current_app as app
+from flask import jsonify, request
 
 from covfee.server.orm.node import NodeInstance, NodeInstanceManualStatus
-from flask_socketio import send, emit, join_room, leave_room
+from covfee.server.socketio.socket import socketio
 
+from ..orm import NodeInstanceStatus, TaskInstance
 from .api import api
 from .auth import admin_required
 from .utils import jsonify_or_404
-from ..orm import TaskSpec, TaskInstance, TaskResponse, NodeInstanceStatus
-from covfee.server.socketio.socket import socketio
 
 # TASKS
 
@@ -100,4 +97,5 @@ def restart_node(nid):
         socketio.emit("status", payload, namespace="/admin")
 
     app.session.commit()
+    return "", 200
     return "", 200

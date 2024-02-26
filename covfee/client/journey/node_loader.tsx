@@ -1,22 +1,20 @@
+import { Button, Popover, Result, Spin } from "antd"
 import * as React from "react"
 import styled from "styled-components"
-import ReactDOM from "react-dom"
-import { Button, Modal, Popover, Result, Spin } from "antd"
 
-import { JourneyContext, TimerState } from "./journey_context"
-import { myerror } from "../utils"
-import { getTask } from "../task_utils"
 import { QuestionCircleOutlined } from "@ant-design/icons"
-import { BaseTaskProps, CovfeeTask } from "tasks/base"
-import { useNode } from "../models/Node"
-import { NodeStatuses, NodeType } from "../types/node"
-import { AllPropsRequired } from "../types/utils"
-import { nodeContext } from "./node_context"
-import { Provider as StoreProvider, useDispatch } from "react-redux"
 import { Store, configureStore } from "@reduxjs/toolkit"
+import { Provider as StoreProvider } from "react-redux"
+import { BaseTaskProps } from "tasks/base"
 import { ServerToClientEvents, appContext } from "../app_context"
-import { NodeProvider } from "./node_provider"
+import { useNode } from "../models/Node"
+import { getTask } from "../task_utils"
+import { NodeType } from "../types/node"
+import { AllPropsRequired } from "../types/utils"
+import { myerror } from "../utils"
+import { JourneyContext, TimerState } from "./journey_context"
 import { Lobby } from "./lobby"
+import { NodeProvider } from "./node_provider"
 
 interface Props {
   /**
@@ -145,16 +143,18 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
       }
       setResponse(data.response)
 
-      // We create the reduxStore here to ensure that the initial state is accessible to the task on first render
-      const initialState =
-        data.response.state !== null
-          ? data.response.state
-          : taskSlice.getInitialState()
+      if (taskSlice !== null) {
+        // We create the reduxStore here to ensure that the initial state is accessible to the task on first render
+        const initialState =
+          data.response.state !== null
+            ? data.response.state
+            : taskSlice.getInitialState()
 
-      reduxStore.current = configureStore({
-        reducer: taskSlice.reducer,
-        preloadedState: initialState,
-      })
+        reduxStore.current = configureStore({
+          reducer: taskSlice.reducer,
+          preloadedState: initialState,
+        })
+      }
       setIsLoading(false)
     }
 
@@ -264,12 +264,15 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
    */
   React.useEffect(() => {
     const handleAction: ServerToClientEvents["action"] = (action) => {
-      reduxStore.current.dispatch(action)
+      if (reduxStore.current !== null) reduxStore.current.dispatch(action)
+      else console.warn("action event received when reduxStore = null")
     }
 
     const handleState: ServerToClientEvents["state"] = (state) => {
-      const action = { type: "task/setState", payload: state.state }
-      reduxStore.current.dispatch(action)
+      if (reduxStore.current !== null) {
+        const action = { type: "task/setState", payload: state.state }
+        reduxStore.current.dispatch(action)
+      }
     }
 
     socket.on("action", handleAction)
@@ -281,14 +284,6 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
       socket.off("state", handleState)
     }
   }, [socket])
-
-  // React.useEffect(()=>{
-  //   console.log([node, response])
-  //   // check that all the node requirements are ready
-  //   if(node.taskData !== undefined && response !== null) {
-  //     setIsLoading(false)
-  //   }
-  // }, [node, response])
 
   const handleTaskSubmit = () => {
     submitResponse({ state: reduxStore.current.getState() })

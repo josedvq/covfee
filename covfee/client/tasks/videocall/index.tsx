@@ -1,15 +1,15 @@
-import * as React from "react"
 import * as openvidu from "openvidu-browser"
-import { useState, useEffect, useRef } from "react"
+import * as React from "react"
+import { useEffect } from "react"
 import { CovfeeTaskProps } from "../base"
 
-import { slice, actions } from "./slice"
+import { slice } from "./slice"
 import type { VideocallTaskSpec } from "./spec"
 
+import { nodeContext } from "../../journey/node_context"
 import { TaskExport } from "../../types/node"
 import { AllPropsRequired } from "../../types/utils"
 import { VideocallGUI } from "./gui"
-import { nodeContext } from "../../journey/node_context"
 
 interface Props extends CovfeeTaskProps<VideocallTaskSpec> {
   taskData: {

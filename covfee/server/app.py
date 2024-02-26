@@ -1,19 +1,24 @@
-import os
+import inspect
 import json
+import os
 
-import greenlet
 import eventlet
-
-eventlet.monkey_patch(thread=True, time=True)
+import greenlet
+from flask import Blueprint, Flask
 from flask import current_app as app
-from flask import Flask, Blueprint, render_template, send_from_directory
-from sqlalchemy.orm import scoped_session
-from flask_jwt_extended import JWTManager
+from flask import render_template, send_from_directory
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 from flask_session import Session
+from sqlalchemy.orm import scoped_session
+
+from covfee.config import Config
+from covfee.server import tasks
+from covfee.server.tasks.base import BaseCovfeeTask
 
 from .scheduler.apscheduler import scheduler
-from covfee.config import Config
+
+eventlet.monkey_patch(thread=True, time=True)
 
 
 def create_app(mode, session_local=None):
@@ -41,12 +46,9 @@ def create_app(mode, session_local=None):
 
     app.sessionmaker = session_local
     app.session = scoped_session(session_local, scopefunc=greenlet.getcurrent)
-    from .orm import set_sessionmaker
 
-    set_sessionmaker(session_local)
-    # socketio = SocketIO(app, cors_allowed_origins="*")
+    from .socketio import chat, handlers  # noqa: F401
     from .socketio.socket import socketio
-    from .socketio import chat, handlers
 
     # important: here, set socketio json implementation too
     socketio.init_app(app, manage_session=True, json=app.json)
@@ -56,6 +58,15 @@ def create_app(mode, session_local=None):
 
     app.register_blueprint(api, url_prefix="/api")
     app.register_blueprint(auth, url_prefix="/auth")
+
+    # register the task blueprints
+    for name in dir(tasks):
+        elem = getattr(tasks, name)
+        if inspect.isclass(elem) and issubclass(elem, BaseCovfeeTask):
+            blueprint = elem.get_blueprint()
+            if blueprint is not None:
+                print(f"Registering blueprint for task {elem.__name__}")
+                app.register_blueprint(blueprint, url_prefix=f"/custom/{elem.__name__}")
 
     CORS(app, resources={r"/*": {"origins": "*"}})
     app.config["SECRET_KEY"] = "Meow Meow"

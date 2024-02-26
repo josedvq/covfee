@@ -2,35 +2,40 @@
 title: Developing custom tasks
 ---
 
-import useBaseUrl from '@docusaurus/useBaseUrl'
+import useBaseUrl from "@docusaurus/useBaseUrl"
 
 New custom tasks or HIT types can be added by implementing a React component meeting a few conditions. For some tasks, a Python base class must be sub-classed too. To be valid, task components must meet these conditions:
 
 ## Types of tasks
+
 There are two main types of tasks in covfee:
 
-- Tasks with shared state, or *multiplayer* tasks are meant to be visited by multiple users at the same time. A chess game, or a collaborative live view form to be filled by multiple users at the same time is an example of a shared state task. Covfee internally manages state synchronization and persistence. A copy of the latest state is kept in the server. If the task is opened in multiple clients (windows/tabs), they will all be kept in sync and changes can be observed *live*.
+- Tasks with shared state, or _multiplayer_ tasks are meant to be visited by multiple users at the same time. A chess game, or a collaborative live view form to be filled by multiple users at the same time is an example of a shared state task. Covfee internally manages state synchronization and persistence. A copy of the latest state is kept in the server. If the task is opened in multiple clients (windows/tabs), they will all be kept in sync and changes can be observed _live_.
 - Tasks without shared state, or "single player" tasks are meant to be visited by a single user. A standard form is a good example. If these tasks are opened in multiple clients (windows/tabs) they will not be kept in sync. Their state will diverge when multiple users make changes.
 
 ## Task state
 
-Covfee tasks are, in their most basic form, simply React components. In other words, copy-pasting any React component as a Covfee task would "work". However, in any type of online experiment we normally want to store the results of the task (eg. the answers to a questionnaire). 
+Covfee tasks are, in their most basic form, simply React components. In other words, copy-pasting any React component as a Covfee task would "work". However, in any type of online experiment we normally want to store the results of the task (eg. the answers to a questionnaire).
 
 In covfee, task components do not explicitly store or commit these results to the server. Instead, the state of the task is stored automatically by Covfee. To make use of this, any task state that should be persisted by Covfee must be managed in a central Redux store. In other words, **implementing Covfee tasks boils down to implementing React components with a Redux state store** in all cases. This means following the Redux design phylosophy by defining actions and reducers, which produce a new state given an action and the current state:
 
-<div style={{textAlign: 'center'}}>
-<img src={useBaseUrl('/img/redux.png')} style={{width: '50%', maxWidth: '500px', textAlign: 'center'}}/>
+<div style={{ textAlign: "center" }}>
+  <img
+    src={useBaseUrl("/img/redux.png")}
+    style={{ width: "50%", maxWidth: "500px", textAlign: "center" }}
+  />
 </div>
 
 The React component's (Interface / view) job is simply to update the DOM according to the current state, and to dispatch actions in response to browser events.
 
 State persistance and loading is managed internally by Covfee:
+
 - For shared state tasks, Covfee will keep the most up-to-date state in the server, which will always represent the latest state of the task.
 
 - For non-shared state tasks, the latest state is kept in the browser and persisted when necessary. Covfee submits and persists state whenever:
-    - When a certain time has passed after the last state change. The default is 3s.
-    - The user moves to the next or previous task or otherwise leaves the task. An exception is if the user abruptly closes the browser window/tab where the task is open. In this case the state may not sent to the server.
-    - The user presses the "submit" button in the task.
+  - When a certain time has passed after the last state change. The default is 3s.
+  - The user moves to the next or previous task or otherwise leaves the task. An exception is if the user abruptly closes the browser window/tab where the task is open. In this case the state may not sent to the server.
+  - The user presses the "submit" button in the task.
 
 State that does not need to be stored can be managed separately, for example using React's `useState`.
 
@@ -44,16 +49,15 @@ This tutorial requires a basic understanding of Typescript, HTML, React and Redu
 - React: functional components, hooks (useState, useEffect, useContext, useRef, useMemo), custom hooks, fetching data. It's important to understand the nuances behind hooks and dependencies: when do hooks run?
 - Redux, Redux toolkit. Important to understand how to think about application state and how to design the state, actions and reducers:
 
-
 In general, **you should know how to design and write a React application using Redux for state management**.
 
-
 ### Installation
+
 Please start by following the [development install instructions](development) to install Covfee.
 
-
 ### The tutorial
-In this tutorial, we will create a simple contact form asking users for their name and email. Additionally, the task will have one boolean prop (`showPhoneField`) that, if true, will add a phone number field to the form. The answers to the form will be preserved in task state. 
+
+In this tutorial, we will create a simple contact form asking users for their name and email. Additionally, the task will have one boolean prop (`showPhoneField`) that, if true, will add a phone number field to the form. The answers to the form will be preserved in task state.
 
 We will place Typescript files for the task in `covfee/client/tasks`, in the following structure:
 
@@ -130,7 +134,7 @@ export const slice = createSlice({
 export const { actions, reducer } = slice
 ```
 
-Here we specified the type for the state, the initial state, and wrote separate reducers to set name, email and phone number. 
+Here we specified the type for the state, the initial state, and wrote separate reducers to set name, email and phone number.
 
 ### React Component
 
@@ -213,15 +217,11 @@ export default {
 
 ```
 
-
-
-Note the *export* statement at the end of the file. Covfee expects every task to export a default object with these keys. `useSharedState` should only be set to true for *multiplayer* tasks.
-
+Note the _export_ statement at the end of the file. Covfee expects every task to export a default object with these keys. `useSharedState` should only be set to true for _multiplayer_ tasks.
 
 ### Importing the task
 
-Now that the task is created, the task should be imported into Covfee source files. To do this, modify the file at `/covfee/client/tasks/index.ts` to import your custom task. Simply follow the same pattern as for the rest of the imports in the file. The task props specification (*spec*) should also be imported in `/covfee/shared/spec/task.ts`.
-
+Now that the task is created, the task should be imported into Covfee source files. To do this, modify the file at `/covfee/client/tasks/index.ts` to import your custom task. Simply follow the same pattern as for the rest of the imports in the file. The task props specification (_spec_) should also be imported in `/covfee/shared/spec/task.ts`.
 
 Now we are ready to create the auto-generated code that Covfee is designed to create. Covfee auto-generates two files using the tasks' props specification:
 
@@ -239,14 +239,11 @@ covfee-dev schemata
 After this step, it should be possible to manually verify that the dataclasses file contains a new class for our custom task.
 
 <!--
-The task also needs to be included in the 
+The task also needs to be included in the
 ```
-covfee-dev build        
+covfee-dev build
 ```
 -->
-
-
-
 
 ## Running the task
 
@@ -287,16 +284,11 @@ covfee make tutorial.py --force --dev
 This will parse the specification, create the database, and start the covfee server.
 
 In development mode, we need to run the webpack server separately. To do it, in another terminal run:
+
 ```
 covfee webpack
 ```
 
-After this the Covfee admin panel should be accessible in the URL displayed when running the Covfee server (http://localhost:5000/admin# by default). The links to the Journey (with the two tasks) should be available in the admin panel (under *Journeys*).
+After this the Covfee admin panel should be accessible in the URL displayed when running the Covfee server (http://localhost:5000/admin# by default). The links to the Journey (with the two tasks) should be available in the admin panel (under _Journeys_).
 
 With this development setup, any changes to the client or server will be hot-reloaded. Therefore it should be possible and convenient to edit the task's React component or the backend while running the app.
-
-<!--
-## Adding server-side code
-
-Tasks that have specific data transfer requirements (eg. annotation tasks) may need to implement custom API endpoints.
--->
