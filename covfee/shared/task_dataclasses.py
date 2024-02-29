@@ -3,13 +3,12 @@ from .dataclass import CovfeeTask
 
 class ActionAnnotationTaskSpec(CovfeeTask):
     type: str = "ActionAnnotationTask"
+    annotations: List[Any]
     # base of the custom API of this task
     customApiBase: str
-    # The annotations
-    input: Any
-    # Media file to be displayed.
     media: Any
     name: str
+    userCanAdd: bool
     # Seconds countdown after start condition met.
     countdown: float
     # Instructions to be displayed for the node
@@ -43,57 +42,57 @@ class ActionAnnotationTaskSpec(CovfeeTask):
     useSharedState: bool
     # If true, all journeys must click ready to start the task
     wait_for_ready: bool
-    def __init__(self, customApiBase, input, media, name, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, wait_for_ready = None):
+    def __init__(self, annotations, customApiBase, media, name, userCanAdd, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, wait_for_ready = None):
         """
         ### Parameters
-        0. customApiBase : str
+        0. annotations : List[Any]
+        1. customApiBase : str
             - base of the custom API of this task
-        1. input : Any
-            - The annotations
         2. media : Any
-            - Media file to be displayed.
         3. name : str
-        4. countdown : float
+        4. userCanAdd : bool
+        5. countdown : float
             - Seconds countdown after start condition met.
-        5. instructions : str
+        6. instructions : str
             - Instructions to be displayed for the node
-        6. instructions_type : str
+        7. instructions_type : str
             - How the instructions will be displayed
-        7. max_submissions : float
+        8. max_submissions : float
             - Maximum number of submissions a user can make for the task.
-        8. n_pause : float
+        9. n_pause : float
             - If the number of subjects is n_pause or less, the task will be paused
-        9. n_start : float
+        10. n_start : float
             - Number of jorneys required to start task
-        10. prerequisite : bool
+        11. prerequisite : bool
             - Node is marked as a prerrequisite
 Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
-        11. required : bool
+        12. required : bool
             - If true, this node must have a valid submission before the HIT can be submitted
-        12. timer : float
+        13. timer : float
             - Time to complete the task
-        13. timer_empty : float
+        14. timer_empty : float
             - Empty timer is started everytime the task is empty (no journeys online)
 If the timer reaches zero, the task is set to finished state.
-        14. timer_pausable : bool
+        15. timer_pausable : bool
             - If true, the timer will pause when the task is paused.
-        15. timer_pause : float
+        16. timer_pause : float
             - Pause timer is started every time the task enters paused state
 If timer reaches zero, the task is set to finished state.
-        16. useSharedState : bool
+        17. useSharedState : bool
             - If true, the task state will be synced between clients.
 This applies both to multiple clients in the same journey and across journeys.
 Internally covfee uses socketio to synchronize task state.
-        17. wait_for_ready : bool
+        18. wait_for_ready : bool
             - If true, all journeys must click ready to start the task
         """
 
 
         super().__init__()
+        self.annotations = annotations
         self.customApiBase = customApiBase
-        self.input = input
         self.media = media
         self.name = name
+        self.userCanAdd = userCanAdd
         self.countdown = countdown
         self.instructions = instructions
         self.instructions_type = instructions_type
