@@ -15,7 +15,7 @@ export interface BaseTaskSpec extends BaseNodeSpec {
   /**
    * base of the custom API of this task
    */
-  customApiBase: string
+  customApiBase?: string
 }
 
 /**
