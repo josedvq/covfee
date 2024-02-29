@@ -1,23 +1,25 @@
 from __future__ import annotations
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, TYPE_CHECKING, Literal, Optional
-import enum
-from flask import current_app as app
 
+import enum
+from datetime import datetime, timedelta
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+from flask import current_app as app
 from sqlalchemy import ForeignKey, event
-from sqlalchemy.orm import relationship, Mapped, mapped_column
-from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
+from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from covfee.server.scheduler.timers import TimerName, schedule_timer, stop_timer
 
 from .base import Base
 from .chat import Chat
-from . import utils
-from .condition_parser import eval_string, parse_expression, eval_expression
+from .condition_parser import eval_string
 
 if TYPE_CHECKING:
-    from .journey import JourneySpec, JourneyInstance
-    from .hit import HITSpec, HITInstance
+    from .hit import HITInstance, HITSpec
+    from .journey import JourneyInstance, JourneySpec
+    from .hit import HITInstance, HITSpec
+    from .journey import JourneyInstance, JourneySpec
 
 
 class JourneySpecNodeSpec(Base):
@@ -103,6 +105,7 @@ class NodeSpec(Base):
         spec_dict = super().to_dict()
         settings = spec_dict["settings"]
         del spec_dict["settings"]
+        spec_dict["customApiBase"] = None
         return {**spec_dict, **settings}
 
 
@@ -370,7 +373,7 @@ class NodeInstance(Base):
         print(f"check_timer called with timer={timer}")
         if self.status == NodeInstanceStatus.FINISHED:
             app.logger.warn(
-                f"check_timers called after task finished. Some timers not cancelled?"
+                "check_timers called after task finished. Some timers not cancelled?"
             )
         # check timers
         if timer == "finish":

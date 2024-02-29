@@ -22,7 +22,6 @@ covfee/server/tmp
 covfee/build-storybook.log
 *.DS_Store
 *.wav
-.vscode*
 *package-lock.json
 *nohup.out
 .ipynb_checkpoints*

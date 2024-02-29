@@ -1,5 +1,4 @@
 import React from "react"
-import { ButtonManagerClient } from "input/button_manager"
 
 export abstract class CovfeeTask<
   T extends BaseTaskProps,
@@ -27,6 +26,7 @@ export interface BaseTaskProps {
   spec: any
   /**
    * Auxiliary task information
+   * Results of the the task backend's on_join method
    */
   taskData: any
   /**

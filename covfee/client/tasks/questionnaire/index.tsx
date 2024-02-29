@@ -1,15 +1,15 @@
+import { Col, Row } from "antd"
 import * as React from "react"
-import { Row, Col } from "antd"
+import { useSelector } from "react-redux"
+import { NodeState, TaskExport } from "types/node"
+import { AllPropsRequired } from "types/utils"
+import { Form } from "../../input/form"
+import { useDispatch } from "../../journey/state"
 import VideojsPlayer from "../../players/videojs"
 import WaveSurferPlayer from "../../players/wavesurfer"
-import { Form } from "../../input/form"
-import { BaseTaskProps, CovfeeTaskProps } from "../base"
+import { CovfeeTaskProps } from "../base"
+import { State, actions, slice } from "./slice"
 import type { QuestionnaireTaskSpec } from "./spec"
-import { State, slice, actions } from "./slice"
-import { TaskExport, TaskType, NodeState } from "types/node"
-import { useSelector } from "react-redux"
-import { useDispatch } from "../../journey/state"
-import { AllPropsRequired } from "types/utils"
 
 interface Props extends CovfeeTaskProps<QuestionnaireTaskSpec> {}
 
@@ -41,22 +41,22 @@ export const QuestionnaireTask: React.FC<Props> = (props) => {
           <Col span={16}>
             {(() => {
               switch (args.spec.media.type) {
-              case "video":
-                return (
-                  <VideojsPlayer
-                    {...args.spec.media}
-                    onEnded={actions.enableForm}
-                  />
-                )
-              case "audio":
-                return (
-                  <WaveSurferPlayer
-                    media={args.spec.media}
-                    onEnded={actions.enableForm}
-                  />
-                )
-              default:
-                return <p>Unrecognized media type.</p>
+                case "video":
+                  return (
+                    <VideojsPlayer
+                      {...args.spec.media}
+                      onEnded={actions.enableForm}
+                    />
+                  )
+                case "audio":
+                  return (
+                    <WaveSurferPlayer
+                      media={args.spec.media}
+                      onEnded={actions.enableForm}
+                    />
+                  )
+                default:
+                  return <p>Unrecognized media type.</p>
               }
             })()}
           </Col>

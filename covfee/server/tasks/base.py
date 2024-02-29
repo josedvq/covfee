@@ -1,14 +1,17 @@
 from __future__ import annotations
-import pandas as pd
-import numpy as np
-from typing import Tuple, List, Any, TYPE_CHECKING
 
-from ..orm.journey import JourneyInstance
+from typing import TYPE_CHECKING
+
+import numpy as np
+import pandas as pd
+from flask import Blueprint
+
 from ...logger import logger
+from ..orm.journey import JourneyInstance
 
 if TYPE_CHECKING:
-    from covfee.server.orm.task import TaskInstance
     from covfee.server.orm.response import TaskResponse
+    from covfee.server.orm.task import TaskInstance
 
 
 class CriticalError(Exception):
@@ -25,8 +28,13 @@ class CriticalError(Exception):
 
 
 class BaseCovfeeTask:
-    def __init__(self, task: TaskInstance = None):
+    def __init__(self, task: TaskInstance = None, session=None):
         self.task = task
+        self.session = session
+
+    @classmethod
+    def get_blueprint(cls) -> Blueprint | None:
+        return None
 
     def get_task_specific_props(self) -> dict:
         """Used to extend the dict that is send to the browser as props for the task element.
