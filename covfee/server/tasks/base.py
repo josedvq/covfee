@@ -1,17 +1,40 @@
-import pandas as pd
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
-from typing import Tuple, List, Any
-# from ..orm.task import Task, TaskResponse
+import pandas as pd
+from flask import Blueprint
+
+from ...logger import logger
+from ..orm.journey import JourneyInstance
+
+if TYPE_CHECKING:
+    from covfee.server.orm.response import TaskResponse
+    from covfee.server.orm.task import TaskInstance
+
+
+class CriticalError(Exception):
+    """When raised from a custom task callback will cause a critical error message to be shown to the user."""
+
+    def __ini__(self, load_task=False):
+        """_summary_
+
+        Args:
+            load_task (bool, optional): Whether to continue loading the task in frontend. Defaults to False.
+        """
+        super().__init__("Critical error encountered in custom task callback.")
+        self.load_task = load_task
+
 
 class BaseCovfeeTask:
+    def __init__(self, task: TaskInstance = None, session=None):
+        self.task = task
+        self.session = session
 
-    def __init__(self, response=None, task=None):
-        self.response = response
-
-        if response:
-            self.task = response.task
-        else:
-            self.task = task
+    @classmethod
+    def get_blueprint(cls) -> Blueprint | None:
+        return None
 
     def get_task_specific_props(self) -> dict:
         """Used to extend the dict that is send to the browser as props for the task element.
@@ -38,12 +61,12 @@ class BaseCovfeeTask:
             chunk_data, chunk_logs = (None, None)
 
         return {
-            'response': self.response.data,
-            'data': chunk_data.tolist() if chunk_data is not None else [],
-            'logs': chunk_logs if chunk_logs is not None else [],
-            'created_at': self.response.created_at.isoformat(),
-            'updated_at': self.response.updated_at.isoformat(),
-            'submitted_at': self.response.submitted_at.isoformat(),
+            "response": self.response.data,
+            "data": chunk_data.tolist() if chunk_data is not None else [],
+            "logs": chunk_logs if chunk_logs is not None else [],
+            "created_at": self.response.created_at.isoformat(),
+            "updated_at": self.response.updated_at.isoformat(),
+            "submitted_at": self.response.submitted_at.isoformat(),
         }
 
     def to_dataframe(self, data: np.ndarray) -> pd.DataFrame:
@@ -66,32 +89,52 @@ class BaseCovfeeTask:
             assert data.ndim == 2
             assert data.shape[1] >= 3
             num_columns = data.shape[1] - 2
-            return pd.DataFrame(data, columns=['index', 'media_time', *[f'data{i}' for i in range(num_columns)]])
+            return pd.DataFrame(
+                data,
+                columns=[
+                    "index",
+                    "media_time",
+                    *[f"data{i}" for i in range(num_columns)],
+                ],
+            )
 
-    def validate(self, response: Any, data: np.ndarray = None, log_data: List[List[Any]] = None):
+    def validate(
+        self,
+        response: TaskResponse,
+    ) -> (bool, str):
         """This method decides whether a particular task submission will be accepted or not
 
         Args:
-            response (object): The (non-continuous) task response. Usually includes the value of 
-                input forms / sliders / radio buttons in the task.
-            data (pd.DataFrame): The continuous task response, includes all the data points 
-                logged by the task. For continuous tasks this may be the only response.
-            log_data (list[list[any]], optional): The logs submitted by the task via buffer.log(). 
-                Usually contains auxiliary information. Defaults to None.
+            response (object): The task response object.
 
         Returns:
             [type]: [description]
         """
-        return True
+        return True, None
 
-    def on_first_join():
-        """ Called when the first visitor joins the task.
-            (for socketio-enabled tasks)
-        """
-        pass
+    def on_status_change(self):
+        """Called when the task changes status"""
+        logger.info("BaseCovfeeTask: on_status_change")
 
-    def on_last_leave():
-        """ Called when the last person left leaves the task page
-            (for socketio-enabled tasks)
+    def on_admin_pause(self):
+        """Called when the task is paused by an admin"""
+        logger.info("BaseCovfeeTask: on_admin_pause")
+
+    def on_create(self):
+        """Called when the task is created
+        (for socketio-enabled tasks)
         """
-        pass
+        logger.info("BaseCovfeeTask: on_create")
+
+    def on_join(self, journey: JourneyInstance = None):
+        """Called when any visitor joins the task.
+        May be called multiple times per journey.
+        (for socketio-enabled tasks)
+        """
+        logger.info("BaseCovfeeTask: on_join")
+
+    def on_leave(self):
+        """Called when a subject the task page
+        (for socketio-enabled tasks)
+        """
+        logger.info("BaseCovfeeTask: on_leave")

@@ -1,0 +1,21 @@
+.ant-radio-group-small {
+    display: flex !important;
+}
+
+.ant-radio-group-small .ant-radio-button-wrapper {
+    margin: 3px;
+    text-align: center;
+    font-size: 12px;
+    height: auto;
+}
+
+.bubble-cloud {
+    text-align: center;
+    flex: 1;
+}
+
+.bubble-cloud > img {
+    width: 100%;
+    max-width: 240px;
+    margin: 0 auto;
+}

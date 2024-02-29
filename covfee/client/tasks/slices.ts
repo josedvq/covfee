@@ -1,5 +1,5 @@
-import videocallSlice from './videocall/videocallSlice'
+import { slice } from "./increment_counter/slice"
 
 export default {
-    VideocallTask: videocallSlice
+  IncrementCounterTask: slice,
 }

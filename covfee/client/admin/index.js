@@ -1,19 +1,9 @@
-import * as React from 'react';
-import ReactDOM from 'react-dom';
+import * as React from "react";
+import ReactDOM from "react-dom/client";
 
-import RootContainer from './root';
+import RootContainer from "./root";
 
-const title = 'covfee: the continuous video feedback tool';
+const title = "covfee: the continuous video feedback tool";
 
-const render = () => {
-    ReactDOM.render(<RootContainer />, document.getElementById('app'));
-}
-
-render(RootContainer)
-
-if (module.hot) {
-    module.hot.accept('./root.tsx', () => {
-        const NextRootContainer = require('./root.tsx').default;
-        render(NextRootContainer);
-    })
-}
+const root = ReactDOM.createRoot(document.getElementById("app"));
+root.render(<RootContainer />);

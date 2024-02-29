@@ -1,49 +1,38 @@
-import * as React from 'react'
-import {
-    Layout,
-    Menu,
-    Typography
-} from 'antd'
-import 'antd/dist/antd.css'
+import * as React from "react"
+import "antd/dist/reset.css"
 
-const { Title, Paragraph, Text } = Typography;
+import { HashRouter as Router, Routes, Route, Link } from "react-router-dom"
 
-import {
-    HashRouter as Router,
-    Switch,
-    Route,
-    Link,
-} from "react-router-dom"
+import { AppProvider } from "../app_provider"
+import { ChatProvider } from "../chat_context"
+import ProjectsPage from "./projects_page"
+import { LoginPage } from "./login"
+import { AdminLayout } from "./layout"
+import { AdminProvider } from "./admin_provider"
+import { NodeOverlay } from "./node_overlay"
 
-const { SubMenu } = Menu;
-const { Header, Footer, Content, Sider } = Layout;
-
-import UserContext from '../user'
-import AdminProject from './project'
-import AdminHIT from './hit'
-import AdminHeader from './header'
-import LoginPage from './login'
-
-class Root extends React.Component {
-
-    render() {
-        return <Router>
-            <UserContext>
-                <Switch>
-                    <Route path="/projects/:projectId">
-                        <AdminProject />
-                    </Route>
-                    <Route path="/login">
-                        <LoginPage/>
-                    </Route>
-                    <Route path="/">
-                        <AdminProject />
-                    </Route>
-                </Switch>
-                
-            </UserContext>
-        </Router>
-    }
+export const Root: React.FC<void> = (props) => {
+  return (
+    <Router>
+      <AppProvider admin={true}>
+        <AdminProvider>
+          <ChatProvider>
+            <AdminLayout>
+              <NodeOverlay />
+              <Routes>
+                <Route
+                  path="/projects/:projectId"
+                  element={<ProjectsPage />}
+                ></Route>
+                <Route path="/login" element={<LoginPage />}></Route>
+                <Route path="/" element={<ProjectsPage />}></Route>
+              </Routes>
+            </AdminLayout>
+          </ChatProvider>
+        </AdminProvider>
+      </AppProvider>
+    </Router>
+  )
 }
 
 export default Root

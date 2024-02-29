@@ -1,22 +1,27 @@
-import ContinuousKeypointTask from './continuous_keypoint'
-import Continuous1DTask from './continuous_1d'
-import QuestionnaireTask from './questionnaire'
-import InstructionsTask from './instructions'
-// import VideocallTask from './videocall'
+import { TaskExport } from "types/node"
+import ContinuousAnnotationTask from "./continuous_annotation"
+import IncrementCounterTask from "./increment_counter"
+import InstructionsTask from "./instructions"
+import QuestionnaireTask from "./questionnaire"
+import TutorialTask from "./tutorial"
+import VideocallTask from "./videocall"
 
 // these will be available in source code:
-export { 
-    ContinuousKeypointTask, 
-    Continuous1DTask,
-    QuestionnaireTask,
-    InstructionsTask
+export {
+  ContinuousAnnotationTask,
+  IncrementCounterTask,
+  InstructionsTask,
+  QuestionnaireTask,
+  TutorialTask,
+  VideocallTask,
 }
 
 // these will be visible to the covfee interface:
 export default {
-    'ContinuousKeypointTask': ContinuousKeypointTask,
-    'Continuous1DTask': Continuous1DTask,
-    'QuestionnaireTask': QuestionnaireTask,
-    'InstructionsTask': InstructionsTask,
-    // 'VideocallTask': VideocallTask
-}
+  QuestionnaireTask,
+  InstructionsTask,
+  IncrementCounterTask,
+  VideocallTask,
+  TutorialTask,
+  ContinuousAnnotationTask,
+} as Record<string, TaskExport>

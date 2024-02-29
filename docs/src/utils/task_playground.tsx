@@ -1,6 +1,6 @@
 import * as React from 'react'
 import 'covfee-client/css/docs.css'
-import TaskSpec from '@covfee-types/task'
+import TaskSpec from '@covfee-spec/task'
 import { Alert, Button, Popover, Tabs} from 'antd'
 import { AlignLeftOutlined, ArrowUpOutlined, CopyOutlined, FormOutlined, UndoOutlined } from '@ant-design/icons'
 import {CopyToClipboard} from 'react-copy-to-clipboard'
