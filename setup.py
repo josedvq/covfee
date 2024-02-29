@@ -1,8 +1,13 @@
 import versioneer
+
 from setuptools import find_packages, setup
+import sys
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
+
+if not (sys.version_info >= (3, 8) and sys.version_info < (3, 11)):
+    sys.exit("Python version must be >=3.8 and < 3.11")
 
 setup(
     name="covfee",

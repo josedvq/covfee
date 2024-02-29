@@ -1,6 +1,7 @@
 // Important: import spec from a .ts file containing the spec only (Typescript type/interface).
 // AVOID importing the spec from files containing or importing React components or other code.
 // This could cause bugs when creating the schemata.
+import { ActionAnnotationTaskSpec } from "@covfee-client/tasks/action_annotation/spec"
 import { ContinuousAnnotationTaskSpec } from "@covfee-client/tasks/continuous_annotation/spec"
 import { IncrementCounterTaskSpec } from "@covfee-client/tasks/increment_counter/spec"
 import { InstructionsTaskSpec } from "@covfee-client/tasks/instructions/spec"
@@ -27,6 +28,7 @@ export type TaskSpec =
   | QuestionnaireTaskSpec
   | VideocallTaskSpec
   | TutorialTaskSpec
+  | ActionAnnotationTaskSpec
   | ContinuousAnnotationTaskSpec
 
 export type NodeSpec = TaskSpec
