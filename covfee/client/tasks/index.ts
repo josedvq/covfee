@@ -1,5 +1,4 @@
 import { TaskExport } from "types/node"
-import ActionAnnotationTask from "./action_annotation"
 import ContinuousAnnotationTask from "./continuous_annotation"
 import IncrementCounterTask from "./increment_counter"
 import InstructionsTask from "./instructions"
@@ -9,7 +8,6 @@ import VideocallTask from "./videocall"
 
 // these will be available in source code:
 export {
-  ActionAnnotationTask,
   ContinuousAnnotationTask,
   IncrementCounterTask,
   InstructionsTask,
@@ -25,6 +23,5 @@ export default {
   IncrementCounterTask,
   VideocallTask,
   TutorialTask,
-  ActionAnnotationTask,
   ContinuousAnnotationTask,
 } as Record<string, TaskExport>

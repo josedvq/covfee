@@ -1,119 +1,9 @@
 from typing import Union, Any, List, Tuple, Dict
 from .dataclass import CovfeeTask
 
-class ActionAnnotationTaskSpec(CovfeeTask):
-    type: str = "ActionAnnotationTask"
-    annotations: List[Any]
-    # base of the custom API of this task
-    customApiBase: str
-    media: Any
-    name: str
-    userCanAdd: bool
-    # Seconds countdown after start condition met.
-    countdown: float
-    # Instructions to be displayed for the node
-    instructions: str
-    # How the instructions will be displayed
-    instructions_type: str
-    # Maximum number of submissions a user can make for the task.
-    max_submissions: float
-    # If the number of subjects is n_pause or less, the task will be paused
-    n_pause: float
-    # Number of jorneys required to start task
-    n_start: float
-    # Node is marked as a prerrequisite
-    # Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
-    prerequisite: bool
-    # If true, this node must have a valid submission before the HIT can be submitted
-    required: bool
-    # Time to complete the task
-    timer: float
-    # Empty timer is started everytime the task is empty (no journeys online)
-    # If the timer reaches zero, the task is set to finished state.
-    timer_empty: float
-    # If true, the timer will pause when the task is paused.
-    timer_pausable: bool
-    # Pause timer is started every time the task enters paused state
-    # If timer reaches zero, the task is set to finished state.
-    timer_pause: float
-    # If true, the task state will be synced between clients.
-    # This applies both to multiple clients in the same journey and across journeys.
-    # Internally covfee uses socketio to synchronize task state.
-    useSharedState: bool
-    # If true, all journeys must click ready to start the task
-    wait_for_ready: bool
-    def __init__(self, annotations, customApiBase, media, name, userCanAdd, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, wait_for_ready = None):
-        """
-        ### Parameters
-        0. annotations : List[Any]
-        1. customApiBase : str
-            - base of the custom API of this task
-        2. media : Any
-        3. name : str
-        4. userCanAdd : bool
-        5. countdown : float
-            - Seconds countdown after start condition met.
-        6. instructions : str
-            - Instructions to be displayed for the node
-        7. instructions_type : str
-            - How the instructions will be displayed
-        8. max_submissions : float
-            - Maximum number of submissions a user can make for the task.
-        9. n_pause : float
-            - If the number of subjects is n_pause or less, the task will be paused
-        10. n_start : float
-            - Number of jorneys required to start task
-        11. prerequisite : bool
-            - Node is marked as a prerrequisite
-Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
-        12. required : bool
-            - If true, this node must have a valid submission before the HIT can be submitted
-        13. timer : float
-            - Time to complete the task
-        14. timer_empty : float
-            - Empty timer is started everytime the task is empty (no journeys online)
-If the timer reaches zero, the task is set to finished state.
-        15. timer_pausable : bool
-            - If true, the timer will pause when the task is paused.
-        16. timer_pause : float
-            - Pause timer is started every time the task enters paused state
-If timer reaches zero, the task is set to finished state.
-        17. useSharedState : bool
-            - If true, the task state will be synced between clients.
-This applies both to multiple clients in the same journey and across journeys.
-Internally covfee uses socketio to synchronize task state.
-        18. wait_for_ready : bool
-            - If true, all journeys must click ready to start the task
-        """
-
-
-        super().__init__()
-        self.annotations = annotations
-        self.customApiBase = customApiBase
-        self.media = media
-        self.name = name
-        self.userCanAdd = userCanAdd
-        self.countdown = countdown
-        self.instructions = instructions
-        self.instructions_type = instructions_type
-        self.max_submissions = max_submissions
-        self.n_pause = n_pause
-        self.n_start = n_start
-        self.prerequisite = prerequisite
-        self.required = required
-        self.timer = timer
-        self.timer_empty = timer_empty
-        self.timer_pausable = timer_pausable
-        self.timer_pause = timer_pause
-        self.useSharedState = useSharedState
-        self.wait_for_ready = wait_for_ready
-
-
 class ContinuousAnnotationTaskSpec(CovfeeTask):
     type: str = "ContinuousAnnotationTask"
     annotations: List[Any]
-    # base of the custom API of this task
-    customApiBase: str
     media: Any
     name: str
     userCanAdd: bool
@@ -150,54 +40,51 @@ class ContinuousAnnotationTaskSpec(CovfeeTask):
     useSharedState: bool
     # If true, all journeys must click ready to start the task
     wait_for_ready: bool
-    def __init__(self, annotations, customApiBase, media, name, userCanAdd, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, wait_for_ready = None):
+    def __init__(self, annotations, media, name, userCanAdd, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, wait_for_ready = None):
         """
         ### Parameters
         0. annotations : List[Any]
-        1. customApiBase : str
-            - base of the custom API of this task
-        2. media : Any
-        3. name : str
-        4. userCanAdd : bool
-        5. countdown : float
+        1. media : Any
+        2. name : str
+        3. userCanAdd : bool
+        4. countdown : float
             - Seconds countdown after start condition met.
-        6. instructions : str
+        5. instructions : str
             - Instructions to be displayed for the node
-        7. instructions_type : str
+        6. instructions_type : str
             - How the instructions will be displayed
-        8. max_submissions : float
+        7. max_submissions : float
             - Maximum number of submissions a user can make for the task.
-        9. n_pause : float
+        8. n_pause : float
             - If the number of subjects is n_pause or less, the task will be paused
-        10. n_start : float
+        9. n_start : float
             - Number of jorneys required to start task
-        11. prerequisite : bool
+        10. prerequisite : bool
             - Node is marked as a prerrequisite
 Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
-        12. required : bool
+        11. required : bool
             - If true, this node must have a valid submission before the HIT can be submitted
-        13. timer : float
+        12. timer : float
             - Time to complete the task
-        14. timer_empty : float
+        13. timer_empty : float
             - Empty timer is started everytime the task is empty (no journeys online)
 If the timer reaches zero, the task is set to finished state.
-        15. timer_pausable : bool
+        14. timer_pausable : bool
             - If true, the timer will pause when the task is paused.
-        16. timer_pause : float
+        15. timer_pause : float
             - Pause timer is started every time the task enters paused state
 If timer reaches zero, the task is set to finished state.
-        17. useSharedState : bool
+        16. useSharedState : bool
             - If true, the task state will be synced between clients.
 This applies both to multiple clients in the same journey and across journeys.
 Internally covfee uses socketio to synchronize task state.
-        18. wait_for_ready : bool
+        17. wait_for_ready : bool
             - If true, all journeys must click ready to start the task
         """
 
 
         super().__init__()
         self.annotations = annotations
-        self.customApiBase = customApiBase
         self.media = media
         self.name = name
         self.userCanAdd = userCanAdd
@@ -215,6 +102,7 @@ Internally covfee uses socketio to synchronize task state.
         self.timer_pause = timer_pause
         self.useSharedState = useSharedState
         self.wait_for_ready = wait_for_ready
+
 
 
 class IncrementCounterTaskSpec(CovfeeTask):
