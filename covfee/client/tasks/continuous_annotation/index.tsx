@@ -13,7 +13,7 @@ import { fetcher } from "../../utils"
 import { CovfeeTaskProps } from "../base"
 import styles from "./continous_annotation.module.css"
 import { State, actions, slice } from "./slice"
-import type { ContinuousAnnotationTaskSpec } from "./spec"
+import type { AnnotationDataSpec, ContinuousAnnotationTaskSpec } from "./spec"
 
 // You can download this image and place it in the art folder from:
 // @helix.ewi.tudelft.nl:/home/kfunesmora/mingle/media
@@ -22,12 +22,12 @@ import ConflabGallery from "../../art/conflab-gallery.svg"
 
 interface Props extends CovfeeTaskProps<ContinuousAnnotationTaskSpec> {}
 
-// Declare constants with the participants expected in the task, as well
-// as the annotation types to be made
-const ANNOTATION_TYPES: string[] = ["speaking", "laughing"]
-const PARTICIPANTS_LIST: string[] = []
-for (let i = 1; i < 51; i++) {
-  PARTICIPANTS_LIST.push("Participant_" + i)
+/**
+ * We specify the data structure for the annotation data received from the server
+ */
+type AnnotationData = AnnotationDataSpec & {
+  id: number
+  data_json: number[]
 }
 
 const ContinuousAnnotationTask: React.FC<Props> = (props) => {
@@ -41,36 +41,185 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     },
   }
 
-  const { node } = React.useContext(nodeContext)
-  const [annotations, setAnnotations] = React.useState()
+  const dispatch = useDispatch()
 
-  const fetchTasks = React.useCallback(async () => {
+  const { node } = React.useContext(nodeContext)
+
+  // Holds the annotations data for this task instance
+  const [annotationsDataMirror, setAnnotationsDataMirror] =
+    React.useState<AnnotationData[]>()
+  // we read the state using useSelector
+  const selectedAnnotationIndex: number = useSelector<State, number | null>(
+    (state) => state.selectedAnnotationIndex
+  )
+  const [showingGallery, setShowingGallery] = useState(false)
+  const [isAnnotating, setIsAnnotating] = useState(false)
+
+  const [activeAnnotationDataArray, setActiveAnnotationDataArray] =
+    React.useState<number[]>([])
+
+  const validAnnotationsDataAndSelection: boolean =
+    annotationsDataMirror !== undefined &&
+    selectedAnnotationIndex !== null &&
+    selectedAnnotationIndex >= 0 &&
+    selectedAnnotationIndex < annotationsDataMirror.length
+
+  //-------------------- Server communication -------------------- //
+  const fetchAnnotationsServerData = React.useCallback(async () => {
     const url =
       Constants.base_url +
       node.customApiBase +
       `/tasks/${node.id}/annotations/all`
     const res = await fetcher(url)
-    const annotations = await res.json()
-    setAnnotations(annotations)
+    setAnnotationsDataMirror(await res.json())
   }, [node.customApiBase, node.id])
 
-  // this is a custom dispatch function provided by Covfee
-  const dispatch = useDispatch()
+  const postActiveAnnotationDataArrayToServer = React.useCallback(async () => {
+    if (!validAnnotationsDataAndSelection) {
+      return
+    }
 
-  // we read the state using useSelector
-  const mediaPaused = useSelector<State, boolean>((state) => state.mediaPaused)
-  const active_annotation = useSelector<State, string>(
-    (state) => state.active_annotation
-  )
-  const active_participant = useSelector<State, string>(
-    (state) => state.active_participant
-  )
-  const [showingGallery, setShowingGallery] = useState(false)
+    const active_annotation_data_to_post = {
+      ...annotationsDataMirror[selectedAnnotationIndex],
+      data_json: activeAnnotationDataArray,
+    }
+    try {
+      const url =
+        Constants.base_url +
+        node.customApiBase +
+        `/annotations/` +
+        active_annotation_data_to_post.id
+      const res = await fetcher(url, {
+        method: "UPDATE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(active_annotation_data_to_post),
+      })
+      if (res.ok) {
+        fetchAnnotationsServerData()
+      } else {
+        console.error("Error posting new data:", res.status)
+      }
+    } catch (error) {
+      console.error("Error posting new data:", error)
+    }
+  }, [
+    node.customApiBase,
+    node.id,
+    annotationsDataMirror,
+    selectedAnnotationIndex,
+    activeAnnotationDataArray,
+    validAnnotationsDataAndSelection,
+  ])
+
+  // update selectedAnnotationIndex to a reasonable state, for the case in which
+  // annotationsDataMirror is undefined, or empty, or when is valid but selectedAnnotationIndex
+  // was still uninitialized.
+  useEffect(() => {
+    if (annotationsDataMirror === undefined) {
+      dispatch(actions.setSelectedAnnotationIndex(null))
+    } else if (annotationsDataMirror.length === 0) {
+      dispatch(actions.setSelectedAnnotationIndex(null))
+    } else if (selectedAnnotationIndex === null) {
+      dispatch(actions.setSelectedAnnotationIndex(0))
+    }
+  }, [selectedAnnotationIndex, annotationsDataMirror])
+
+  //-------------------- Video playback -------------------- //
+
+  // this is a custom dispatch function provided by Covfee
+
+  const numberOfVideoFrames = 5 // TODO: Initialize me on video load
+
+  /******************************************************/
+  /***** Logic to create a dummy video playback *********/
+  /******************************************************/
+  // This is temporary, just to test the annotation flow,
+  // and pushing back and forth annotations to the server
+  // through the API endpoints
+  const DUMMY_VIDEO_NUMBER_OF_FRAMES: number = numberOfVideoFrames
+  const [frameNumber, setFrameNumber] = useState(0)
+  useEffect(() => {
+    let videoPlaybackInterval: NodeJS.Timeout | undefined
+
+    if (isAnnotating) {
+      setFrameNumber(0)
+      videoPlaybackInterval = setInterval(() => {
+        // Increment the seconds state every second
+        setFrameNumber((prevFrameNumber) => prevFrameNumber + 1)
+      }, 33)
+    }
+
+    // Clean up the interval when the component unmounts or when the timer stops
+    return () => clearInterval(videoPlaybackInterval)
+  }, [isAnnotating]) // Run the effect whenever isRunning changes
+
+  useEffect(() => {
+    if (frameNumber >= DUMMY_VIDEO_NUMBER_OF_FRAMES) {
+      console.log("Stopping the video playback")
+      setIsAnnotating(false)
+      handleVideoEnded()
+    }
+  }, [frameNumber])
+  /******************************************************/
+  /******************************************************/
 
   const my_video = {
     type: "video",
     url: "https://mdn.github.io/learning-area/html/multimedia-and-embedding/video-and-audio-content/rabbit320.mp4",
   }
+
+  const selectFirstAvailableAnnotationIndexBasedOnParticipantName = (
+    participant: string
+  ) => {
+    if (annotationsDataMirror === undefined) {
+      return
+    }
+    // Finds the first annotation in the spec that has the participant
+    const first_annotation_index_for_participant =
+      annotationsDataMirror.findIndex((annotation) => {
+        return annotation.participant === participant
+      })
+    console.log("Index ", first_annotation_index_for_participant)
+    if (first_annotation_index_for_participant !== -1) {
+      dispatch(
+        actions.setSelectedAnnotationIndex(
+          first_annotation_index_for_participant
+        )
+      )
+    }
+  }
+
+  // We prepare the participants options in the menu
+  const participants_menu_items: MenuProps["items"] = [
+    {
+      key: "1",
+      type: "group",
+      label: "Select participant",
+      children: annotationsDataMirror
+        ? annotationsDataMirror
+            // We filter unique ocurrences of participants
+            .filter(
+              (annotation, index, self) =>
+                index ===
+                self
+                  .map((self_annotation) => self_annotation.participant)
+                  .indexOf(annotation.participant)
+            )
+            // Those unique occurrences are then mapped into menu items
+            .map(({ participant }) => ({
+              key: participant,
+              label: participant,
+              onClick: (item: MenuInfo) => {
+                selectFirstAvailableAnnotationIndexBasedOnParticipantName(
+                  item.key
+                )
+              },
+            }))
+        : [],
+    },
+  ]
 
   // We prepare the annotations options
   const annotations_menu_items: MenuProps["items"] = [
@@ -78,29 +227,28 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       key: "1",
       type: "group",
       label: "Select annotation",
-      children: ANNOTATION_TYPES.map((annotation_type) => ({
-        key: annotation_type,
-        label: annotation_type,
-        onClick: (item: MenuInfo) => {
-          dispatch(actions.setActiveAnnotation(item.key))
-        },
-      })),
-    },
-  ]
-
-  // We prepare the annotations options
-  const participants_menu_items: MenuProps["items"] = [
-    {
-      key: "1",
-      type: "group",
-      label: "Select participant",
-      children: PARTICIPANTS_LIST.map((participant_available) => ({
-        key: participant_available,
-        label: participant_available,
-        onClick: (item: MenuInfo) => {
-          dispatch(actions.setActiveParticipant(item.key))
-        },
-      })),
+      children: validAnnotationsDataAndSelection
+        ? annotationsDataMirror
+            // We extend the annotationDataMirror with the index for element
+            .map((annotation, annotation_index) => ({
+              annotation,
+              annotation_index,
+            }))
+            // We pick the annotations for the currently selected participant (forwarding the original index)
+            .filter(
+              ({ annotation, annotation_index }) =>
+                annotation.participant ===
+                annotationsDataMirror[selectedAnnotationIndex].participant
+            )
+            // Now we transform those into entries for the menu, using the original index as unique identifier (key)
+            .map(({ annotation, annotation_index }) => ({
+              key: annotation_index,
+              label: annotation.category,
+              onClick: (item: MenuInfo) => {
+                dispatch(actions.setSelectedAnnotationIndex(item.key))
+              },
+            }))
+        : [],
     },
   ]
 
@@ -115,8 +263,12 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   }, [showingGallery])
 
   React.useEffect(() => {
-    fetchTasks()
-  }, [fetchTasks])
+    fetchAnnotationsServerData()
+  }, [fetchAnnotationsServerData])
+
+  React.useEffect(() => {
+    console.log(annotationsDataMirror)
+  }, [annotationsDataMirror])
 
   // TODO: Confider moving the gallery overlay into a unique component.
   const handleClickOnGalleryImage = (e: MouseEvent) => {
@@ -139,11 +291,47 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
         if (participant_id >= 38) {
           participant_id += 2
         }
-        dispatch(actions.setActiveParticipant("Participant_" + participant_id))
+        selectFirstAvailableAnnotationIndexBasedOnParticipantName(
+          "Participant_" + participant_id
+        )
       }
       setShowingGallery(false)
     }
   }
+
+  const toggleAnnotatingStatus = () => {
+    if (!isAnnotating) {
+      if (!validAnnotationsDataAndSelection) {
+        return
+      }
+      // TODO: Check for data_json length is equal to the number of frames
+      if (annotationsDataMirror[selectedAnnotationIndex].data_json !== null) {
+        console.log("Setting old data")
+        setActiveAnnotationDataArray(
+          annotationsDataMirror[selectedAnnotationIndex].data_json
+        )
+      } else {
+        console.log("Creating new array")
+        setActiveAnnotationDataArray(
+          Array.from({ length: numberOfVideoFrames }, () => 0)
+        )
+      }
+    }
+
+    setIsAnnotating(!isAnnotating)
+  }
+
+  const handleVideoEnded = () => {
+    if (isAnnotating) {
+      postActiveAnnotationDataArrayToServer()
+    }
+  }
+
+  const handleNewFrameIndex = (frame_index: number) => {}
+
+  useEffect(() => {
+    handleNewFrameIndex(frameNumber)
+  }, [frameNumber])
 
   // and we render the component
   return (
@@ -185,7 +373,9 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
               className={styles["action-task-dropwdown-button"]}
             >
               <Space>
-                {active_participant}
+                {validAnnotationsDataAndSelection
+                  ? annotationsDataMirror[selectedAnnotationIndex].participant
+                  : ""}
                 <DownOutlined />
               </Space>
             </a>
@@ -199,12 +389,22 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
               className={styles["action-task-dropwdown-button"]}
             >
               <Space>
-                {active_annotation}
+                {validAnnotationsDataAndSelection
+                  ? annotationsDataMirror[selectedAnnotationIndex]?.category
+                  : ""}
                 <DownOutlined />
               </Space>
             </a>
           </Dropdown>
           <div className={styles.sidebarBottom}>
+            <p>{frameNumber}</p>
+            <Button
+              type="primary"
+              className={styles["gallery-button"]}
+              onClick={toggleAnnotatingStatus}
+            >
+              {isAnnotating ? "Stop Annotation" : "Start Annotation"}
+            </Button>
             <Button
               type="primary"
               className={styles["gallery-button"]}
@@ -226,7 +426,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
             </p>
 
             <h3>Annotations in the database:</h3>
-            <p>{JSON.stringify(annotations)}</p>
+            <p>{JSON.stringify(annotationsDataMirror)}</p>
           </>
           <VideojsPlayer
             className={styles.videoPlayer}

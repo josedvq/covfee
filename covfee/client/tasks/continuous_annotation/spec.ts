@@ -2,6 +2,12 @@ import { BaseTaskSpec } from "@covfee-shared/spec/task"
 /**
  * @TJS-additionalProperties false
  */
+export interface AnnotationDataSpec {
+  category: string
+  participant: string
+  interface: "RankTrace" | "GTrace" | "Binary"
+}
+
 export interface ContinuousAnnotationTaskSpec extends BaseTaskSpec {
   /**
    * @default "ContinuousAnnotationTask"
@@ -11,9 +17,6 @@ export interface ContinuousAnnotationTaskSpec extends BaseTaskSpec {
     type: "video"
     url: string
   }
-  annotations: {
-    name: string
-    interface: "RankTrace" | "GTrace" | "Binary"
-  }[]
+  annotations: AnnotationDataSpec[]
   userCanAdd: boolean
 }
