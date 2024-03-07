@@ -2,7 +2,7 @@ import { DownOutlined } from "@ant-design/icons"
 import Constants from "Constants"
 import type { MenuProps } from "antd"
 import { Button, Dropdown, MenuInfo, Space } from "antd"
-import React, { useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 import { useSelector } from "react-redux"
 import { nodeContext } from "../../journey/node_context"
 import { useDispatch } from "../../journey/state"
@@ -22,12 +22,20 @@ import ConflabGallery from "../../art/conflab-gallery.svg"
 
 interface Props extends CovfeeTaskProps<ContinuousAnnotationTaskSpec> {}
 
+const REGISTER_ACTION_ANNOTATION_KEY: string = "s"
+const UNINITIALIZED_ACTION_ANNOTATION_START_TIME: null = null
+
 /**
  * We specify the data structure for the annotation data received from the server
  */
 type AnnotationData = AnnotationDataSpec & {
   id: number
   data_json: number[]
+}
+
+type ActionAnnotationDataArray = {
+  buffer: number[]
+  needs_upload: boolean
 }
 
 const ContinuousAnnotationTask: React.FC<Props> = (props) => {
@@ -54,9 +62,15 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   )
   const [showingGallery, setShowingGallery] = useState(false)
   const [isAnnotating, setIsAnnotating] = useState(false)
+  const [actionAnnotationStartTime, setActionAnnotationStartTime] = useState<
+    number | null
+  >(UNINITIALIZED_ACTION_ANNOTATION_START_TIME)
 
   const [activeAnnotationDataArray, setActiveAnnotationDataArray] =
-    React.useState<number[]>([])
+    React.useState<ActionAnnotationDataArray>({
+      buffer: [],
+      needs_upload: false,
+    })
 
   const validAnnotationsDataAndSelection: boolean =
     annotationsDataMirror !== undefined &&
@@ -78,10 +92,14 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     if (!validAnnotationsDataAndSelection) {
       return
     }
-
+    if (!activeAnnotationDataArray.needs_upload) {
+      return
+    }
+    console.log("Posting new data to server")
+    console.log(activeAnnotationDataArray)
     const active_annotation_data_to_post = {
       ...annotationsDataMirror[selectedAnnotationIndex],
-      data_json: activeAnnotationDataArray,
+      data_json: activeAnnotationDataArray.buffer,
     }
     try {
       const url =
@@ -104,6 +122,9 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     } catch (error) {
       console.error("Error posting new data:", error)
     }
+    setActiveAnnotationDataArray((prevActiveAnnotationDataArray) => {
+      return { ...prevActiveAnnotationDataArray, needs_upload: false }
+    })
   }, [
     node.customApiBase,
     node.id,
@@ -130,7 +151,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
 
   // this is a custom dispatch function provided by Covfee
 
-  const numberOfVideoFrames = 5 // TODO: Initialize me on video load
+  const numberOfVideoFrames = 30 * 1 // TODO: Initialize me on video load
 
   /******************************************************/
   /***** Logic to create a dummy video playback *********/
@@ -155,13 +176,14 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     return () => clearInterval(videoPlaybackInterval)
   }, [isAnnotating]) // Run the effect whenever isRunning changes
 
-  useEffect(() => {
-    if (frameNumber >= DUMMY_VIDEO_NUMBER_OF_FRAMES) {
-      console.log("Stopping the video playback")
-      setIsAnnotating(false)
-      handleVideoEnded()
-    }
+  // TODO: Implement these functions video playback logic
+  const getCurrentVideoTime = React.useCallback(() => {
+    return frameNumber / 30.0
   }, [frameNumber])
+
+  const getCurrentVideoFramerate = React.useCallback(() => {
+    return 30.0
+  }, [])
   /******************************************************/
   /******************************************************/
 
@@ -299,33 +321,129 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     }
   }
 
+  /****************** Annotation process logic *************** */
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (isAnnotating && event.key === REGISTER_ACTION_ANNOTATION_KEY) {
+        // If there isn't an ongoing annotation already... (note that
+        // holding the key leads to multiple event calls)
+        if (
+          actionAnnotationStartTime ===
+          UNINITIALIZED_ACTION_ANNOTATION_START_TIME
+        ) {
+          const currentVideoTime = getCurrentVideoTime()
+          setActionAnnotationStartTime(currentVideoTime)
+          console.log("Annotation started at", currentVideoTime)
+        }
+      }
+    },
+    [actionAnnotationStartTime, getCurrentVideoTime, isAnnotating]
+  )
+
+  const registerActionAnnotationStopped = useCallback(() => {
+    // If we are annotating, we set the activeAnnotationDataArray to 1 for the
+    // corresponding time range
+    console.log(
+      "Registering action annotation stopped",
+      actionAnnotationStartTime
+    )
+    if (
+      actionAnnotationStartTime !== UNINITIALIZED_ACTION_ANNOTATION_START_TIME
+    ) {
+      const currentVideoTime = getCurrentVideoTime()
+      console.log("Annotation ended at", currentVideoTime)
+      // Based on the registered annotation start time and framerate, we get
+      // the corresponding frame time.
+      const startFrameIndex = Math.round(
+        actionAnnotationStartTime * getCurrentVideoFramerate()
+      )
+      // Similarly, we retrieve the current frame number
+      const endFrameIndex = Math.min(
+        Math.round(getCurrentVideoTime() * getCurrentVideoFramerate()),
+        activeAnnotationDataArray.buffer.length
+      )
+      // We then update the data array for the elements in between start and end time
+      if (
+        startFrameIndex < activeAnnotationDataArray.buffer.length &&
+        endFrameIndex > startFrameIndex
+      ) {
+        setActiveAnnotationDataArray((prevActiveAnnotationDataArray) => {
+          const newActiveAnnotationDataArray =
+            prevActiveAnnotationDataArray.buffer.slice()
+          newActiveAnnotationDataArray.fill(1, startFrameIndex, endFrameIndex)
+          return {
+            buffer: newActiveAnnotationDataArray,
+            needs_upload: prevActiveAnnotationDataArray.needs_upload,
+          }
+        })
+        // We similarly clear out annotation start time
+        setActionAnnotationStartTime(-1)
+      }
+    }
+  }, [
+    actionAnnotationStartTime,
+    activeAnnotationDataArray,
+    getCurrentVideoTime,
+    getCurrentVideoFramerate,
+  ])
+
+  const handleKeyUp = useCallback(
+    (event: KeyboardEvent) => {
+      if (isAnnotating && event.key === REGISTER_ACTION_ANNOTATION_KEY) {
+        registerActionAnnotationStopped()
+      }
+    },
+    [isAnnotating, registerActionAnnotationStopped]
+  )
+
+  // Register the listeners for keyboard events
+  React.useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("keyup", handleKeyUp)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("keyup", handleKeyUp)
+    }
+  }, [handleKeyDown, handleKeyUp])
+
+  // ---- Higher level annotation status logic ------ //
   const toggleAnnotatingStatus = () => {
     if (!isAnnotating) {
       if (!validAnnotationsDataAndSelection) {
         return
       }
-      // TODO: Check for data_json length is equal to the number of frames
-      if (annotationsDataMirror[selectedAnnotationIndex].data_json !== null) {
-        console.log("Setting old data")
-        setActiveAnnotationDataArray(
-          annotationsDataMirror[selectedAnnotationIndex].data_json
-        )
-      } else {
-        console.log("Creating new array")
-        setActiveAnnotationDataArray(
-          Array.from({ length: numberOfVideoFrames }, () => 0)
-        )
-      }
+      setActiveAnnotationDataArray({
+        buffer: Array.from({ length: numberOfVideoFrames }, () => 0),
+        needs_upload: false,
+      })
     }
-
     setIsAnnotating(!isAnnotating)
   }
 
-  const handleVideoEnded = () => {
+  const handleVideoEnded = useCallback(() => {
     if (isAnnotating) {
+      console.log("Video ended. Stopping annotation")
+      registerActionAnnotationStopped()
+      setActiveAnnotationDataArray((prevActiveAnnotationDataArray) => {
+        return { ...prevActiveAnnotationDataArray, needs_upload: true }
+      })
+    }
+  }, [isAnnotating, registerActionAnnotationStopped])
+
+  useEffect(() => {
+    if (activeAnnotationDataArray.needs_upload) {
       postActiveAnnotationDataArrayToServer()
     }
-  }
+  }, [activeAnnotationDataArray, postActiveAnnotationDataArrayToServer])
+
+  // Dummy video logic
+  useEffect(() => {
+    if (frameNumber >= DUMMY_VIDEO_NUMBER_OF_FRAMES) {
+      console.log("Stopping the video playback")
+      handleVideoEnded()
+      setIsAnnotating(false)
+    }
+  }, [frameNumber, handleVideoEnded])
 
   const handleNewFrameIndex = (frame_index: number) => {}
 
@@ -366,35 +484,44 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
             }}
             className={styles["action-task-dropdown"]}
           >
-            <a
+            <Button
               onClick={(e) => {
                 e.preventDefault()
               }}
               className={styles["action-task-dropwdown-button"]}
             >
-              <Space>
-                {validAnnotationsDataAndSelection
-                  ? annotationsDataMirror[selectedAnnotationIndex].participant
-                  : ""}
-                <DownOutlined />
-              </Space>
-            </a>
+              <span className={styles["action-task-dropdown-button-text"]}>
+                <Space>
+                  {validAnnotationsDataAndSelection
+                    ? annotationsDataMirror[selectedAnnotationIndex].participant
+                    : ""}
+                </Space>
+              </span>
+              <DownOutlined
+                className={styles["action-task-dropwdown-button-icon"]}
+              />
+            </Button>
           </Dropdown>
           <h1>Select an action to annotate:</h1>
           <Dropdown menu={{ items: annotations_menu_items, selectable: true }}>
-            <a
+            <Button
               onClick={(e) => {
                 e.preventDefault()
               }}
               className={styles["action-task-dropwdown-button"]}
             >
-              <Space>
-                {validAnnotationsDataAndSelection
-                  ? annotationsDataMirror[selectedAnnotationIndex]?.category
-                  : ""}
-                <DownOutlined />
-              </Space>
-            </a>
+              <span className={styles["action-task-dropdown-button-text"]}>
+                <Space>
+                  {/* <CheckOutlined /> */}
+                  {validAnnotationsDataAndSelection
+                    ? annotationsDataMirror[selectedAnnotationIndex]?.category
+                    : ""}
+                </Space>
+              </span>
+              <DownOutlined
+                className={styles["action-task-dropwdown-button-icon"]}
+              />
+            </Button>
           </Dropdown>
           <div className={styles.sidebarBottom}>
             <p>{frameNumber}</p>

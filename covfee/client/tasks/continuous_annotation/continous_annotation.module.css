@@ -77,9 +77,22 @@
   width: 100%;
   border: 1px solid blue;
   border-radius: 6px;
-  padding: 4px 8px 8px 4px;
+  /*padding: 4px 8px 8px 4px;*/
   margin: 4px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+}
+
+.action-task-dropdown-button-text {
+  flex: 1;
+  text-align: left;
+}
+
+.action-task-dropwdown-button-icon {
+  margin-left: 8px;
+}
+.action-task-dropwdown-button-icon-placeholder {
+  width: 16px;
 }
 
 .action-task-dropdown-menu {
