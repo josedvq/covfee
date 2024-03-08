@@ -49,11 +49,13 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     },
   }
 
+  // this is a custom dispatch function provided by Covfee
   const dispatch = useDispatch()
-
   const { node } = React.useContext(nodeContext)
 
-  // Holds the annotations data for this task instance
+  //*************************************************************//
+  //------------------ States definition -------------------- //
+  //*************************************************************//
   const [annotationsDataMirror, setAnnotationsDataMirror] =
     React.useState<AnnotationData[]>()
   // we read the state using useSelector
@@ -78,7 +80,29 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     selectedAnnotationIndex >= 0 &&
     selectedAnnotationIndex < annotationsDataMirror.length
 
-  //-------------------- Server communication -------------------- //
+  const selectFirstAvailableAnnotationIndexBasedOnParticipantName = (
+    participant: string
+  ) => {
+    if (annotationsDataMirror === undefined) {
+      return
+    }
+    // Finds the first annotation in the spec that has the participant
+    const first_annotation_index_for_participant =
+      annotationsDataMirror.findIndex((annotation) => {
+        return annotation.participant === participant
+      })
+    if (first_annotation_index_for_participant !== -1) {
+      dispatch(
+        actions.setSelectedAnnotationIndex(
+          first_annotation_index_for_participant
+        )
+      )
+    }
+  }
+
+  //*************************************************************//
+  //------------------ Server communication -------------------- //
+  //*************************************************************//
   const fetchAnnotationsServerData = React.useCallback(async () => {
     const url =
       Constants.base_url +
@@ -88,15 +112,23 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     setAnnotationsDataMirror(await res.json())
   }, [node.customApiBase, node.id])
 
-  const postActiveAnnotationDataArrayToServer = React.useCallback(async () => {
+  // We keep the annotationDataMirror up to date with the server data.
+  // Note that given useEffect, this leads to a call immediately when
+  // this component is instantiated.
+  // Note that fetchAnnotationsServerData is a useCallback, so it is memoized
+  // and that function reference is what is being monitored by the useEffect
+  React.useEffect(() => {
+    fetchAnnotationsServerData()
+  }, [fetchAnnotationsServerData])
+
+  const postActiveAnnotationDataArrayToServer = async () => {
     if (!validAnnotationsDataAndSelection) {
       return
     }
     if (!activeAnnotationDataArray.needs_upload) {
       return
     }
-    console.log("Posting new data to server")
-    console.log(activeAnnotationDataArray)
+    console.log("Posting new data to server", activeAnnotationDataArray)
     const active_annotation_data_to_post = {
       ...annotationsDataMirror[selectedAnnotationIndex],
       data_json: activeAnnotationDataArray.buffer,
@@ -125,14 +157,15 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     setActiveAnnotationDataArray((prevActiveAnnotationDataArray) => {
       return { ...prevActiveAnnotationDataArray, needs_upload: false }
     })
-  }, [
-    node.customApiBase,
-    node.id,
-    annotationsDataMirror,
-    selectedAnnotationIndex,
-    activeAnnotationDataArray,
-    validAnnotationsDataAndSelection,
-  ])
+  }
+
+  // When the activeAnnotationDataArray eventually is observed to have the needs_upload
+  // flag set to True, we post the new data to the server
+  useEffect(() => {
+    if (activeAnnotationDataArray.needs_upload) {
+      postActiveAnnotationDataArrayToServer()
+    }
+  }, [activeAnnotationDataArray, postActiveAnnotationDataArrayToServer])
 
   // update selectedAnnotationIndex to a reasonable state, for the case in which
   // annotationsDataMirror is undefined, or empty, or when is valid but selectedAnnotationIndex
@@ -147,71 +180,92 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     }
   }, [selectedAnnotationIndex, annotationsDataMirror])
 
-  //-------------------- Video playback -------------------- //
-
-  // this is a custom dispatch function provided by Covfee
-
+  //*************************************************************//
+  //----------- Video playback fuctionality -------------------- //
+  //*************************************************************//
   const numberOfVideoFrames = 30 * 1 // TODO: Initialize me on video load
 
-  /******************************************************/
-  /***** Logic to create a dummy video playback *********/
-  /******************************************************/
-  // This is temporary, just to test the annotation flow,
-  // and pushing back and forth annotations to the server
-  // through the API endpoints
-  const DUMMY_VIDEO_NUMBER_OF_FRAMES: number = numberOfVideoFrames
-  const [frameNumber, setFrameNumber] = useState(0)
-  useEffect(() => {
-    let videoPlaybackInterval: NodeJS.Timeout | undefined
+  const startVideoPlayback = (startTimeInSeconds: number) => {
+    // TODO: Implement the actual video playback start playing at the given time
+    startDummyVideoPlayback(startTimeInSeconds)
+  }
 
-    if (isAnnotating) {
-      setFrameNumber(0)
-      videoPlaybackInterval = setInterval(() => {
-        // Increment the seconds state every second
-        setFrameNumber((prevFrameNumber) => prevFrameNumber + 1)
-      }, 33)
-    }
+  const pauseVideoPlayback = () => {
+    pauseDummyVideoPlayback()
+  }
 
-    // Clean up the interval when the component unmounts or when the timer stops
-    return () => clearInterval(videoPlaybackInterval)
-  }, [isAnnotating]) // Run the effect whenever isRunning changes
+  const getCurrentVideoTime = () => {
+    return getCurrentDummyVideoTime()
+  }
 
-  // TODO: Implement these functions video playback logic
-  const getCurrentVideoTime = React.useCallback(() => {
-    return frameNumber / 30.0
-  }, [frameNumber])
+  const handleVideoEnd = () => {
+    handleAnnotationsOnVideoEndEvent()
 
-  const getCurrentVideoFramerate = React.useCallback(() => {
-    return 30.0
-  }, [])
-  /******************************************************/
-  /******************************************************/
+    setIsAnnotating(false)
+  }
+
+  const getCurrentVideoFramerate = () => {
+    return getCurrentDummyVideoFramerate()
+  }
 
   const my_video = {
     type: "video",
     url: "https://mdn.github.io/learning-area/html/multimedia-and-embedding/video-and-audio-content/rabbit320.mp4",
   }
 
-  const selectFirstAvailableAnnotationIndexBasedOnParticipantName = (
-    participant: string
-  ) => {
-    if (annotationsDataMirror === undefined) {
-      return
-    }
-    // Finds the first annotation in the spec that has the participant
-    const first_annotation_index_for_participant =
-      annotationsDataMirror.findIndex((annotation) => {
-        return annotation.participant === participant
-      })
-    console.log("Index ", first_annotation_index_for_participant)
-    if (first_annotation_index_for_participant !== -1) {
-      dispatch(
-        actions.setSelectedAnnotationIndex(
-          first_annotation_index_for_participant
-        )
+  //*************************************************************//
+  //-------------- Dummy Video fuctionality -------------------- //
+  //----------------- For testing purposes ----------------------//
+  //*************************************************************//
+  const DUMMY_VIDEO_NUMBER_OF_FRAMES: number = numberOfVideoFrames
+  const [frameNumber, setFrameNumber] = useState(0)
+  const [dummyVideoTimerId, setDummyVideoTimerId] = useState(null)
+
+  const startDummyVideoPlayback = (startTimeInSeconds: number) => {
+    console.log("Starting video playback, setting to ", startTimeInSeconds)
+    if (dummyVideoTimerId === null) {
+      setFrameNumber(
+        Math.round(startTimeInSeconds * getCurrentVideoFramerate())
       )
+      setDummyVideoTimerId(
+        setInterval(() => {
+          // Increment the seconds state every second
+          setFrameNumber((prevFrameNumber) => prevFrameNumber + 1)
+        }, 33)
+      )
+    } else {
+      console.log("Dummy video id was not null")
     }
   }
+  const pauseDummyVideoPlayback = () => {
+    if (dummyVideoTimerId !== null) {
+      clearInterval(dummyVideoTimerId)
+      setDummyVideoTimerId(null)
+    }
+  }
+
+  // Dummy video logic to know
+  useEffect(() => {
+    if (frameNumber >= DUMMY_VIDEO_NUMBER_OF_FRAMES) {
+      console.log("Stopping the video playback")
+      handleVideoEnd()
+      pauseDummyVideoPlayback()
+    }
+  }, [frameNumber])
+
+  // TODO: Implement these functions video playback logic
+  const getCurrentDummyVideoTime = React.useCallback(() => {
+    console.log("Frame number", frameNumber)
+    return frameNumber / 30.0
+  }, [frameNumber])
+
+  const getCurrentDummyVideoFramerate = () => {
+    return 30.0
+  }
+
+  //********************************************************************//
+  //------------- Participant and annnotation menus-------------------- //
+  //********************************************************************//
 
   // We prepare the participants options in the menu
   const participants_menu_items: MenuProps["items"] = [
@@ -274,6 +328,10 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     },
   ]
 
+  //********************************************************************//
+  //------------------- Gallery management ---------------------------- //
+  //********************************************************************//
+
   // We use a Ref to know to which DOM element to redirect the keyboard focus
   // and as to capture key press events. Also, to retrieve the geometry of the
   // underlying gallery svg image.
@@ -283,10 +341,6 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       galleryOverlayRef.current.focus()
     }
   }, [showingGallery])
-
-  React.useEffect(() => {
-    fetchAnnotationsServerData()
-  }, [fetchAnnotationsServerData])
 
   React.useEffect(() => {
     console.log(annotationsDataMirror)
@@ -321,45 +375,40 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     }
   }
 
-  /****************** Annotation process logic *************** */
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (isAnnotating && event.key === REGISTER_ACTION_ANNOTATION_KEY) {
-        // If there isn't an ongoing annotation already... (note that
-        // holding the key leads to multiple event calls)
-        if (
-          actionAnnotationStartTime ===
-          UNINITIALIZED_ACTION_ANNOTATION_START_TIME
-        ) {
-          const currentVideoTime = getCurrentVideoTime()
-          setActionAnnotationStartTime(currentVideoTime)
-          console.log("Annotation started at", currentVideoTime)
-        }
+  //********************************************************************//
+  //----------------- Action annotation logic ------------------------- //
+  //********************************************************************//
+  const annotateStartEventOfActionAnnotation = () => {
+    if (isAnnotating) {
+      console.log("Key pressed", isAnnotating)
+      // If there isn't an ongoing annotation already... (note that
+      // holding the key leads to multiple event calls)
+      if (
+        actionAnnotationStartTime === UNINITIALIZED_ACTION_ANNOTATION_START_TIME
+      ) {
+        const currentVideoTime = getCurrentVideoTime()
+        setActionAnnotationStartTime(currentVideoTime)
+        console.log("Annotation started at", currentVideoTime)
       }
-    },
-    [actionAnnotationStartTime, getCurrentVideoTime, isAnnotating]
-  )
+    }
+  }
 
-  const registerActionAnnotationStopped = useCallback(() => {
+  const annotateEndEventOfActionAnnotation = () => {
     // If we are annotating, we set the activeAnnotationDataArray to 1 for the
     // corresponding time range
-    console.log(
-      "Registering action annotation stopped",
-      actionAnnotationStartTime
-    )
     if (
       actionAnnotationStartTime !== UNINITIALIZED_ACTION_ANNOTATION_START_TIME
     ) {
       const currentVideoTime = getCurrentVideoTime()
-      console.log("Annotation ended at", currentVideoTime)
+      const currentVideoFramerate = getCurrentVideoFramerate()
       // Based on the registered annotation start time and framerate, we get
       // the corresponding frame time.
       const startFrameIndex = Math.round(
-        actionAnnotationStartTime * getCurrentVideoFramerate()
+        actionAnnotationStartTime * currentVideoFramerate
       )
       // Similarly, we retrieve the current frame number
       const endFrameIndex = Math.min(
-        Math.round(getCurrentVideoTime() * getCurrentVideoFramerate()),
+        Math.round(currentVideoTime * currentVideoFramerate),
         activeAnnotationDataArray.buffer.length
       )
       // We then update the data array for the elements in between start and end time
@@ -377,23 +426,59 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
           }
         })
         // We similarly clear out annotation start time
-        setActionAnnotationStartTime(-1)
+        setActionAnnotationStartTime(UNINITIALIZED_ACTION_ANNOTATION_START_TIME)
       }
     }
-  }, [
-    actionAnnotationStartTime,
-    activeAnnotationDataArray,
-    getCurrentVideoTime,
-    getCurrentVideoFramerate,
-  ])
+  }
+
+  const handleAnnotationStartOrStopButtonClick = () => {
+    if (!isAnnotating) {
+      if (!validAnnotationsDataAndSelection) {
+        return
+      }
+      startVideoPlayback(0.0)
+      setActiveAnnotationDataArray({
+        buffer: Array.from({ length: numberOfVideoFrames }, () => 0),
+        needs_upload: false,
+      })
+    } else {
+      pauseVideoPlayback()
+    }
+    setIsAnnotating(!isAnnotating)
+  }
+
+  const handleAnnotationsOnVideoEndEvent = () => {
+    if (isAnnotating) {
+      // TODO: Triple check that isAnnotating is not being set to false before this
+      // function is called.
+      annotateEndEventOfActionAnnotation()
+      // Setting the need_upload will trigger the postActiveAnnotationDataArrayToServer
+      // function given the useEffect hook with activeAnnotationDataArray as dependency
+      setActiveAnnotationDataArray((prevActiveAnnotationDataArray) => {
+        return { ...prevActiveAnnotationDataArray, needs_upload: true }
+      })
+    }
+  }
+
+  //********************************************************************//
+  //---------- Keyboard management for Action annotation--------------- //
+  //********************************************************************//
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === REGISTER_ACTION_ANNOTATION_KEY) {
+        annotateStartEventOfActionAnnotation()
+      }
+    },
+    [actionAnnotationStartTime, getCurrentVideoTime, isAnnotating]
+  )
 
   const handleKeyUp = useCallback(
     (event: KeyboardEvent) => {
       if (isAnnotating && event.key === REGISTER_ACTION_ANNOTATION_KEY) {
-        registerActionAnnotationStopped()
+        annotateEndEventOfActionAnnotation()
       }
     },
-    [isAnnotating, registerActionAnnotationStopped]
+    [isAnnotating, annotateEndEventOfActionAnnotation]
   )
 
   // Register the listeners for keyboard events
@@ -406,52 +491,9 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     }
   }, [handleKeyDown, handleKeyUp])
 
-  // ---- Higher level annotation status logic ------ //
-  const toggleAnnotatingStatus = () => {
-    if (!isAnnotating) {
-      if (!validAnnotationsDataAndSelection) {
-        return
-      }
-      setActiveAnnotationDataArray({
-        buffer: Array.from({ length: numberOfVideoFrames }, () => 0),
-        needs_upload: false,
-      })
-    }
-    setIsAnnotating(!isAnnotating)
-  }
-
-  const handleVideoEnded = useCallback(() => {
-    if (isAnnotating) {
-      console.log("Video ended. Stopping annotation")
-      registerActionAnnotationStopped()
-      setActiveAnnotationDataArray((prevActiveAnnotationDataArray) => {
-        return { ...prevActiveAnnotationDataArray, needs_upload: true }
-      })
-    }
-  }, [isAnnotating, registerActionAnnotationStopped])
-
-  useEffect(() => {
-    if (activeAnnotationDataArray.needs_upload) {
-      postActiveAnnotationDataArrayToServer()
-    }
-  }, [activeAnnotationDataArray, postActiveAnnotationDataArrayToServer])
-
-  // Dummy video logic
-  useEffect(() => {
-    if (frameNumber >= DUMMY_VIDEO_NUMBER_OF_FRAMES) {
-      console.log("Stopping the video playback")
-      handleVideoEnded()
-      setIsAnnotating(false)
-    }
-  }, [frameNumber, handleVideoEnded])
-
-  const handleNewFrameIndex = (frame_index: number) => {}
-
-  useEffect(() => {
-    handleNewFrameIndex(frameNumber)
-  }, [frameNumber])
-
-  // and we render the component
+  //********************************************************************//
+  //----------------------- JSX rendering logic ------------------------//
+  //********************************************************************//
   return (
     <form>
       {showingGallery && (
@@ -524,11 +566,23 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
             </Button>
           </Dropdown>
           <div className={styles.sidebarBottom}>
+            <div
+              className={`${styles["action-annotation-flashscreen"]} ${
+                isAnnotating
+                  ? actionAnnotationStartTime ===
+                    UNINITIALIZED_ACTION_ANNOTATION_START_TIME
+                    ? styles[
+                        "action-annotation-flashscreen-active-key-not-pressed"
+                      ]
+                    : styles["action-annotation-flashscreen-active-key-pressed"]
+                  : ""
+              }`}
+            />
             <p>{frameNumber}</p>
             <Button
               type="primary"
               className={styles["gallery-button"]}
-              onClick={toggleAnnotatingStatus}
+              onClick={handleAnnotationStartOrStopButtonClick}
             >
               {isAnnotating ? "Stop Annotation" : "Start Annotation"}
             </Button>
