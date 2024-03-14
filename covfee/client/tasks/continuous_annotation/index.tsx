@@ -11,12 +11,13 @@ import { TaskExport } from "../../types/node"
 import { AllPropsRequired } from "../../types/utils"
 import { fetcher } from "../../utils"
 import { CovfeeTaskProps } from "../base"
+import CamViewSelection from "./camview_selection"
 import styles from "./continous_annotation.module.css"
 import { State, actions, slice } from "./slice"
 import type { AnnotationDataSpec, ContinuousAnnotationTaskSpec } from "./spec"
 
 // You can download this image and place it in the art folder from:
-// @helix.ewi.tudelft.nl:/home/kfunesmora/mingle/media
+// @covfee.ewi.tudelft.nl:/home/kfunesmora/conflab-media/
 // Do not commit to the repo for confidentiality reasons.
 import ConflabGallery from "../../art/conflab-gallery.svg"
 
@@ -24,6 +25,10 @@ interface Props extends CovfeeTaskProps<ContinuousAnnotationTaskSpec> {}
 
 const REGISTER_ACTION_ANNOTATION_KEY: string = "s"
 const UNINITIALIZED_ACTION_ANNOTATION_START_TIME: null = null
+const CHANGE_VIEW_UP_KEY: string = "ArrowUp"
+const CHANGE_VIEW_DOWN_KEY: string = "ArrowDown"
+const CAMVIEW_SELECTION_LAYOUT_IS_VERTICAL: boolean = true
+const CAMVIEW_SELECTION_NUMBER_OF_VIEWS: number = 5
 
 /**
  * We specify the data structure for the annotation data received from the server
@@ -67,7 +72,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   const [actionAnnotationStartTime, setActionAnnotationStartTime] = useState<
     number | null
   >(UNINITIALIZED_ACTION_ANNOTATION_START_TIME)
-
+  const [selectedCamViewIndex, setSelectedCamViewIndex] = useState(0)
   const [activeAnnotationDataArray, setActiveAnnotationDataArray] =
     React.useState<ActionAnnotationDataArray>({
       buffer: [],
@@ -477,6 +482,20 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       if (isAnnotating && event.key === REGISTER_ACTION_ANNOTATION_KEY) {
         annotateEndEventOfActionAnnotation()
       }
+      // We use the arrow keys to change the selected camera view
+      // FIXME: this leads to scrolling the page. However, we expect that the final
+      // implementation will have a layout which won't generate a scrollbar while
+      // annotating.
+      if (event.key == CHANGE_VIEW_UP_KEY) {
+        setSelectedCamViewIndex((prevSelectedViewIndex) => {
+          return Math.max(0, prevSelectedViewIndex - 1)
+        })
+      }
+      if (event.key == CHANGE_VIEW_DOWN_KEY) {
+        setSelectedCamViewIndex((prevSelectedViewIndex) => {
+          return Math.min(4, prevSelectedViewIndex + 1)
+        })
+      }
     },
     [isAnnotating, annotateEndEventOfActionAnnotation]
   )
@@ -614,6 +633,14 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
             // {...args.spec.media}
             {...my_video}
             // onEnded={actions.enableForm}
+          />
+        </div>
+        <div className={styles.rightSideBar}>
+          <CamViewSelection
+            setSelectedView={setSelectedCamViewIndex}
+            selectedView={selectedCamViewIndex}
+            layoutIsVertical={CAMVIEW_SELECTION_LAYOUT_IS_VERTICAL}
+            numberOfViews={CAMVIEW_SELECTION_NUMBER_OF_VIEWS}
           />
         </div>
       </div>

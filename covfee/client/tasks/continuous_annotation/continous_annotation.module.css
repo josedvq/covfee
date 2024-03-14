@@ -26,7 +26,7 @@
 
   left: 50%;
   transform: translateX(-50%);
-  background-color: white;
+  background-color: rgb(223, 165, 165);
 }
 
 .sidebar {
@@ -34,9 +34,16 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  width: 20%; /* Adjust as needed */
+  width: 20%;
   min-width: 200px; /* Set a minimum width */
-  background-color: #f0f0f0; /* Example background color */
+  padding: 12px;
+}
+
+.rightSideBar {
+  display: flex;
+  flex-direction: column;
+  width: 20%;
+  min-width: 200px; /* Set a minimum width */
   padding: 12px;
 }
 
@@ -114,4 +121,23 @@
 
 .action-annotation-flashscreen-active-key-not-pressed {
   background-color: green;
+}
+
+.camview-selection-svg-container {
+  width: 100%;
+  max-width: 100%;
+
+  background-color: green;
+}
+
+.camview-selection-image {
+  width: 100%;
+  max-width: 100%;
+  height: auto; /* this is critical so that getBoundingClientRect is accurate */
+  /*background-color: green;*/
+}
+
+.camview-selection-bounding-box {
+  background-color: rgba(255, 217, 0, 0.2);
+  border: 3px solid rgb(255, 230, 0);
 }
