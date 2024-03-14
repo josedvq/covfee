@@ -7,16 +7,17 @@ export interface AnnotationDataSpec {
   participant: string
   interface: "RankTrace" | "GTrace" | "Binary"
 }
+export interface MediaSpec {
+  type: "video"
+  url: string
+}
 
 export interface ContinuousAnnotationTaskSpec extends BaseTaskSpec {
   /**
    * @default "ContinuousAnnotationTask"
    */
   type: "ContinuousAnnotationTask"
-  media: {
-    type: "video"
-    url: string
-  }
+  media: MediaSpec[]
   annotations: AnnotationDataSpec[]
   userCanAdd: boolean
 }

@@ -213,10 +213,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     return getCurrentDummyVideoFramerate()
   }
 
-  const my_video = {
-    type: "video",
-    url: "https://mdn.github.io/learning-area/html/multimedia-and-embedding/video-and-audio-content/rabbit320.mp4",
-  }
+  const my_video = props.spec.media[0]
 
   //*************************************************************//
   //-------------- Dummy Video fuctionality -------------------- //

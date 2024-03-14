@@ -11,10 +11,22 @@ my_task_1 = tasks.ContinuousAnnotationTaskSpec(
         {"category": "Laughing", "interface": "Binary", "participant": "Participant_1"},
         {"category": "Jumping", "interface": "Binary", "participant": "Participant_2"},
     ],
-    media={
+    media=[{
+        "type": "video",
+        "url": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    }, {
+        "type": "video",
+        "url": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    }, {
         "type": "video",
         "url": "https://file-examples.com/storage/fec71f2ebe65d8e339e8b9c/2017/04/file_example_MP4_640_3MG.mp4",
-    },
+    }, {
+        "type": "video",
+        "url": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    }, {
+        "type": "video",
+        "url": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    }],
     userCanAdd=False,
 )
 

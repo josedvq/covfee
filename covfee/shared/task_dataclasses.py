@@ -4,7 +4,7 @@ from .dataclass import CovfeeTask
 class ContinuousAnnotationTaskSpec(CovfeeTask):
     type: str = "ContinuousAnnotationTask"
     annotations: List[Any]
-    media: Any
+    media: List[Any]
     name: str
     userCanAdd: bool
     # Seconds countdown after start condition met.
@@ -46,7 +46,7 @@ class ContinuousAnnotationTaskSpec(CovfeeTask):
         """
         ### Parameters
         0. annotations : List[Any]
-        1. media : Any
+        1. media : List[Any]
         2. name : str
         3. userCanAdd : bool
         4. countdown : float
