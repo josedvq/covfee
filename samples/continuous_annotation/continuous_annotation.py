@@ -4,6 +4,29 @@ from covfee.shared.dataclass import CovfeeApp
 
 config.load_environment("local")
 
+spec_consent_form = {
+    "name": "Consent",
+    "content": {"type": "link", "url": "$$www$$/consent.html"},
+    "form": {
+        "fields": [
+            {
+                "name": "name",
+                "label": "Full name:",
+                "required": True,
+                "input": {"inputType": "Input"},
+            },
+            {
+                "name": "email",
+                "label": "email:",
+                "required": True,
+                "input": {"inputType": "Input"},
+            },
+        ]
+    },
+}
+
+consent_form = tasks.InstructionsTaskSpec(**spec_consent_form, prerequisite=True, required=True)
+
 my_task_1 = tasks.ContinuousAnnotationTaskSpec(
     name="My Task 1",
     annotations=[
@@ -31,7 +54,7 @@ my_task_1 = tasks.ContinuousAnnotationTaskSpec(
 )
 
 hit = HIT("Joint counter")
-j1 = hit.add_journey(nodes=[my_task_1])
+j1 = hit.add_journey(nodes=[consent_form, my_task_1])
 
 projects = [Project("My Project", email="example@example.com", hits=[hit])]
 app = CovfeeApp(projects)
