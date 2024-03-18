@@ -34,12 +34,17 @@ class Launcher:
     projects: List["orm.Project"]
 
     def __init__(
-        self, environment, projects: List["orm.Project"] = [], folder: Path = None
+        self,
+        environment,
+        projects: List["orm.Project"] = [],
+        folder: Path = None,
+        auth_enabled: bool = True,
     ):
         self.environment = environment
         self.config = Config(environment)
         self.projects = projects
         self.folder = folder
+        self.auth_enabled = auth_enabled
 
         self.engine = get_engine(
             in_memory=(environment == "dev"), db_path=self.config["DATABASE_PATH"]
@@ -64,15 +69,13 @@ class Launcher:
 
         self.commit()
 
-    def launch(self, unsafe=None, host="0.0.0.0", port=5000):
+    def launch(self, host="0.0.0.0", port=5000):
         if self.environment != "dev":
             self.link_bundles()
-        if unsafe is None:
-            unsafe = False if self.environment == "deploy" else True
 
         socketio, app = create_app_and_socketio(self.environment, self.session_local)
         with app.app_context():
-            app.config["UNSAFE_MODE_ON"] = unsafe
+            app.config["UNSAFE_MODE_ON"] = not self.auth_enabled
             self._start_server(socketio, app, host, port)
 
     def create_tables(self, drop=False):
@@ -87,9 +90,13 @@ class Launcher:
             username = self.config["ADMIN_USERNAME"]
             password = self.config["ADMIN_PASSWORD"]
 
-            if username == default_username and password == default_password:
+            if (
+                self.auth_enabled
+                and username == default_username
+                and password == default_password
+            ):
                 raise ValueError(
-                    'Default admin credentials "admin:admin" have not been changed. Please change username and password in config when deploying.'
+                    'Default admin credentials "admin:admin" have not been changed. Please change username and password in config when deploying with authentication.'
                 )
             with self.session_local() as session:
                 user = orm.User.by_username(session, username)

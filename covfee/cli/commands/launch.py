@@ -112,7 +112,9 @@ def make(force, dev, deploy, safe, rms, no_launch, project_spec_file):
         loader = Loader(project_spec_file)
         projects = loader.process(with_spinner=True)
 
-        launcher = Launcher(mode, projects, Path(project_spec_file).parent)
+        launcher = Launcher(
+            mode, projects, Path(project_spec_file).parent, auth_enabled=not unsafe
+        )
         launcher.make_database(force, with_spinner=True)
         if not no_launch:
             print(
@@ -120,7 +122,7 @@ def make(force, dev, deploy, safe, rms, no_launch, project_spec_file):
                     url=config["ADMIN_URL"] if unsafe else config["LOGIN_URL"]
                 )
             )
-            launcher.launch(unsafe)
+            launcher.launch()
     except FileNotFoundError:
         pass
     except JavascriptError as err:
@@ -157,8 +159,8 @@ def start(host, port, deploy, safe):
     config = Config(mode)
 
     try:
-        launcher = Launcher(mode, [])
-        launcher.launch(unsafe, host=host, port=port)
+        launcher = Launcher(mode, [], auth_enabled=not unsafe)
+        launcher.launch(host=host, port=port)
     except Exception as err:
         print(traceback.format_exc())
         if "js_stack_trace" in dir(err):
