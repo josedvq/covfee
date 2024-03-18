@@ -47,5 +47,8 @@ PROJECT_WWW_PATH = os.path.join(os.getcwd(), "www")
 # enables the www server
 SERVE_WWW = True
 
+DEFAULT_ADMIN_USERNAME = "admin"
+DEFAULT_ADMIN_PASSWORD = "admin"
+
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "admin"

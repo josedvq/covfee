@@ -1,16 +1,16 @@
 from __future__ import annotations
-import os
+
 import json
 from pprint import pformat
 from typing import TYPE_CHECKING, List
 
 import pandas as pd
 from sqlalchemy import select
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 # from ..db import Base
 from .base import Base
-import covfee.launcher as launcher
 
 if TYPE_CHECKING:
     from .hit import HITSpec
@@ -63,7 +63,7 @@ class Project(Base):
         return df
 
     @staticmethod
-    def from_name(session, name: str):
+    def by_name(session, name: str):
         return (
             session.execute(select(Project).where(Project.name == name))
             .scalars()

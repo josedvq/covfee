@@ -1,15 +1,21 @@
-import * as React from "react"
 import "antd/dist/reset.css"
+import * as React from "react"
 
-import { HashRouter as Router, Routes, Route, Link } from "react-router-dom"
+import { Outlet, Route, HashRouter as Router, Routes } from "react-router-dom"
 
 import { AppProvider } from "../app_provider"
 import { ChatProvider } from "../chat_context"
-import ProjectsPage from "./projects_page"
-import { LoginPage } from "./login"
-import { AdminLayout } from "./layout"
 import { AdminProvider } from "./admin_provider"
+import { AdminLayout } from "./layout"
+import { LoginPage } from "./login"
 import { NodeOverlay } from "./node_overlay"
+import ProjectsPage from "./projects_page"
+
+const AdminRequired = (props: { loggedRequired: boolean }) => (
+  <AdminLayout loggedRequired={props.loggedRequired}>
+    <Outlet /> {/* This will render the nested route */}
+  </AdminLayout>
+)
 
 export const Root: React.FC<void> = (props) => {
   return (
@@ -17,17 +23,19 @@ export const Root: React.FC<void> = (props) => {
       <AppProvider admin={true}>
         <AdminProvider>
           <ChatProvider>
-            <AdminLayout>
-              <NodeOverlay />
-              <Routes>
+            <NodeOverlay />
+            <Routes>
+              <Route element={<AdminRequired loggedRequired={true} />}>
+                <Route path="/" element={<ProjectsPage />}></Route>
                 <Route
                   path="/projects/:projectId"
                   element={<ProjectsPage />}
                 ></Route>
+              </Route>
+              <Route element={<AdminRequired loggedRequired={false} />}>
                 <Route path="/login" element={<LoginPage />}></Route>
-                <Route path="/" element={<ProjectsPage />}></Route>
-              </Routes>
-            </AdminLayout>
+              </Route>
+            </Routes>
           </ChatProvider>
         </AdminProvider>
       </AppProvider>

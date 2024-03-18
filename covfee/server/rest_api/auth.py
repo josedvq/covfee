@@ -1,23 +1,20 @@
-import os
-import hmac
-import hashlib
-
 from functools import wraps
 
-from flask import abort, request, jsonify, Blueprint, current_app as app
+from flask import Blueprint, jsonify, request
+from flask import current_app as app
 from flask_jwt_extended import (
-    jwt_required,
     create_access_token,
     create_refresh_token,
     get_current_user,
+    get_jwt,
+    jwt_required,
     set_access_cookies,
     set_refresh_cookies,
     unset_jwt_cookies,
-    get_jwt,
     verify_jwt_in_request,
 )
 
-from ..orm import User, AuthProvider, password_hash
+from ..orm import User, password_hash
 
 
 # AUTHENTICATION
@@ -51,9 +48,10 @@ def admin_required(fn):
 # such as not being found in the underlying data store
 
 
-def user_loader_callback(identity):
-    return app.session.query(User).get(identity)
-    # return User.query.filter_by(username=identity).first()
+def user_loader_callback(jwt_header, jwt_payload) -> User:
+    identity = jwt_payload["sub"]
+    user = app.session.query(User).get(identity)
+    return user
 
 
 # Create a function that will be called whenever create_access_token
@@ -101,7 +99,7 @@ def login_password():
     if username is None or password is None:
         return jsonify({"msg": "Bad username or password"}), 401
 
-    user = app.session.query(User).filter_by(username=username).first()
+    user = User.by_username(app.session, username)
     if user is None:
         return jsonify({"msg": "Bad username or password"}), 401
 
@@ -117,27 +115,6 @@ def login_password():
         return jsonify({"msg": "Bad username or password"}), 401
 
     return login_user(provider.user)
-
-
-@auth.route("/signup-password", methods=["POST"])
-def signup():
-    username = request.json.get("username", None)
-    password = request.json.get("password", None)
-
-    if username is None or password is None:
-        return jsonify({"msg": "Missing username or password"}), 401
-
-    provider = AuthProvider.query.filter_by(
-        user_id=username, provider="password"
-    ).first()
-
-    if provider is not None:
-        return jsonify({"msg": "Username exists"}), 401
-
-    # Create the new user
-    user = User(username, roles=["user"])
-    user.add_provider("password", username, {"password": password})
-    return login_user(user)
 
 
 @auth.route("/refresh", methods=["POST"])

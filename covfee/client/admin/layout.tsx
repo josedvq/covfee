@@ -1,18 +1,18 @@
-import * as React from "react";
-import CovfeeLogo from "../art/logo.svg";
-import { Layout, Menu, Typography, Result, Button } from "antd";
-import Constants from "Constants";
-import { Footer } from "antd/lib/layout/layout";
-const { Title, Paragraph, Text } = Typography;
-import { appContext, AppContextProps } from "../app_context";
+import Constants from "Constants"
+import { Button, Layout, Menu, Result, Typography } from "antd"
+import { Footer } from "antd/lib/layout/layout"
+import * as React from "react"
+import { appContext } from "../app_context"
+import CovfeeLogo from "../art/logo.svg"
+const { Title, Paragraph, Text } = Typography
 
-import { CovfeeMenuItem } from "../gui";
-import { AllPropsRequired } from "types/utils";
-import { ChatPopup } from "../chat/chat";
+import { AllPropsRequired } from "types/utils"
+import { ChatPopup } from "../chat/chat"
+import { CovfeeMenuItem } from "../gui"
 
 interface HeaderProps {
-  menuItems?: React.ReactElement[];
-  showLogin?: boolean;
+  menuItems?: React.ReactElement[]
+  showLogin?: boolean
 }
 
 export const AdminHeader: React.FC<React.PropsWithChildren<HeaderProps>> = (
@@ -22,19 +22,19 @@ export const AdminHeader: React.FC<React.PropsWithChildren<HeaderProps>> = (
     menuItems: [],
     showLogin: true,
     ...props,
-  };
+  }
 
-  const { logged, logout } = React.useContext(appContext);
+  const { logged, logout } = React.useContext(appContext)
 
   const handleLogin = () => {
-    window.location.replace(Constants.admin.home_url + "/login");
-  };
+    window.location.replace(Constants.admin.home_url + "/login")
+  }
 
   const handleLogout = () => {
     logout().then(() => {
-      window.location.replace(Constants.admin.login_url);
-    });
-  };
+      window.location.replace(Constants.admin.login_url)
+    })
+  }
 
   return (
     <Menu
@@ -58,16 +58,16 @@ export const AdminHeader: React.FC<React.PropsWithChildren<HeaderProps>> = (
       )}
       {args.menuItems &&
         args.menuItems.map((item, index) => {
-          return <Menu.Item key={3 + index}>{item}</Menu.Item>;
+          return <Menu.Item key={3 + index}>{item}</Menu.Item>
         })}
     </Menu>
-  );
-};
+  )
+}
 
 interface LayoutProps {
-  loggedRequired?: boolean;
-  rolesRequired?: string[];
-  header?: HeaderProps;
+  loggedRequired?: boolean
+  rolesRequired?: string[]
+  header?: HeaderProps
 }
 
 export const AdminLayout: React.FC<React.PropsWithChildren<LayoutProps>> = (
@@ -78,9 +78,9 @@ export const AdminLayout: React.FC<React.PropsWithChildren<LayoutProps>> = (
     rolesRequired: ["admin", "requester"],
     header: {},
     ...props,
-  };
+  }
 
-  const { logged, roles, chats } = React.useContext(appContext);
+  const { logged, roles, chats } = React.useContext(appContext)
 
   const renderContentForbidden = (
     reason: "not_logged" | "roles" | "default"
@@ -90,7 +90,7 @@ export const AdminLayout: React.FC<React.PropsWithChildren<LayoutProps>> = (
         msg: "You must be logged in to access this page.",
         btn: "Log in",
         act: () => {
-          window.location.replace(Constants.admin.login_url);
+          window.location.replace(Constants.admin.login_url)
         },
       },
       roles: {
@@ -103,9 +103,9 @@ export const AdminLayout: React.FC<React.PropsWithChildren<LayoutProps>> = (
         btn: false,
         act: () => {},
       },
-    };
+    }
 
-    const page = error_pages[reason] || error_pages["default"];
+    const page = error_pages[reason] || error_pages["default"]
 
     return (
       <Result
@@ -117,7 +117,7 @@ export const AdminLayout: React.FC<React.PropsWithChildren<LayoutProps>> = (
             <Button
               type="primary"
               onClick={() => {
-                page.act();
+                page.act()
               }}
             >
               {page.btn}
@@ -125,27 +125,27 @@ export const AdminLayout: React.FC<React.PropsWithChildren<LayoutProps>> = (
           )
         }
       />
-    );
-  };
+    )
+  }
 
   return (
     <Layout>
       <AdminHeader {...args.header} />
       <Layout>
         {(() => {
-          if (Constants.admin.unsafe_mode_on) return props.children;
+          if (Constants.admin.unsafe_mode_on) return props.children
 
           if (args.loggedRequired && !logged)
-            return renderContentForbidden("not_logged");
+            return renderContentForbidden("not_logged")
 
           if (args.loggedRequired && args.rolesRequired) {
             const isAllowed =
               args.rolesRequired.filter((value) => roles.includes(value))
-                .length > 0;
-            if (!isAllowed) return renderContentForbidden("roles");
+                .length > 0
+            if (!isAllowed) return renderContentForbidden("roles")
           }
 
-          return props.children;
+          return props.children
         })()}
       </Layout>
       <Footer>
@@ -164,7 +164,7 @@ export const AdminLayout: React.FC<React.PropsWithChildren<LayoutProps>> = (
         </Text>
       </Footer>
 
-      <ChatPopup chats={chats} />
+      {logged && <ChatPopup chats={chats} />}
     </Layout>
-  );
-};
+  )
+}
