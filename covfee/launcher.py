@@ -2,7 +2,6 @@ import os
 import platform
 import shutil
 import sys
-import warnings
 from shutil import which
 from typing import List
 
@@ -13,7 +12,7 @@ from halo.halo import Halo
 import covfee.server.orm as orm
 from covfee.cli.utils import working_directory
 from covfee.config import Config
-from covfee.server.app import create_app
+from covfee.server.app import create_app_and_socketio
 from covfee.server.db import get_engine, get_session_local
 
 
@@ -65,12 +64,16 @@ class Launcher:
 
         self.commit()
 
-    def launch(self, unsafe=None):
+    def launch(self, unsafe=None, host="0.0.0.0", port=5000):
         if self.environment != "dev":
             self.link_bundles()
         if unsafe is None:
             unsafe = False if self.environment == "deploy" else True
-        self.start_server(unsafe)
+
+        socketio, app = create_app_and_socketio(self.environment, self.session_local)
+        with app.app_context():
+            app.config["UNSAFE_MODE_ON"] = unsafe
+            self._start_server(socketio, app, host, port)
 
     def create_tables(self, drop=False):
         if drop:
@@ -85,8 +88,8 @@ class Launcher:
             password = self.config["ADMIN_PASSWORD"]
 
             if username == default_username and password == default_password:
-                warnings.warn(
-                    'Using default admin credentials "admin:admin". Please change username and password in config when deploying.'
+                raise ValueError(
+                    'Default admin credentials "admin:admin" have not been changed. Please change username and password in config when deploying.'
                 )
             with self.session_local() as session:
                 user = orm.User.by_username(session, username)
@@ -100,13 +103,7 @@ class Launcher:
                 session.add(admin)
                 session.commit()
 
-    def start_server(self, unsafe=False):
-        socketio, app = create_app(self.environment, self.session_local)
-        with app.app_context():
-            app.config["UNSAFE_MODE_ON"] = unsafe
-            self._start_server(socketio, app)
-
-    def _start_server(self, socketio, app, host="0.0.0.0"):
+    def _start_server(self, socketio, app, host="0.0.0.0", port=5000):
         if app.config["SSL_ENABLED"]:
             ssl_options = {
                 "keyfile": self.config["SSL_KEY_FILE"],
@@ -115,13 +112,13 @@ class Launcher:
         else:
             ssl_options = {}
 
-        print(f"Running covfee at {host}:{5000} with environment={self.environment}")
+        print(f"Running covfee at {host}:{port} with environment={self.environment}")
         if self.environment == "local":
-            socketio.run(app, host=host, port=5000, **ssl_options)
+            socketio.run(app, host=host, port=port, **ssl_options)
         elif self.environment == "dev":
-            socketio.run(app, host=host, port=5000, debug=True, **ssl_options)
+            socketio.run(app, host=host, port=port, debug=True, **ssl_options)
         elif self.environment == "deploy":
-            socketio.run(app, host=host, **ssl_options)
+            socketio.run(app, host=host, port=port, **ssl_options)
         else:
             raise f"unrecognized self.environment {self.environment}"
 

@@ -1,5 +1,6 @@
-import versioneer
 from setuptools import find_packages, setup
+
+import versioneer
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -27,25 +28,28 @@ setup(
         ]
     },
     install_requires=[
+        # server stack (fixed versions)
         "Flask == 2.3.2",
         "werkzeug==2.3.4",
-        "eventlet==0.33.3",
-        "Flask-Session == 0.5.*",
-        "sqlalchemy == 2.*",
-        "flask_cors == 3.*",
-        "flask-socketio == 5.*",
-        "gunicorn == 20.*",
+        "eventlet==0.35.2",
+        "gunicorn == 21.2.0",
+        "Flask-Session == 0.5.0",
+        "sqlalchemy == 2.0.28",
+        "flask_cors == 3.0.10",
+        "flask-socketio == 5.3.6",
         "flask-jwt-extended == 4.4.4",
+        "pyzmq == 22.3.0",
+        "APScheduler == 3.10.4",
+        # common utils (fixed major versions)
         "click ==  8.*",
-        "pandas == 1.*",
-        "jsonschema == 3.*",
-        "halo == 0.*",
-        "colorama == 0.4.*",
-        "pyzmq == 22.*",
         "numpy == 1.*",
-        "zipstream-new == 1.*",
+        "pandas == 1.*",
         "requests == 2.*",
-        "APScheduler == 3.10.*",
+        # small utils (fixed versions)
+        "jsonschema == 3.2.0",
+        "halo == 0.0.31",
+        "colorama == 0.4.6",
+        "zipstream-new == 1.1.8",
         "pyparsing == 3.1.1",
         "json-ref-dict == 0.7.2",
     ],

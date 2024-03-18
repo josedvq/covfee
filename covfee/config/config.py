@@ -1,6 +1,8 @@
 import os
-import flask
 from urllib.parse import urlparse
+
+import flask
+import flask
 
 
 class Config(flask.Config):
@@ -49,6 +51,7 @@ class Config(flask.Config):
             # create sqlalchemy database uri
             SQLALCHEMY_DATABASE_URI=f'sqlite:///{self["DATABASE_PATH"]}',
             # create derived URLs
+            BUNDLES_URL=self["BASE_URL"] + "/bundles",
             PROJECT_WWW_URL=self.get("PROJECT_WWW_URL", self["BASE_URL"] + "/www"),
             APP_URL=self["BASE_URL"] + "/#",
             ADMIN_URL=self["BASE_URL"] + "/admin#",

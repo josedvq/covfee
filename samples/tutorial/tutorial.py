@@ -1,5 +1,6 @@
-from covfee import tasks, HIT, Project
+from covfee import HIT, Project, tasks
 from covfee.config import config
+from covfee.server.app import create_app_and_socketio  # noqa: F401
 from covfee.shared.dataclass import CovfeeApp
 
 config.load_environment("local")

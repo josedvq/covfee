@@ -2,7 +2,6 @@ import inspect
 import json
 import os
 
-import eventlet
 import greenlet
 from flask import Blueprint, Flask
 from flask import current_app as app
@@ -18,10 +17,8 @@ from covfee.server.tasks.base import BaseCovfeeTask
 
 from .scheduler.apscheduler import scheduler
 
-eventlet.monkey_patch(thread=True, time=True)
 
-
-def create_app(mode, session_local=None):
+def create_app_and_socketio(mode="deploy", session_local=None):
     # called once per process
     # but reused across threads
 
@@ -97,6 +94,11 @@ def create_app(mode, session_local=None):
         # app.scheduler.shutdown()
 
     return socketio, app
+
+
+def create_app(*args, **kwargs):
+    socketio, app = create_app_and_socketio(*args, **kwargs)
+    return app
 
 
 # APP ROUTES

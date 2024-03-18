@@ -141,6 +141,31 @@ def make(force, dev, deploy, safe, rms, no_launch, project_spec_file):
         return
 
 
+@covfee_cli.command()
+@click.option("--host", default="0.0.0.0", help="Server hostname.")
+@click.option("--port", default=5000, help="Port to serve the app on.")
+@click.option("--deploy", is_flag=True, help="Run covfee in deployment mode")
+@click.option("--safe", is_flag=True, help="Enable authentication in local mode.")
+def start(host, port, deploy, safe):
+    """
+    Starts covfee in local mode by default. Use --deploy to start deployment server.
+    """
+    mode = "local"
+    if deploy:
+        mode = "deploy"
+    unsafe = False if mode == "deploy" else (not safe)
+    config = Config(mode)
+
+    try:
+        launcher = Launcher(mode, [])
+        launcher.launch(unsafe, host=host, port=port)
+    except Exception as err:
+        print(traceback.format_exc())
+        if "js_stack_trace" in dir(err):
+            print(err.js_stack_trace)
+        return
+
+
 def install_npm_packages(force=False):
     config = Config()
     server_path = config["COVFEE_SERVER_PATH"]
