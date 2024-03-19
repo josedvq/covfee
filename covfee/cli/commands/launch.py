@@ -17,7 +17,8 @@ from covfee.config import Config
 from covfee.launcher import Launcher, ProjectExistsException, launch_webpack
 from covfee.shared.validator.validation_errors import JavascriptError, ValidationError
 
-from ...loader import Loader
+from covfee.loader import Loader
+import sys
 
 colorama_init()
 
