@@ -377,7 +377,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
         {...extraProps}
         onClick={handleTaskSubmit}
         htmlType="submit"
-        disabled={node.status !== "RUNNING"}
+        disabled={node.status !== "RUNNING" || extraProps.disabled}
       >
         Submit
       </Button>
