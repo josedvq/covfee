@@ -1,5 +1,6 @@
 .action-annotation-task {
   display: flex;
+  height: 100%;
 }
 
 .gallery-overlay {
@@ -23,33 +24,53 @@
   height: auto;
   width: 95%;
   position: absolute;
-
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgb(223, 165, 165);
 }
-
 .sidebar {
   font-size: 1em;
   height: 100%;
   display: flex;
   flex-direction: column;
-  width: 20%;
-  min-width: 200px; /* Set a minimum width */
+  background-color: #f0f0f0; /* Example background color */
   padding: 12px;
 }
+.left-sidebar {
+  min-width: 300px; /* Set a minimum width */
+  width: 22%;
+}
 
-.rightSideBar {
+.sidebar-block {
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 6px;
+  background-color: rgb(231, 229, 229);
+  border: 1px solid blue;
+}
+
+.selected-participant-svg {
+  margin-top: 4px;
+  background-color: black;
+  width: 25vh;
+}
+
+.sidebar-block h1 {
+  font-size: 18px;
+  text-align: center;
+  font-weight: bold;
+}
+.sidebar-block h2 {
+  margin-top: 12px;
+  margin-bottom: 4px;
+  font-size: 16px;
+}
+
+.right-sidebar {
+  padding: 12px;
   display: flex;
   flex-direction: column;
   width: 20%;
   min-width: 200px; /* Set a minimum width */
-  padding: 12px;
-}
-
-.sidebar h1 {
-  font-size: 1em;
-  margin-top: 2em;
 }
 
 .sidebarBottom {
@@ -64,13 +85,12 @@
 }
 
 .main-content {
-  background-color: #ffffff; /* Example background color */
-  width: 80%;
-  flex-direction: column;
+  padding-top: 22px;
+  flex: 1;
 }
 
-.videoPlayer {
-  width: 50%;
+.main-content-video {
+  flex: 1;
 }
 
 .action-task-dropdown-title {
@@ -84,8 +104,8 @@
   width: 100%;
   border: 1px solid blue;
   border-radius: 6px;
-  /*padding: 4px 8px 8px 4px;*/
-  margin: 4px;
+  margin-top: 4px;
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
 }
@@ -107,12 +127,51 @@
   overflow: auto;
 }
 
+.action-task-progress-bar {
+  width: 100%;
+}
+
+.action-task-progress-text {
+  margin-top: 10px;
+  text-align: left;
+}
+
+.action-task-progress-finished-message {
+  margin-top: 10px;
+  font-weight: "bold";
+  font-size: 16px;
+}
+
+.action-task-progress-code {
+  font-weight: "bold";
+  font-size: 22px;
+  text-align: center;
+}
+
+.action-task-progress-completion-button {
+  width: 100%;
+  font-size: 16px;
+}
+
 .action-annotation-flashscreen {
+  margin: 15px;
+  display: flex;
+  justify-content: center; /* Horizontally center the content */
+  align-items: center; /* Vertically center the content */
   border: 1px solid black;
   border-radius: 6px;
-  width: 100%;
-  height: 40px;
+  height: 100px;
   background-color: lightgray;
+}
+
+.keyboard-action-register-instruction-text {
+  text-align: center;
+  font-weight: bold;
+}
+
+.action-annotation-flashscreen h1 {
+  font-size: 24px;
+  text-align: center;
 }
 
 .action-annotation-flashscreen-active-key-pressed {
@@ -126,15 +185,13 @@
 .camview-selection-svg-container {
   width: 100%;
   max-width: 100%;
-
-  background-color: green;
 }
 
 .camview-selection-image {
   width: 100%;
   max-width: 100%;
+  max-height: 80vh;
   height: auto; /* this is critical so that getBoundingClientRect is accurate */
-  /*background-color: green;*/
 }
 
 .camview-selection-bounding-box {

@@ -33,10 +33,12 @@ my_task_1 = tasks.ContinuousAnnotationTaskSpec(
         {"category": "Speaking", "interface": "Binary", "participant": "Participant_1"},
         {"category": "Laughing", "interface": "Binary", "participant": "Participant_1"},
         {"category": "Jumping", "interface": "Binary", "participant": "Participant_2"},
+        {"category": "Speaking", "interface": "Binary", "participant": "Participant_42"},
+        
     ],
     media=[{
         "type": "video",
-        "url": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        "url": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
     }, {
         "type": "video",
         "url": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
@@ -50,11 +52,12 @@ my_task_1 = tasks.ContinuousAnnotationTaskSpec(
         "type": "video",
         "url": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
     }],
+    prolificCompletionCode="D1F2DGU1",
     userCanAdd=False,
 )
-
 hit = HIT("Joint counter")
 j1 = hit.add_journey(nodes=[consent_form, my_task_1])
 
 projects = [Project("My Project", email="example@example.com", hits=[hit])]
 app = CovfeeApp(projects)
+

@@ -19,5 +19,6 @@ export interface ContinuousAnnotationTaskSpec extends BaseTaskSpec {
   type: "ContinuousAnnotationTask"
   media: MediaSpec[]
   annotations: AnnotationDataSpec[]
+  prolificCompletionCode?: string
   userCanAdd: boolean
 }

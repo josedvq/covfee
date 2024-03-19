@@ -95,14 +95,16 @@ const CamViewSelection: React.FC<Props> = (props) => {
         onClick={handleClickOnMultiviewImage}
         className={styles["camview-selection-image"]}
       />
-      <div
-        className={styles["camview-selection-bounding-box"]}
-        style={{
-          position: "relative",
-          ...boundingBoxRectPx,
-          zIndex: 1000,
-        }}
-      />
+      <div style={{ position: "relative", width: 0, height: 0 }}>
+        <div
+          className={styles["camview-selection-bounding-box"]}
+          style={{
+            position: "relative",
+            ...boundingBoxRectPx,
+            zIndex: 999,
+          }}
+        />
+      </div>
     </div>
   )
 }
