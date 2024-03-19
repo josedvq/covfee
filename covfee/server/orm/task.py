@@ -71,6 +71,31 @@ class TaskInstance(NodeInstance):
         self.aux = {}
         self.add_response()  # add initial empty response
 
+    def set_status(self, to_status: NodeInstanceStatus, *args, **kwargs):
+        if (
+            self.status == NodeInstanceStatus.FINISHED or self.status == to_status
+        ):  # status frozen when node paused by the admin
+            return
+
+        from_dt_start = self.dt_start
+        from_status = self.status
+        super().set_status(to_status, *args, **kwargs)
+
+        # call task object event handlers
+        if to_status == NodeInstanceStatus.RUNNING:
+            task_object = self.get_task_object()
+            task_object.on_run()
+            if from_dt_start is None:
+                task_object.on_start()
+
+        if to_status == NodeInstanceStatus.PAUSED:
+            task_object = self.get_task_object()
+            task_object.on_pause()
+
+        if to_status == NodeInstanceStatus.FINISHED:
+            task_object = self.get_task_object()
+            task_object.on_finish()
+
     def __hash__(self):
         if hasattr(self, "id") and self.id is not None:
             return self.id

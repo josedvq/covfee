@@ -40,4 +40,35 @@ export interface VideocallTaskSpec extends BaseTaskSpec {
    * @default true
    */
   allowScreenShare?: boolean
+  /**
+   * Recording options for OpenVIDU
+   */
+  serverRecording?: {
+    /**
+     * Enable server recording
+     */
+    enable: boolean
+    /**
+     * Record audio
+     */
+    hasAudio: boolean
+    /**
+     * Record video
+     */
+    hasVideo: boolean
+    /**
+     * record all streams in a single file in a grid layout or record each stream in its own separate file.
+     */
+    outputMode: "INDIVIDUAL" | "COMPOSED" | "COMPOSED_QUICK_START"
+    /**
+     * Video resolution. Only applies for COMPOSED output mode
+     * @default "1280x720"
+     */
+    resolution: string
+    /**
+     * Only applies for COMPOSED output mode
+     * @default 25
+     */
+    frameRate: number
+  }
 }

@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
-import pandas as pd
 from flask import Blueprint
 
 from ...logger import logger
@@ -44,60 +42,6 @@ class BaseCovfeeTask:
         """
         return {}
 
-    def to_dict(self, with_chunk_data: bool) -> dict:
-        """Processes a task response to return a friendly dict (JSON) with task results and metadata
-        Called when data is downloaded in JSON format.
-        Does not affect the data in the database.
-
-        Args:
-            with_chunk_data (bool): If true, include the continuous response data.
-
-        Returns:
-            dict: task response and summary metadata
-        """
-        if with_chunk_data:
-            chunk_data, chunk_logs = self.response.get_ndarray()
-        else:
-            chunk_data, chunk_logs = (None, None)
-
-        return {
-            "response": self.response.data,
-            "data": chunk_data.tolist() if chunk_data is not None else [],
-            "logs": chunk_logs if chunk_logs is not None else [],
-            "created_at": self.response.created_at.isoformat(),
-            "updated_at": self.response.updated_at.isoformat(),
-            "submitted_at": self.response.submitted_at.isoformat(),
-        }
-
-    def to_dataframe(self, data: np.ndarray) -> pd.DataFrame:
-        """Transforms the submitted data into a pandas dataframe.
-        This method is called when results are downloaded as CSV from the admin panel.
-        It can be implemented to add headers to the default dataframe or to filter data before download.
-        Does not affect the data in the database.
-
-        Args:
-            data (np.ndarray): Continuous data aggregated into a single array
-                with shape (num_samples, sample_size)
-                - num_samples depends on the video duration and the specified
-                sampling rate
-                - sample_size is the size of each annotated record (eg. 1 for Continuous1D,
-                2 for ContinuousKeypoint)
-        """
-        if data is None:
-            return None
-        else:
-            assert data.ndim == 2
-            assert data.shape[1] >= 3
-            num_columns = data.shape[1] - 2
-            return pd.DataFrame(
-                data,
-                columns=[
-                    "index",
-                    "media_time",
-                    *[f"data{i}" for i in range(num_columns)],
-                ],
-            )
-
     def validate(
         self,
         response: TaskResponse,
@@ -112,9 +56,21 @@ class BaseCovfeeTask:
         """
         return True, None
 
-    def on_status_change(self):
-        """Called when the task changes status"""
-        logger.info("BaseCovfeeTask: on_status_change")
+    def on_start(self):
+        """Called when the task status changes from INIT to RUNNING, ie when the task is started for the first time"""
+        logger.info("BaseCovfeeTask: on_start")
+
+    def on_run(self):
+        """Called when the task status changes to RUNNING (after the countdown), including the first time. ie. when the task starts the first time both on_start and on_run are called."""
+        logger.info("BaseCovfeeTask: on_run")
+
+    def on_pause(self):
+        """Called when the task status changes to PAUSE."""
+        logger.info("BaseCovfeeTask: on_pause")
+
+    def on_finish(self):
+        """Called when the task status changes to FINISH."""
+        logger.info("BaseCovfeeTask: on_finish")
 
     def on_admin_pause(self):
         """Called when the task is paused by an admin"""
