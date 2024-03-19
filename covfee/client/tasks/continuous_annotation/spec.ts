@@ -8,8 +8,8 @@ export interface AnnotationDataSpec {
   interface: "RankTrace" | "GTrace" | "Binary"
 }
 export interface MediaSpec {
-  type: "video"
-  url: string
+  type: "video/mp4"
+  src: string
 }
 
 export interface ContinuousAnnotationTaskSpec extends BaseTaskSpec {
