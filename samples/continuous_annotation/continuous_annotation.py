@@ -37,20 +37,20 @@ my_task_1 = tasks.ContinuousAnnotationTaskSpec(
         
     ],
     media=[{
-        "type": "video",
-        "url": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        "type": "video/mp4",
+        "src": "https://www.shutterstock.com/shutterstock/videos/1080381158/preview/stock-footage--seconds-simple-countdown-timer.mp4",
     }, {
-        "type": "video",
-        "url": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+        "type": "video/mp4",
+        "src": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
     }, {
-        "type": "video",
-        "url": "https://file-examples.com/storage/fec71f2ebe65d8e339e8b9c/2017/04/file_example_MP4_640_3MG.mp4",
+        "type": "video/mp4",
+        "src": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
     }, {
-        "type": "video",
-        "url": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        "type": "video/mp4",
+        "src": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
     }, {
-        "type": "video",
-        "url": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+        "type": "video/mp4",
+        "src": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
     }],
     prolificCompletionCode="D1F2DGU1",
     userCanAdd=False,

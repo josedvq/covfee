@@ -8,11 +8,12 @@ import {
 import Constants from "Constants"
 import type { MenuProps } from "antd"
 import { Button, Dropdown, MenuInfo, Modal, Progress, Space } from "antd"
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useSelector } from "react-redux"
+import { VideoJsPlayer } from "video.js"
 import { nodeContext } from "../../journey/node_context"
 import { useDispatch } from "../../journey/state"
-import VideojsPlayer from "../../players/videojs"
+import VideoJSFC from "../../players/videojsfc"
 import { TaskExport } from "../../types/node"
 import { AllPropsRequired } from "../../types/utils"
 import { fetcher } from "../../utils"
@@ -40,6 +41,7 @@ const CHANGE_VIEW_UP_KEY: string = "ArrowUp"
 const CHANGE_VIEW_DOWN_KEY: string = "ArrowDown"
 const CAMVIEW_SELECTION_LAYOUT_IS_VERTICAL: boolean = true
 const CAMVIEW_SELECTION_NUMBER_OF_VIEWS: number = 5
+const VIDEO_PLAYBACK_ASSUMED_FRAMERATE: number = 60.0
 
 /**
  * We specify the data structure for the annotation data received from the server
@@ -64,8 +66,6 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       ...props.spec,
     },
   }
-
-  console.log("Prolific Completion", props.spec.prolificCompletionCode)
 
   // this is a custom dispatch function provided by Covfee
   const dispatch = useDispatch()
@@ -170,7 +170,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       const url =
         Constants.base_url +
         node.customApiBase +
-        `/annotations/` +
+        "/annotations/" +
         active_annotation_data_to_post.id
       const res = await fetcher(url, {
         method: "UPDATE",
@@ -216,81 +216,114 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   //*************************************************************//
   //----------- Video playback fuctionality -------------------- //
   //*************************************************************//
-  const numberOfVideoFrames = 200 * 1 // TODO: Initialize me on video load
 
-  const startVideoPlayback = (startTimeInSeconds: number) => {
-    // TODO: Implement the actual video playback start playing at the given time
-    startDummyVideoPlayback(startTimeInSeconds)
+  // We get a reference to the VideoJS player and assign event
+  // listeners to it.
+  const videoPlayerRef = useRef<VideoJsPlayer>(null)
+  const handleVideoPlayerReady = (player: VideoJsPlayer) => {
+    videoPlayerRef.current = player
   }
-
-  const pauseVideoPlayback = () => {
-    pauseDummyVideoPlayback()
-  }
-
-  const getCurrentVideoTime = () => {
-    return getCurrentDummyVideoTime()
-  }
+  useEffect(() => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.on("ended", handleVideoEnd)
+      videoPlayerRef.current.on("loadstart", handleVideoSourceChange)
+      return () => {
+        videoPlayerRef.current.off("ended", handleVideoEnd)
+        videoPlayerRef.current.off("loadstart", handleVideoSourceChange)
+      }
+    }
+  })
 
   const handleVideoEnd = () => {
     handleAnnotationsOnVideoEndEvent()
-
     setIsAnnotating(false)
   }
 
-  const getCurrentVideoFramerate = () => {
-    return getCurrentDummyVideoFramerate()
+  // We define the options, more specifically the sources, for the video player
+  // Note: it's important to memoize the options object to avoid the videojs player
+  //       to be reset on every render, except when the selectedCamViewIndex
+  //       does change, which trigger a change in the sources, i.e., the video url
+  //       being used.
+  const videoPlayerOptions = useMemo(() => {
+    return {
+      autoplay: false,
+      controls: false,
+      responsive: true,
+      fluid: true,
+      sources: [props.spec.media[selectedCamViewIndex]],
+    }
+  }, [props.spec, selectedCamViewIndex])
+
+  // ...and add logic that ensures that video playback status is kept in sync under
+  // the selectedCamViewIndex changes. First, we keep track of the playback status.
+  const [playbackStatus, setPlaybackStatus] = useState({
+    paused: true,
+    currentTime: 0.0,
+  })
+  useEffect(() => {
+    // Note: this is triggered when the selectedCamViewIndex changes
+    if (videoPlayerRef.current) {
+      setPlaybackStatus({
+        paused: videoPlayerRef.current.paused(),
+        currentTime: videoPlayerRef.current.currentTime(),
+      })
+    }
+  }, [selectedCamViewIndex])
+
+  // ...and then we ensure that the video player is updated with the playback status
+  // when the new video source becomes active.
+  const handleVideoSourceChange = (newSrc: string) => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.currentTime(playbackStatus.currentTime)
+      if (playbackStatus.paused != videoPlayerRef.current.paused()) {
+        if (playbackStatus.paused) {
+          videoPlayerRef.current.pause()
+        } else {
+          videoPlayerRef.current.play()
+        }
+      }
+    }
   }
 
-  const my_video = props.spec.media[0]
-
-  //*************************************************************//
-  //-------------- Dummy Video fuctionality -------------------- //
-  //----------------- For testing purposes ----------------------//
-  //*************************************************************//
-  const DUMMY_VIDEO_NUMBER_OF_FRAMES: number = numberOfVideoFrames
-  const [frameNumber, setFrameNumber] = useState(0)
-  const [dummyVideoTimerId, setDummyVideoTimerId] = useState(null)
-
-  const startDummyVideoPlayback = (startTimeInSeconds: number) => {
-    console.log("Starting video playback, setting to ", startTimeInSeconds)
-    if (dummyVideoTimerId === null) {
-      setFrameNumber(
-        Math.round(startTimeInSeconds * getCurrentVideoFramerate())
-      )
-      setDummyVideoTimerId(
-        setInterval(() => {
-          // Increment the seconds state every second
-          setFrameNumber((prevFrameNumber) => prevFrameNumber + 1)
-        }, 33)
+  const numberOfVideoFrames = () => {
+    if (videoPlayerRef.current) {
+      return Math.ceil(
+        videoPlayerRef.current.duration() * getCurrentVideoFramerate()
       )
     } else {
-      console.log("Dummy video id was not null")
-    }
-  }
-  const pauseDummyVideoPlayback = () => {
-    if (dummyVideoTimerId !== null) {
-      clearInterval(dummyVideoTimerId)
-      setDummyVideoTimerId(null)
+      return 0
     }
   }
 
-  // Dummy video logic to know
-  useEffect(() => {
-    if (frameNumber >= DUMMY_VIDEO_NUMBER_OF_FRAMES) {
-      console.log("Stopping the video playback")
-      handleVideoEnd()
-      pauseDummyVideoPlayback()
+  const startVideoPlayback = (startTimeInSeconds: number) => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.currentTime(startTimeInSeconds)
+      videoPlayerRef.current.play()
     }
-  }, [frameNumber])
+  }
 
-  // TODO: Implement these functions video playback logic
-  const getCurrentDummyVideoTime = React.useCallback(() => {
-    console.log("Frame number", frameNumber)
-    return frameNumber / 30.0
-  }, [frameNumber])
+  const pauseVideoPlayback = () => {
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.pause()
+    }
+  }
 
-  const getCurrentDummyVideoFramerate = () => {
-    return 30.0
+  const getCurrentVideoTime = () => {
+    if (videoPlayerRef.current) {
+      return videoPlayerRef.current.currentTime()
+    } else {
+      return 0.0
+    }
+  }
+
+  const getCurrentVideoFramerate = () => {
+    if (videoPlayerRef.current) {
+      return (
+        videoPlayerRef.current.playbackRate() * VIDEO_PLAYBACK_ASSUMED_FRAMERATE
+      )
+    } else {
+      return VIDEO_PLAYBACK_ASSUMED_FRAMERATE
+    }
   }
 
   //********************************************************************//
@@ -463,7 +496,6 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   //----------------- Action annotation logic ------------------------- //
   //********************************************************************//
   const annotateStartEventOfActionAnnotation = () => {
-    console.log("Key pressed", isAnnotating)
     // If there isn't an ongoing annotation already... (note that
     // holding the key leads to multiple event calls)
     if (
@@ -471,7 +503,6 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     ) {
       const currentVideoTime = getCurrentVideoTime()
       setActionAnnotationStartTime(currentVideoTime)
-      console.log("Annotation started at", currentVideoTime)
     }
   }
 
@@ -482,6 +513,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       actionAnnotationStartTime !== UNINITIALIZED_ACTION_ANNOTATION_START_TIME
     ) {
       const currentVideoTime = getCurrentVideoTime()
+      console.log("Annotation ended at", currentVideoTime)
       const currentVideoFramerate = getCurrentVideoFramerate()
       // Based on the registered annotation start time and framerate, we get
       // the corresponding frame time.
@@ -520,7 +552,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       }
       startVideoPlayback(0.0)
       setActiveAnnotationDataArray({
-        buffer: Array.from({ length: numberOfVideoFrames }, () => 0),
+        buffer: Array.from({ length: numberOfVideoFrames() }, () => 0),
         needs_upload: false,
       })
     } else {
@@ -539,6 +571,8 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       setActiveAnnotationDataArray((prevActiveAnnotationDataArray) => {
         return { ...prevActiveAnnotationDataArray, needs_upload: true }
       })
+    } else {
+      console.log("Annotating is false")
     }
   }
 
@@ -704,9 +738,9 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
             <h1>Instructions</h1>
             <h2>
               <strong>Step 1: </strong>
-              {`Select the camera view where the person below is `}
+              {"Select the camera view where the person below is "}
               <strong>best visible</strong>
-              {` using the UP or DOWN keys.`}
+              {" using the UP or DOWN keys."}
             </h2>
             <svg
               viewBox={computeViewBoxOnGalleryToCropSelectedParticipant()}
@@ -722,7 +756,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
               <strong> can't find the person at all</strong>, click the button
               below which will open a pop-up asking to confirm that the person
               can't be found. If you confirm, proceed to Step{" "}
-              {showAnnotationItems ? `5` : `4`}:
+              {showAnnotationItems ? "5" : "4"}:
             </h2>
             <Button
               type="primary"
@@ -776,7 +810,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
               </>
             )}
             <h2>
-              <strong>Step {showAnnotationItems ? `4` : `3`}: </strong>
+              <strong>Step {showAnnotationItems ? "4" : "3"}: </strong>
               Start the annotation process. <strong>Get ready! </strong>
               The video will start playing. During playback, press and{" "}
               <strong> hold </strong> the{" "}
@@ -790,7 +824,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
               . Release while they are not (Press{" "}
               <strong>{`${REGISTER_ACTION_ANNOTATION_KEY.toUpperCase()}`}</strong>{" "}
               and try it!). When finished, go to Step{" "}
-              {showAnnotationItems ? `3` : `4`}.
+              {showAnnotationItems ? "3" : "4"}.
             </h2>
             <Button
               type="primary"
@@ -800,7 +834,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
               {isAnnotating ? "Stop Annotation" : "Start Annotation"}
             </Button>
             <h2>
-              <strong>Step {showAnnotationItems ? `5` : `4`}: </strong> Select a
+              <strong>Step {showAnnotationItems ? "5" : "4"}: </strong> Select a
               participant that hasn't been annotated. Then, go to Step 1
             </h2>
 
@@ -852,17 +886,18 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
               Select Participant on Gallery
             </Button>
           </div>
-
-          <div className={styles.sidebarBottom}>
-            <p>{frameNumber}</p>
-          </div>
         </div>
         <div className={styles["main-content"]}>
-          <VideojsPlayer
+          {/* <VideojsPlayer
             className={styles["main-content-video"]}
+            ref={videoPlayerRef}
             // {...args.spec.media}
             {...my_video}
             // onEnded={actions.enableForm}
+          /> */}
+          <VideoJSFC
+            options={videoPlayerOptions}
+            onReady={handleVideoPlayerReady}
           />
           <div
             className={`${styles["action-annotation-flashscreen"]} ${
