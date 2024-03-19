@@ -14,10 +14,14 @@ SQLALCHEMY_ENGINE_OPTIONS = {"isolation_level": "READ UNCOMMITTED"}
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 COVFEE_BASE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+
+# COVFEE RESOURCE PATHS
+MASTER_BUNDLE_PATH = os.path.join(COVFEE_BASE_PATH, "client", "bundles")
 COVFEE_CLI_PATH = os.path.join(COVFEE_BASE_PATH, "cli")
 COVFEE_CLIENT_PATH = os.path.join(COVFEE_BASE_PATH, "client")
 COVFEE_SERVER_PATH = os.path.join(COVFEE_BASE_PATH, "server")
 COVFEE_SHARED_PATH = os.path.join(COVFEE_BASE_PATH, "shared")
+
 # for storing the json schemata for validation
 SCHEMATA_PATH = os.path.join(COVFEE_BASE_PATH, "shared", "schemata.json")
 DATACLASSES_PATH = os.path.join(COVFEE_BASE_PATH, "shared", "task_dataclasses.py")
@@ -28,9 +32,7 @@ DATACLASSES_PATH = os.path.join(COVFEE_BASE_PATH, "shared", "task_dataclasses.py
 JWT_TOKEN_LOCATION = ["cookies"]
 JWT_COOKIE_CSRF_PROTECT = False
 
-# COVFEE RESOURCE PATHS
-MASTER_BUNDLE_PATH = os.path.join(COVFEE_BASE_PATH, "client", "bundles")
-BUNDLES_URL = os.path.join(BASE_URL, "bundles")
+
 # dev mode setting
 WEBPACK_DEVSERVER_HOST = "localhost"
 DEV_BUNDLES_URL = "http://localhost:8085"
@@ -46,6 +48,9 @@ PROJECT_WWW_PATH = os.path.join(os.getcwd(), "www")
 
 # enables the www server
 SERVE_WWW = True
+
+DEFAULT_ADMIN_USERNAME = "admin"
+DEFAULT_ADMIN_PASSWORD = "admin"
 
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "admin"

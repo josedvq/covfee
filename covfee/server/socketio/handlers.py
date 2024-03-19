@@ -1,16 +1,14 @@
 from typing import Union
 
-from flask import current_app as app, session
-from flask_socketio import send, emit, join_room, leave_room
+from flask import current_app as app
+from flask import session
+from flask_socketio import emit, join_room, leave_room, send
 
-from covfee.server.socketio.socket import socketio, store
-from covfee.server.orm import (
-    NodeInstance,
-    TaskResponse,
-    JourneyInstance,
-)
+from covfee.server.orm import JourneyInstance, NodeInstance
 from covfee.server.orm.chat import Chat
 from covfee.server.orm.task import TaskInstance
+from covfee.server.socketio.socket import socketio, store
+
 from ..tasks.base import CriticalError
 
 
@@ -27,6 +25,7 @@ def get_chat(chatId: int) -> Chat:
 
 
 def get_on_join_payload(node: TaskInstance, journey: JourneyInstance):
+    response = node.responses[-1].to_dict()
     task_object = node.get_task_object()
     if task_object is not None:
         try:
@@ -36,7 +35,7 @@ def get_on_join_payload(node: TaskInstance, journey: JourneyInstance):
                 "error": ex.msg,
                 "load_task": ex.load_task,
             }
-        except Exception as ex:
+        except Exception:
             payload = {
                 "error": f"Unknown exception while executing on_join for task {task_object.__class__.__name__}",
                 "load_task": True,
@@ -47,7 +46,8 @@ def get_on_join_payload(node: TaskInstance, journey: JourneyInstance):
     else:
         payload = {}
 
-    payload = {"response": node.responses[-1].to_dict(), **payload}
+    payload = {"response": response, **payload}
+
     return payload
 
 
@@ -119,6 +119,8 @@ def on_join(data):
 
     emit("join", join_payload)
     app.logger.info(f"socketio: join: {str(join_payload)}")
+
+    print("app.session.commit()")
     app.session.commit()
 
     # update current node status
@@ -137,7 +139,7 @@ def on_join(data):
         if res["success"]:
             emit("state", res, to=curr_node_id)
         else:
-            app.logger.error(f"Redux store returned error")
+            app.logger.error("Redux store returned error")
 
 
 # admin joins a node

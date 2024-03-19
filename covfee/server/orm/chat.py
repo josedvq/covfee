@@ -1,18 +1,17 @@
 from __future__ import annotations
-from typing import Any, Dict, List, TYPE_CHECKING, Optional
-from typing_extensions import Annotated
-import enum
-import datetime
 
-from sqlalchemy import Table, Column, ForeignKey
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+import datetime
+from typing import TYPE_CHECKING, List, Optional
+
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing_extensions import Annotated
 
 from .base import Base
-from . import utils
 
 if TYPE_CHECKING:
-    from .node import NodeInstance
     from .journey import JourneyInstance
+    from .node import NodeInstance
 
 
 class Chat(Base):
@@ -31,11 +30,13 @@ class Chat(Base):
     # journey association (many-to-many)
     # used to store info associated to (chat, journey) like read status
     journey_associations: Mapped[List[ChatJourney]] = relationship(
-        back_populates="chat"
+        back_populates="chat", cascade="all,delete"
     )
 
     # one chat -> many chat messages
-    messages: Mapped[List[ChatMessage]] = relationship(back_populates="chat")
+    messages: Mapped[List[ChatMessage]] = relationship(
+        back_populates="chat", cascade="all,delete"
+    )
 
     read_by_admin_at: Mapped[Optional[datetime.datetime]] = mapped_column()
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
@@ -44,8 +45,8 @@ class Chat(Base):
     )
 
     def __init__(self, journey_or_node: JourneyInstance | NodeInstance):
-        from .node import NodeInstance
         from .journey import JourneyInstance
+        from .node import NodeInstance
 
         super().init()
         if isinstance(journey_or_node, JourneyInstance):

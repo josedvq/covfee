@@ -2,57 +2,89 @@
 title: Deploying to a server
 ---
 
-Deploying covfee is necessary when you want to make your HITs available to others over the internet. We do not recommend developing your tasks in deployment mode. It is normally more convenient to create your HIT specifications locally, deploy covfee, and then run `covfee make` on the deployed instance to initialize your database.
+Deploying covfee is necessary when you want to make your HITs available to others over the internet.
 
-## Deployment configuration
-covfee reads its configuration from the folder in which it is run (ie. the project folder). When ran in deployment mode, covfee will look for the file `covfee.deployment.config.py` for its configuration. 
+:::info
+If you are developing new task interfaces in Typescript it is more convenient to create your HIT specifications locally, deploy covfee, and then run `covfee make` on the deployed instance to initialize your database.
+:::
+
+## 1. Deployment configuration
+
+covfee reads its configuration from the folder in which it is run (ie. the project folder). When ran in deployment mode, covfee will look for the file `covfee.deployment.config.py` for its configuration.
 
 ### Basic configuration
 
 If you are deploying covfee in a typical server, add a configuration file like the following to your project folder:
 
 ```
-BASE_URL = 'http://example.com/covfee'
-APP_PORT = 80
+BASE_URL = "http://my-domain.com:5000"
+
+COVFEE_SECRET_KEY = "MY_SECRET"
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin"
 ```
 
-The `BASE_URL` option should point to the public URL of your covfee instance.
+The `BASE_URL` option should point to the address where you plan to serve covfee.
+
+The username and password will be used by covfee to authenticate users of the admin panel. It is therefore important to set them to something secure.
 
 ### Hosting media files externally
 
-To host media files externally, add the following to your `covfee.deployment.config.py`:
+The `MEDIA_URL` option allows you to customize the location of your media files. By default, covfee will serve media files from a folder called `www` in your project folder. Anything in this folder will be made public. If you want to host your media files externally, you can disable this behavior by setting `MEDIA_SERVER` to `False` and pointing `MEDIA_URL` to your files' location:
 
 ```
 MEDIA_URL = 'http://example.com/covfee-media'
 MEDIA_SERVER = False
 ```
 
-The `MEDIA_URL` option allows you to customize the location of your media files. By default, covfee will serve media files from a folder called `media` in your project folder. Anything in this folder will be made public. If you want to host your media files externally, you can disable this behavior by setting `MEDIA_SERVER` to `False` and pointing `MEDIA_URL` to your files' location.
+## 2. Deployment Installation
 
-## Deployment options
+Start by installing covfee in the server. If you are using a development version / fork follow the _Setup_ section of the [Development instructions] to install covfee in the server.
+
+Next, build the schemata and bundles:
+
+```
+covfee-dev schemata
+covfee-dev build
+```
+
+The second step here builds the production bundles (_compiled_ Javascript) that is served in production. Errors here might indicate problems with your custom task.
+
+Now run **covfee make** in the server:
+
+```
+covfee make tutorial.py --no-launch --deploy
+```
+
+This will initialize the database for deployment without starting the server.
+
+## 3. Starting the server
+
+There are several options for starting covfee in deployment. **In the server too, it is important covfee is started from the project folder.**
+
+### Embedded server
+
+Here we use the production-ready embedded server from [flask-socketio](https://flask-socketio.readthedocs.io/en/latest/deployment.html) to start covfee. To run the server you may use:
+
+```
+covfee start --host 0.0.0.0 --port 80 --deploy
+```
+
+This will serve covfee in deployment mode using the specified host and port.
 
 ### gunicorn
 
-gunicorn is the most common deployment option for Flask applications. To run a production copy of covfee on your covfee project directory:
-
-1. Install covfee per the Getting Started instructions. It is recommended to install covfee in a virtual environment.
-
-2. Build covfee. This will build the Javascript bundle used by the covfee app.
+gunicorn is the most common deployment option for Flask applications. To run covfee using gunicorn:
 
 ```
-cd /path/to/covfee-project
-covfee-build
-```
-
-3. Run the covfee server:
-
-```
-covfee-gunicorn
+gunicorn --worker-class eventlet -w 4 'covfee.server.app:create_app()' --bind 0.0.0.0:5000
 ```
 
 ### Apache mod_wsgi
 
-covfee can be run under Apache by using [mod_wsgi](https://modwsgi.readthedocs.io/en/master/). `mod_wsgi` must be installed for Python 3 for covfee to work. To ensure this install:
+covfee can be run under Apache by using [mod_wsgi](https://modwsgi.readthedocs.io/en/master/). This option can be more involved and is only recommended for advanced users.
+
+First, `mod_wsgi` must be installed for Python 3:
 
 ```
 sudo apt-get install libapache2-mod-wsgi-py3
@@ -68,7 +100,7 @@ activate_this = '/path/to/virtualenv/bin/activate_this.py'
 with open(activate_this) as file_:
     exec(file_.read(), dict(__file__=activate_this))
 os.chdir('/path/to/covfee-project')
-from covfee.start import create_app
+from covfee.server.app import create_app
 application = create_app()
 ```
 
@@ -82,11 +114,13 @@ WSGIProcessGroup covfee
 WSGIScriptAlias /covfee /path/to/covfee-project/covfee.wsgi
 ```
 
-`WSGIScriptAlias` must point to the `covfee.wsgi` file you created in the previous step. The first parameter `/covfee` is the url path under which covfee will be accesible. 
+`WSGIScriptAlias` must point to the `covfee.wsgi` file you created in the previous step. The first parameter `/covfee` is the url path under which covfee will be accesible.
 
 ### More deployment options
 
 Covfee is built with Flask and is therefore easy to deploy using any of the options supported by Flask. Take a look at the [Flask deployment options](https://flask.palletsprojects.com/en/1.1.x/deploying/) for more.
 
+## Restarting covfee
 
-
+Covfee can be safely stopped and started using any of the approaches above. Beware of the use of `covfee make` in production, as the `--force` option will overwrite the entire database, potentially causing data loss.
+In its current form covfee does not allow modification of the task specification once it has been moved to production. HITs can be duplicated using the admin panel to collect more data or deal with failed HITs, but the specification of a HIT cannot be changed without re-creating the database.

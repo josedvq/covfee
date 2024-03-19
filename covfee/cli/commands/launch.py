@@ -1,29 +1,23 @@
-""" Launch commands
+"""Launch commands
 
 These commands launch or build covfee and are supported for the typical use case.
 """
 
 import os
-from pathlib import Path
 import subprocess
-import sys
-from colorama import init as colorama_init, Fore
-import click
 import traceback
-from getpass import getpass
+from pathlib import Path
 
-from flask import current_app as app
-from flask.cli import FlaskGroup, pass_script_info
+import click
+from colorama import Fore
+from colorama import init as colorama_init
 
-from covfee.server.app import create_app
-from covfee.loader import Loader
-from covfee.launcher import Launcher, ProjectExistsException
-from halo.halo import Halo
-from covfee.shared.validator.validation_errors import JavascriptError, ValidationError
-from covfee.shared.schemata import Schemata
 from covfee.cli.utils import NPMPackage, working_directory
-from covfee.launcher import launch_webpack
 from covfee.config import Config
+from covfee.launcher import Launcher, ProjectExistsException, launch_webpack
+from covfee.shared.validator.validation_errors import JavascriptError, ValidationError
+
+from ...loader import Loader
 
 colorama_init()
 
@@ -79,61 +73,6 @@ def store(port, daemon):
             res.wait()
 
 
-@covfee_cli.command()
-def build():
-    """
-    Builds the covfee bundle into the project folder
-    """
-    _, app = create_app("dev")
-
-    with app.app_context():
-        covfee_folder = Loader(os.getcwd())
-        if not covfee_folder.is_project():
-            raise Exception("Working directory is not a valid covfee project folder.")
-
-        covfee_folder.build()
-
-
-@covfee_cli.command()
-@click.option("--dev", is_flag=True, help="Run covfee in dev mode")
-@click.option("--deploy", is_flag=True, help="Run covfee in deployment mode")
-@click.option("--launch-browser", is_flag=True, help="Launches the web browser.")
-@click.option(
-    "--safe",
-    is_flag=True,
-    help="Enables login protection in local and dev mode (disabled by default).",
-)
-def start(dev, deploy, launch_browser, safe):
-    """
-    Starts covfee in local mode by default. Use --deploy or --dev to start deployment (public) or development servers.
-    """
-    assert not (dev and deploy), "--dev and --deploy are mutually exclusive"
-    mode = "local"
-    if dev:
-        mode = "dev"
-    if deploy:
-        mode = "deploy"
-    unsafe = False if mode == "deploy" else (not safe)
-
-    socketio, app = create_app(mode)
-
-    with app.app_context():
-        covfee_folder = Loader(os.getcwd())
-        if not covfee_folder.is_project():
-            return print(
-                Fore.RED
-                + "Working directory is not a valid covfee project folder. Did you run"
-                " covfee maker in the current folder?"
-            )
-
-        if launch_browser:
-            covfee_folder.launch_in_browser(unsafe)
-
-        app.config["UNSAFE_MODE_ON"] = unsafe
-        print(get_start_message(app.config, unsafe))
-        start_covfee(socketio, app, mode)
-
-
 def get_start_message(url):
     msg = (
         Fore.GREEN
@@ -181,7 +120,9 @@ def make(
         loader = Loader(project_spec_file)
         projects = loader.process(with_spinner=True)
 
-        launcher = Launcher(mode, projects, Path(project_spec_file).parent)
+        launcher = Launcher(
+            mode, projects, Path(project_spec_file).parent, auth_enabled=not unsafe
+        )
         launcher.make_database(force, with_spinner=True)
         if not no_launch:
             print(
@@ -189,7 +130,7 @@ def make(
                     url=config["ADMIN_URL"] if unsafe else config["LOGIN_URL"]
                 )
             )
-            launcher.launch(unsafe)
+            launcher.launch()
     except FileNotFoundError:
         pass
     except JavascriptError as err:
@@ -203,6 +144,31 @@ def make(
         return print(
             f'Project "{err.name}" exists in database. Add --force option to overwrite all projects.'
         )
+    except Exception as err:
+        print(traceback.format_exc())
+        if "js_stack_trace" in dir(err):
+            print(err.js_stack_trace)
+        return
+
+
+@covfee_cli.command()
+@click.option("--host", default="0.0.0.0", help="Server hostname.")
+@click.option("--port", default=5000, help="Port to serve the app on.")
+@click.option("--deploy", is_flag=True, help="Run covfee in deployment mode")
+@click.option("--safe", is_flag=True, help="Enable authentication in local mode.")
+def start(host, port, deploy, safe):
+    """
+    Starts covfee in local mode by default. Use --deploy to start deployment server.
+    """
+    mode = "local"
+    if deploy:
+        mode = "deploy"
+    unsafe = False if mode == "deploy" else (not safe)
+    config = Config(mode)
+
+    try:
+        launcher = Launcher(mode, [], auth_enabled=not unsafe)
+        launcher.launch(host=host, port=port)
     except Exception as err:
         print(traceback.format_exc())
         if "js_stack_trace" in dir(err):

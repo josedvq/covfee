@@ -1,20 +1,15 @@
+import { LoadingOutlined } from "@ant-design/icons"
+import { Empty, Select, Typography } from "antd"
 import * as React from "react"
-import { Select, Typography, Empty, Button } from "antd"
+import { ProjectType } from "types/project"
+import { appContext } from "../app_context"
+import { chatContext } from "../chat_context"
+import { getAllProjects, getProject } from "../models/Project"
+import { myerror } from "../utils"
+import { Project } from "./project"
 
 const { Paragraph } = Typography
 const { Option } = Select
-import Constants from "Constants"
-import { myerror, fetcher, throwBadResponse } from "../utils"
-import { LoadingOutlined } from "@ant-design/icons"
-import Modal from "antd/lib/modal/Modal"
-import { HitEditorForm } from "./hit_editor"
-import { getAllProjects, getProject, useProject } from "../models/Project"
-import { ProjectType } from "types/project"
-import { HitBlock } from "./hit_block/hit_block"
-import { appContext } from "../app_context"
-import { Project } from "./project"
-import { chatContext } from "../chat_context"
-import { AdminProvider } from "./admin_provider"
 
 interface Props {}
 

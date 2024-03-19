@@ -12,10 +12,6 @@ import { BaseNodeSpec } from "./node"
 
 export interface BaseTaskSpec extends BaseNodeSpec {
   type: string
-  /**
-   * base of the custom API of this task
-   */
-  customApiBase?: string
 }
 
 /**

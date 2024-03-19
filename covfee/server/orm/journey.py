@@ -1,26 +1,27 @@
 from __future__ import annotations
-import enum
-import os
+
 import datetime
-import hmac
-import secrets
+import enum
 import hashlib
-from typing import List, Dict, Any, TYPE_CHECKING, Optional, Tuple
-from typing_extensions import Annotated
+import hmac
+import os
+import secrets
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+
+from flask import current_app as app
 
 # from ..db import Base
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship, Mapped, mapped_column
-from sqlalchemy.ext.associationproxy import association_proxy, AssociationProxy
-from flask import current_app as app
+from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
 from .chat import Chat, ChatJourney
 from .node import JourneyNode, JourneySpecNodeSpec
 
 if TYPE_CHECKING:
-    from .hit import HITSpec, HITInstance
-    from .node import NodeSpec, NodeInstance
+    from .hit import HITInstance, HITSpec
+    from .node import NodeInstance, NodeSpec
 
 
 class JourneySpec(Base):
@@ -35,7 +36,9 @@ class JourneySpec(Base):
 
     # down
     nodespec_associations: Mapped[List[JourneySpecNodeSpec]] = relationship(
-        back_populates="journeyspec", order_by=JourneySpecNodeSpec.order
+        back_populates="journeyspec",
+        order_by=JourneySpecNodeSpec.order,
+        cascade="all,delete",
     )
     nodespecs: AssociationProxy[List[NodeSpec]] = association_proxy(
         "nodespec_associations",
@@ -101,12 +104,12 @@ class JourneyInstance(Base):
     # journey association (many-to-many)
     # used to store info associated to (chat, journey) like read status
     chat_associations: Mapped[List[ChatJourney]] = relationship(
-        back_populates="journey"
+        back_populates="journey", cascade="all,delete"
     )
 
     # down
     node_associations: Mapped[List[JourneyNode]] = relationship(
-        back_populates="journey", order_by=JourneyNode.order
+        back_populates="journey", order_by=JourneyNode.order, cascade="all,delete"
     )
     nodes: AssociationProxy[List[NodeInstance]] = association_proxy(
         "node_associations",

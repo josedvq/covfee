@@ -2,22 +2,18 @@ import os
 import platform
 import shutil
 import sys
-import json
 from shutil import which
-from typing import Any, List
+from typing import List
+
 from click import Path
-
+from colorama import Fore
 from halo.halo import Halo
-from colorama import init as colorama_init, Fore
-from covfee.loader import cli_create_tables
 
-from covfee.server.db import get_session_local, get_engine
-from covfee.config import Config
 import covfee.server.orm as orm
-from covfee.shared.validator.ajv_validator import AjvValidator
-from covfee.server.app import create_app
 from covfee.cli.utils import working_directory
-from covfee.server.socketio.redux_store import ReduxStoreService
+from covfee.config import Config
+from covfee.server.app import create_app_and_socketio
+from covfee.server.db import get_engine, get_session_local
 
 
 class ProjectExistsException(Exception):
@@ -38,12 +34,17 @@ class Launcher:
     projects: List["orm.Project"]
 
     def __init__(
-        self, environment, projects: List["orm.Project"] = [], folder: Path = None
+        self,
+        environment,
+        projects: List["orm.Project"] = [],
+        folder: Path = None,
+        auth_enabled: bool = True,
     ):
         self.environment = environment
         self.config = Config(environment)
         self.projects = projects
         self.folder = folder
+        self.auth_enabled = auth_enabled
 
         self.engine = get_engine(
             in_memory=(environment == "dev"), db_path=self.config["DATABASE_PATH"]
@@ -52,10 +53,11 @@ class Launcher:
 
     def make_database(self, force=False, with_spinner=False):
         self.init_folder()
-        self.create_tables()
+        self.create_tables(drop=force)
+        self.create_admin()
         if not force:
             with Halo(
-                text=f"Looking for existing projects",
+                text="Looking for existing projects",
                 spinner="dots",
                 enabled=with_spinner,
             ) as spinner:
@@ -67,23 +69,48 @@ class Launcher:
 
         self.commit()
 
-    def launch(self, unsafe=None):
+    def launch(self, host="0.0.0.0", port=5000):
         if self.environment != "dev":
             self.link_bundles()
-        if unsafe is None:
-            unsafe = False if self.environment == "deploy" else True
-        self.start_server(unsafe)
 
-    def create_tables(self):
+        socketio, app = create_app_and_socketio(self.environment, self.session_local)
+        with app.app_context():
+            app.config["UNSAFE_MODE_ON"] = not self.auth_enabled
+            self._start_server(socketio, app, host, port)
+
+    def create_tables(self, drop=False):
+        if drop:
+            orm.Base.metadata.drop_all(self.engine)
         orm.Base.metadata.create_all(self.engine)
 
-    def start_server(self, unsafe=False):
-        socketio, app = create_app(self.environment, self.session_local)
-        with app.app_context():
-            app.config["UNSAFE_MODE_ON"] = unsafe
-            self._start_server(socketio, app)
+    def create_admin(self):
+        default_username = self.config["DEFAULT_ADMIN_USERNAME"]
+        default_password = self.config["DEFAULT_ADMIN_PASSWORD"]
+        if "ADMIN_USERNAME" in self.config and "ADMIN_PASSWORD" in self.config:
+            username = self.config["ADMIN_USERNAME"]
+            password = self.config["ADMIN_PASSWORD"]
 
-    def _start_server(self, socketio, app, host="0.0.0.0"):
+            if (
+                self.auth_enabled
+                and username == default_username
+                and password == default_password
+            ):
+                raise ValueError(
+                    'Default admin credentials "admin:admin" have not been changed. Please change username and password in config when deploying with authentication.'
+                )
+            with self.session_local() as session:
+                user = orm.User.by_username(session, username)
+                if user is not None:
+                    return
+                admin = orm.User.from_username_password(
+                    username=username,
+                    password=password,
+                    secret=self.config["JWT_SECRET_KEY"],
+                )
+                session.add(admin)
+                session.commit()
+
+    def _start_server(self, socketio, app, host="0.0.0.0", port=5000):
         if app.config["SSL_ENABLED"]:
             ssl_options = {
                 "keyfile": self.config["SSL_KEY_FILE"],
@@ -92,13 +119,13 @@ class Launcher:
         else:
             ssl_options = {}
 
-        print(f"Running covfee at {host}:{5000} with environment={self.environment}")
+        print(f"Running covfee at {host}:{port} with environment={self.environment}")
         if self.environment == "local":
-            socketio.run(app, host=host, port=5000, **ssl_options)
+            socketio.run(app, host=host, port=port, **ssl_options)
         elif self.environment == "dev":
-            socketio.run(app, host=host, port=5000, debug=True, **ssl_options)
+            socketio.run(app, host=host, port=port, debug=True, **ssl_options)
         elif self.environment == "deploy":
-            socketio.run(app, host=host, **ssl_options)
+            socketio.run(app, host=host, port=port, **ssl_options)
         else:
             raise f"unrecognized self.environment {self.environment}"
 
@@ -114,14 +141,14 @@ class Launcher:
     def check_conficts(self, with_spinner=False):
         with self.session_local() as session:
             for project in self.projects:
-                existing_project = orm.Project.from_name(session, project.name)
+                existing_project = orm.Project.by_name(session, project.name)
                 if existing_project:
                     raise ProjectExistsException(project.name)
 
     def commit(self):
         with self.session_local() as session:
             for project in self.projects:
-                existing_project = orm.Project.from_name(session, project.name)
+                existing_project = orm.Project.by_name(session, project.name)
 
                 if existing_project:
                     session.delete(existing_project)
