@@ -2,7 +2,6 @@ import inspect
 import json
 import os
 
-import greenlet
 from flask import Blueprint, Flask
 from flask import current_app as app
 from flask import render_template, send_from_directory
@@ -42,7 +41,7 @@ def create_app_and_socketio(mode="deploy", session_local=None):
         )
 
     app.sessionmaker = session_local
-    app.session = scoped_session(session_local, scopefunc=greenlet.getcurrent)
+    app.session = scoped_session(session_local)
 
     from .socketio import chat, handlers  # noqa: F401
     from .socketio.socket import socketio
@@ -86,12 +85,9 @@ def create_app_and_socketio(mode="deploy", session_local=None):
     # app.scheduler = BackgroundScheduler()
     scheduler.start()
 
-    @app.teardown_request
-    def teardown_request(exception):
-        if exception:
-            app.session.rollback()
+    @app.teardown_appcontext
+    def teardown_appctx(exception):
         app.session.remove()
-        # app.scheduler.shutdown()
 
     return socketio, app
 

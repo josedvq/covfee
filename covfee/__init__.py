@@ -1,6 +1,9 @@
 import eventlet
 
-eventlet.monkey_patch(thread=True, time=True)
+
+# we need to monkey patch the standard library to make it work with eventlet
+# Apscheduler timers break without this
+eventlet.monkey_patch()
 from . import _version
 from .shared import task_dataclasses as tasks  # noqa: F401
 

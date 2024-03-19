@@ -1,8 +1,9 @@
 import requests
 from flask import current_app as app
 
-from .base import BaseCovfeeTask, CriticalError
 from covfee.logger import logger
+
+from .base import BaseCovfeeTask, CriticalError
 
 OPENVIDU_URL = "http://192.168.0.22:4443/"
 OPENVIDU_SECRET = "MY_SECRET"
@@ -22,7 +23,7 @@ class VideocallTask(BaseCovfeeTask):
                     "recordingMode": "MANUAL",
                     "customSessionId": str(self.task.id),
                 },
-                timeout=(3.05, 5),
+                timeout=2,
             )
             response.raise_for_status()
             return response.json()["sessionId"]
@@ -43,7 +44,7 @@ class VideocallTask(BaseCovfeeTask):
             auth=("OPENVIDUAPP", OPENVIDU_SECRET),
             headers={"Content-type": "application/json"},
             json={"data": journey_id},
-            timeout=(3.05, 5),
+            timeout=2,
         )
         response.raise_for_status()
         return response.json()["token"]
@@ -51,6 +52,8 @@ class VideocallTask(BaseCovfeeTask):
     def on_join(self, journey=None):
         logger.info("VideocallTask:on_join")
         # retrieve or request a session ID for the call / room
+
+        # return {"session_id": 235235, "connection_token": 25235}
 
         try:
             session_id = self._request_session_id()

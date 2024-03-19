@@ -1,11 +1,11 @@
-import os
 import json
+import os
 import subprocess
 
 import zmq
+from flask import current_app as app
 
 from covfee.cli.utils import working_directory
-from flask import current_app as app
 
 context = zmq.Context()
 
@@ -36,7 +36,12 @@ class ReduxStoreClient:
 
     def socket_request(self, payload):
         self.socket.send_json(payload)
-        message = self.socket.recv()
+        try:
+            message = self.socket.recv()
+        except zmq.error.Again as e:
+            raise RuntimeError(
+                "The Redux store service may not be running or the store service host/port may be incorrect"
+            ) from e
         return json.loads(message.decode("utf-8"))
 
     def join(self, nodeId, taskName, currState):
