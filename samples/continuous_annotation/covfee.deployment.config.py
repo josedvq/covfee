@@ -1,0 +1,5 @@
+BASE_URL = "http://localhost:5000"
+
+COVFEE_SECRET_KEY = "MY_SECRET"
+ADMIN_USERNAME = "admin2"
+ADMIN_PASSWORD = "admin2"
