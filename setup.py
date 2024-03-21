@@ -57,5 +57,10 @@ setup(
         "pyparsing == 3.1.1",
         "json-ref-dict == 0.7.2",
     ],
+    extras_require={        
+        'dev': [
+            'gevent == 23.9.1',
+        ]
+    },
     python_requires=">=3.6",
 )
