@@ -6,7 +6,7 @@ config.load_environment("local")
 
 spec_consent_form = {
     "name": "Consent",
-    "content": {"type": "link", "url": "$$www$$/consent.html"},
+    "content": {"type": "link", "url": "https://covfee.ewi.tudelft.nl/media/consent.html"},
     "form": {
         "fields": [
             {

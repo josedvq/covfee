@@ -1,0 +1,16 @@
+[Unit]
+Description=Gunicorn instance to serve covfee
+After=network.target
+
+[Service]
+User=edortaperez
+Group=www-data
+WorkingDirectory=/home/edortaperez/covfee/samples/continuous_annotation
+Environment="PATH=/home/edortaperez/miniconda3/envs/covfee/bin"
+ExecStart=/home/edortaperez/miniconda3/envs/covfee/bin/gunicorn --worker-class eventlet -w 1 'covfee.server.app:create_app()' --bind 0.0.0.0:5002
+
+# Serve via socket file
+# gunicorn --worker-class eventlet -w 1 --bind unix:covfee.sock -m 007 'covfee.server.app:create_app()'
+
+[Install]
+WantedBy=multi-user.target
