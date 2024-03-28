@@ -1,13 +1,7 @@
-import {
-  BorderOutlined,
-  CheckSquareTwoTone,
-  DownOutlined,
-  ExclamationCircleOutlined,
-  ExportOutlined,
-} from "@ant-design/icons"
 import Constants from "Constants"
-import type { MenuProps } from "antd"
-import { Button, Dropdown, MenuInfo, Modal, Progress, Space } from "antd"
+
+import { CloseOutlined } from "@ant-design/icons"
+import { Button, Checkbox, Modal } from "antd"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useSelector } from "react-redux"
 import { VideoJsPlayer } from "video.js"
@@ -18,27 +12,30 @@ import { TaskExport } from "../../types/node"
 import { AllPropsRequired } from "../../types/utils"
 import { fetcher } from "../../utils"
 import { CovfeeTaskProps } from "../base"
+import ActionAnnotationFlashscreen from "./action_annotation_flashscreen"
 import CamViewSelection from "./camview_selection"
+import { ModalParticipantSelectionGallery } from "./conflab_participant_selection"
+
+import {
+  ABORT_ONGOING_ANNOTATION_KEY,
+  CHANGE_VIEW_NEXT_KEY,
+  CHANGE_VIEW_PREV_KEY,
+  REGISTER_ACTION_ANNOTATION_KEY,
+  TIP_EMOJI,
+} from "./constants"
 import styles from "./continous_annotation.module.css"
+import {
+  AnnotationOption,
+  InstructionsSidebar,
+  ParticipantOption,
+} from "./instructions_sidebar"
 import { State, actions, slice } from "./slice"
 import type { AnnotationDataSpec, ContinuousAnnotationTaskSpec } from "./spec"
-
-// You can download this image and place it in the art folder from:
-// @covfee.ewi.tudelft.nl:/home/kfunesmora/conflab-media/
-// Do not commit to the repo for confidentiality reasons.
-import ConflabGallery from "../../art/conflab-gallery.svg"
-// Hardcoding the size of the viewport of the original svg, which couldn't find
-// a way to retrieve by code.
-const CONFLAB_SVG_ORIGINAL_SIZE = { width: 1427.578, height: 1496.532 }
-const grid_size_x = 6
-const grid_size_y = 8
+import TaskProgress from "./task_progress"
 
 interface Props extends CovfeeTaskProps<ContinuousAnnotationTaskSpec> {}
 
-const REGISTER_ACTION_ANNOTATION_KEY: string = "S"
 const UNINITIALIZED_ACTION_ANNOTATION_START_TIME: null = null
-const CHANGE_VIEW_UP_KEY: string = "ArrowUp"
-const CHANGE_VIEW_DOWN_KEY: string = "ArrowDown"
 const CAMVIEW_SELECTION_LAYOUT_IS_VERTICAL: boolean = true
 const CAMVIEW_SELECTION_NUMBER_OF_VIEWS: number = 5
 const VIDEO_PLAYBACK_ASSUMED_FRAMERATE: number = 60.0
@@ -81,6 +78,10 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     (state) => state.selectedAnnotationIndex
   )
   const [showingGallery, setShowingGallery] = useState(false)
+  const [showAnnotationTipsOnStart, setShowAnnotationTipsOnStart] =
+    useState(true)
+  const [showingAnnotationTips, setShowingAnnotationTips] = useState(false)
+
   const [isAnnotating, setIsAnnotating] = useState(false)
   const [actionAnnotationStartTime, setActionAnnotationStartTime] = useState<
     number | null
@@ -288,7 +289,9 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
         if (playbackStatus.paused) {
           videoPlayerRef.current.pause()
         } else {
-          videoPlayerRef.current.play()
+          videoPlayerRef.current.play().catch((error) => {
+            console.log("Error playing video: ", error)
+          })
         }
       }
     }
@@ -356,149 +359,6 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       return false
     }
     return annotationsDataMirror[index].data_json !== null
-  }
-
-  // We prepare the participants options in the menu
-  const participants_menu_items: MenuProps["items"] = [
-    {
-      key: "1",
-      type: "group",
-      label: "Select participant",
-      children: annotationsDataMirror
-        ? annotationsDataMirror
-            // We filter unique ocurrences of participants
-            .filter(
-              (annotation, index, self) =>
-                index ===
-                self
-                  .map((self_annotation) => self_annotation.participant)
-                  .indexOf(annotation.participant)
-            )
-            // Those unique occurrences are then mapped into menu items
-            .map(({ participant }) => ({
-              key: participant,
-              label: participant,
-              icon: participantCompleted(participant) ? (
-                <CheckSquareTwoTone />
-              ) : (
-                <BorderOutlined />
-              ),
-              onClick: (item: MenuInfo) => {
-                selectFirstAvailableAnnotationIndexBasedOnParticipantName(
-                  item.key
-                )
-              },
-            }))
-        : [],
-    },
-  ]
-
-  // We prepare the annotations options
-  const annotations_menu_items: MenuProps["items"] = [
-    {
-      key: "1",
-      type: "group",
-      label: "Select annotation",
-      children: validAnnotationsDataAndSelection
-        ? annotationsDataMirror
-            // We extend the annotationDataMirror with the index for element
-            .map((annotation, annotation_index) => ({
-              annotation,
-              annotation_index,
-            }))
-            // We pick the annotations for the currently selected participant (forwarding the original index)
-            .filter(
-              ({ annotation, annotation_index }) =>
-                annotation.participant ===
-                annotationsDataMirror[selectedAnnotationIndex].participant
-            )
-            // Now we transform those into entries for the menu, using the original index as unique identifier (key)
-            .map(({ annotation, annotation_index }) => ({
-              key: annotation_index,
-              label: annotation.category,
-              icon: annotationCompleted(annotation_index) ? (
-                <CheckSquareTwoTone />
-              ) : (
-                <BorderOutlined />
-              ),
-              onClick: (item: MenuInfo) => {
-                dispatch(actions.setSelectedAnnotationIndex(item.key))
-              },
-            }))
-        : [],
-    },
-  ]
-
-  const showAnnotationItems: boolean = validAnnotationsDataAndSelection
-    ? annotationsDataMirror.filter(
-        (annotation) =>
-          annotation.participant ===
-          annotationsDataMirror[selectedAnnotationIndex].participant
-      ).length > 1
-    : false
-
-  //********************************************************************//
-  //------------------- Gallery management ---------------------------- //
-  //********************************************************************//
-
-  // We use a Ref to know to which DOM element to redirect the keyboard focus
-  // and as to capture key press events. Also, to retrieve the geometry of the
-  // underlying gallery svg image.
-  const galleryOverlayRef = useRef(null)
-  useEffect(() => {
-    if (showingGallery && galleryOverlayRef.current) {
-      galleryOverlayRef.current.focus()
-    }
-  }, [showingGallery])
-
-  React.useEffect(() => {
-    console.log(annotationsDataMirror)
-  }, [annotationsDataMirror])
-
-  // TODO: Confider moving the gallery overlay into a unique component.
-  const handleClickOnGalleryImage = (e: MouseEvent) => {
-    // Based on the known gallery image of participants, we calculate in which
-    // participant the click is falling in.
-    if (galleryOverlayRef.current) {
-      const galleryOverlayImageElement =
-        galleryOverlayRef.current.querySelectorAll("svg")[0]
-      if (galleryOverlayImageElement) {
-        var imageRect = galleryOverlayImageElement.getBoundingClientRect()
-        var cell_x = Math.floor(
-          (grid_size_x * (e.clientX - imageRect.left)) / imageRect.width
-        )
-        var cell_y = Math.floor(
-          (grid_size_y * (e.clientY - imageRect.top)) / imageRect.height
-        )
-        let participant_id: number = cell_y * grid_size_x + cell_x + 1
-        if (participant_id >= 38) {
-          participant_id += 2
-        }
-        selectFirstAvailableAnnotationIndexBasedOnParticipantName(
-          "Participant_" + participant_id
-        )
-      }
-      setShowingGallery(false)
-    }
-  }
-
-  const computeViewBoxOnGalleryToCropSelectedParticipant = () => {
-    const gallerySVGCellWidth = CONFLAB_SVG_ORIGINAL_SIZE.width / grid_size_x
-    const gallerySVGCellHeight = CONFLAB_SVG_ORIGINAL_SIZE.height / grid_size_y
-    var gallerySVGCellX = 0
-    var gallerySVGCellY = 0
-    if (validAnnotationsDataAndSelection) {
-      const selectedParticipant =
-        annotationsDataMirror[selectedAnnotationIndex].participant
-      const participant_id = parseInt(selectedParticipant.split("_")[1])
-      const cell_id =
-        participant_id <= 37 ? participant_id - 1 : participant_id - 3
-      const cell_x = cell_id % grid_size_x
-      const cell_y = Math.floor(cell_id / grid_size_x)
-      gallerySVGCellX = cell_x * gallerySVGCellWidth
-      gallerySVGCellY = cell_y * gallerySVGCellHeight
-    }
-    return `${gallerySVGCellX} ${gallerySVGCellY} ${gallerySVGCellWidth} ${gallerySVGCellHeight}`
   }
 
   //********************************************************************//
@@ -601,6 +461,9 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       if (event.key.toUpperCase() === REGISTER_ACTION_ANNOTATION_KEY) {
         annotateStartEventOfActionAnnotation()
       }
+      if (isAnnotating && event.key === ABORT_ONGOING_ANNOTATION_KEY) {
+        handleAnnotationStartOrStopButtonClick()
+      }
     },
     [actionAnnotationStartTime, getCurrentVideoTime, isAnnotating]
   )
@@ -614,12 +477,12 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       // FIXME: this leads to scrolling the page. However, we expect that the final
       // implementation will have a layout which won't generate a scrollbar while
       // annotating.
-      if (event.key == CHANGE_VIEW_UP_KEY) {
+      if (event.key.toUpperCase() == CHANGE_VIEW_PREV_KEY) {
         setSelectedCamViewIndex((prevSelectedViewIndex) => {
           return Math.max(0, prevSelectedViewIndex - 1)
         })
       }
-      if (event.key == CHANGE_VIEW_DOWN_KEY) {
+      if (event.key.toUpperCase() == CHANGE_VIEW_NEXT_KEY) {
         setSelectedCamViewIndex((prevSelectedViewIndex) => {
           return Math.min(4, prevSelectedViewIndex + 1)
         })
@@ -639,35 +502,78 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   }, [handleKeyDown, handleKeyUp])
 
   //********************************************************************//
+  // Participant and annotations for participant options
+
+  let participant_options: ParticipantOption[] = []
+  let annotation_options: AnnotationOption[] = []
+  if (validAnnotationsDataAndSelection) {
+    participant_options = annotationsDataMirror
+      // We filter unique ocurrences of participants
+      .filter(
+        (annotation, index, self) =>
+          index ===
+          self
+            .map((self_annotation) => self_annotation.participant)
+            .indexOf(annotation.participant)
+      )
+      // Those unique occurrences are then mapped into menu items
+      .map(({ participant }) => ({
+        name: participant,
+        completed: participantCompleted(participant),
+      }))
+
+    annotation_options = annotationsDataMirror
+      // We extend the annotationDataMirror with the index for element
+      .map((annotation, annotation_index) => ({
+        annotation,
+        annotation_index,
+      }))
+      // We pick the annotations for the currently selected participant (forwarding the original index)
+      .filter(
+        ({ annotation, annotation_index }) =>
+          annotation.participant ===
+          annotationsDataMirror[selectedAnnotationIndex].participant
+      )
+      // Now we transform those into entries for the menu, using the original index as unique identifier (key)
+      .map(({ annotation, annotation_index }) => ({
+        category: annotation.category,
+        index: annotation_index,
+        completed: annotationCompleted(annotation_index),
+      }))
+  }
+
+  React.useEffect(() => {
+    if (isAnnotating) {
+      setShowingAnnotationTips(showAnnotationTipsOnStart)
+    }
+  }, [isAnnotating])
+
+  // ********************************************************************//
   //----------------------- JSX rendering logic ------------------------//
   //********************************************************************//
+  if (!validAnnotationsDataAndSelection) {
+    // We assume that a first selection is done automatically and that the user
+    // can't get the component into a state in which there is no valid selection.
+    return <h1>Loading...</h1>
+  }
+
   return (
     <form>
-      {showingGallery && (
-        <div
-          className={styles["gallery-overlay"]}
-          onKeyDown={(e) => {
-            e.preventDefault()
-            if (e.key === "Escape") {
-              setShowingGallery(false)
-            }
-          }}
-          tabIndex={-1}
-          ref={galleryOverlayRef}
-        >
-          <h1>Click on the participant to select or Press ESC to close</h1>
-          <ConflabGallery
-            className={styles["gallery-overlay-image"]}
-            onClick={handleClickOnGalleryImage}
-          />
-        </div>
-      )}
+      <ModalParticipantSelectionGallery
+        /* This is the modal for selecting the participant */
+        open={showingGallery}
+        onCancel={() => {
+          setShowingGallery(false)
+        }}
+        onParticipantSelected={(participant: string) => {
+          selectFirstAvailableAnnotationIndexBasedOnParticipantName(participant)
+          setShowingGallery(false)
+        }}
+      />
       <Modal
         title={
           "Set " +
-          (validAnnotationsDataAndSelection
-            ? annotationsDataMirror[selectedAnnotationIndex].participant
-            : "") +
+          annotationsDataMirror[selectedAnnotationIndex].participant +
           " as not appearing in the video(s)"
         }
         open={isMarkParticipantModalOpen}
@@ -704,223 +610,95 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
         </ul>
       </Modal>
       <div className={styles["action-annotation-task"]}>
-        <div className={`${styles["sidebar"]} ${styles["left-sidebar"]}`}>
-          <div
-            className={styles["sidebar-block"]}
-            style={{ borderWidth: isEntireTaskCompleted ? 5 : 1 }}
-          >
-            <h3 className={styles["action-task-progress-text"]}>
-              Task progress
-            </h3>
-            <Progress
-              percent={taskCompletionPercentage}
-              className={styles["action-task-progress-bar"]}
-              format={(percent) => percent.toFixed(1) + "%"}
-            />
-            {isEntireTaskCompleted && (
-              <>
-                <p className={styles["action-task-progress-finished-message"]}>
-                  Finished! &#x1F389; Your completion code is:
-                </p>
-                <p className={styles["action-task-progress-code"]}>
-                  {props.spec.prolificCompletionCode}
-                </p>
-                {props.renderSubmitButton({
-                  disabled: false,
-                  className: styles["action-task-progress-completion-button"],
-                  icon: <ExportOutlined />,
-                })}
-              </>
-            )}
-          </div>
-          <div className={styles["sidebar-block"]}>
-            <h1>Instructions</h1>
-            <h2>
-              <strong>Step 1: </strong>
-              {"Select the camera view where the person below is "}
-              <strong>best visible</strong>
-              {" using the UP or DOWN keys."}
-            </h2>
-            <svg
-              viewBox={computeViewBoxOnGalleryToCropSelectedParticipant()}
-              width="100%"
-              className={styles["selected-participant-svg"]}
-            >
-              <ConflabGallery />
-            </svg>
-            <h2>
-              <strong>Step 2: </strong>
-              If you have found the participant and selected the best camera
-              view, proceed to Step 3. If you
-              <strong> can't find the person at all</strong>, click the button
-              below which will open a pop-up asking to confirm that the person
-              can't be found. If you confirm, proceed to Step{" "}
-              {showAnnotationItems ? "5" : "4"}:
-            </h2>
-            <Button
-              type="primary"
-              onClick={() => {
-                setIsMarkParticipantModalOpen(true)
-              }}
-              className={styles["gallery-button"]}
-              icon={<ExclamationCircleOutlined />}
-              disabled={isAnnotating}
-            >
-              I can't find this participant!
-            </Button>
-            {showAnnotationItems && (
-              <>
-                <h2>
-                  <strong>Step 3: </strong> Select an action that hasn't been
-                  annotated and continue to Step 4. If all have been annotated,
-                  skip to Step 5.
-                </h2>
-                <Dropdown
-                  menu={{ items: annotations_menu_items, selectable: true }}
-                  disabled={isAnnotating}
-                >
-                  <Button
-                    onClick={(e) => {
-                      e.preventDefault()
-                    }}
-                    className={styles["action-task-dropwdown-button"]}
-                  >
-                    <span
-                      className={styles["action-task-dropdown-button-text"]}
-                    >
-                      <Space>
-                        {validAnnotationsDataAndSelection &&
-                          (annotationCompleted(selectedAnnotationIndex) ? (
-                            <CheckSquareTwoTone />
-                          ) : (
-                            <BorderOutlined />
-                          ))}
-                        {validAnnotationsDataAndSelection
-                          ? annotationsDataMirror[selectedAnnotationIndex]
-                              ?.category
-                          : ""}
-                      </Space>
-                    </span>
-                    <DownOutlined
-                      className={styles["action-task-dropwdown-button-icon"]}
-                    />
-                  </Button>
-                </Dropdown>
-              </>
-            )}
-            <h2>
-              <strong>Step {showAnnotationItems ? "4" : "3"}: </strong>
-              Start the annotation process. <strong>Get ready! </strong>
-              The video will start playing. During playback, press and{" "}
-              <strong> hold </strong> the{" "}
-              <strong>{`${REGISTER_ACTION_ANNOTATION_KEY}`}</strong> key to
-              indicate the person is{" "}
-              <strong>
-                {validAnnotationsDataAndSelection
-                  ? annotationsDataMirror[selectedAnnotationIndex]?.category
-                  : ""}
-              </strong>
-              . Release while they are not (Press{" "}
-              <strong>{`${REGISTER_ACTION_ANNOTATION_KEY}`}</strong> and try
-              it!). When finished, go to Step {showAnnotationItems ? "3" : "4"}.
-            </h2>
-            <Button
-              type="primary"
-              className={styles["gallery-button"]}
-              onClick={handleAnnotationStartOrStopButtonClick}
-            >
-              {isAnnotating ? "Stop Annotation" : "Start Annotation"}
-            </Button>
-            <h2>
-              <strong>Step {showAnnotationItems ? "5" : "4"}: </strong> Select a
-              participant that hasn't been annotated. Then, go to Step 1
-            </h2>
-
-            <Dropdown
-              menu={{
-                items: participants_menu_items,
-                selectable: true,
-                className: styles["action-task-dropdown-menu"],
-              }}
-              className={styles["action-task-dropdown"]}
-              disabled={isAnnotating}
-            >
-              <Button
-                onClick={(e) => {
-                  e.preventDefault()
-                }}
-                className={styles["action-task-dropwdown-button"]}
-              >
-                <span className={styles["action-task-dropdown-button-text"]}>
-                  <Space>
-                    {validAnnotationsDataAndSelection &&
-                      (participantCompleted(
-                        annotationsDataMirror[selectedAnnotationIndex]
-                          .participant
-                      ) ? (
-                        <CheckSquareTwoTone />
-                      ) : (
-                        <BorderOutlined />
-                      ))}
-                    {validAnnotationsDataAndSelection
-                      ? annotationsDataMirror[selectedAnnotationIndex]
-                          .participant
-                      : ""}
-                  </Space>
-                </span>
-                <DownOutlined
-                  className={styles["action-task-dropwdown-button-icon"]}
-                />
-              </Button>
-            </Dropdown>
-            <Button
-              type="primary"
-              className={styles["gallery-button"]}
-              onClick={() => {
-                setShowingGallery(true)
-              }}
-              disabled={isAnnotating}
-            >
-              Select Participant on Gallery
-            </Button>
-          </div>
-        </div>
-        <div className={styles["main-content"]}>
-          <VideoJSFC
-            options={videoPlayerOptions}
-            onReady={handleVideoPlayerReady}
+        <div
+          className={`${styles["sidebar"]} ${styles["left-sidebar"]} ${
+            isAnnotating ? styles["left-sidebar-hidden"] : ""
+          }`}
+        >
+          <TaskProgress
+            finished={isEntireTaskCompleted}
+            percent={taskCompletionPercentage}
+            completionCode={props.spec.prolificCompletionCode}
+            renderSubmitButton={props.renderSubmitButton}
           />
-          <div
-            className={`${styles["action-annotation-flashscreen"]} ${
-              validAnnotationsDataAndSelection
-                ? actionAnnotationStartTime ===
-                  UNINITIALIZED_ACTION_ANNOTATION_START_TIME
-                  ? styles[
-                      "action-annotation-flashscreen-active-key-not-pressed"
-                    ]
-                  : styles["action-annotation-flashscreen-active-key-pressed"]
-                : ""
-            }`}
-          >
-            <h1>
-              {validAnnotationsDataAndSelection
-                ? actionAnnotationStartTime ===
-                  UNINITIALIZED_ACTION_ANNOTATION_START_TIME
-                  ? "NOT " +
-                    annotationsDataMirror[selectedAnnotationIndex].category
-                  : annotationsDataMirror[selectedAnnotationIndex].category
-                : ""}
-            </h1>
+
+          <InstructionsSidebar
+            // Current content to display
+            selected_participant={{
+              name: annotationsDataMirror[selectedAnnotationIndex].participant,
+              completed: participantCompleted(
+                annotationsDataMirror[selectedAnnotationIndex].participant
+              ),
+            }}
+            selected_annotation={{
+              category: annotationsDataMirror[selectedAnnotationIndex].category,
+              completed: annotationCompleted(selectedAnnotationIndex),
+            }}
+            participant_options={participant_options}
+            annotation_options={annotation_options}
+            // Callbacks
+            onCantFindParticipantClick={() => {
+              setIsMarkParticipantModalOpen(true)
+            }}
+            onParticipantSelected={(participant: string) => {
+              selectFirstAvailableAnnotationIndexBasedOnParticipantName(
+                participant
+              )
+            }}
+            onAnnotationSelected={(index: number) => {
+              dispatch(actions.setSelectedAnnotationIndex(index))
+            }}
+            onStartStopAnnotationClick={handleAnnotationStartOrStopButtonClick}
+            onOpenParticipantSelectionClick={() => {
+              setShowingGallery(true)
+            }}
+          />
+        </div>
+        <div style={{ backgroundColor: "blue" }} /> {/* <--- Filler div */}
+        <div className={styles["main-content"]}>
+          <div className={styles["main-content-video-and-guide"]}>
+            <VideoJSFC
+              options={videoPlayerOptions}
+              onReady={handleVideoPlayerReady}
+            />
+            {showingAnnotationTips && (
+              <div className={styles["instructions-box-overlay"]}>
+                {/* These are the tips we want to make sure the annotator sees while the annotation process is ongoing */}
+                <Button
+                  type="text"
+                  icon={<CloseOutlined style={{ color: "white" }} />}
+                  style={{ position: "absolute", top: 0, right: 0 }}
+                  onClick={() => {
+                    setShowingAnnotationTips(false)
+                  }}
+                />
+                <h2 className={styles["instruction-text-during-annotation"]}>
+                  {TIP_EMOJI} Press ESC to abort the ongoing annotation. Don't
+                  worry you can start over.
+                </h2>
+                <h2 className={styles["instruction-text-during-annotation"]}>
+                  {TIP_EMOJI} Press {CHANGE_VIEW_PREV_KEY.toUpperCase()} or{" "}
+                  {CHANGE_VIEW_NEXT_KEY.toUpperCase()} to change camera if the
+                  participant of interest moves out of view.
+                </h2>
+
+                <Checkbox
+                  style={{
+                    color: "white",
+                    fontSize: "18px",
+                    position: "absolute",
+                    bottom: 0,
+                    right: 0,
+                  }}
+                  onChange={(e) =>
+                    setShowAnnotationTipsOnStart(!e.target.checked)
+                  }
+                >
+                  Don't show this again
+                </Checkbox>
+              </div>
+            )}
           </div>
-          {validAnnotationsDataAndSelection && isAnnotating && (
-            <p className={styles["keyboard-action-register-instruction-text"]}>
-              {"Press and HOLD the " +
-                REGISTER_ACTION_ANNOTATION_KEY +
-                " key to indicate the participant is " +
-                annotationsDataMirror[selectedAnnotationIndex].category +
-                ". RELEASE while they are not."}
-            </p>
-          )}
           {/* <>
             <h3>Node data:</h3>
             <p>{JSON.stringify(node)}</p>
@@ -935,17 +713,27 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
         </div>
         <div className={`${styles["sidebar"]} ${styles["right-sidebar"]}`}>
           <div className={styles["sidebar-block"]}>
-            <h1>Press UP or DOWN to select a camera view</h1>
+            <h1>
+              Press {CHANGE_VIEW_PREV_KEY.toUpperCase()} or{" "}
+              {CHANGE_VIEW_NEXT_KEY.toUpperCase()} to select a camera view
+            </h1>
             <CamViewSelection
               setSelectedView={setSelectedCamViewIndex}
               selectedView={selectedCamViewIndex}
               layoutIsVertical={CAMVIEW_SELECTION_LAYOUT_IS_VERTICAL}
               numberOfViews={CAMVIEW_SELECTION_NUMBER_OF_VIEWS}
             />
-            <p style={{ marginTop: "10px" }}>
-              Tip: you can change view during the annotation if a participant
-              moves to another camera view
-            </p>
+          </div>
+          <div className={styles["sidebar-block"]}>
+            <ActionAnnotationFlashscreen
+              active={
+                actionAnnotationStartTime !==
+                UNINITIALIZED_ACTION_ANNOTATION_START_TIME
+              }
+              annotation_category={
+                annotationsDataMirror[selectedAnnotationIndex].category
+              }
+            />
           </div>
         </div>
       </div>

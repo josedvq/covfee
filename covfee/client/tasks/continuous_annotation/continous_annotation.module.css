@@ -1,5 +1,6 @@
 .action-annotation-task {
   display: flex;
+  justify-content: flex-end;
   height: 100%;
 }
 
@@ -38,6 +39,11 @@
 .left-sidebar {
   min-width: 300px; /* Set a minimum width */
   width: 22%;
+  transition: margin 0.3s ease;
+}
+
+.left-sidebar-hidden {
+  margin-left: -22%;
 }
 
 .sidebar-block {
@@ -69,8 +75,9 @@
   padding: 12px;
   display: flex;
   flex-direction: column;
-  width: 20%;
+  width: 12%;
   min-width: 200px; /* Set a minimum width */
+  align-self: flex-end;
 }
 
 .sidebarBottom {
@@ -85,8 +92,21 @@
 }
 
 .main-content {
-  padding-top: 22px;
+  display: flex;
+  justify-content: flex-end;
   flex: 1;
+  flex-direction: row;
+}
+
+.main-content-video-and-guide {
+  padding-top: 22px;
+  flex-grow: 1;
+  max-width: 85vw;
+  max-height: "50px";
+}
+
+.main-content video-js {
+  height: 100px;
 }
 
 .action-task-dropdown-title {
@@ -150,24 +170,34 @@
 }
 
 .action-annotation-flashscreen {
-  margin: 15px;
   display: flex;
   justify-content: center; /* Horizontally center the content */
   align-items: center; /* Vertically center the content */
   border: 1px solid black;
   border-radius: 6px;
-  height: 100px;
-  background-color: lightgray;
+  height: 10vh;
+  width: 100%;
+  flex-direction: column;
 }
 
-.keyboard-action-register-instruction-text {
-  text-align: center;
-  font-weight: bold;
+.instructions-box-overlay {
+  display: flex;
+  background: rgba(49, 49, 49, 0.8);
+  justify-content: center;
+  flex-direction: column;
+  width: 40%;
+  color: white;
+  position: relative;
+  left: 2%;
+  top: -22vh;
+  height: 20vh;
+  padding-left: 3%;
+  padding-right: 3%;
 }
 
 .action-annotation-flashscreen h1 {
-  font-size: 24px;
-  text-align: center;
+  font-size: 20px;
+  margin: 0px;
 }
 
 .action-annotation-flashscreen-active-key-pressed {
