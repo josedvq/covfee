@@ -2,19 +2,24 @@ import inspect
 import json
 import os
 
-from flask import Blueprint, Flask
+from flask import Blueprint, Flask, redirect, request, abort
 from flask import current_app as app
 from flask import render_template, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_session import Session
 from sqlalchemy.orm import scoped_session
+from sqlalchemy import select
 
 from covfee.config import Config
 from covfee.server import tasks
 from covfee.server.tasks.base import BaseCovfeeTask
 
 from .scheduler.apscheduler import scheduler
+from .orm.annotator import Annotator
+from .orm.journey import JourneyInstance
+
+from typing import Optional
 
 
 def create_app_and_socketio(mode="deploy", session_local=None):
@@ -125,6 +130,47 @@ def admin():
         constants=json.dumps(app.config.get_frontend_config()),
         bundle_url=app.config["BUNDLES_URL"],
     )
+
+# admin interface
+@frontend.route("/prolific")
+def prolific():
+    # The journey_instance_id to use for redirection
+    journey_instance_url: Optional[str] = None 
+
+    # We extract the Prolific academic worker unique id
+    prolific_project_id = request.args.get('project')
+    prolific_annotator_id = request.args.get('annotator')
+    if prolific_project_id is None or prolific_annotator_id is None:
+        abort(404)
+
+    # We check if an Annotator exists in the database with the given prolific_annotator_id
+    session = app.session()
+    annotator = session.execute(select(Annotator).filter_by(prolific_id=prolific_annotator_id)).scalar_one_or_none()
+    if annotator is not None:
+        journey_instance_url = annotator.journey_instance.get_url()
+    else:
+        # We find a journey_instance which does not have an annotator associated with it
+        for journey_instance in session.query(JourneyInstance).all():
+            if journey_instance.annotator is None:
+                # We take a record of the journey_id for the later redirection
+                journey_instance_url = journey_instance.get_url()
+
+                # Then we register an Annotator row and associate it with the journey_instance
+                annotator = Annotator(prolific_id=prolific_annotator_id)
+                journey_instance.annotator = annotator
+                session.add(annotator)
+                session.commit()
+                break  
+        if journey_instance_url is None:
+            # We should here tell the annotator that all tasks have been taken and send an email or something
+            return render_template(
+                "all_assigned.html",
+            )
+
+    # http://localhost:5000/prolific?annotator=annotator1&project=prof
+    # http://localhost:5000/prolific?annotator=annotator2&project=prof
+
+    return redirect(journey_instance_url)
 
 
 # project www server

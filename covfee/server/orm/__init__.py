@@ -7,6 +7,7 @@ from .task import *
 from .response import *
 from .user import *
 from .chat import *
+from .annotator import *
 
 
 def set_sessionmaker(sessionmaker):
