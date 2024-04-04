@@ -29,10 +29,6 @@ class Annotator(Base):
     # The time the annotator row was created, expected to be the time the annotator was first linked
     # to a journey instance.
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
-    # When an annotator access has expired, we can make a record of the formerly assigned journey instance.
-    # FIXME: A foreign key to journey instance would be better, but using it introduced SQLAlchemy errors
-    #        due to ambiguities linked to two foreignkeys to the same table.
-    expired_journey_instance_id: Mapped[Optional[int]] = mapped_column()
 
     def __repr__(self) -> str:
         journey_instance_id = (

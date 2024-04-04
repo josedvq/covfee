@@ -156,8 +156,6 @@ def prolific():
         # Annotator already registered, check whether to redirect to their journey_instance work, or
         # to inform them they no longer have access.
         if annotator.journey_instance is not None:
-            # Note: consider evaluating expiration here. Access expiration is only evaluated when another
-            #       annotator tries to get a journey instance to work on.
             journey_instance_url = annotator.journey_instance.get_url()
         else:
             return render_template(
@@ -173,9 +171,7 @@ def prolific():
                 )
             )
         )
-        expired_annotator = None
-        # We try to pick a journey_instance that does not have an annotator associated with it
-        # in first priority
+        # We search for a journey_instance that does not have an annotator associated with it
         for journey_instance in non_finished_journey_instances_query.all():
             # We ignore finished or disabled journeys
             if journey_instance.annotator is None:
@@ -188,48 +184,6 @@ def prolific():
                 session.add(annotator)
                 session.commit()
                 break
-
-        if journey_instance_url is None:
-            # If we did not find an unassigned journey instance, we check if there is one whose
-            # annotator access has timedout, in a second priority
-            for journey_instance in non_finished_journey_instances_query.all():
-                previous_annotator_access_expired: bool = (
-                    journey_instance.annotator is not None
-                    and (
-                        datetime.now() - journey_instance.annotator.created_at
-                    ).total_seconds()
-                    > app.config["ANNOTATOR_COMPLETION_TIMEOUT_IN_SECONDS"]
-                )
-                if journey_instance.annotator is not None:
-                    print(
-                        "ELAPSED: ",
-                        (
-                            datetime.now() - journey_instance.annotator.created_at
-                        ).total_seconds(),
-                    )
-                    print(
-                        "previous_annotator_access_expired",
-                        previous_annotator_access_expired,
-                    )
-                if previous_annotator_access_expired:
-                    # We take a record of the journey_id for the later redirection
-                    journey_instance_url = journey_instance.get_url()
-                    # We take a record of expired journey instance for the previous annotator
-                    # so we can keep track of what happened.
-                    expired_annotator = journey_instance.annotator
-                    journey_instance.annotator.expired_journey_instance_id = (
-                        journey_instance.id
-                    )
-                    # TODO: Consider "cleaning up" the progress for the journey here.
-
-                    # We now create a new entry for the requesting annotator and assign to this
-                    # journey instance
-                    annotator = Annotator(prolific_id=prolific_annotator_id)
-                    journey_instance.annotator = annotator
-                    session.add(annotator)
-                    session.commit()
-                    print(expired_annotator)
-                    break
 
         if journey_instance_url is None:
             # We should here tell the annotator that all tasks have been taken and send an email or something
