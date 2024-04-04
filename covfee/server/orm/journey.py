@@ -109,7 +109,9 @@ class JourneyInstance(Base):
     )
 
     # annotator associated to this journey
-    annotator: Mapped[Optional[Annotator]] = relationship(back_populates="journey_instance", cascade="all,delete")
+    annotator: Mapped[Optional[Annotator]] = relationship(
+        back_populates="journey_instance", cascade="all,delete"
+    )
 
     # down
     node_associations: Mapped[List[JourneyNode]] = relationship(
