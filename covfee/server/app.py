@@ -19,8 +19,6 @@ from .scheduler.apscheduler import scheduler
 from .orm.annotator import Annotator
 from .orm.journey import JourneyInstance, JourneyInstanceStatus
 
-from datetime import datetime
-
 from typing import Optional
 
 
@@ -175,6 +173,14 @@ def prolific():
         for journey_instance in non_finished_journey_instances_query.all():
             # We ignore finished or disabled journeys
             if journey_instance.annotator is None:
+                # TODO: In the next iteration of this logic we want to achieve two things
+                # 1) For a completed journey, we want to keep a record of the annotator id,
+                #    regardless of whether the annotator is assigned to another journey to work on
+                # 2) Implement logic in which an annotator can't be assigned to journeys belonging
+                #    to the same HIT. This is to prevent the same annotator from annotating the
+                #    same task, whereas assigning multiple journeys to one HIT is a good way to
+                #    achieve inter-annotator agreement evaluations.
+
                 # We take a record of the journey_id for the later redirection
                 journey_instance_url = journey_instance.get_url()
 
