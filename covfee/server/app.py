@@ -132,16 +132,22 @@ def admin():
     )
 
 
-# admin interface
+# annotator redirection from prolific academic
 @frontend.route("/prolific")
 def prolific():
     # The journey_instance_id to use for redirection
     journey_instance_url: Optional[str] = None
 
     # We extract the Prolific academic worker unique id
-    prolific_project_id = request.args.get("project")
-    prolific_annotator_id = request.args.get("annotator")
-    if prolific_project_id is None or prolific_annotator_id is None:
+    prolific_study_id = request.args.get("STUDY_ID")
+    prolific_annotator_id = request.args.get("PROLIFIC_PID")
+    prolific_annotator_session_id = request.args.get("SESSION_ID")
+
+    if (
+        prolific_study_id is None
+        or prolific_annotator_id is None
+        or prolific_annotator_session_id is None
+    ):
         abort(404)
 
     # We check if an Annotator exists in the database with the given prolific_annotator_id
@@ -199,8 +205,9 @@ def prolific():
                 id=prolific_annotator_id,
             )
 
-    # http://localhost:5000/prolific?annotator=annotator1&project=prof
-    # http://localhost:5000/prolific?annotator=annotator2&project=prof
+    # Debugging URLs
+    # http://localhost:5000/prolific?PROLIFIC_PID=annotator1&STUDY_ID=test&SESSION_ID=1
+    # http://localhost:5000/prolific?PROLIFIC_PID=annotator2&STUDY_ID=test&SESSION_ID=1
 
     return redirect(journey_instance_url)
 
