@@ -18,6 +18,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 from .chat import Chat, ChatJourney
 from .node import JourneyNode, JourneySpecNodeSpec
+from .annotator import Annotator
 
 if TYPE_CHECKING:
     from .hit import HITInstance, HITSpec
@@ -105,6 +106,11 @@ class JourneyInstance(Base):
     # used to store info associated to (chat, journey) like read status
     chat_associations: Mapped[List[ChatJourney]] = relationship(
         back_populates="journey", cascade="all,delete"
+    )
+
+    # annotator associated to this journey
+    annotator: Mapped[Optional[Annotator]] = relationship(
+        back_populates="journey_instance", cascade="all,delete"
     )
 
     # down

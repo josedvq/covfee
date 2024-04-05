@@ -35,7 +35,7 @@ const grid_size_y = 8
 
 interface Props extends CovfeeTaskProps<ContinuousAnnotationTaskSpec> {}
 
-const REGISTER_ACTION_ANNOTATION_KEY: string = "s"
+const REGISTER_ACTION_ANNOTATION_KEY: string = "S"
 const UNINITIALIZED_ACTION_ANNOTATION_START_TIME: null = null
 const CHANGE_VIEW_UP_KEY: string = "ArrowUp"
 const CHANGE_VIEW_DOWN_KEY: string = "ArrowDown"
@@ -222,6 +222,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   const videoPlayerRef = useRef<VideoJsPlayer>(null)
   const handleVideoPlayerReady = (player: VideoJsPlayer) => {
     videoPlayerRef.current = player
+    videoPlayerRef.current.volume(0)
   }
   useEffect(() => {
     if (videoPlayerRef.current) {
@@ -589,7 +590,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   //********************************************************************//
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if (event.key === REGISTER_ACTION_ANNOTATION_KEY) {
+      if (event.key.toUpperCase() === REGISTER_ACTION_ANNOTATION_KEY) {
         annotateStartEventOfActionAnnotation()
       }
     },
@@ -598,7 +599,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
 
   const handleKeyUp = useCallback(
     (event: KeyboardEvent) => {
-      if (event.key === REGISTER_ACTION_ANNOTATION_KEY) {
+      if (event.key.toUpperCase() === REGISTER_ACTION_ANNOTATION_KEY) {
         annotateEndEventOfActionAnnotation()
       }
       // We use the arrow keys to change the selected camera view
@@ -717,20 +718,11 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
                 <p className={styles["action-task-progress-code"]}>
                   {props.spec.prolificCompletionCode}
                 </p>
-                <Button
-                  type="primary"
-                  icon={<ExportOutlined />}
-                  className={styles["action-task-progress-completion-button"]}
-                  onClick={(event: MouseEvent) => {
-                    window.open(
-                      "https://app.prolific.com/submissions/complete?cc=" +
-                        props.spec.prolificCompletionCode,
-                      "_blank"
-                    )
-                  }}
-                >
-                  Take me to Prolific Academic
-                </Button>
+                {props.renderSubmitButton({
+                  disabled: false,
+                  className: styles["action-task-progress-completion-button"],
+                  icon: <ExportOutlined />,
+                })}
               </>
             )}
           </div>
@@ -814,17 +806,16 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
               Start the annotation process. <strong>Get ready! </strong>
               The video will start playing. During playback, press and{" "}
               <strong> hold </strong> the{" "}
-              <strong>{`${REGISTER_ACTION_ANNOTATION_KEY.toUpperCase()}`}</strong>{" "}
-              key to indicate the person is{" "}
+              <strong>{`${REGISTER_ACTION_ANNOTATION_KEY}`}</strong> key to
+              indicate the person is{" "}
               <strong>
                 {validAnnotationsDataAndSelection
                   ? annotationsDataMirror[selectedAnnotationIndex]?.category
                   : ""}
               </strong>
               . Release while they are not (Press{" "}
-              <strong>{`${REGISTER_ACTION_ANNOTATION_KEY.toUpperCase()}`}</strong>{" "}
-              and try it!). When finished, go to Step{" "}
-              {showAnnotationItems ? "3" : "4"}.
+              <strong>{`${REGISTER_ACTION_ANNOTATION_KEY}`}</strong> and try
+              it!). When finished, go to Step {showAnnotationItems ? "3" : "4"}.
             </h2>
             <Button
               type="primary"
@@ -917,7 +908,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
           {validAnnotationsDataAndSelection && isAnnotating && (
             <p className={styles["keyboard-action-register-instruction-text"]}>
               {"Press and HOLD the " +
-                REGISTER_ACTION_ANNOTATION_KEY.toUpperCase() +
+                REGISTER_ACTION_ANNOTATION_KEY +
                 " key to indicate the participant is " +
                 annotationsDataMirror[selectedAnnotationIndex].category +
                 ". RELEASE while they are not."}
