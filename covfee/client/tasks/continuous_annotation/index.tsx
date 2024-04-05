@@ -287,7 +287,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
 
   const numberOfVideoFrames = () => {
     if (videoPlayerRef.current) {
-      return Math.ceil(
+      return Math.round(
         videoPlayerRef.current.duration() * getCurrentVideoFramerate()
       )
     } else {
@@ -878,13 +878,6 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
           </div>
         </div>
         <div className={styles["main-content"]}>
-          {/* <VideojsPlayer
-            className={styles["main-content-video"]}
-            ref={videoPlayerRef}
-            // {...args.spec.media}
-            {...my_video}
-            // onEnded={actions.enableForm}
-          /> */}
           <VideoJSFC
             options={videoPlayerOptions}
             onReady={handleVideoPlayerReady}
