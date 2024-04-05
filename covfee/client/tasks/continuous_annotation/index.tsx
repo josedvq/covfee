@@ -222,6 +222,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   const videoPlayerRef = useRef<VideoJsPlayer>(null)
   const handleVideoPlayerReady = (player: VideoJsPlayer) => {
     videoPlayerRef.current = player
+    videoPlayerRef.current.volume(0)
   }
   useEffect(() => {
     if (videoPlayerRef.current) {
