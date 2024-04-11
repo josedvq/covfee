@@ -59,6 +59,8 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
     fetchResponse,
     submitResponse,
     setReady,
+    setProgress: setNodeProgress,
+    submitProgress,
   } = useNode(args.node, socket)
 
   const [isLoading, setIsLoading] = React.useState(true)
@@ -297,6 +299,17 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
       })
   }
 
+  const handleTaskProgressSubmit = (progress: number) => {
+    submitProgress(progress)
+      .then((data: any) => {
+        setNodeProgress(progress)
+      })
+      .catch((error) => {
+        myerror("Error updating task progress.", error)
+        setNodeProgress(progress)
+      })
+  }
+
   const renderErrorMessage = React.useCallback(() => {
     return (
       <MessageContainer>
@@ -441,6 +454,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
                 disabled: node.status == "FINISHED",
                 onSubmit: handleTaskSubmit,
                 renderSubmitButton: renderTaskSubmitButton,
+                onUpdateProgress: handleTaskProgressSubmit,
               }
 
               const taskElement = React.createElement(

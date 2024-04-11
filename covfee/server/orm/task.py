@@ -121,6 +121,7 @@ class TaskInstance(NodeInstance):
             "dt_count": utils.datetime_to_str(self.dt_count),
             "dt_pause": utils.datetime_to_str(self.dt_pause),
             "t_elapsed": self.t_elapsed,
+            "progress": self.progress,
         }
 
     def pause(self, pause: bool):

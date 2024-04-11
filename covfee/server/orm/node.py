@@ -179,6 +179,9 @@ class NodeInstance(Base):
     )
     status: Mapped[NodeInstanceStatus] = mapped_column(default=NodeInstanceStatus.INIT)
 
+    # Optional numeric [0-100] progress for the Node
+    progress: Mapped[Optional[float]] = mapped_column(default=None)
+
     dt_start: Mapped[Optional[datetime]]
     dt_pause: Mapped[Optional[datetime]]
     dt_count: Mapped[Optional[datetime]]
