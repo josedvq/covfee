@@ -76,7 +76,7 @@ covfee
 
 First, we place the specification for the task props in the `spec.ts` file:
 
-```
+```ts
 import { BaseTaskSpec } from "@covfee-shared/spec/task"
 
 /**
@@ -100,7 +100,7 @@ These props will be parsed by Covfee so that they can be provided in Python when
 
 Tasks in covfee specify their state by creating a Redux Toolkit slice. For our purposes a slice is just an object that encapsulates the initial state and the reducers for the task. In this case, we need the state to hold the user's name, email and phone number. Our `slice.ts` file looks like this:
 
-```
+```ts
 import { createSlice } from "@reduxjs/toolkit"
 
 export interface State {
@@ -140,7 +140,7 @@ Here we specified the type for the state, the initial state, and wrote separate 
 
 Following React + Redux design philosophy, the main job of the React component is to sync state with the DOM (view), by reading the state and by calling Redux actions in response to user events. In this case we read the state variables using `useSelector` in the same way it is used in Redux, and we call Redux actions whenever the content of the input elements changes. That's all!
 
-```
+```ts
 import React from "react"
 import { slice, actions, State } from "./slice"
 import { TaskExport } from "../../types/node"
@@ -214,7 +214,6 @@ export default {
   taskSlice: slice,
   useSharedState: false,
 } as TaskExport
-
 ```
 
 Note the _export_ statement at the end of the file. Covfee expects every task to export a default object with these keys. `useSharedState` should only be set to true for _multiplayer_ tasks.
@@ -256,7 +255,7 @@ my_folder
 
 The naming is not relevant. Paste the following into the `tutorial.py`:
 
-```
+```python
 from covfee import tasks, HIT, Project
 from covfee.config import config
 from covfee.shared.dataclass import CovfeeApp

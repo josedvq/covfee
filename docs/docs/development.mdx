@@ -14,10 +14,9 @@ Covfee's frontend is built using [webpack](https://webpack.js.org/), which has a
 
 1. Install the latest version of [node.js](https://nodejs.org/en/download/). Make sure that the `npm` command is available in your terminal.
 
-
-
 :::tip
-**We strongly recommend that you install covfee in a Python virtual environment**. To create and activate one using *venv*:
+**We strongly recommend that you install covfee in a Python virtual environment**. To create and activate one using _venv_:
+
 ```
 python3 -m venv ./env
 source ./env/bin/activate
@@ -36,6 +35,7 @@ python3 -m pip install -e .
 The `covfee` command should now be available in the terminal. Type `covfee --help` to make sure.
 
 3. Install Javascript dependencies:
+
 ```
 yarn install
 ```
@@ -51,7 +51,7 @@ The development install is ready.
 
 ## Running a covfee project in dev mode
 
-Covfee requires a project folder with at least one `.covfee.json` file to run. Covfee provides sample projects, or see [Getting Started](getting_started) for instructions on how to create your own project folder and specification.
+Covfee requires a project folder with at least one project file to run. Covfee provides sample projects, or see [Getting Started](getting_started) for instructions on how to create your own project folder and specification.
 
 To run one of the covfee samples:
 
@@ -63,12 +63,15 @@ covfee make . --no-launch
 ```
 
 2. Start the webpack server from the same folder:
+
 ```
 covfee webpack
 ```
+
 This will start a [Webpack development server](https://webpack.js.org/guides/development/) with hot-reloading.
 
 3. In another terminal, at the same folder, start the flask server in dev mode. This will start the Python backend server with hot-reloading:
+
 ```
 covfee start --dev
 ```

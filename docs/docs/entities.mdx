@@ -1,19 +1,20 @@
 ---
-title: Covfee entities
+title: HITs, Journeys and Tasks
 ---
 
-import useBaseUrl from '@docusaurus/useBaseUrl'
+import useBaseUrl from "@docusaurus/useBaseUrl"
 
 Here we define the nomenclature used within Covfee to talk about online experiments and their sub-parts.
 
-
 ## The HIT
 
-The main unit in Covfee is possibly the HIT (Human Intelligence Task). Despite the name, in crowd-sourcing settings the term HIT is often used to denote **multiple** tasks performed by an annotator or experiment subject. What distinguishes the HIT is that it is independent of any other HITs and it cannot be (or may not be convenient to) split  into independent sub-units. Each HIT is normally identified by a single URL and is paid when completed. In Covfee we generalize this idea by using the term HIT to denote one or more tasks performed by one or more experiment subjects or annotators. For example, a HIT may be an online video conversation, or a game of chess to be completed by two people. The same HIT may include separate demographic questionnaires and post-experiment questionnaires for both participants. 
+The main unit in Covfee is possibly the HIT (Human Intelligence Task). Despite the name, in crowd-sourcing settings the term HIT is often used to denote **multiple** tasks performed by an annotator or experiment subject. What distinguishes the HIT is that it is independent of any other HITs and it cannot be (or may not be convenient to) split into independent sub-units. Each HIT is normally identified by a single URL and is paid when completed. In Covfee we generalize this idea by using the term HIT to denote one or more tasks performed by one or more experiment subjects or annotators. For example, a HIT may be an online video conversation, or a game of chess to be completed by two people. The same HIT may include separate demographic questionnaires and post-experiment questionnaires for both participants.
 
 In covfee, a HIT is specified via it's graph structure. Our videocall example can be drawn as follows:
 
-<img src={useBaseUrl('/img/covfee_entities_1.png')}/>
+<div class="text--center">
+  <img src={useBaseUrl("/img/covfee_entities_1.png")} width="800" />
+</div>
 
 A HIT is composed of one or multiple Tasks, and one or multiple Journeys or paths through the Tasks. In Covfee, these paths must be acyclic but may be assymetric (ie. subjects may follow different paths). Each Journey is mapped to a URL by Covfee, which when opened accesses the current node/task for that HIT. In most cases tasks are to be completed in order.
 
@@ -27,6 +28,8 @@ In practice, we might use the term HIT to refer to both specifications and insta
 
 A Covfee Project may contain multiple different HIT specifications. A common case is to specify a HIT per experimental condition. In summary the following is the hierarchy used in Covfee, with examples for a Project, HIT, Journey and Task:
 
-<img src={useBaseUrl('/img/covfee_entities_2.png')}/>
+<div class="text--center">
+  <img src={useBaseUrl("/img/covfee_entities_2.png")} width="600" />
+</div>
 
 Finally, a Covfee app may also contain multiple independent Projects.
