@@ -22,7 +22,7 @@ import { NodeButtons, NodeRow } from "./node_buttons"
 import { HoveringButtons } from "./utils"
 import type { HoveringButtonsArgs } from "./utils"
 import { JourneyRow } from "./journey_buttons"
-
+import { NodeType } from "../../types/node"
 interface Props {
   hit: HitInstanceType
 }
@@ -177,8 +177,15 @@ export const HitBlock = (props: Props) => {
 
               <ul>
                 {props.hit.journeys.map((journey, index) => {
+
+                  let journeyNodes: NodeType[] = []
+                  for (const node_idx of journey.nodes) {
+                    journeyNodes.push(props.hit.nodes[node_idx - 1])
+                  }
+
                   return (
                     <JourneyRow
+                      journeyNodes={journeyNodes}
                       key={index}
                       focus={focusedJourney == index}
                       onFocus={() => {
