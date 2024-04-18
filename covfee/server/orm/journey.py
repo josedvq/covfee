@@ -30,6 +30,12 @@ class JourneySpec(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[Optional[str]]
 
+    # An optional id that the study administrator can attach to this Journey
+    # making it identifiable through multiple launches of "covfee make"
+    # and thus being able to add more hits/journeys without destroying
+    # the database. It's a string as it is intended to be human-readable
+    id_within_study: Mapped[Optional[str]] = mapped_column(unique=True)
+
     # spec relationships
     # up
     hitspec_id: Mapped[int] = mapped_column(ForeignKey("hitspecs.id"))
@@ -86,7 +92,12 @@ class JourneyInstanceStatus(enum.Enum):
 
 
 class JourneyInstance(Base):
-    """Represents an instance of a HIT, to be solved by one user"""
+    """Represents an instance of a journey, to be solved by one user
+    - one Journey instance maps to one URL that can be sent to a participant to access and solve the HIT.
+    - a Journey instance is specified by the abstract JourneySpec it is an instance of.
+    - a Journey instance is linked to a list of tasks (instantiated task specifications),
+    which hold the responses for the Journey
+    """
 
     __tablename__ = "journeyinstances"
 

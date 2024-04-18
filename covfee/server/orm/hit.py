@@ -6,7 +6,7 @@ import hmac
 import binascii
 import hashlib
 import datetime
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Optional
 from hashlib import sha256
 from pprint import pformat
 
@@ -27,6 +27,12 @@ class HITSpec(Base):
     __table_args__ = (UniqueConstraint("project_id", "name"),)
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
+
+    # An optional id that the study administrator can attach to this HIT
+    # making it identifiable through multiple launches of "covfee make"
+    # and thus being able to add more hits/journeys without destroying
+    # the database. It's a string as it is intended to be human-readable
+    id_within_study: Mapped[Optional[str]] = mapped_column(unique=True)
 
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
     # project_id = Column(Integer, ForeignKey("projects.name"))
@@ -105,7 +111,8 @@ class HITSpec(Base):
 
 
 class HITInstance(Base):
-    """Represents an instance of a HIT, to be solved by one user
+    """Represents an instance of a HIT, to be solved by one or multiple users through their
+    respective journeys
     - one HIT instance maps to one URL that can be sent to a participant to access and solve the HIT.
     - a HIT instance is specified by the abstract HIT it is an instance of.
     - a HIT instance is linked to a list of tasks (instantiated task specifications),
