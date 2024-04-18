@@ -1,6 +1,8 @@
 from typing import Any, List, Tuple, Optional
 
-import covfee.launcher as launcher
+from sqlalchemy.orm import scoped_session
+from sqlalchemy import select
+
 from covfee.logger import logger
 from covfee.server.orm import (
     HITSpec as OrmHit,
@@ -14,6 +16,8 @@ from covfee.server.orm import (
 from covfee.server.orm import (
     TaskSpec as OrmTask,
 )
+from covfee.server.orm import HITInstance, JourneyInstance
+import os
 
 
 class PostInitCaller(type):
@@ -28,12 +32,14 @@ class BaseDataclass:
 
 
 class CovfeeTask(BaseDataclass, metaclass=PostInitCaller):
+    _orm_task: Optional[OrmTask] = None
+    _player_count: int
+
     def __init__(self):
         super().__init__()
-        self._orm_task = None
         self._player_count = -1
 
-    def orm(self):
+    def create_orm_task_object(self) -> OrmTask:
         if self._orm_task is not None:
             return self._orm_task
         spec = {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
@@ -87,12 +93,14 @@ class Journey(BaseDataclass):
         if nodes is not None:
             self.nodes_players = [(n, n._count()) for n in nodes]
         else:
-            self.nodes_players: List[Tuple[CovfeeTask, int]] = list()
+            self.nodes_players = []
         self.name = name
         self.global_unique_id = global_unique_id
 
-    def orm(self):
-        journey = OrmJourney([(n.orm(), p) for n, p in self.nodes_players])
+    def create_orm_journey_object(self) -> OrmJourney:
+        journey = OrmJourney(
+            [(n.create_orm_task_object(), p) for n, p in self.nodes_players]
+        )
         journey.global_unique_id = self.global_unique_id
         logger.debug(f"Created ORM journey: {str(journey)}")
         return journey
@@ -138,47 +146,151 @@ class HIT(BaseDataclass):
 
         self.config = config
 
-    def add_journey(self, nodes=None, journey_global_unique_id: Optional[str] = None):
+    def add_journey(
+        self, nodes=None, journey_global_unique_id: Optional[str] = None
+    ) -> Journey:
         j = Journey(nodes, global_unique_id=journey_global_unique_id)
         self.journeys.append(j)
         return j
 
-    def orm(self):
-        hit = OrmHit(self.name, [j.orm() for j in self.journeys])
+    def create_orm_hit_object(self) -> OrmHit:
+        hit = OrmHit(self.name, [j.create_orm_journey_object() for j in self.journeys])
         hit.global_unique_id = self.global_unique_id
         logger.debug(f"Created ORM HIT: {str(hit)}")
         return hit
 
 
 class Project(BaseDataclass):
+    name: str
+    email: str
+    hits: List[HIT]
+
     def __init__(self, name: str, email: str, hits: HIT = None):
         super().__init__()
         self.name = name
         self.email = email
         self.hits = hits if hits is not None else list()
 
-    def orm(self):
-        project = OrmProject(self.name, self.email, [h.orm() for h in self.hits])
-        logger.debug(f"Created ORM Project: {str(project)}")
+    def create_or_update_orm_specs_data(self, session: scoped_session) -> OrmProject:
+        project: Optional[OrmProject] = session.execute(
+            select(OrmProject).filter_by(name=self.name)
+        ).scalar_one_or_none()
+        if project is not None:
+            logger.info(
+                f"Project {self.name} already exists! Will only accept HITs/Journeys with new global_unique_ids."
+            )
+            project.email = self.email
+
+            for new_hit in self.hits:
+                if new_hit.global_unique_id is None:
+                    continue
+                hitspec_in_db: Optional[OrmHit] = session.execute(
+                    select(OrmHit).filter_by(global_unique_id=new_hit.global_unique_id)
+                ).scalar_one_or_none()
+                if hitspec_in_db is not None:
+                    logger.info(
+                        f"HIT {new_hit.global_unique_id} already exists. Checking whether to add new journeys."
+                    )
+                    for journey in new_hit.journeys:
+                        if journey.global_unique_id is None:
+                            logger.info(
+                                f"Cant' add new journeys to HIT without a global_unique_id. Skipping..."
+                            )
+                            continue
+                        journey_in_db = session.execute(
+                            select(OrmJourney).filter_by(
+                                global_unique_id=journey.global_unique_id
+                            )
+                        ).scalar_one_or_none()
+                        if journey_in_db is not None:
+                            logger.info(
+                                f"Journey {journey.global_unique_id} already exists. Skipping..."
+                            )
+                        else:
+                            logger.info(
+                                f"Journey {journey.global_unique_id} being created."
+                            )
+                            journey_orm = journey.create_orm_journey_object()
+                            hitspec_in_db.append_journeyspecs([journey_orm])
+                else:
+                    project.hitspecs.append(new_hit.create_orm_hit_object())
+        else:
+            logger.info(
+                f"Project {self.name} did not exist. Will be created from scratch as is."
+            )
+            project = OrmProject(
+                self.name, self.email, [h.create_orm_hit_object() for h in self.hits]
+            )
+            logger.debug(f"Created ORM Project: {str(project)}")
         return project
+
+    def create_orm_instances_for_hitspecs_journeyspecs_without_instances(
+        self, orm_project: OrmProject, session: scoped_session
+    ) -> OrmProject:
+        # Note: this implementation will create instances
+        if os.environ.get("COVFEE_ENV") == "dev":
+            # In dev mode, instances ids are explicitly set through a ClassVar counter.
+            # In case the project already exists with prior instances, we need to update
+            # that counter relying on what is in the database.
+            # already existed, with previous instances, we
+            HITInstance.instance_counter = session.query(HITInstance).count() + 1
+            JourneyInstance.instance_counter = (
+                session.query(JourneyInstance).count() + 1
+            )
+
+        for hitspec in orm_project.hitspecs:
+            if len(hitspec.instances) == 0:
+                hitspec.instantiate()
+                for hit_instance in hitspec.instances:
+                    for node in hit_instance.nodes:
+                        # FIXME - It's unclear why chats are not being added when the
+                        #         updated orm_project is added to the session.
+                        session.add(node.chat)
+            else:
+                # We check now whether the hit instances are missing journey instances
+                for hit_instance in hitspec.instances:
+                    # We collect the journeyspecs without their own instances
+                    journeyspecs_without_instances = [
+                        journey_spec
+                        for journey_spec in hitspec.journeyspecs
+                        if len(journey_spec.journeys) == 0
+                    ]
+                    if len(journeyspecs_without_instances) > 0:
+                        hit_instance.instantiate_new_journeys(
+                            journeyspecs_without_instances
+                        )
+                        for node in hit_instance.nodes:
+                            # FIXME - It's unclear why chats are not being added when the
+                            #         updated orm_project is added to the session.
+                            session.add(node.chat)
 
 
 class CovfeeApp(BaseDataclass):
-    def __init__(self, projects: List[Project]):
+    _projects_specs: List[Project]
+
+    def __init__(self, projects: List[Project]) -> None:
         super().__init__()
-        self.projects = projects
+        self._projects_specs = projects
 
-    def get_instantiated_projects(self, num_instances=1):
-        orm_projects = []
-        for p in self.projects:
-            orm_project = p.orm()
-            for spec in orm_project.hitspecs:
-                spec.instantiate(num_instances)
-            orm_projects.append(orm_project)
-        return orm_projects
+    def add_to_database_new_or_updated_projects_specifications_and_instances(
+        self, session: scoped_session
+    ) -> List[OrmProject]:
+        """
+        If a session is provided, it is assumed that the related projects could already exist and we
+        could potentially be committing new specs and their related instances.
+        """
+        for project_specs in self._projects_specs:
+            # We first create or update the project specs data, meaning the respective
+            # hitspecs and journeyspecs. If the project is new, it will create data for
+            # all provided HITs. Otherwise, it will create specs only for new HITs
+            # or journeys with global_unique_ids.
+            orm_project = project_specs.create_or_update_orm_specs_data(session)
 
-    def launch(self, num_instances=1):
-        orm_projects = self.get_instantiated_projects(num_instances)
-        l = launcher.Launcher("dev", orm_projects, folder=None)
-        l.make_database()
-        l.launch()
+            # We then create instances for hitspecs and journeyspecs without instances.
+            # This is equally valid for a newly created project, or the newly created specs
+            # for an existing project.
+            project_specs.create_orm_instances_for_hitspecs_journeyspecs_without_instances(
+                orm_project, session
+            )
+
+            session.add(orm_project)

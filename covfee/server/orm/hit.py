@@ -7,7 +7,7 @@ import binascii
 import hashlib
 import datetime
 import secrets
-from typing import List, TYPE_CHECKING, Optional
+from typing import List, TYPE_CHECKING, Optional, ClassVar
 from hashlib import sha256
 from pprint import pformat
 
@@ -60,10 +60,18 @@ class HITSpec(Base):
         if name is None:
             name = binascii.b2a_hex(os.urandom(8)).decode("utf-8")
         self.name = name
-        self.journeyspecs = journeyspecs
-        print(f"HIT: {len(journeyspecs)}")
-        self.nodespecs = [n for js in journeyspecs for n in js.nodespecs]
-        print(f"HIT: {len(self.nodespecs)}")
+        self.append_journeyspecs(journeyspecs)
+
+    def append_journeyspecs(self, journeyspecs: List[JourneySpec]):
+        self.journeyspecs += journeyspecs
+        print(
+            f"HIT - Appended {len(journeyspecs)} of {len(self.journeyspecs)} journeyspecs"
+        )
+        new_nodespecs = [n for js in journeyspecs for n in js.nodespecs]
+        self.nodespecs += new_nodespecs
+        print(
+            f"HIT: - Appended {len(new_nodespecs)} of {len(self.nodespecs)} nodespecs"
+        )
 
     def make_journey(self):
         journeyspec = JourneySpec()
@@ -76,11 +84,6 @@ class HITSpec(Base):
                 journeyspecs=self.journeyspecs,
             )
             self.instances.append(instance)
-
-    def launch(self, num_instances=1):
-        if self.project is None:
-            self.project = Project()
-        self.project.launch(num_instances)
 
     def get_api_url(self):
         return f'{app.config["API_URL"]}/hits/{self.id}'
@@ -141,7 +144,7 @@ class HITInstance(Base):
         default=datetime.datetime.now, onupdate=datetime.datetime.now
     )
 
-    instance_counter = 0
+    instance_counter: ClassVar[int] = 0
 
     def __init__(self, journeyspecs: List[JourneySpec] = []):
         super().init()
@@ -150,8 +153,12 @@ class HITInstance(Base):
         self.submitted = False
 
         # instantiate every node only once
+        self.instantiate_new_journeys(journeyspecs)
+
+    def instantiate_new_journeys(self, journeyspecs: List[JourneySpec]):
+        # instantiate every node only once
         nodespec_to_nodeinstance = dict()
-        for i, journeyspec in enumerate(journeyspecs):
+        for journeyspec in journeyspecs:
             journey = journeyspec.instantiate()
             journey.hit_id = self.id
 
@@ -169,11 +176,12 @@ class HITInstance(Base):
                     )
                 )
             self.journeys.append(journey)
-        self.nodes = list(nodespec_to_nodeinstance.values())
+        new_nodes = list(nodespec_to_nodeinstance.values())
+        self.nodes = self.nodes + new_nodes
 
         # call node.reset when the graph is ready
         # ie. when all the links are set in the ORM
-        for node in self.nodes:
+        for node in new_nodes:
             node.reset()
 
     @staticmethod

@@ -34,10 +34,6 @@ class Project(Base):
         self.email = email
         self.hitspecs = hitspecs
 
-        # to keep track of info at launch time
-        self._conflicts = False
-        self._filename = None
-
     def get_dataframe(self):
         rows = list()
         for hit in self.hitspecs:
@@ -47,9 +43,11 @@ class Project(Base):
                         {
                             "hit_name": hit.name,
                             "hit_id": instance.id.hex(),
-                            "journey_name": journey.spec.name
-                            if journey.spec.name is not None
-                            else "unnamed",
+                            "journey_name": (
+                                journey.spec.name
+                                if journey.spec.name is not None
+                                else "unnamed"
+                            ),
                             "journey_id": journey.id,
                             "url": journey.get_url(),
                             "completion_code": journey.get_completion_code(),

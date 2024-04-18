@@ -8,7 +8,7 @@ from flask import render_template, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_session import Session
-from sqlalchemy.orm import scoped_session
+from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy import select, not_
 
 from covfee.config import Config
@@ -26,7 +26,9 @@ from .orm.journey import JourneyInstance, JourneyInstanceStatus
 from typing import Optional
 
 
-def create_app_and_socketio(mode="deploy", session_local=None):
+def create_app_and_socketio(
+    mode="deploy", session_local: Optional[sessionmaker] = None
+):
     # called once per process
     # but reused across threads
 
@@ -43,10 +45,10 @@ def create_app_and_socketio(mode="deploy", session_local=None):
     app.json = CovfeeJSONProvider(app)
 
     if session_local is None:
-        from .db import get_session_local
+        from .db import create_database_sessionmaker, DatabaseEngineConfig
 
-        session_local = get_session_local(
-            in_memory=False, db_path=config["DATABASE_PATH"]
+        session_local = create_database_sessionmaker(
+            DatabaseEngineConfig(database_file=config["DATABASE_PATH"])
         )
 
     app.sessionmaker = session_local
@@ -179,8 +181,7 @@ def prolific():
         )
 
     # We check if an Annotator exists in the database with the given prolific_annotator_id
-    session = app.session()
-    annotator = session.execute(
+    annotator = app.session.execute(
         select(Annotator).filter_by(
             prolific_id=prolific_annotator_id, prolific_study_id=prolific_study_id
         )
@@ -198,7 +199,7 @@ def prolific():
                 id=prolific_annotator_id,
             )
     else:
-        non_finished_journey_instances_query = session.query(JourneyInstance).filter(
+        non_finished_journey_instances_query = app.session.query(JourneyInstance).filter(
             not_(
                 JourneyInstance.status.in_(
                     [JourneyInstanceStatus.FINISHED, JourneyInstanceStatus.DISABLED]
@@ -206,6 +207,7 @@ def prolific():
             )
         )
         # We search for a journey_instance that does not have an annotator associated with it
+        journey_instance: JourneyInstance
         for journey_instance in non_finished_journey_instances_query.all():
             # We ignore finished or disabled journeys
             if (journey_instance.annotator is None or
@@ -230,7 +232,7 @@ def prolific():
                     prolific_study_id=prolific_study_id,
                 )
                 journey_instance.annotator = annotator
-                session.commit()
+                app.session.commit()
 
                 break
 

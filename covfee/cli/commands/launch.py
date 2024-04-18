@@ -118,13 +118,19 @@ def make(
     install_npm_packages()
 
     try:
+        # 1. Parse the project spec file into a format that covfee can manage (CovfeeApp)
         loader = Loader(project_spec_file)
-        projects = loader.process(with_spinner=True)
-
-        launcher = Launcher(
-            mode, projects, Path(project_spec_file).parent, auth_enabled=not unsafe
+        covfee_app = loader.load_project_spec_file_and_parse_as_covfee_app(
+            with_spinner=True
         )
-        launcher.make_database(force, with_spinner=True)
+
+        # 2. Create or update the database
+        launcher = Launcher(
+            mode, covfee_app, Path(project_spec_file).parent, auth_enabled=not unsafe
+        )
+        launcher.create_or_update_database(delete_existing_data=force)
+
+        # 3. Launch the app based on the current data/configuration.
         if not no_launch:
             print(
                 get_start_message(
