@@ -21,4 +21,5 @@ export interface ContinuousAnnotationTaskSpec extends BaseTaskSpec {
   annotations: AnnotationDataSpec[]
   prolificCompletionCode?: string
   userCanAdd: boolean
+  videoTutorialUrl?: string
 }

@@ -281,7 +281,7 @@ export const _JourneyPage: React.FC<Props> = (props) => {
 
       <ContentContainer
         showSideBar={args.showSideBar}
-        height={window.innerHeight}
+        /*height={window.innerHeight}*/
       >
         {hitExtra && (
           <></>

@@ -1,7 +1,7 @@
 import Constants from "Constants"
 
-import { CloseOutlined } from "@ant-design/icons"
-import { Button, Checkbox, Modal } from "antd"
+import { CloseOutlined, InfoCircleFilled } from "@ant-design/icons"
+import { Button, Checkbox, notification } from "antd"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useSelector } from "react-redux"
 import { VideoJsPlayer } from "video.js"
@@ -120,8 +120,6 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     taskCompletionPercentage =
       (100 * numberOfAnnotationsCompleted) / numberOfAnnotations
   }
-  const [isMarkParticipantModalOpen, setIsMarkParticipantModalOpen] =
-    useState(false)
 
   const selectFirstAvailableAnnotationIndexBasedOnParticipantName = (
     participant: string
@@ -208,8 +206,13 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   useEffect(() => {
     if (activeAnnotationDataArray.needs_upload) {
       postActiveAnnotationDataArrayToServer()
+      notification.open({
+        message: "Annotation Saved",
+        description: "Please continue with the next one.",
+        icon: <InfoCircleFilled style={{ color: "green" }} />,
+      })
     }
-  }, [activeAnnotationDataArray, postActiveAnnotationDataArrayToServer])
+  }, [activeAnnotationDataArray])
 
   // update selectedAnnotationIndex to a reasonable state, for the case in which
   // annotationsDataMirror is undefined, or empty, or when is valid but selectedAnnotationIndex
@@ -250,6 +253,16 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     }
   })
 
+  useEffect(() => {
+    if (videoPlayerRef.current) {
+      if (isAnnotating) {
+        videoPlayerRef.current.controlBar.hide()
+      } else {
+        videoPlayerRef.current.controlBar.show()
+      }
+    }
+  }, [isAnnotating])
+
   const handleVideoEnd = () => {
     handleAnnotationsOnVideoEndEvent()
     setIsAnnotating(false)
@@ -263,7 +276,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   const videoPlayerOptions = useMemo(() => {
     return {
       autoplay: false,
-      controls: false,
+      controls: true,
       responsive: true,
       fluid: true,
       sources: [props.spec.media[selectedCamViewIndex]],
@@ -272,14 +285,17 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
 
   // ...and add logic that ensures that video playback status is kept in sync under
   // the selectedCamViewIndex changes. First, we keep track of the playback status.
-  const [playbackStatus, setPlaybackStatus] = useState({
+  const [
+    playbackStatusOnCamViewChangeEvent,
+    setPlaybackStatusOnCamViewChangeEvent,
+  ] = useState({
     paused: true,
     currentTime: 0.0,
   })
   useEffect(() => {
     // Note: this is triggered when the selectedCamViewIndex changes
     if (videoPlayerRef.current) {
-      setPlaybackStatus({
+      setPlaybackStatusOnCamViewChangeEvent({
         paused: videoPlayerRef.current.paused(),
         currentTime: videoPlayerRef.current.currentTime(),
       })
@@ -290,9 +306,14 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   // when the new video source becomes active.
   const handleVideoSourceChange = (newSrc: string) => {
     if (videoPlayerRef.current) {
-      videoPlayerRef.current.currentTime(playbackStatus.currentTime)
-      if (playbackStatus.paused != videoPlayerRef.current.paused()) {
-        if (playbackStatus.paused) {
+      videoPlayerRef.current.currentTime(
+        playbackStatusOnCamViewChangeEvent.currentTime
+      )
+      if (
+        playbackStatusOnCamViewChangeEvent.paused !=
+        videoPlayerRef.current.paused()
+      ) {
+        if (playbackStatusOnCamViewChangeEvent.paused) {
           videoPlayerRef.current.pause()
         } else {
           videoPlayerRef.current.play().catch((error) => {
@@ -451,12 +472,13 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     }
   }
 
-  const handleClickOnParticipantNotAppearingInVideos = () => {
+  const handleParticipantNotAppearingInVideos = () => {
+    // FIXME: Extend this logic to push all annotations categories
+    // associated to the selected participant as empty, not just the current one.
     setActiveAnnotationDataArray({
       buffer: Array.from({ length: 1 }, () => 0),
       needs_upload: true,
     })
-    setIsMarkParticipantModalOpen(false)
   }
 
   //********************************************************************//
@@ -549,9 +571,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   }
 
   React.useEffect(() => {
-    if (isAnnotating) {
-      setShowingAnnotationTips(showAnnotationTipsOnStart)
-    }
+    setShowingAnnotationTips(isAnnotating && showAnnotationTipsOnStart)
   }, [isAnnotating])
 
   // ********************************************************************//
@@ -566,7 +586,6 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   return (
     <form>
       <ModalParticipantSelectionGallery
-        /* This is the modal for selecting the participant */
         open={showingGallery}
         onCancel={() => {
           setShowingGallery(false)
@@ -576,45 +595,6 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
           setShowingGallery(false)
         }}
       />
-      <Modal
-        title={
-          "Set " +
-          annotationsDataMirror[selectedAnnotationIndex].participant +
-          " as not appearing in the video(s)"
-        }
-        open={isMarkParticipantModalOpen}
-        onOk={handleClickOnParticipantNotAppearingInVideos}
-        onCancel={() => {
-          setIsMarkParticipantModalOpen(false)
-        }}
-        footer={[
-          <Button
-            key="back"
-            onClick={() => {
-              setIsMarkParticipantModalOpen(false)
-            }}
-          >
-            Cancel
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            onClick={handleClickOnParticipantNotAppearingInVideos}
-          >
-            Yes! the participant is not found
-          </Button>,
-        ]}
-      >
-        <ul>
-          <li>
-            I checked all camera views and I can't find this participant .
-          </li>
-          <li>
-            I am mostly certain this participant does not enter any view in the
-            middle of playback.
-          </li>
-        </ul>
-      </Modal>
       <div className={styles["action-annotation-task"]}>
         <div
           className={`${styles["sidebar"]} ${styles["left-sidebar"]} ${
@@ -646,10 +626,9 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
             }}
             participant_options={participant_options}
             annotation_options={annotation_options}
+            video_tutorial_url={props.spec.videoTutorialUrl}
             // Callbacks
-            onCantFindParticipantClick={() => {
-              setIsMarkParticipantModalOpen(true)
-            }}
+            onCantFindParticipant={handleParticipantNotAppearingInVideos}
             onParticipantSelected={(participant: string) => {
               selectFirstAvailableAnnotationIndexBasedOnParticipantName(
                 participant

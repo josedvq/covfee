@@ -1,6 +1,6 @@
 import type { MenuProps } from "antd"
-import { Button, Dropdown, MenuInfo, Space } from "antd"
-import React from "react"
+import { Button, Dropdown, MenuInfo, Modal, Space } from "antd"
+import React, { useEffect, useState } from "react"
 import { SelectedParticipantImage } from "./conflab_participant_selection"
 
 import {
@@ -35,8 +35,9 @@ type Props = {
   selected_annotation: AnnotationOption
   participant_options: ParticipantOption[]
   annotation_options: AnnotationOption[]
+  video_tutorial_url?: string
 
-  onCantFindParticipantClick: () => void
+  onCantFindParticipant: () => void
   onParticipantSelected: (participant: string) => void
   onAnnotationSelected: (annotation_index: number) => void
   onStartStopAnnotationClick: () => void
@@ -44,6 +45,12 @@ type Props = {
 }
 
 const InstructionsSidebar: React.FC<Props> = (props) => {
+  // Modal dialogs control
+  const [checkingWhetherToRedoAnnotation, setCheckingWhetherToRedoAnnotation] =
+    useState(false)
+  const [isMarkParticipantModalOpen, setIsMarkParticipantModalOpen] =
+    useState(false)
+
   // We prepare the participants options in the menu
   const participants_menu_items: MenuProps["items"] = [
     {
@@ -78,13 +85,88 @@ const InstructionsSidebar: React.FC<Props> = (props) => {
     },
   ]
 
+  const handleStartRedoAnnotationClick = () => {
+    if (props.selected_annotation.completed) {
+      setCheckingWhetherToRedoAnnotation(true)
+    } else {
+      props.onStartStopAnnotationClick()
+    }
+  }
+
+  useEffect(() => {
+    if (checkingWhetherToRedoAnnotation) {
+      Modal.confirm({
+        title: "Are you sure you want to redo this annotation?",
+        okText: "Yes",
+        onOk: () => {
+          setCheckingWhetherToRedoAnnotation(false)
+          props.onStartStopAnnotationClick()
+        },
+        onCancel: () => {
+          setCheckingWhetherToRedoAnnotation(false)
+        },
+      })
+    }
+  }, [checkingWhetherToRedoAnnotation])
+
   const multiple_annotations_for_selected_participant =
     props.annotation_options.length > 1
 
   return (
     <>
+      <Modal
+        title={
+          "Set " +
+          props.selected_participant.name +
+          " as not appearing in the video(s)"
+        }
+        open={isMarkParticipantModalOpen}
+        onOk={props.onCantFindParticipant}
+        onCancel={() => {
+          setIsMarkParticipantModalOpen(false)
+        }}
+        footer={[
+          <Button
+            key="back"
+            onClick={() => {
+              setIsMarkParticipantModalOpen(false)
+            }}
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            onClick={() => {
+              props.onCantFindParticipant()
+              setIsMarkParticipantModalOpen(false)
+            }}
+          >
+            Yes! the participant is not found
+          </Button>,
+        ]}
+      >
+        <ul>
+          <li>
+            I checked all camera views and I can't find this participant .
+          </li>
+          <li>
+            I am mostly certain this participant does not enter any view in the
+            middle of playback.
+          </li>
+        </ul>
+      </Modal>
       <div className={styles["sidebar-block"]}>
         <h1>Instructions</h1>
+        {props.video_tutorial_url && (
+          <Button
+            type="primary"
+            className={styles["gallery-button"]}
+            onClick={() => window.open(props.video_tutorial_url, "_blank")}
+          >
+            Watch Tutorial Video (audio required)
+          </Button>
+        )}
         <h2>
           <strong>Step 1: </strong>
           {"Select the camera view where the person below is "}
@@ -92,7 +174,7 @@ const InstructionsSidebar: React.FC<Props> = (props) => {
           {" using the "} {CHANGE_VIEW_PREV_KEY}
           {" or "}
           {CHANGE_VIEW_NEXT_KEY}
-          {" keys."}
+          {" keys. You can play the video to help you find the person. "}
         </h2>
         <SelectedParticipantImage
           participant={props.selected_participant.name}
@@ -102,14 +184,16 @@ const InstructionsSidebar: React.FC<Props> = (props) => {
           <strong>Step 2: </strong>
           If you have found the participant and selected the best camera view,
           proceed to Step 3. If you
-          <strong> can't find the person at all</strong>, click the button below
-          which will open a pop-up asking to confirm that the person can't be
-          found. If you confirm, proceed to Step{" "}
-          {multiple_annotations_for_selected_participant ? "5" : "4"}:
+          <strong> can't find the participant at all</strong>, click the button
+          below. A pop-up will appear asking you to confirm that the participant
+          can't be found. If you confirm this, proceed to Step
+          {multiple_annotations_for_selected_participant ? " 5" : " 4"}.
         </h2>
         <Button
           type="primary"
-          onClick={props.onCantFindParticipantClick}
+          onClick={() => {
+            setIsMarkParticipantModalOpen(true)
+          }}
           className={styles["gallery-button"]}
           icon={<ExclamationCircleOutlined />}
         >
@@ -153,8 +237,8 @@ const InstructionsSidebar: React.FC<Props> = (props) => {
             Step {multiple_annotations_for_selected_participant ? "4" : "3"}:{" "}
           </strong>
           Start the annotation process. <strong>Get ready! </strong>
-          The video will start playing. During playback, press and{" "}
-          <strong> hold </strong> the{" "}
+          The video will start playing from the beginning. During playback,
+          press and <strong> hold </strong> the{" "}
           <strong>{`${REGISTER_ACTION_ANNOTATION_KEY}`}</strong> key to indicate
           the person is <strong>{props.selected_annotation.category}</strong>.
           Release while they are not ({TIP_EMOJI}
@@ -168,7 +252,7 @@ const InstructionsSidebar: React.FC<Props> = (props) => {
         <Button
           type="primary"
           className={styles["gallery-button"]}
-          onClick={props.onStartStopAnnotationClick}
+          onClick={handleStartRedoAnnotationClick}
         >
           {props.selected_annotation.completed
             ? "Redo Annotation"
@@ -182,7 +266,13 @@ const InstructionsSidebar: React.FC<Props> = (props) => {
           <CheckSquareTwoTone />
           ). Then, go to Step 1
         </h2>
-
+        <Button
+          type="primary"
+          className={styles["gallery-button"]}
+          onClick={props.onOpenParticipantSelectionClick}
+        >
+          Select Participant on Gallery
+        </Button>
         <Dropdown
           menu={{
             items: participants_menu_items,
@@ -212,13 +302,6 @@ const InstructionsSidebar: React.FC<Props> = (props) => {
             />
           </Button>
         </Dropdown>
-        <Button
-          type="primary"
-          className={styles["gallery-button"]}
-          onClick={props.onOpenParticipantSelectionClick}
-        >
-          Select Participant on Gallery
-        </Button>
       </div>
     </>
   )

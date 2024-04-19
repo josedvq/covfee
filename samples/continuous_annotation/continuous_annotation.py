@@ -33,6 +33,7 @@ for i in range(3):
         }],
         prolificCompletionCode="D1F2DGU1",
         userCanAdd=False,
+        videoTutorialUrl="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
     )
 
     j1 = hit.add_journey(nodes=[my_task_1])

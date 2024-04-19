@@ -39,9 +39,10 @@ class ContinuousAnnotationTaskSpec(CovfeeTask):
     # This applies both to multiple clients in the same journey and across journeys.
     # Internally covfee uses socketio to synchronize task state.
     useSharedState: bool
+    videoTutorialUrl: str
     # If true, all journeys must click ready to start the task
     wait_for_ready: bool
-    def __init__(self, annotations, media, name, userCanAdd, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, prolificCompletionCode = None, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, wait_for_ready = None):
+    def __init__(self, annotations, media, name, userCanAdd, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, prolificCompletionCode = None, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, videoTutorialUrl = None, wait_for_ready = None):
         """
         ### Parameters
         0. annotations : List[Any]
@@ -80,7 +81,8 @@ If timer reaches zero, the task is set to finished state.
             - If true, the task state will be synced between clients.
 This applies both to multiple clients in the same journey and across journeys.
 Internally covfee uses socketio to synchronize task state.
-        18. wait_for_ready : bool
+        18. videoTutorialUrl : str
+        19. wait_for_ready : bool
             - If true, all journeys must click ready to start the task
         """
 
@@ -104,6 +106,7 @@ Internally covfee uses socketio to synchronize task state.
         self.timer_pausable = timer_pausable
         self.timer_pause = timer_pause
         self.useSharedState = useSharedState
+        self.videoTutorialUrl = videoTutorialUrl
         self.wait_for_ready = wait_for_ready
 
 
