@@ -1,15 +1,13 @@
-import * as React from "react"
-import styled from "styled-components"
-import { generatePath } from "react-router"
 import { ArrowRightOutlined, PlusOutlined } from "@ant-design/icons"
-import { Row, Col, Typography, Menu, Button, Modal, Progress } from "antd"
+import { Button, Menu, Modal, Progress, Row } from "antd"
 import "antd/dist/reset.css"
+import * as React from "react"
+import { generatePath } from "react-router"
+import styled from "styled-components"
 
-import { myerror } from "../utils"
-import { MarkdownLoader } from "../tasks/utils/markdown_loader"
 import { CovfeeMenuItem } from "../gui"
-import { Sidebar } from "./sidebar"
-
+import { MarkdownLoader } from "../tasks/utils/markdown_loader"
+import { myerror } from "../utils"
 import {
   JourneyContext,
   JourneyContextType,
@@ -17,17 +15,18 @@ import {
   defaultTimerState,
 } from "./journey_context"
 import { NodeLoader } from "./node_loader"
+import { Sidebar } from "./sidebar"
 
-import "./journey.scss"
-import { FullJourney, fetchJourney, useJourney } from "../models/Journey"
-import { useState, useContext } from "react"
-import { AllPropsRequired } from "../types/utils"
-import { appContext } from "../app_context"
+import { useContext, useState } from "react"
 import { useParams } from "react-router-dom"
-import { ChatPopup } from "../chat/chat"
+import { appContext } from "../app_context"
 import { AppProvider } from "../app_provider"
+import { ChatPopup } from "../chat/chat"
 import { ChatProvider, chatContext } from "../chat_context"
+import { FullJourney, fetchJourney, useJourney } from "../models/Journey"
 import { Chat } from "../types/chat"
+import { AllPropsRequired } from "../types/utils"
+import "./journey.scss"
 import { Timer } from "./timer"
 
 type Props = {
@@ -40,6 +39,11 @@ type Props = {
    * Tells the annotation component to keep urls up to date
    */
   routingEnabled?: boolean
+
+  /**
+   * Show the sidebar with the journey nodes
+   */
+  showSideBar?: boolean
 
   // ASYNC OPERATIONS
   // submitTaskResponse: (arg0: TaskResponseType, arg1: any) => Promise<TaskResponseType>
@@ -55,6 +59,7 @@ export const _JourneyPage: React.FC<Props> = (props) => {
     () => ({
       routingEnabled: true,
       previewMode: false,
+      showSideBar: false,
       onSubmit: () => null,
       ...props,
     }),
@@ -245,29 +250,34 @@ export const _JourneyPage: React.FC<Props> = (props) => {
           </Menu.Item>
         )}
       </Menu>
-      <SidebarContainer height={window.innerHeight}>
-        <Sidebar
-          nodes={journey.nodes}
-          currNode={currNodeIndex}
-          onChangeActiveTask={changeActiveNode}
-        >
-          {journey.submitted && (
-            <Button
-              type="primary"
-              style={{
-                width: "100%",
-                backgroundColor: "#5b8c00",
-                borderColor: "#5b8c00",
-              }}
-              onClick={showCompletionInfo}
-            >
-              Show completion code
-            </Button>
-          )}
-        </Sidebar>
-      </SidebarContainer>
+      {args.showSideBar && (
+        <SidebarContainer height={window.innerHeight}>
+          <Sidebar
+            nodes={journey.nodes}
+            currNode={currNodeIndex}
+            onChangeActiveTask={changeActiveNode}
+          >
+            {journey.submitted && (
+              <Button
+                type="primary"
+                style={{
+                  width: "100%",
+                  backgroundColor: "#5b8c00",
+                  borderColor: "#5b8c00",
+                }}
+                onClick={showCompletionInfo}
+              >
+                Show completion code
+              </Button>
+            )}
+          </Sidebar>
+        </SidebarContainer>
+      )}
 
-      <ContentContainer height={window.innerHeight}>
+      <ContentContainer
+        showSideBar={args.showSideBar}
+        height={window.innerHeight}
+      >
         {hitExtra && (
           <></>
           // <Collapsible open={extraOpen}>
@@ -319,14 +329,19 @@ const SidebarContainer = styled.div<any>`
   overflow: auto;
 `
 
-const ContentContainer = styled.div<any>`
+interface ContentContainerProps {
+  showSideBar: boolean
+  height?: number
+}
+
+const ContentContainer = styled.div<ContentContainerProps>`
   position: fixed;
   top: 46px;
   right: 0;
   display: inline-block;
   vertical-align: top;
-  height: calc(100vh - 46px);
-  width: calc(100% - 25%);
+  height: ${(props) => (props.height ? props.height : "calc(100vh - 46px)")};
+  width: ${(props) => (props.showSideBar ? "calc(100% - 25%)" : "100%")};
   overflow: auto;
 `
 
