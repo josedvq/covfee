@@ -1,5 +1,4 @@
-import { ExportOutlined } from "@ant-design/icons"
-import { Progress } from "antd"
+import { Button, Progress } from "antd"
 import React from "react"
 
 import styles from "./continous_annotation.module.css"
@@ -8,7 +7,8 @@ type Props = {
   finished: boolean
   percent: number
   completionCode: string
-  renderSubmitButton: (extraProps?: any) => React.ReactNode
+  submittButtonCallback: (extraProps?: any) => void
+  submitButtonDisabled: boolean
 }
 
 const TaskProgress: React.FC<Props> = (props) => {
@@ -31,11 +31,14 @@ const TaskProgress: React.FC<Props> = (props) => {
           <p className={styles["action-task-progress-code"]}>
             {props.completionCode}
           </p>
-          {props.renderSubmitButton({
-            disabled: false,
-            className: styles["action-task-progress-completion-button"],
-            icon: <ExportOutlined />,
-          })}
+          <Button
+            onClick={props.submittButtonCallback}
+            type="primary"
+            className={styles["gallery-button"]}
+            disabled={props.submitButtonDisabled}
+          >
+            Submit
+          </Button>
         </>
       )}
     </div>

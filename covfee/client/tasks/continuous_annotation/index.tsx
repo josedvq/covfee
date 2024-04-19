@@ -54,15 +54,15 @@ type ActionAnnotationDataArray = {
 }
 
 const ContinuousAnnotationTask: React.FC<Props> = (props) => {
-  // here we set the defaults for the task props
-  // we could use useMemo to avoid recomputing on every render
-  const args: AllPropsRequired<Props> = {
-    ...props,
-    spec: {
-      userCanAdd: true,
-      ...props.spec,
-    },
-  }
+  const args: AllPropsRequired<Props> = React.useMemo(() => {
+    return {
+      ...props,
+      spec: {
+        userCanAdd: true,
+        ...props.spec,
+      },
+    }
+  }, [props])
 
   // this is a custom dispatch function provided by Covfee
   const dispatch = useDispatch()
@@ -71,6 +71,12 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   //*************************************************************//
   //------------------ States definition -------------------- //
   //*************************************************************//
+  const [submitted, setSubmitted] = useState(args.response.submitted)
+
+  React.useEffect(() => {
+    setSubmitted(args.response.submitted)
+  }, [args.response.submitted])
+
   const [annotationsDataMirror, setAnnotationsDataMirror] =
     React.useState<AnnotationData[]>()
   // we read the state using useSelector
@@ -619,7 +625,11 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
             finished={isEntireTaskCompleted}
             percent={taskCompletionPercentage}
             completionCode={props.spec.prolificCompletionCode}
-            renderSubmitButton={props.renderSubmitButton}
+            submittButtonCallback={(response: any) => {
+              props.onSubmit(response)
+              setSubmitted(true)
+            }}
+            submitButtonDisabled={submitted}
           />
 
           <InstructionsSidebar

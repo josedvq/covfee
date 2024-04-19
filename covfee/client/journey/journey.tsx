@@ -51,7 +51,7 @@ type Props = {
   /**
    * Called when the Hit submit button is clicked
    */
-  onSubmit?: () => Promise<any>
+  onSubmit?: () => Promise<any> | null
 }
 
 export const _JourneyPage: React.FC<Props> = (props) => {
@@ -150,25 +150,30 @@ export const _JourneyPage: React.FC<Props> = (props) => {
   }, [journey])
 
   const handleSubmit = React.useCallback(() => {
-    args
-      .onSubmit()
-      .then(() => {
-        showCompletionInfo()
-      })
-      .catch((err) => {
-        if (err.message.includes("required tasks")) {
-          myerror(
-            err.message +
-              " Please make sure all tasks are marked green before submitting.",
-            err
-          )
-        } else {
-          myerror(
-            "Error submitting HIT. Please try again or contact the organizers.",
-            err
-          )
-        }
-      })
+    let callback = args.onSubmit()
+
+    if (callback instanceof Promise) {
+      callback
+        .then(() => {
+          showCompletionInfo()
+        })
+        .catch((err) => {
+          if (err.message.includes("required tasks")) {
+            myerror(
+              err.message +
+                " Please make sure all tasks are marked green before submitting.",
+              err
+            )
+          } else {
+            myerror(
+              "Error submitting HIT. Please try again or contact the organizers.",
+              err
+            )
+          }
+        })
+    } else {
+      showCompletionInfo()
+    }
   }, [args, showCompletionInfo])
 
   const gotoNextNode = React.useCallback(() => {
