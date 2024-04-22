@@ -117,6 +117,12 @@ export const _JourneyPage: React.FC<Props> = (props) => {
   }, [])
 
   const showCompletionInfo = React.useCallback(() => {
+    // FIXME: this implementation ties strongly the submission logic
+    //        with immediately showing this pop up to redirect to prolific.
+    //        Instead, for the continuous annotation task, we wanted to
+    //        allow the user to confirm, to submit, and then decide when
+    //        to redirect, for better user experience.
+    return
     const config = journey.completionInfo
     return Modal.success({
       title: "HIT submitted!",

@@ -31,7 +31,7 @@ import {
 } from "./instructions_sidebar"
 import { State, actions, slice } from "./slice"
 import type { AnnotationDataSpec, ContinuousAnnotationTaskSpec } from "./spec"
-import TaskProgress from "./task_progress"
+import TaskProgress, { TaskAlreadyCompleted } from "./task_progress"
 
 interface Props extends CovfeeTaskProps<ContinuousAnnotationTaskSpec> {}
 
@@ -583,6 +583,15 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     return <h1>Loading...</h1>
   }
 
+  // Redirection URL once the annotator has completed the entire annotation task.
+  const redirectUrl =
+    "https://app.prolific.com/submissions/complete?cc=" +
+    props.spec.prolificCompletionCode
+
+  if (args.response.submitted) {
+    return <TaskAlreadyCompleted redirectUrl={redirectUrl} />
+  }
+
   return (
     <form>
       <ModalParticipantSelectionGallery
@@ -605,8 +614,9 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
             finished={isEntireTaskCompleted}
             percent={taskCompletionPercentage}
             completionCode={props.spec.prolificCompletionCode}
-            submittButtonCallback={(response: any) => {
-              props.onSubmit(response)
+            redirectUrl={redirectUrl}
+            onSubmit={() => {
+              props.onSubmit({})
               setSubmitted(true)
             }}
             submitButtonDisabled={submitted}

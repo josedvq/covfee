@@ -142,7 +142,7 @@ const InstructionsSidebar: React.FC<Props> = (props) => {
               setIsMarkParticipantModalOpen(false)
             }}
           >
-            Yes! the participant is not found
+            I'm sure the participant is not found
           </Button>,
         ]}
       >
@@ -151,8 +151,8 @@ const InstructionsSidebar: React.FC<Props> = (props) => {
             I checked all camera views and I can't find this participant .
           </li>
           <li>
-            I am mostly certain this participant does not enter any view in the
-            middle of playback.
+            I am certain this participant does not enter any view in the middle
+            of playback.
           </li>
         </ul>
       </Modal>
