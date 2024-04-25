@@ -1,13 +1,12 @@
-import React, { useContext } from "react"
-import { Chat, ChatMessage, IoChatMessage } from "../types/chat"
-import { AllPropsRequired } from "../types/utils"
-import { styled } from "styled-components"
 import { SendOutlined, WechatOutlined } from "@ant-design/icons"
-import classNames from "classnames"
 import { Empty } from "antd"
-import { appContext } from "../app_context"
-import { getHumanFriendlyDateString } from "../utils"
+import classNames from "classnames"
+import React, { useContext } from "react"
+import { styled } from "styled-components"
 import { chatContext } from "../chat_context"
+import { Chat } from "../types/chat"
+import { AllPropsRequired } from "../types/utils"
+import { getHumanFriendlyDateString } from "../utils"
 
 const getChatName = (chat: Chat) => {
   if (chat.journey_id) {
@@ -103,6 +102,8 @@ const ChatButton = styled.button<{ $chatOpen: boolean; $numUnread: number }>`
   bottom: 0;
   width: 50px;
   height: 50px;
+  /* FIXME #MINGLE: Force hiding the chat for the mingle experiments using the continuous annotation task */
+  display: none;
 
   font-size: 2.2em;
   background-color: ${(props) => (props.$chatOpen ? "gray" : "#ddd")};

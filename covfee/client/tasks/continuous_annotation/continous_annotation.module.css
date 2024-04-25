@@ -99,7 +99,7 @@
 }
 
 .main-content-video-and-guide {
-  padding-top: 22px;
+  padding-top: 2px;
   flex-grow: 1;
   max-width: 85vw;
   max-height: "50px";
@@ -194,6 +194,10 @@
   height: 20vh;
   padding-left: 3%;
   padding-right: 3%;
+}
+
+.instruction-text-during-annotation {
+  font-size: 1rem;
 }
 
 .action-annotation-flashscreen h1 {

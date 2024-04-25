@@ -238,17 +238,28 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   // We get a reference to the VideoJS player and assign event
   // listeners to it.
   const videoPlayerRef = useRef<VideoJsPlayer>(null)
+  // We keep track of the loadstart event to make React respond to it
+  // based on useEffect calls, because the execution of the loadstart
+  // callback is different between chrome and firefox. In Chrome is
+  // executed after the useEffect calls (when all state is fully updated),
+  // but Firefox executes it before the useEffect calls leading to bugs.
+  const [videoLoadStartEvent, setVideoLoadStartEvent] = useState(null)
+
   const handleVideoPlayerReady = (player: VideoJsPlayer) => {
     videoPlayerRef.current = player
     videoPlayerRef.current.volume(0)
   }
   useEffect(() => {
     if (videoPlayerRef.current) {
+      const handleVideoLoadStart = (event: any) => {
+        // enqueues a useEffect call
+        setVideoLoadStartEvent(event)
+      }
       videoPlayerRef.current.on("ended", handleVideoEnd)
-      videoPlayerRef.current.on("loadstart", handleVideoSourceChange)
+      videoPlayerRef.current.on("loadstart", handleVideoLoadStart)
       return () => {
         videoPlayerRef.current.off("ended", handleVideoEnd)
-        videoPlayerRef.current.off("loadstart", handleVideoSourceChange)
+        videoPlayerRef.current.off("loadstart", handleVideoLoadStart)
       }
     }
   })
@@ -304,7 +315,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
 
   // ...and then we ensure that the video player is updated with the playback status
   // when the new video source becomes active.
-  const handleVideoSourceChange = (newSrc: string) => {
+  useEffect(() => {
     if (videoPlayerRef.current) {
       videoPlayerRef.current.currentTime(
         playbackStatusOnCamViewChangeEvent.currentTime
@@ -322,7 +333,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
         }
       }
     }
-  }
+  }, [videoLoadStartEvent])
 
   const numberOfVideoFrames = () => {
     if (videoPlayerRef.current) {
@@ -446,7 +457,14 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       if (!validAnnotationsDataAndSelection) {
         return
       }
+      // Scroll to the top of the page,
+      // on 1080p resolution it doesn't do anything, as the page is as big as the screen,
+      // on 720p or lower, the page is bigger than the screen, so it scrolls to the top.
+      const parentElement = document.getElementById("JourneyContentContainer")
+      parentElement.scrollTo({ top: 0, left: 0, behavior: "instant" })
+
       startVideoPlayback(0.0)
+
       setActiveAnnotationDataArray({
         buffer: Array.from({ length: numberOfVideoFrames() }, () => 0),
         needs_upload: false,
@@ -684,7 +702,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
                 <Checkbox
                   style={{
                     color: "white",
-                    fontSize: "18px",
+                    fontSize: "1rem",
                     position: "absolute",
                     bottom: 0,
                     right: 0,

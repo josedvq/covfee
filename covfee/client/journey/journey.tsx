@@ -117,7 +117,7 @@ export const _JourneyPage: React.FC<Props> = (props) => {
   }, [])
 
   const showCompletionInfo = React.useCallback(() => {
-    // FIXME: this implementation ties strongly the submission logic
+    // FIXME: #MINGLE this implementation ties strongly the submission logic
     //        with immediately showing this pop up to redirect to prolific.
     //        Instead, for the continuous annotation task, we wanted to
     //        allow the user to confirm, to submit, and then decide when
@@ -242,7 +242,14 @@ export const _JourneyPage: React.FC<Props> = (props) => {
         onClick={handleMenuClick}
         mode="horizontal"
         theme="dark"
-        style={{ position: "sticky", top: 0, width: "100%", zIndex: 1000 }}
+        style={{
+          position: "sticky",
+          top: 0,
+          width: "100%",
+          zIndex: 1000,
+          /* FIXME #MINGLE: Force hiding for the mingle experiments using the continuous annotation task */
+          display: "none",
+        }}
       >
         <Menu.Item key="logo" disabled>
           <CovfeeMenuItem />
@@ -286,6 +293,7 @@ export const _JourneyPage: React.FC<Props> = (props) => {
       )}
 
       <ContentContainer
+        id="JourneyContentContainer"
         showSideBar={args.showSideBar}
         /*height={window.innerHeight}*/
       >
@@ -334,8 +342,8 @@ const SidebarContainer = styled.div<any>`
   position: sticky;
   display: inline-block;
   vertical-align: top;
-  top: 46px;
-  height: calc(100vh - 46px);
+  // top: 46px; // FIXME #MINGLE: Force hiding for the mingle experiments using the continuous annotation task
+  height: calc(100vh);
   width: 25%;
   overflow: auto;
 `
@@ -347,11 +355,14 @@ interface ContentContainerProps {
 
 const ContentContainer = styled.div<ContentContainerProps>`
   position: fixed;
-  top: 46px;
+  // top: 46px; // FIXME #MINGLE: Force hiding for the mingle experiments using the continuous annotation task
   right: 0;
   display: inline-block;
   vertical-align: top;
-  height: ${(props) => (props.height ? props.height : "calc(100vh - 46px)")};
+  height: ${(props) =>
+    props.height
+      ? props.height
+      : "calc(100vh)"}; // FIXME #MINGLE: Force hiding for the mingle experiments using the continuous annotation task
   width: ${(props) => (props.showSideBar ? "calc(100% - 25%)" : "100%")};
   overflow: auto;
 `
