@@ -21,5 +21,10 @@ export interface ContinuousAnnotationTaskSpec extends BaseTaskSpec {
   annotations: AnnotationDataSpec[]
   prolificCompletionCode?: string
   userCanAdd: boolean
+  /**
+   * When specified: True, means audio on is mandatory, False means audio off (muted) is mandatory.
+   * @default null
+   */
+  audioRequirement?: boolean
   videoTutorialUrl?: string
 }

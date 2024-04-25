@@ -32,6 +32,7 @@ for i in range(3):
             "src": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
         }],
         prolificCompletionCode="D1F2DGU1",
+        audioRequirement=False,
         userCanAdd=False,
         videoTutorialUrl="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
     )

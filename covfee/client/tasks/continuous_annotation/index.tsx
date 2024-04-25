@@ -238,6 +238,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   // We get a reference to the VideoJS player and assign event
   // listeners to it.
   const videoPlayerRef = useRef<VideoJsPlayer>(null)
+  const [, setIsVideoPlayerReady] = useState(false)
   // We keep track of the loadstart event to make React respond to it
   // based on useEffect calls, because the execution of the loadstart
   // callback is different between chrome and firefox. In Chrome is
@@ -247,22 +248,33 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
 
   const handleVideoPlayerReady = (player: VideoJsPlayer) => {
     videoPlayerRef.current = player
-    videoPlayerRef.current.volume(0)
+    // We associate a dummy state to trigger a render when the video player is ready
+    // and thus execution of the code in the useEffect hook connecting event listeners
+    // below.
+    setIsVideoPlayerReady(true)
+    forceVideoAudioRequirement()
   }
+
   useEffect(() => {
     if (videoPlayerRef.current) {
       const handleVideoLoadStart = (event: any) => {
         // enqueues a useEffect call
         setVideoLoadStartEvent(event)
+        forceVideoAudioRequirement()
+      }
+      const handleVolumeChange = () => {
+        forceVideoAudioRequirement()
       }
       videoPlayerRef.current.on("ended", handleVideoEnd)
       videoPlayerRef.current.on("loadstart", handleVideoLoadStart)
+      videoPlayerRef.current.on("volumechange", handleVolumeChange)
       return () => {
         videoPlayerRef.current.off("ended", handleVideoEnd)
         videoPlayerRef.current.off("loadstart", handleVideoLoadStart)
+        videoPlayerRef.current.off("volumechange", handleVolumeChange)
       }
     }
-  })
+  }) // No dependencies so all functions are updated with all latest state
 
   useEffect(() => {
     if (videoPlayerRef.current) {
@@ -334,6 +346,27 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       }
     }
   }, [videoLoadStartEvent])
+
+  const forceVideoAudioRequirement = () => {
+    if (!videoPlayerRef.current || props.spec.audioRequirement === null) {
+      return
+    }
+
+    if (props.spec.audioRequirement) {
+      if (
+        videoPlayerRef.current.volume() !== 1 ||
+        videoPlayerRef.current.muted()
+      ) {
+        videoPlayerRef.current.volume(1)
+        videoPlayerRef.current.muted(false)
+      }
+    } else {
+      if (videoPlayerRef.current.volume() !== 0) {
+        videoPlayerRef.current.volume(0)
+        videoPlayerRef.current.muted(true)
+      }
+    }
+  }
 
   const numberOfVideoFrames = () => {
     if (videoPlayerRef.current) {
