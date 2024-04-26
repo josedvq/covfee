@@ -4,7 +4,13 @@ from enum import Enum
 from flask import jsonify
 from flask.json.provider import JSONProvider
 import requests
-from typing import List, Optional
+from typing import List
+
+
+class ProlificAPIRequestError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
 
 
 def jsonify_or_404(res, **kwargs):
@@ -36,7 +42,7 @@ class CovfeeJSONProvider(JSONProvider):
 
 def fetch_prolific_ids_for_returned_participants(
     study_id: str, token: str
-) -> Optional[List[str]]:
+) -> List[str]:
     """
     Use the Prolific Academic API to get the IDs of participants who have returned the study
     and thus they should be ignored.
@@ -55,11 +61,13 @@ def fetch_prolific_ids_for_returned_participants(
         )
         response.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        print(f"HTTP error occurred while requesting prolific data: {err}")
-        return None
+        raise ProlificAPIRequestError(
+            f"HTTP error occurred while requesting prolific data: {err}"
+        )
     except requests.exceptions.RequestException as err:
-        print(f"Request error occurred while requesting prolific data: {err}")
-        return None
+        raise ProlificAPIRequestError(
+            f"Request error occurred while requesting prolific data: {err}"
+        )
     else:
         return [
             participant["id"]

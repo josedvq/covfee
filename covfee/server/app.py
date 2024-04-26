@@ -16,6 +16,7 @@ from covfee.server import tasks
 from covfee.server.tasks.base import BaseCovfeeTask
 from covfee.server.rest_api.utils import (
     fetch_prolific_ids_for_returned_participants,
+    ProlificAPIRequestError,
 )
 
 from .scheduler.apscheduler import scheduler
@@ -153,16 +154,17 @@ def prolific():
     ):
         abort(404)
 
-    prolific_ids_for_returned_participants = (
-        fetch_prolific_ids_for_returned_participants(
-            prolific_study_id, app.config["PROLIFIC_API_TOKEN"]
+    try:
+        prolific_ids_for_returned_participants = (
+            fetch_prolific_ids_for_returned_participants(
+                prolific_study_id, app.config["PROLIFIC_API_TOKEN"]
+            )
         )
-    )
-
-    if prolific_ids_for_returned_participants is None:
+    except ProlificAPIRequestError as err:
         # This error would be raised whenever:
         # - Prolific academic API is down, or timedout
         # - Incorrect study_id or token
+        print(f"ProlificAPIRequestError: {err}")
         return render_template(
             "annotator_error.html",
             message="Failed to communicate with prolific academic. Please try again later!",
