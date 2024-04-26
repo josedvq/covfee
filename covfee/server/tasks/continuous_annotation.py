@@ -109,7 +109,7 @@ class Annotation(Base):
 
     # link to covfee node / task
     task_id: Mapped[int] = mapped_column(ForeignKey("nodeinstances.id"))
-    task: Mapped[TaskInstance] = relationship()
+    task: Mapped[TaskInstance] = relationship("TaskInstance", backref="annotations")
 
     category: Mapped[str]
     participant: Mapped[str]
@@ -120,3 +120,6 @@ class Annotation(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(
         default=datetime.datetime.now, onupdate=datetime.datetime.now
     )
+
+    def reset_data(self) -> None:
+        self.data_json = None

@@ -214,6 +214,10 @@ class NodeInstance(Base):
         except RuntimeError:
             pass
 
+    def reset_annotated_data(self) -> None:
+        # To be overriden by the respective TaskInstance
+        return
+
     def eval_expression(self, expression):
         var_values = {
             "N": len(self.curr_journeys),

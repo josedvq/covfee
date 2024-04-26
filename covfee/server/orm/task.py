@@ -82,6 +82,10 @@ class TaskInstance(NodeInstance):
             return NotImplemented
         return hash(self) == hash(other)
 
+    def reset_annotated_data(self):
+        for annotation in self.annotations:
+            annotation.reset_data()
+
     def get_task_object(self):
         task_class = getattr(tasks, self.spec.spec["type"], BaseCovfeeTask)
         task_object = task_class(task=self, session=object_session(self))

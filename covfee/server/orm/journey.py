@@ -189,6 +189,10 @@ class JourneyInstance(Base):
         self.config = {}
         self.chat = Chat(self)
 
+    def reset_nodes_annotated_data(self):
+        for node in self.nodes:
+            node.reset_annotated_data()
+
     def get_url(self):
         return f'{app.config["APP_URL"]}/journeys/{self.id.hex():s}'
 

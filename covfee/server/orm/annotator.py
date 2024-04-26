@@ -15,7 +15,9 @@ class Annotator(Base):
     # A unique identifier for the annotator row
     id: Mapped[int] = mapped_column(primary_key=True)
     # A user id provided by the Prolific academic platform
-    prolific_id: Mapped[str] = mapped_column(unique=True)
+    prolific_id: Mapped[str] = mapped_column()
+    # A reference to the study id
+    prolific_study_id: Mapped[Optional[str]] = mapped_column()
     # A reference to the journey instance the annotator is working on
     journey_instance_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("journeyinstances.id")

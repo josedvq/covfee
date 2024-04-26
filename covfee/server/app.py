@@ -14,6 +14,9 @@ from sqlalchemy import select, not_
 from covfee.config import Config
 from covfee.server import tasks
 from covfee.server.tasks.base import BaseCovfeeTask
+from covfee.server.rest_api.utils import (
+    fetch_prolific_ids_for_returned_participants,
+)
 
 from .scheduler.apscheduler import scheduler
 from .orm.annotator import Annotator
@@ -150,10 +153,35 @@ def prolific():
     ):
         abort(404)
 
+    prolific_ids_for_returned_participants = (
+        fetch_prolific_ids_for_returned_participants(
+            prolific_study_id, app.config["PROLIFIC_API_TOKEN"]
+        )
+    )
+
+    if prolific_ids_for_returned_participants is None:
+        # This error would be raised whenever:
+        # - Prolific academic API is down, or timedout
+        # - Incorrect study_id or token
+        return render_template(
+            "annotator_error.html",
+            message="Failed to communicate with prolific academic. Please try again later!",
+            id=prolific_annotator_id,
+        )
+
+    if prolific_annotator_id in prolific_ids_for_returned_participants:
+        return render_template(
+            "annotator_error.html",
+            message="You have returned this task and it can no longer be accessed.",
+            id=prolific_annotator_id,
+        )
+
     # We check if an Annotator exists in the database with the given prolific_annotator_id
     session = app.session()
     annotator = session.execute(
-        select(Annotator).filter_by(prolific_id=prolific_annotator_id)
+        select(Annotator).filter_by(
+            prolific_id=prolific_annotator_id, prolific_study_id=prolific_study_id
+        )
     ).scalar_one_or_none()
 
     if annotator is not None:
@@ -178,7 +206,11 @@ def prolific():
         # We search for a journey_instance that does not have an annotator associated with it
         for journey_instance in non_finished_journey_instances_query.all():
             # We ignore finished or disabled journeys
-            if journey_instance.annotator is None:
+            if journey_instance.annotator is None or (
+                journey_instance.annotator.prolific_study_id == prolific_study_id
+                and journey_instance.annotator.prolific_id
+                in prolific_ids_for_returned_participants
+            ):
                 # TODO: In the next iteration of this logic we want to achieve two things
                 # 1) For a completed journey, we want to keep a record of the annotator id,
                 #    regardless of whether the annotator is assigned to another journey to work on
@@ -191,10 +223,16 @@ def prolific():
                 journey_instance_url = journey_instance.get_url()
 
                 # Then we register an Annotator row and associate it with the journey_instance
-                annotator = Annotator(prolific_id=prolific_annotator_id)
+                if journey_instance.annotator is not None:
+                    journey_instance.reset_nodes_annotated_data()
+
+                annotator = Annotator(
+                    prolific_id=prolific_annotator_id,
+                    prolific_study_id=prolific_study_id,
+                )
                 journey_instance.annotator = annotator
-                session.add(annotator)
                 session.commit()
+
                 break
 
         if journey_instance_url is None:
@@ -206,8 +244,10 @@ def prolific():
             )
 
     # Debugging URLs
-    # http://localhost:5000/prolific?PROLIFIC_PID=annotator1&STUDY_ID=test&SESSION_ID=1
-    # http://localhost:5000/prolific?PROLIFIC_PID=annotator2&STUDY_ID=test&SESSION_ID=1
+    # http://localhost:5000/prolific?PROLIFIC_PID=annotator1&STUDY_ID=66277a8f17e66747a8b4ed16&SESSION_ID=1
+    # http://localhost:5000/prolific?PROLIFIC_PID=annotator2&STUDY_ID=66277a8f17e66747a8b4ed16&SESSION_ID=1
+    # http://localhost:5000/prolific?PROLIFIC_PID=annotator3&STUDY_ID=66277a8f17e66747a8b4ed16&SESSION_ID=1
+    # http://localhost:5000/prolific?PROLIFIC_PID=66278fea4837dd6351dd936c&STUDY_ID=66277a8f17e66747a8b4ed16&SESSION_ID=1 # < Returned participant
 
     return redirect(journey_instance_url)
 
