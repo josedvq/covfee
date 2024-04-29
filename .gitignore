@@ -40,5 +40,5 @@ samples/conflab/media/*
 samples/memory/media/*
 samples/memory/media.zip
 
-# FIXME: ignore the deployment files that now live in the private gitlab repo
+# FIXME: #CONFLAB ignore the deployment files that now live in the private gitlab repo
 samples/continuous_annotation/*

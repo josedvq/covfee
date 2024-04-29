@@ -102,7 +102,7 @@ const ChatButton = styled.button<{ $chatOpen: boolean; $numUnread: number }>`
   bottom: 0;
   width: 50px;
   height: 50px;
-  /* FIXME #MINGLE: Force hiding the chat for the mingle experiments using the continuous annotation task */
+  /* FIXME #CONFLAB: Force hiding the chat for the mingle experiments using the continuous annotation task */
   display: none;
 
   font-size: 2.2em;
