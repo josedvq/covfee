@@ -6,12 +6,14 @@ import hmac
 import binascii
 import hashlib
 import datetime
+import secrets
 from typing import List, TYPE_CHECKING, Optional
 from hashlib import sha256
 from pprint import pformat
 
 from flask import current_app as app
-from sqlalchemy import ForeignKey, UniqueConstraint
+
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 # from ..db import Base
@@ -24,7 +26,6 @@ from .node import JourneyNode, NodeInstance, NodeSpec
 
 class HITSpec(Base):
     __tablename__ = "hitspecs"
-    __table_args__ = (UniqueConstraint("project_id", "name"),)
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
 
@@ -71,8 +72,6 @@ class HITSpec(Base):
     def instantiate(self, n=1):
         for _ in range(n):
             instance = HITInstance(
-                # (id, index)
-                id=sha256(f"{self.id}_{len(self.journeyspecs)}".encode()).digest(),
                 journeyspecs=self.journeyspecs,
             )
             self.instances.append(instance)
@@ -141,10 +140,12 @@ class HITInstance(Base):
         default=datetime.datetime.now, onupdate=datetime.datetime.now
     )
 
-    def __init__(self, id: bytes, journeyspecs: List[JourneySpec] = []):
+    instance_counter = 0
+
+    def __init__(self, journeyspecs: List[JourneySpec] = []):
         super().init()
-        self.id = id
-        self.preview_id = sha256((id + "preview".encode())).digest()
+        self.id = HITInstance.generate_new_id()
+        self.preview_id = sha256((self.id + "preview".encode())).digest()
         self.submitted = False
 
         # instantiate every node only once
@@ -173,6 +174,19 @@ class HITInstance(Base):
         # ie. when all the links are set in the ORM
         for node in self.nodes:
             node.reset()
+
+    @staticmethod
+    def generate_new_id():
+        if os.environ.get("COVFEE_ENV") == "dev":
+            # return predictable id in dev mode
+            # so that ids don't change on every run
+            # Note, in a previous implementation, the id was a function of the associated
+            # len(HITSpec.journeyspecs). Unclear why.
+            id = hashlib.sha256((str(HITInstance.instance_counter).encode())).digest()
+            HITInstance.instance_counter += 1
+        else:
+            id = secrets.token_bytes(32)
+        return id
 
     def get_api_url(self):
         return f'{app.config["API_URL"]}/instances/{self.id.hex():s}'

@@ -167,7 +167,7 @@ class JourneyInstance(Base):
     )
 
     @staticmethod
-    def get_id():
+    def generate_new_id():
         if os.environ.get("COVFEE_ENV") == "dev":
             # return predictable id in dev mode
             # so that URLs don't change on every run
@@ -181,7 +181,7 @@ class JourneyInstance(Base):
 
     def __init__(self):
         super().init()
-        self.id = JourneyInstance.get_id()
+        self.id = JourneyInstance.generate_new_id()
         self.preview_id = hashlib.sha256((self.id + "preview".encode())).digest()
         self.submitted = False
         self.interface = {}

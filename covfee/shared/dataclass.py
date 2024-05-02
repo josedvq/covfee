@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Optional
 
 import covfee.launcher as launcher
 from covfee.logger import logger
@@ -61,16 +61,39 @@ class CovfeeTask(BaseDataclass, metaclass=PostInitCaller):
 
 
 class Journey(BaseDataclass):
-    def __init__(self, nodes: List[CovfeeTask] = None, name: str = None):
+    name: str
+    global_unique_id: Optional[str]
+    nodes_players: List[Tuple[CovfeeTask, int]]
+
+    def __init__(
+        self,
+        nodes: List[CovfeeTask] = None,
+        name: str = None,
+        global_unique_id: Optional[str] = None,
+    ):
+        """
+        Specifies a journey
+
+        Parameters:
+        nodes (list[CovfeeTask]): The tasks that a study participant will go through for this journey.
+        name (str): A human readable name.
+        global_unique_id (Optional[str]): A globally unique identifier for the Journey. Serves to create persistency
+                                          in the database across multiple launches of "covfee make" and therefore,
+                                          be able to add more hits/journeys into an existing database.
+                                          It is expected to be unique even across different projects and it is
+                                          responsibility of the study administrator to define a naming pattern.
+        """
         super().__init__()
         if nodes is not None:
             self.nodes_players = [(n, n._count()) for n in nodes]
         else:
             self.nodes_players: List[Tuple[CovfeeTask, int]] = list()
         self.name = name
+        self.id_within_study = global_unique_id
 
     def orm(self):
         journey = OrmJourney([(n.orm(), p) for n, p in self.nodes_players])
+        journey.id_within_study = self.id_within_study
         logger.debug(f"Created ORM journey: {str(journey)}")
         return journey
 
@@ -81,21 +104,48 @@ class Journey(BaseDataclass):
 
 
 class HIT(BaseDataclass):
-    def __init__(self, name: str, repeat=1, config: Any = None):
+    name: str
+    repeat: int
+    config: Any
+    journeys: List[Journey]
+    global_unique_id: Optional[str]
+
+    def __init__(
+        self,
+        name: str,
+        repeat: int = 1,
+        config: Any = None,
+        global_unique_id: Optional[str] = None,
+    ):
+        """
+        Specifies a hit
+
+        Parameters:
+        name (str): A human readable name.
+        global_unique_id (Optional[str]): A globally unique identifier for the HIT. Serves to create persistency
+                                          in the database across multiple launches of "covfee make" and therefore,
+                                          be able to add more hits/journeys into an existing database.
+                                          It is expected to be unique even across different projects and it is
+                                          responsibility of the study administrator to define a naming pattern.
+        repeat (int): The number of times the HIT should be repeated. Defaults to 1.
+        config (Any): The configuration for the HIT. Defaults to None.
+        """
         super().__init__()
         self.name = name
         self.journeys = []
         self.repeat = repeat
+        self.global_unique_id = global_unique_id
 
         self.config = config
 
-    def add_journey(self, nodes=None):
-        j = Journey(nodes)
+    def add_journey(self, nodes=None, journey_global_unique_id: Optional[str] = None):
+        j = Journey(nodes, global_unique_id=journey_global_unique_id)
         self.journeys.append(j)
         return j
 
     def orm(self):
         hit = OrmHit(self.name, [j.orm() for j in self.journeys])
+        hit.id_within_study = self.global_unique_id
         logger.debug(f"Created ORM HIT: {str(hit)}")
         return hit
 
