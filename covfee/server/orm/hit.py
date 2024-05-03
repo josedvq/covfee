@@ -22,6 +22,7 @@ from .base import Base
 from .journey import JourneySpec, JourneyInstance
 from .project import Project
 from .node import JourneyNode, NodeInstance, NodeSpec
+from .utils import NoIndentJSONEncoder
 
 
 class HITSpec(Base):
@@ -241,7 +242,10 @@ class HITInstance(Base):
     def stream_download(self, z, base_path):
         results_dict = self.make_results_dict()
         stream = BytesIO()
-        stream.write(json.dumps(results_dict).encode())
+
+        stream.write(
+            json.dumps(results_dict, indent=4, cls=NoIndentJSONEncoder).encode()
+        )
         stream.seek(0)
         z.write_iter(
             os.path.join(

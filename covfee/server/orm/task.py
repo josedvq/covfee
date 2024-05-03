@@ -134,9 +134,26 @@ class TaskInstance(NodeInstance):
         self.get_task_object().on_admin_pause()
 
     def make_results_dict(self):
-        return {
-            "responses": [response.make_results_dict() for response in self.responses]
-        }
+        results_list = []
+        for response in self.responses:
+            result_dict = response.make_results_dict()
+
+            result_dict["annotations"] = [
+                utils.NoIndentJSON(annotation.data_json)
+                for annotation in self.annotations
+                if annotation.data_json is not None
+            ]
+
+            prolific_ids = []
+            for journey in self.journeys:
+                annotator = journey.annotator
+                if annotator is not None and annotator.prolific_id is not None:
+                    prolific_ids.append(annotator.prolific_id)
+            result_dict["prolific_id"] = prolific_ids
+
+            results_list.append(result_dict)
+
+        return {"responses": results_list}
 
 
 # after a TaskInstance is inserted, we attach its
