@@ -89,11 +89,11 @@ class Journey(BaseDataclass):
         else:
             self.nodes_players: List[Tuple[CovfeeTask, int]] = list()
         self.name = name
-        self.id_within_study = global_unique_id
+        self.global_unique_id = global_unique_id
 
     def orm(self):
         journey = OrmJourney([(n.orm(), p) for n, p in self.nodes_players])
-        journey.id_within_study = self.id_within_study
+        journey.global_unique_id = self.global_unique_id
         logger.debug(f"Created ORM journey: {str(journey)}")
         return journey
 
@@ -145,7 +145,7 @@ class HIT(BaseDataclass):
 
     def orm(self):
         hit = OrmHit(self.name, [j.orm() for j in self.journeys])
-        hit.id_within_study = self.global_unique_id
+        hit.global_unique_id = self.global_unique_id
         logger.debug(f"Created ORM HIT: {str(hit)}")
         return hit
 

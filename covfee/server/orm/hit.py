@@ -33,7 +33,7 @@ class HITSpec(Base):
     # making it identifiable through multiple launches of "covfee make"
     # and thus being able to add more hits/journeys without destroying
     # the database. It's a string as it is intended to be human-readable
-    id_within_study: Mapped[Optional[str]] = mapped_column(unique=True)
+    global_unique_id: Mapped[Optional[str]] = mapped_column(unique=True)
 
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
     # project_id = Column(Integer, ForeignKey("projects.name"))
