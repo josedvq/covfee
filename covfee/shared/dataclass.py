@@ -183,6 +183,7 @@ class Project(BaseDataclass):
 
             for new_hit in self.hits:
                 if new_hit.global_unique_id is None:
+                    logger.info("HIT missing global_unique_id. Skipping...")
                     continue
                 hitspec_in_db: Optional[OrmHit] = session.execute(
                     select(OrmHit).filter_by(global_unique_id=new_hit.global_unique_id)

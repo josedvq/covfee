@@ -27,7 +27,7 @@ from typing import Optional
 
 
 def create_app_and_socketio(
-    mode="deploy", session_local: Optional[sessionmaker] = None
+    mode: str = "deploy", session_local: Optional[sessionmaker] = None
 ):
     # called once per process
     # but reused across threads
@@ -199,7 +199,9 @@ def prolific():
                 id=prolific_annotator_id,
             )
     else:
-        non_finished_journey_instances_query = app.session.query(JourneyInstance).filter(
+        non_finished_journey_instances_query = app.session.query(
+            JourneyInstance
+        ).filter(
             not_(
                 JourneyInstance.status.in_(
                     [JourneyInstanceStatus.FINISHED, JourneyInstanceStatus.DISABLED]
@@ -210,8 +212,11 @@ def prolific():
         journey_instance: JourneyInstance
         for journey_instance in non_finished_journey_instances_query.all():
             # We ignore finished or disabled journeys
-            if (journey_instance.annotator is None or
-                journey_instance.annotator.prolific_id in prolific_ids_for_returned_participants):
+            if (
+                journey_instance.annotator is None
+                or journey_instance.annotator.prolific_id
+                in prolific_ids_for_returned_participants
+            ):
                 # TODO: In the next iteration of this logic we want to achieve two things
                 # 1) For a completed journey, we want to keep a record of the annotator id,
                 #    regardless of whether the annotator is assigned to another journey to work on

@@ -90,6 +90,9 @@ class Launcher:
                 if confirmation.lower() != "yes":
                     print("Aborting...")
                     exit()
+
+                self._make_a_backup_of_the_database_file()
+
             orm.Base.metadata.drop_all(self.engine)
         orm.Base.metadata.create_all(self.engine)
 
@@ -113,7 +116,6 @@ class Launcher:
                 and not delete_existing_data
                 and (session.new or session.dirty or session.deleted)
             ):
-                database_backup_filename = f"{self._database_engine_config.database_file}.backup.{datetime.now().strftime('%Y%m%d%H%M%S')}"
                 user_confirmation_response = input(
                     "The database will be modified. Are you sure you want to continue? (yes/no): "
                 )
@@ -121,18 +123,23 @@ class Launcher:
                     print("Aborting...")
                     exit()
                 else:
-                    logger.info(
-                        f"Creating database backup: {database_backup_filename}..."
-                    )
-                    shutil.copy2(
-                        self._database_engine_config.database_file,
-                        database_backup_filename,
-                    )
+                    self._make_a_backup_of_the_database_file()
             else:
                 logger.info("No database modifications were detected.")
 
             session.commit()
             session.close()
+
+    def _make_a_backup_of_the_database_file(self) -> None:
+        database_backup_filename = f"{self._database_engine_config.database_file}.backup.{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        logger.info(
+                        f"Creating database backup: {database_backup_filename}..."
+                    )
+        shutil.copy2(
+            self._database_engine_config.database_file,
+            database_backup_filename,
+        )
+                
 
     def launch(self, host="0.0.0.0", port=5000):
         if self.environment != "dev":

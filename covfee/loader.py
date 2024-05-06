@@ -51,7 +51,7 @@ class Loader:
             )
 
     def load_project_spec_file_and_parse_as_covfee_app(
-        self, with_spinner=False
+        self, with_spinner: bool=False
     ) -> CovfeeApp:
         covfee_app: CovfeeApp
         if self._project_spec_from_python_file:
@@ -73,7 +73,7 @@ class Loader:
 
         return covfee_app
 
-    def _load_projects_json_specs_from_json_file(self, with_spinner=True) -> List[Dict]:
+    def _load_projects_json_specs_from_json_file(self, with_spinner: bool=True) -> List[Dict]:
         projects_json_specs: List[Dict] = []
         with Halo(
             text=f"Parsing file {self._project_spec_file} as json..",
@@ -93,7 +93,7 @@ class Loader:
         return projects_json_specs
 
     def _raise_exception_if_projects_json_specs_are_not_valid(
-        self, projects_json_specs: List[Dict], with_spinner=False
+        self, projects_json_specs: List[Dict], with_spinner: bool=False
     ) -> None:
         filter = AjvValidator()
         for project_json_specs in projects_json_specs:
@@ -112,7 +112,7 @@ class Loader:
                 spinner.succeed(f'Project "{project_json_specs["name"]}" is valid.')
 
     def _parse_projects_json_specs_into_covfee_app(
-        self, projects_json_specs: List[Dict], with_spinner=False
+        self, projects_json_specs: List[Dict], with_spinner: bool=False
     ) -> CovfeeApp:
         raise NotImplementedError
         # FIXME: ...this function was broken, but was modified to provide a skeleton of what's needed.
