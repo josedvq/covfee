@@ -1,29 +1,35 @@
 import inspect
 import json
 import os
+from typing import Optional
 
-from flask import Blueprint, Flask, redirect, request, abort
+from flask import (
+    Blueprint,
+    Flask,
+    abort,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+)
 from flask import current_app as app
-from flask import render_template, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
-from flask_session import Session
+from sqlalchemy import not_, select
 from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy import select, not_
 
 from covfee.config import Config
 from covfee.server import tasks
-from covfee.server.tasks.base import BaseCovfeeTask
 from covfee.server.rest_api.utils import (
-    fetch_prolific_ids_for_returned_participants,
     ProlificAPIRequestError,
+    fetch_prolific_ids_for_invalid_participants,
 )
+from covfee.server.tasks.base import BaseCovfeeTask
+from flask_session import Session
 
-from .scheduler.apscheduler import scheduler
 from .orm.annotator import Annotator
 from .orm.journey import JourneyInstance, JourneyInstanceStatus
-
-from typing import Optional
+from .scheduler.apscheduler import scheduler
 
 
 def create_app_and_socketio(
@@ -45,7 +51,7 @@ def create_app_and_socketio(
     app.json = CovfeeJSONProvider(app)
 
     if session_local is None:
-        from .db import create_database_sessionmaker, DatabaseEngineConfig
+        from .db import DatabaseEngineConfig, create_database_sessionmaker
 
         session_local = create_database_sessionmaker(
             DatabaseEngineConfig(database_file=config["DATABASE_PATH"])
@@ -157,8 +163,8 @@ def prolific():
         abort(404)
 
     try:
-        prolific_ids_for_returned_participants = (
-            fetch_prolific_ids_for_returned_participants(
+        prolific_ids_for_invalid_participants = (
+            fetch_prolific_ids_for_invalid_participants(
                 prolific_study_id, app.config["PROLIFIC_API_TOKEN"]
             )
         )
@@ -173,10 +179,10 @@ def prolific():
             id=prolific_annotator_id,
         )
 
-    if prolific_annotator_id in prolific_ids_for_returned_participants:
+    if prolific_annotator_id in prolific_ids_for_invalid_participants:
         return render_template(
             "annotator_error.html",
-            message="You have returned this task and it can no longer be accessed.",
+            message="This task can no longer be accessed.",
             id=prolific_annotator_id,
         )
 
@@ -215,7 +221,7 @@ def prolific():
             if (
                 journey_instance.annotator is None
                 or journey_instance.annotator.prolific_id
-                in prolific_ids_for_returned_participants
+                in prolific_ids_for_invalid_participants
             ):
                 # TODO: In the next iteration of this logic we want to achieve two things
                 # 1) For a completed journey, we want to keep a record of the annotator id,

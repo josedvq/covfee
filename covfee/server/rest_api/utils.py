@@ -1,10 +1,10 @@
 import json
-from typing import Union
 from enum import Enum
+from typing import List, Union
+
+import requests
 from flask import jsonify
 from flask.json.provider import JSONProvider
-import requests
-from typing import List
 
 
 class ProlificAPIRequestError(Exception):
@@ -40,12 +40,12 @@ class CovfeeJSONProvider(JSONProvider):
         return json.loads(s, **kwargs)
 
 
-def fetch_prolific_ids_for_returned_participants(
-    study_id: str, token: str
-) -> List[str]:
+def fetch_prolific_ids_for_invalid_participants(study_id: str, token: str) -> List[str]:
     """
-    Use the Prolific Academic API to get the IDs of participants who have returned the study
-    and thus they should be ignored.
+    Use the Prolific Academic API to get the IDs of participants who have failed to do
+    the study. Either because they abandoned it (RETURNED), because we rejected the data
+    that they submitted (REJECTED) or they failed to complete it on time (TIMED-OUT).
+    See https://docs.prolific.com/docs/api-docs/public/#tag/Submissions/Submission-object
     """
     headers = {
         "Authorization": f"Token {token}",
@@ -72,5 +72,5 @@ def fetch_prolific_ids_for_returned_participants(
         return [
             participant["participant_id"]
             for participant in response.json()["results"]
-            if participant["status"] == "RETURNED"
+            if participant["status"] in ["RETURNED", "REJECTED", "TIMED-OUT"]
         ]
