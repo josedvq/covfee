@@ -208,11 +208,8 @@ def prolific():
         # We search for a journey_instance that does not have an annotator associated with it
         for journey_instance in non_finished_journey_instances_query.all():
             # We ignore finished or disabled journeys
-            if journey_instance.annotator is None or (
-                journey_instance.annotator.prolific_study_id == prolific_study_id
-                and journey_instance.annotator.prolific_id
-                in prolific_ids_for_returned_participants
-            ):
+            if (journey_instance.annotator is None or
+                journey_instance.annotator.prolific_id in prolific_ids_for_returned_participants):
                 # TODO: In the next iteration of this logic we want to achieve two things
                 # 1) For a completed journey, we want to keep a record of the annotator id,
                 #    regardless of whether the annotator is assigned to another journey to work on

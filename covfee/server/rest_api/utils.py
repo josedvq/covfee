@@ -70,7 +70,7 @@ def fetch_prolific_ids_for_returned_participants(
         )
     else:
         return [
-            participant["id"]
+            participant["participant_id"]
             for participant in response.json()["results"]
             if participant["status"] == "RETURNED"
         ]
