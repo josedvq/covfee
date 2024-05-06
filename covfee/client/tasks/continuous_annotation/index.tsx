@@ -1,7 +1,7 @@
 import Constants from "Constants"
 
 import { CloseOutlined, InfoCircleFilled } from "@ant-design/icons"
-import { Button, Checkbox, notification } from "antd"
+import { Button, Checkbox, Modal, notification } from "antd"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useSelector } from "react-redux"
 import { VideoJsPlayer } from "video.js"
@@ -98,6 +98,14 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       buffer: [],
       needs_upload: false,
     })
+
+  const [
+    showTaskVariantPopupBulletPoints,
+    setShowTaskVariantPopupBulletPoints,
+  ] = useState(
+    props.spec.taskVariantPopupBulletPoints &&
+      props.spec.taskVariantPopupBulletPoints.length > 0
+  )
 
   const validAnnotationsDataAndSelection: boolean =
     annotationsDataMirror !== undefined &&
@@ -645,6 +653,33 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
 
   return (
     <form>
+      {showTaskVariantPopupBulletPoints && (
+        <Modal
+          title={"Task overview"}
+          open={showTaskVariantPopupBulletPoints}
+          footer={[
+            <Button
+              key="submit"
+              type="primary"
+              onClick={() => {
+                setShowTaskVariantPopupBulletPoints(false)
+              }}
+            >
+              Ok
+            </Button>,
+          ]}
+        >
+          {props.spec.taskVariantPopupBulletPoints && (
+            <ul>
+              {props.spec.taskVariantPopupBulletPoints.map(
+                (instruction: string, index: number) => (
+                  <li key={index}>{instruction}</li>
+                )
+              )}
+            </ul>
+          )}
+        </Modal>
+      )}
       <ModalParticipantSelectionGallery
         open={showingGallery}
         onCancel={() => {
@@ -701,6 +736,9 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
             onStartStopAnnotationClick={handleAnnotationStartOrStopButtonClick}
             onOpenParticipantSelectionClick={() => {
               setShowingGallery(true)
+            }}
+            onWatchTutorialVideoClick={() => {
+              setShowTaskVariantPopupBulletPoints(true)
             }}
           />
         </div>

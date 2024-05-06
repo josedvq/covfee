@@ -42,6 +42,7 @@ type Props = {
   onAnnotationSelected: (annotation_index: number) => void
   onStartStopAnnotationClick: () => void
   onOpenParticipantSelectionClick: () => void
+  onWatchTutorialVideoClick: () => void
 }
 
 const InstructionsSidebar: React.FC<Props> = (props) => {
@@ -162,7 +163,10 @@ const InstructionsSidebar: React.FC<Props> = (props) => {
           <Button
             type="primary"
             className={styles["gallery-button"]}
-            onClick={() => window.open(props.video_tutorial_url, "_blank")}
+            onClick={() => {
+              window.open(props.video_tutorial_url, "_blank")
+              props.onWatchTutorialVideoClick()
+            }}
           >
             Watch Tutorial Video (audio required)
           </Button>

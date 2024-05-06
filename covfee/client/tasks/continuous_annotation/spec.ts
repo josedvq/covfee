@@ -20,6 +20,7 @@ export interface ContinuousAnnotationTaskSpec extends BaseTaskSpec {
   media: MediaSpec[]
   annotations: AnnotationDataSpec[]
   prolificCompletionCode?: string
+  taskVariantPopupBulletPoints?: string[]
   userCanAdd: boolean
   /**
    * When specified: True, means audio on is mandatory, False means audio off (muted) is mandatory.
