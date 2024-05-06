@@ -132,14 +132,11 @@ class Launcher:
 
     def _make_a_backup_of_the_database_file(self) -> None:
         database_backup_filename = f"{self._database_engine_config.database_file}.backup.{datetime.now().strftime('%Y%m%d%H%M%S')}"
-        logger.info(
-                        f"Creating database backup: {database_backup_filename}..."
-                    )
+        logger.info(f"Creating database backup: {database_backup_filename}...")
         shutil.copy2(
             self._database_engine_config.database_file,
             database_backup_filename,
         )
-                
 
     def launch(self, host="0.0.0.0", port=5000):
         if self.environment != "dev":

@@ -305,14 +305,23 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   //       does change, which trigger a change in the sources, i.e., the video url
   //       being used.
   const videoPlayerOptions = useMemo(() => {
+    let participant = ""
+    let source = { ...props.spec.media[selectedCamViewIndex] }
+    if (validAnnotationsDataAndSelection) {
+      // Note: consider optimizing such that if replaceable strings are not
+      //       found, then it fallback into not having selectedAnnotationIndex
+      //       as a dependency, and thus avoiding the videos from reload.
+      participant = annotationsDataMirror[selectedAnnotationIndex].participant
+      source.src = source.src.replace("{participant}", participant)
+    }
     return {
       autoplay: false,
       controls: true,
       responsive: true,
       fluid: true,
-      sources: [props.spec.media[selectedCamViewIndex]],
+      sources: [source],
     }
-  }, [props.spec, selectedCamViewIndex])
+  }, [props.spec, selectedCamViewIndex, selectedAnnotationIndex])
 
   // ...and add logic that ensures that video playback status is kept in sync under
   // the selectedCamViewIndex changes. First, we keep track of the playback status.
