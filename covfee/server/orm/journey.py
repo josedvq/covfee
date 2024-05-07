@@ -271,4 +271,4 @@ class JourneyInstance(Base):
         return instance_dict
 
     def make_results_dict(self):
-        return {"nodes": [node.id for node in self.nodes]}
+        return {"nodes": [node.id for node in self.nodes], "global_unique_id": self.spec.global_unique_id}

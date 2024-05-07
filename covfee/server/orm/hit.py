@@ -243,6 +243,7 @@ class HITInstance(Base):
     def make_results_dict(self):
         return {
             "hit_id": self.id.hex(),
+            "global_unique_id": self.spec.global_unique_id,
             "nodes": {node.id: node.make_results_dict() for node in self.nodes},
             "journeys": [journey.make_results_dict() for journey in self.journeys],
         }
