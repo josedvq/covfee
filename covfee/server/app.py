@@ -15,6 +15,7 @@ from flask import (
 from flask import current_app as app
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from flask_session import Session
 from sqlalchemy import not_, select
 from sqlalchemy.orm import scoped_session, sessionmaker
 
@@ -25,10 +26,9 @@ from covfee.server.rest_api.utils import (
     fetch_prolific_ids_for_invalid_participants,
 )
 from covfee.server.tasks.base import BaseCovfeeTask
-from flask_session import Session
 
 from .orm.annotator import Annotator
-from .orm.journey import JourneyInstance, JourneyInstanceStatus
+from .orm.journey import JourneyInstance, JourneyInstanceStatus, JourneySpec
 from .scheduler.apscheduler import scheduler
 
 
@@ -205,19 +205,22 @@ def prolific():
                 id=prolific_annotator_id,
             )
     else:
-        non_finished_journey_instances_query = app.session.query(
-            JourneyInstance
-        ).filter(
-            not_(
-                JourneyInstance.status.in_(
-                    [JourneyInstanceStatus.FINISHED, JourneyInstanceStatus.DISABLED]
-                )
+        # We ignore finished or disabled journeys within the current study
+        non_finished_journey_instances_in_study_query = (
+            app.session.query(JourneyInstance)
+            .join(JourneySpec, JourneyInstance.journeyspec_id == JourneySpec.id)
+            .filter(
+                not_(
+                    JourneyInstance.status.in_(
+                        [JourneyInstanceStatus.FINISHED, JourneyInstanceStatus.DISABLED]
+                    )
+                ),
+                JourneySpec.prolific_study_id == prolific_study_id,
             )
         )
         # We search for a journey_instance that does not have an annotator associated with it
         journey_instance: JourneyInstance
-        for journey_instance in non_finished_journey_instances_query.all():
-            # We ignore finished or disabled journeys
+        for journey_instance in non_finished_journey_instances_in_study_query.all():
             if (
                 journey_instance.annotator is None
                 or journey_instance.annotator.prolific_id

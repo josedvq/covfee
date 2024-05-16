@@ -18,8 +18,6 @@ from .condition_parser import eval_string
 if TYPE_CHECKING:
     from .hit import HITInstance, HITSpec
     from .journey import JourneyInstance, JourneySpec
-    from .hit import HITInstance, HITSpec
-    from .journey import JourneyInstance, JourneySpec
 
 
 class JourneySpecNodeSpec(Base):

@@ -15,10 +15,10 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from .annotator import Annotator
 from .base import Base
 from .chat import Chat, ChatJourney
 from .node import JourneyNode, JourneySpecNodeSpec
-from .annotator import Annotator
 
 if TYPE_CHECKING:
     from .hit import HITInstance, HITSpec
@@ -35,6 +35,12 @@ class JourneySpec(Base):
     # and thus being able to add more hits/journeys without destroying
     # the database. It's a string as it is intended to be human-readable
     global_unique_id: Mapped[Optional[str]] = mapped_column(unique=True)
+
+    # Indicates whether this journey will be linked to the given study id
+    # from prolific academic, such that when annotators are assigned journeys
+    # , it will only assign journeys corresponding to the same study id as the
+    # incoming annotator.
+    prolific_study_id: Mapped[Optional[str]] = mapped_column()
 
     # spec relationships
     # up
@@ -271,4 +277,7 @@ class JourneyInstance(Base):
         return instance_dict
 
     def make_results_dict(self):
-        return {"nodes": [node.id for node in self.nodes], "global_unique_id": self.spec.global_unique_id}
+        return {
+            "nodes": [node.id for node in self.nodes],
+            "global_unique_id": self.spec.global_unique_id,
+        }

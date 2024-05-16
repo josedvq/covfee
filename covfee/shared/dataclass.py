@@ -1,9 +1,11 @@
-from typing import Any, List, Tuple, Optional
+import os
+from typing import Any, List, Optional, Tuple
 
-from sqlalchemy.orm import scoped_session
 from sqlalchemy import select
+from sqlalchemy.orm import scoped_session
 
 from covfee.logger import logger
+from covfee.server.orm import HITInstance, JourneyInstance
 from covfee.server.orm import (
     HITSpec as OrmHit,
 )
@@ -16,8 +18,6 @@ from covfee.server.orm import (
 from covfee.server.orm import (
     TaskSpec as OrmTask,
 )
-from covfee.server.orm import HITInstance, JourneyInstance
-import os
 
 
 class PostInitCaller(type):
@@ -69,6 +69,7 @@ class CovfeeTask(BaseDataclass, metaclass=PostInitCaller):
 class Journey(BaseDataclass):
     name: str
     global_unique_id: Optional[str]
+    prolific_study_id: Optional[str]
     nodes_players: List[Tuple[CovfeeTask, int]]
 
     def __init__(
@@ -76,6 +77,7 @@ class Journey(BaseDataclass):
         nodes: List[CovfeeTask] = None,
         name: str = None,
         global_unique_id: Optional[str] = None,
+        prolific_study_id: Optional[str] = None,
     ):
         """
         Specifies a journey
@@ -88,6 +90,10 @@ class Journey(BaseDataclass):
                                           be able to add more hits/journeys into an existing database.
                                           It is expected to be unique even across different projects and it is
                                           responsibility of the study administrator to define a naming pattern.
+        prolific_study_id (Optional[str]): Indicates whether this journey will be linked to the given study id
+                                           from prolific academic, such that when annotators are assigned journeys
+                                           , it will only assign journeys corresponding to the same study id as the
+                                           incoming annotator.
         """
         super().__init__()
         if nodes is not None:
@@ -96,12 +102,14 @@ class Journey(BaseDataclass):
             self.nodes_players = []
         self.name = name
         self.global_unique_id = global_unique_id
+        self.prolific_study_id = prolific_study_id
 
     def create_orm_journey_object(self) -> OrmJourney:
         journey = OrmJourney(
             [(n.create_orm_task_object(), p) for n, p in self.nodes_players]
         )
         journey.global_unique_id = self.global_unique_id
+        journey.prolific_study_id = self.prolific_study_id
         logger.debug(f"Created ORM journey: {str(journey)}")
         return journey
 
@@ -147,9 +155,16 @@ class HIT(BaseDataclass):
         self.config = config
 
     def add_journey(
-        self, nodes=None, journey_global_unique_id: Optional[str] = None
+        self,
+        nodes=None,
+        journey_global_unique_id: Optional[str] = None,
+        prolific_study_id: Optional[str] = None,
     ) -> Journey:
-        j = Journey(nodes, global_unique_id=journey_global_unique_id)
+        j = Journey(
+            nodes,
+            global_unique_id=journey_global_unique_id,
+            prolific_study_id=prolific_study_id,
+        )
         self.journeys.append(j)
         return j
 
@@ -195,7 +210,7 @@ class Project(BaseDataclass):
                     for journey in new_hit.journeys:
                         if journey.global_unique_id is None:
                             logger.info(
-                                f"Cant' add new journeys to HIT without a global_unique_id. Skipping..."
+                                "Cant' add new journeys to HIT without a global_unique_id. Skipping..."
                             )
                             continue
                         journey_in_db = session.execute(

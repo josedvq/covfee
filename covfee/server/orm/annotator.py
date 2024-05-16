@@ -1,8 +1,10 @@
+import datetime
+from typing import Optional
+
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-import datetime
+
 from .base import Base
-from typing import Optional
 
 
 class Annotator(Base):
@@ -36,10 +38,6 @@ class Annotator(Base):
         journey_instance_id = (
             self.journey_instance_id.hex() if self.journey_instance_id else "?"
         )
-        expired_journey_instance_id = (
-            self.expired_journey_instance_id.hex()
-            if self.expired_journey_instance_id
-            else "?"
-        )
+
         created_at = self.created_at.isoformat() if self.created_at else "?"
-        return f"Annotator(id={self.id}, prolific_id={self.prolific_id}, journey_instance_id={journey_instance_id}, created_at={created_at}, expired_journey_instance_id={expired_journey_instance_id})"
+        return f"Annotator(id={self.id}, prolific_id={self.prolific_id}, prolific_study_id={self.prolific_study_id}, journey_instance_id={journey_instance_id}, created_at={created_at})"

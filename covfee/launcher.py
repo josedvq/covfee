@@ -2,26 +2,25 @@ import os
 import platform
 import shutil
 import sys
-from shutil import which
 from datetime import datetime
+from shutil import which
 
 from click import Path
 from colorama import Fore
-from covfee.logger import logger
+from sqlalchemy import Engine
+from sqlalchemy.orm import sessionmaker
 
 import covfee.server.orm as orm
 from covfee.cli.utils import working_directory
 from covfee.config import Config
+from covfee.logger import logger
 from covfee.server.app import create_app_and_socketio
 from covfee.server.db import (
+    DatabaseEngineConfig,
     create_database_engine,
     create_database_sessionmaker,
-    DatabaseEngineConfig,
 )
 from covfee.shared.dataclass import CovfeeApp
-
-from sqlalchemy import Engine
-from sqlalchemy.orm import sessionmaker
 
 
 class ProjectExistsException(Exception):
