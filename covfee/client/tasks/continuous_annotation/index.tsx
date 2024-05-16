@@ -312,7 +312,8 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       //       found, then it fallback into not having selectedAnnotationIndex
       //       as a dependency, and thus avoiding the videos from reload.
       participant = annotationsDataMirror[selectedAnnotationIndex].participant
-      source.src = source.src.replace("{participant}", participant)
+      const participantNumber = participant.replace("Participant_", "")
+      source.src = source.src.replace("{participant}", participantNumber)
     }
     return {
       autoplay: false,
