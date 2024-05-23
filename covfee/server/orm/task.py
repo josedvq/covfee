@@ -158,8 +158,10 @@ class TaskInstance(NodeInstance):
                 annotator = journey.annotator
                 if annotator is not None and annotator.prolific_id is not None:
                     journey_dict["prolific_id"] = annotator.prolific_id
+                    journey_dict["prolific_study_id"] = annotator.prolific_study_id
                 else:
                     journey_dict["prolific_id"] = None
+                    journey_dict["prolific_study_id"] = None
                 result_dict["journeys"].append(journey_dict)
 
             results_list.append(result_dict)

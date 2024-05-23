@@ -1,12 +1,10 @@
 import Constants from "Constants"
 
 import { CloseOutlined, InfoCircleFilled } from "@ant-design/icons"
-import { Button, Checkbox, Modal, notification } from "antd"
+import { Button, Checkbox, Modal, message, notification } from "antd"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useSelector } from "react-redux"
 import { VideoJsPlayer } from "video.js"
 import { nodeContext } from "../../journey/node_context"
-import { useDispatch } from "../../journey/state"
 import VideoJSFC from "../../players/videojsfc"
 import { TaskExport } from "../../types/node"
 import { AllPropsRequired } from "../../types/utils"
@@ -29,7 +27,7 @@ import {
   InstructionsSidebar,
   ParticipantOption,
 } from "./instructions_sidebar"
-import { State, actions, slice } from "./slice"
+import { slice } from "./slice"
 import type { AnnotationDataSpec, ContinuousAnnotationTaskSpec } from "./spec"
 import TaskProgress, { TaskAlreadyCompleted } from "./task_progress"
 
@@ -64,8 +62,6 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     }
   }, [props])
 
-  // this is a custom dispatch function provided by Covfee
-  const dispatch = useDispatch()
   const { node } = React.useContext(nodeContext)
 
   //*************************************************************//
@@ -79,10 +75,12 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
 
   const [annotationsDataMirror, setAnnotationsDataMirror] =
     React.useState<AnnotationData[]>()
-  // we read the state using useSelector
-  const selectedAnnotationIndex: number = useSelector<State, number | null>(
-    (state) => state.selectedAnnotationIndex
-  )
+  // Note: we explicitly IGNORE the Redux setSelectedAnnotationIndex action
+  //       set in slice.ts, which appears to stop working as soon as the node
+  //       has a finished status when using the covfee custom dispatch function.
+  const [selectedAnnotationIndex, setSelectedAnnotationIndex] = useState<
+    number | null
+  >(null)
   const [showingGallery, setShowingGallery] = useState(false)
   const [showAnnotationTipsOnStart, setShowAnnotationTipsOnStart] =
     useState(true)
@@ -107,6 +105,12 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       props.spec.taskVariantPopupBulletPoints.length > 0
   )
 
+  const dataJsonContainsAValidAnnotation = (
+    data_json: null | number[]
+  ): boolean => {
+    return data_json !== null && data_json.length > 0
+  }
+
   const validAnnotationsDataAndSelection: boolean =
     annotationsDataMirror !== undefined &&
     selectedAnnotationIndex !== null &&
@@ -119,11 +123,13 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   var taskCompletionPercentage = 0
   if (annotationsDataMirror !== undefined) {
     isEntireTaskCompleted = annotationsDataMirror.every(
-      (annotationData: AnnotationData) => annotationData.data_json !== null
+      (annotationData: AnnotationData) =>
+        dataJsonContainsAValidAnnotation(annotationData.data_json)
     )
     numberOfAnnotations = annotationsDataMirror.length
     numberOfAnnotationsCompleted = annotationsDataMirror.filter(
-      (annotationData: AnnotationData) => annotationData.data_json !== null
+      (annotationData: AnnotationData) =>
+        dataJsonContainsAValidAnnotation(annotationData.data_json)
     ).length
     taskCompletionPercentage =
       (100 * numberOfAnnotationsCompleted) / numberOfAnnotations
@@ -141,11 +147,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
         return annotation.participant === participant
       })
     if (first_annotation_index_for_participant !== -1) {
-      dispatch(
-        actions.setSelectedAnnotationIndex(
-          first_annotation_index_for_participant
-        )
-      )
+      setSelectedAnnotationIndex(first_annotation_index_for_participant)
     }
   }
 
@@ -227,11 +229,11 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   // was still uninitialized.
   useEffect(() => {
     if (annotationsDataMirror === undefined) {
-      dispatch(actions.setSelectedAnnotationIndex(null))
+      setSelectedAnnotationIndex(null)
     } else if (annotationsDataMirror.length === 0) {
-      dispatch(actions.setSelectedAnnotationIndex(null))
+      setSelectedAnnotationIndex(null)
     } else if (selectedAnnotationIndex === null) {
-      dispatch(actions.setSelectedAnnotationIndex(0))
+      setSelectedAnnotationIndex(0)
     }
   }, [selectedAnnotationIndex, annotationsDataMirror])
 
@@ -307,14 +309,23 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
   const videoPlayerOptions = useMemo(() => {
     let participant = ""
     let source = { ...props.spec.media[selectedCamViewIndex] }
+    // we let a plausible participant number to be replaced in the video url
+    // just so we don't get errors when things are loading.
+    let participant_substr_to_set_to_src_url: string = "1"
     if (validAnnotationsDataAndSelection) {
       // Note: consider optimizing such that if replaceable strings are not
       //       found, then it fallback into not having selectedAnnotationIndex
       //       as a dependency, and thus avoiding the videos from reload.
       participant = annotationsDataMirror[selectedAnnotationIndex].participant
-      const participantNumber = participant.replace("Participant_", "")
-      source.src = source.src.replace("{participant}", participantNumber)
+      participant_substr_to_set_to_src_url = participant.replace(
+        "Participant_",
+        ""
+      )
     }
+    source.src = source.src.replace(
+      "{participant}",
+      participant_substr_to_set_to_src_url
+    )
     return {
       autoplay: false,
       controls: true,
@@ -438,8 +449,8 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     const participant_annotations = annotationsDataMirror.filter(
       (annotation) => annotation.participant === participant
     )
-    return participant_annotations.every(
-      (annotation) => annotation.data_json !== null
+    return participant_annotations.every((annotation) =>
+      dataJsonContainsAValidAnnotation(annotation.data_json)
     )
   }
 
@@ -447,7 +458,9 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     if (annotationsDataMirror === undefined) {
       return false
     }
-    return annotationsDataMirror[index].data_json !== null
+    return dataJsonContainsAValidAnnotation(
+      annotationsDataMirror[index].data_json
+    )
   }
 
   //********************************************************************//
@@ -508,6 +521,19 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       if (!validAnnotationsDataAndSelection) {
         return
       }
+      let new_buffer: number[] = Array.from(
+        { length: numberOfVideoFrames() },
+        () => 0
+      )
+
+      if (new_buffer.length === 0) {
+        // This is the result of failure to load the video.
+        message.error(
+          "There was an error loading the video. Please refresh the page and try again."
+        )
+        return
+      }
+
       // Scroll to the top of the page,
       // on 1080p resolution it doesn't do anything, as the page is as big as the screen,
       // on 720p or lower, the page is bigger than the screen, so it scrolls to the top.
@@ -517,7 +543,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
       startVideoPlayback(0.0)
 
       setActiveAnnotationDataArray({
-        buffer: Array.from({ length: numberOfVideoFrames() }, () => 0),
+        buffer: new_buffer,
         needs_upload: false,
       })
     } else {
@@ -657,7 +683,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
     "https://app.prolific.com/submissions/complete?cc=" +
     props.spec.prolificCompletionCode
 
-  if (args.response.submitted) {
+  if (args.response.submitted && isEntireTaskCompleted) {
     return <TaskAlreadyCompleted redirectUrl={redirectUrl} />
   }
 
@@ -741,7 +767,7 @@ const ContinuousAnnotationTask: React.FC<Props> = (props) => {
               )
             }}
             onAnnotationSelected={(index: number) => {
-              dispatch(actions.setSelectedAnnotationIndex(index))
+              setSelectedAnnotationIndex(index)
             }}
             onStartStopAnnotationClick={handleAnnotationStartOrStopButtonClick}
             onOpenParticipantSelectionClick={() => {
