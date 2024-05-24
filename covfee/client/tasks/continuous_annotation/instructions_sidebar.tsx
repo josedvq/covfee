@@ -13,6 +13,7 @@ import {
 import {
   CHANGE_VIEW_NEXT_KEY,
   CHANGE_VIEW_PREV_KEY,
+  DRINKING_ANNOTATION_CATEGORY,
   REGISTER_ACTION_ANNOTATION_KEY,
   TIP_EMOJI,
 } from "./constants"
@@ -144,16 +145,26 @@ const InstructionsSidebar: React.FC<Props> = (props) => {
             }}
           >
             I'm sure the participant is not found
+            {props.selected_annotation.category === DRINKING_ANNOTATION_CATEGORY
+              ? " or has no beverage"
+              : ""}
           </Button>,
         ]}
       >
         <ul>
           <li>
-            I checked all camera views and I can't find this participant .
+            I checked all camera views and I can't find this participant{" "}
+            {props.selected_annotation.category === DRINKING_ANNOTATION_CATEGORY
+              ? "or I did find the participant but I confirmed they don't have a beverage"
+              : ""}
+            .
           </li>
           <li>
-            I am certain this participant does not enter any view in the middle
-            of playback.
+            I am certain this participant does not enter any view
+            {props.selected_annotation.category === DRINKING_ANNOTATION_CATEGORY
+              ? " or does not get a beverage"
+              : ""}{" "}
+            in the middle of playback.
           </li>
         </ul>
       </Modal>
@@ -186,11 +197,23 @@ const InstructionsSidebar: React.FC<Props> = (props) => {
 
         <h2>
           <strong>Step 2: </strong>
-          If you have found the participant and selected the best camera view,
-          proceed to Step 3. If you
-          <strong> can't find the participant at all</strong>, click the button
-          below. A pop-up will appear asking you to confirm that the participant
-          can't be found. If you confirm this, proceed to Step
+          If you have found the participant
+          {props.selected_annotation.category ===
+          DRINKING_ANNOTATION_CATEGORY ? (
+            <strong>, confirmed they have a beverage</strong>
+          ) : (
+            ""
+          )}{" "}
+          and selected the best camera view, proceed to Step 3. If you
+          <strong> can't find the participant at all</strong>
+          {props.selected_annotation.category ===
+          DRINKING_ANNOTATION_CATEGORY ? (
+            <strong> or doesn't have a beverage</strong>
+          ) : (
+            ""
+          )}
+          , click the button below. A pop-up will appear asking you to confirm.
+          If you confirm this, proceed to Step
           {multiple_annotations_for_selected_participant ? " 5" : " 4"}.
         </h2>
         <Button
@@ -201,7 +224,9 @@ const InstructionsSidebar: React.FC<Props> = (props) => {
           className={styles["gallery-button"]}
           icon={<ExclamationCircleOutlined />}
         >
-          I can't find this participant!
+          {props.selected_annotation.category === DRINKING_ANNOTATION_CATEGORY
+            ? "Participant can't be found or has no beverage!"
+            : "I can't find this participant!"}
         </Button>
         {multiple_annotations_for_selected_participant && (
           <>
