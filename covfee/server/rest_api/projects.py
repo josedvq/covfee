@@ -86,7 +86,7 @@ def project_download(pid):
     Returns:
         [type]: stream response with a compressed archive. 204 if the project has no responses
     """
-    project = app.session.query(Project).get(pid)
+    project: Project = app.session.query(Project).get(pid)
     if project is None:
         return {"msg": "not found"}, 404
 

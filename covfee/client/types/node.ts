@@ -45,6 +45,7 @@ export interface NodeType extends AllPropsRequired<BaseNodeSpec> {
    * Status of the node
    */
   status: NodeStatus
+  progress: number | null
   manual: ManualStatus
   taskData: any
   journeys: JourneyAssoc[]

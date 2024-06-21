@@ -1,10 +1,12 @@
 import * as React from "react"
 import styled from "styled-components"
 
-import { HitInstanceType } from "../../types/hit"
-import { NodeStatus } from "../../types/node"
 import { NodeIndexOutlined } from "@ant-design/icons"
+import classNames from "classnames"
 import { appContext } from "../../app_context"
+import { HitInstanceType } from "../../types/hit"
+import { NodeStatus, NodeType } from "../../types/node"
+import { ForceGraph } from "../force_graph"
 import {
   JourneyColorStatus,
   JourneyColorStatuses,
@@ -16,13 +18,10 @@ import {
   getJourneyStatus,
   getNodeStatus,
 } from "../utils"
-import classNames from "classnames"
-import { ForceGraph } from "../force_graph"
-import { NodeButtons, NodeRow } from "./node_buttons"
-import { HoveringButtons } from "./utils"
-import type { HoveringButtonsArgs } from "./utils"
 import { JourneyRow } from "./journey_buttons"
-
+import { NodeButtons, NodeRow } from "./node_buttons"
+import type { HoveringButtonsArgs } from "./utils"
+import { HoveringButtons } from "./utils"
 interface Props {
   hit: HitInstanceType
 }
@@ -130,7 +129,14 @@ export const HitBlock = (props: Props) => {
       </Header>
       {!collapsed && (
         <div style={{ display: "flex", flexDirection: "row" }}>
-          <div style={{ display: "flex", alignItems: "center", width: "60%" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              width: "60%",
+            }}
+          >
             <NodesList>
               <h2>Nodes</h2>
 
@@ -177,8 +183,16 @@ export const HitBlock = (props: Props) => {
 
               <ul>
                 {props.hit.journeys.map((journey, index) => {
+                  let journeyNodes: NodeType[] = []
+                  for (const node_id of journey.nodes) {
+                    journeyNodes.push(
+                      props.hit.nodes.find((node) => node.id === node_id)
+                    )
+                  }
+
                   return (
                     <JourneyRow
+                      journeyNodes={journeyNodes}
                       key={index}
                       focus={focusedJourney == index}
                       onFocus={() => {
@@ -244,9 +258,12 @@ const JourneyStatusSummary = NodeStatusSummary
 const GraphContainer = styled.div`
   flex: 1 0 auto;
   max-width: 60%;
+  /* FIXME #CONFLAB: Hiding the GraphContainer because it takes too much space */
+  visibility: hidden;
+  width: 0px;
+  height: 0px;
 `
 const NodesList = styled.div`
-  max-width: 50%;
   flex: 1 0 auto;
   padding: 3px;
 

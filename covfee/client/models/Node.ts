@@ -1,4 +1,6 @@
-import React, { useState, useCallback, useEffect } from "react"
+import Constants from "Constants"
+import React, { useCallback, useEffect, useState } from "react"
+import { MainSocket, ServerToClientEvents } from "../app_context"
 import {
   ManualStatus,
   ManualStatuses,
@@ -7,8 +9,6 @@ import {
   TaskResponseType,
 } from "../types/node"
 import { fetcher, throwBadResponse } from "../utils"
-import { MainSocket, ServerToClientEvents } from "../app_context"
-import Constants from "Constants"
 
 export function useNodeFns(node: NodeType) {
   const fetchResponse = useCallback(() => {
@@ -24,6 +24,15 @@ export function useNodeFns(node: NodeType) {
   const setManualStatus = useCallback(
     (status: ManualStatus) => {
       const url = node.url + "/manual/" + ManualStatuses.indexOf(status)
+
+      return fetcher(url).then(throwBadResponse)
+    },
+    [node.url]
+  )
+
+  const submitProgress = useCallback(
+    (progress: number) => {
+      const url = node.url + "/progress/" + progress
 
       return fetcher(url).then(throwBadResponse)
     },
@@ -91,6 +100,7 @@ export function useNodeFns(node: NodeType) {
     setManualStatus,
     restart,
     setReady,
+    submitProgress,
   }
 }
 
@@ -115,6 +125,7 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
     makeResponse,
     submitResponse: submitResponseFn,
     setReady,
+    submitProgress,
   } = useNodeFns(node)
 
   const numOnlineJourneys: number = React.useMemo(() => {
@@ -129,6 +140,13 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
     setNode((node) => ({
       ...node,
       status: status,
+    }))
+  }
+
+  const setProgress = (progress: number) => {
+    setNode((node) => ({
+      ...node,
+      progress: progress,
     }))
   }
 
@@ -159,6 +177,7 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
         dt_count: data.dt_count,
         dt_finish: data.dt_finish,
         t_elapsed: data.t_elapsed,
+        progress: data.progress !== null ? +data.progress : null,
       }))
     }
 
@@ -190,10 +209,12 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
     response,
     setResponse,
     setStatus,
+    setProgress,
     fetchResponse,
     submitResponse,
     makeResponse,
     setReady,
+    submitProgress,
   }
 }
 

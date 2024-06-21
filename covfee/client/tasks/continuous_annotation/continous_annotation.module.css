@@ -1,0 +1,231 @@
+.action-annotation-task {
+  display: flex;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.gallery-overlay {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 2%;
+  left: 0%;
+  background: rgba(49, 49, 49, 0.9);
+  z-index: 1000;
+  overflow: auto;
+}
+
+.gallery-overlay h1 {
+  color: white;
+  font-size: 2em;
+  text-align: center;
+  margin-top: 2%;
+}
+.gallery-overlay-image {
+  height: auto;
+  width: 95%;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.sidebar {
+  font-size: 1em;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #f0f0f0; /* Example background color */
+  padding: 12px;
+}
+.left-sidebar {
+  min-width: 300px; /* Set a minimum width */
+  width: 22%;
+  transition: margin 0.3s ease;
+}
+
+.left-sidebar-hidden {
+  margin-left: -22%;
+}
+
+.sidebar-block {
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 6px;
+  background-color: rgb(231, 229, 229);
+  border: 1px solid blue;
+}
+
+.selected-participant-svg {
+  margin-top: 4px;
+  background-color: black;
+  width: 25vh;
+}
+
+.sidebar-block h1 {
+  font-size: 18px;
+  text-align: center;
+  font-weight: bold;
+}
+.sidebar-block h2 {
+  margin-top: 12px;
+  margin-bottom: 4px;
+  font-size: 16px;
+}
+
+.right-sidebar {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  width: 12%;
+  min-width: 200px; /* Set a minimum width */
+  align-self: flex-end;
+}
+
+.sidebarBottom {
+  margin-top: auto;
+}
+
+.gallery-button {
+  font-size: 16px;
+  width: 100%;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.main-content {
+  display: flex;
+  justify-content: flex-end;
+  flex: 1;
+  flex-direction: row;
+}
+
+.main-content-video-and-guide {
+  padding-top: 2px;
+  flex-grow: 1;
+  max-width: 85vw;
+  max-height: "50px";
+}
+
+.main-content video-js {
+  height: 100px;
+}
+
+.action-task-dropdown-title {
+  text-align: left;
+}
+.action-task-dropwdown {
+  font-size: 30px;
+}
+
+.action-task-dropwdown-button {
+  width: 100%;
+  border: 1px solid blue;
+  border-radius: 6px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.action-task-dropdown-button-text {
+  flex: 1;
+  text-align: left;
+}
+
+.action-task-dropwdown-button-icon {
+  margin-left: 8px;
+}
+.action-task-dropwdown-button-icon-placeholder {
+  width: 16px;
+}
+
+.action-task-dropdown-menu {
+  max-height: 300px;
+  overflow: auto;
+}
+
+.action-task-progress-bar {
+  width: 95%;
+}
+
+.action-task-progress-text {
+  margin-top: 10px;
+  text-align: left;
+}
+
+.action-task-progress-finished-message {
+  margin-top: 10px;
+  font-weight: "bold";
+  font-size: 16px;
+  text-align: center;
+}
+
+.action-task-progress-code {
+  font-weight: "bold";
+  font-size: 22px;
+  text-align: center;
+}
+
+.action-task-progress-completion-button {
+  width: 100%;
+  font-size: 16px;
+}
+
+.action-annotation-flashscreen {
+  display: flex;
+  justify-content: center; /* Horizontally center the content */
+  align-items: center; /* Vertically center the content */
+  border: 1px solid black;
+  border-radius: 6px;
+  height: 10vh;
+  width: 100%;
+  flex-direction: column;
+}
+
+.instructions-box-overlay {
+  display: flex;
+  background: rgba(49, 49, 49, 0.8);
+  justify-content: center;
+  flex-direction: column;
+  width: 40%;
+  color: white;
+  position: relative;
+  left: 2%;
+  top: -22vh;
+  height: 20vh;
+  padding-left: 3%;
+  padding-right: 3%;
+}
+
+.instruction-text-during-annotation {
+  font-size: 1rem;
+}
+
+.action-annotation-flashscreen h1 {
+  font-size: 20px;
+  margin: 0px;
+}
+
+.action-annotation-flashscreen-active-key-pressed {
+  background-color: greenyellow;
+}
+
+.action-annotation-flashscreen-active-key-not-pressed {
+  background-color: green;
+}
+
+.camview-selection-svg-container {
+  width: 100%;
+  max-width: 100%;
+}
+
+.camview-selection-image {
+  width: 100%;
+  max-width: 100%;
+  max-height: 80vh;
+  height: auto; /* this is critical so that getBoundingClientRect is accurate */
+}
+
+.camview-selection-bounding-box {
+  background-color: rgba(255, 217, 0, 0.2);
+  border: 3px solid rgb(255, 230, 0);
+}

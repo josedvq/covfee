@@ -1,14 +1,14 @@
 import * as React from "react"
 
-import { JourneyType as FullJourney } from "../types/journey"
-import { JourneyType as ReducedJourney } from "../types/hit"
-import { myerror, fetcher, myinfo, throwBadResponse } from "../utils"
-import download from "downloadjs"
 import Constants from "Constants"
+import download from "downloadjs"
+import { JourneyType as ReducedJourney } from "../types/hit"
+import { JourneyType as FullJourney } from "../types/journey"
+import { fetcher, myerror, myinfo, throwBadResponse } from "../utils"
 
 type JourneyType = FullJourney | ReducedJourney
 
-export type { JourneyType, FullJourney, ReducedJourney }
+export type { FullJourney, JourneyType, ReducedJourney }
 
 export const useJourneyFns = <T extends JourneyType>(journey: T) => {
   const getApiUrl = () => {
@@ -84,4 +84,9 @@ export const submitJourney = (id: string) => {
     body: JSON.stringify({ success: true }),
   }
   return fetcher(url, requestOptions).then(throwBadResponse)
+}
+
+export const fetchAnnotator = (id: string) => {
+  const url = Constants.api_url + "/journeys/" + id + "/annotator"
+  return fetcher(url).then(throwBadResponse)
 }

@@ -52,6 +52,12 @@ export interface BaseTaskProps {
    * Returns a submit button to be rendered in the task. Alternative to directly calling onSubmit.
    */
   renderSubmitButton: (arg0?: any) => React.ReactNode
+
+  /**
+   * To be called when wanting to update the task's numeric progress (value between 0 and 100),
+   * making the information propagate into the admin interface.
+   */
+  onUpdateProgress: (progress: number) => void
 }
 
 export interface CovfeeTaskProps<T> extends BaseTaskProps {

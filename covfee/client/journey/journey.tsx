@@ -1,15 +1,13 @@
-import * as React from "react"
-import styled from "styled-components"
-import { generatePath } from "react-router"
 import { ArrowRightOutlined, PlusOutlined } from "@ant-design/icons"
-import { Row, Col, Typography, Menu, Button, Modal, Progress } from "antd"
+import { Button, Menu, Modal, Progress, Row } from "antd"
 import "antd/dist/reset.css"
+import * as React from "react"
+import { generatePath } from "react-router"
+import styled from "styled-components"
 
-import { myerror } from "../utils"
-import { MarkdownLoader } from "../tasks/utils/markdown_loader"
 import { CovfeeMenuItem } from "../gui"
-import { Sidebar } from "./sidebar"
-
+import { MarkdownLoader } from "../tasks/utils/markdown_loader"
+import { myerror } from "../utils"
 import {
   JourneyContext,
   JourneyContextType,
@@ -17,17 +15,18 @@ import {
   defaultTimerState,
 } from "./journey_context"
 import { NodeLoader } from "./node_loader"
+import { Sidebar } from "./sidebar"
 
-import "./journey.scss"
-import { FullJourney, fetchJourney, useJourney } from "../models/Journey"
-import { useState, useContext } from "react"
-import { AllPropsRequired } from "../types/utils"
-import { appContext } from "../app_context"
+import { useContext, useState } from "react"
 import { useParams } from "react-router-dom"
-import { ChatPopup } from "../chat/chat"
+import { appContext } from "../app_context"
 import { AppProvider } from "../app_provider"
+import { ChatPopup } from "../chat/chat"
 import { ChatProvider, chatContext } from "../chat_context"
+import { FullJourney, fetchJourney, useJourney } from "../models/Journey"
 import { Chat } from "../types/chat"
+import { AllPropsRequired } from "../types/utils"
+import "./journey.scss"
 import { Timer } from "./timer"
 
 type Props = {
@@ -41,13 +40,18 @@ type Props = {
    */
   routingEnabled?: boolean
 
+  /**
+   * Show the sidebar with the journey nodes
+   */
+  showSideBar?: boolean
+
   // ASYNC OPERATIONS
   // submitTaskResponse: (arg0: TaskResponseType, arg1: any) => Promise<TaskResponseType>
   // fetchTaskResponse: (arg0: TaskType) => Promise<TaskResponseType>
   /**
    * Called when the Hit submit button is clicked
    */
-  onSubmit?: () => Promise<any>
+  onSubmit?: () => Promise<any> | null
 }
 
 export const _JourneyPage: React.FC<Props> = (props) => {
@@ -55,6 +59,7 @@ export const _JourneyPage: React.FC<Props> = (props) => {
     () => ({
       routingEnabled: true,
       previewMode: false,
+      showSideBar: false,
       onSubmit: () => null,
       ...props,
     }),
@@ -112,6 +117,12 @@ export const _JourneyPage: React.FC<Props> = (props) => {
   }, [])
 
   const showCompletionInfo = React.useCallback(() => {
+    // FIXME: #CONFLAB this implementation ties strongly the submission logic
+    //        with immediately showing this pop up to redirect to prolific.
+    //        Instead, for the continuous annotation task, we wanted to
+    //        allow the user to confirm, to submit, and then decide when
+    //        to redirect, for better user experience.
+    return
     const config = journey.completionInfo
     return Modal.success({
       title: "HIT submitted!",
@@ -145,25 +156,30 @@ export const _JourneyPage: React.FC<Props> = (props) => {
   }, [journey])
 
   const handleSubmit = React.useCallback(() => {
-    args
-      .onSubmit()
-      .then(() => {
-        showCompletionInfo()
-      })
-      .catch((err) => {
-        if (err.message.includes("required tasks")) {
-          myerror(
-            err.message +
-              " Please make sure all tasks are marked green before submitting.",
-            err
-          )
-        } else {
-          myerror(
-            "Error submitting HIT. Please try again or contact the organizers.",
-            err
-          )
-        }
-      })
+    let callback = args.onSubmit()
+
+    if (callback instanceof Promise) {
+      callback
+        .then(() => {
+          showCompletionInfo()
+        })
+        .catch((err) => {
+          if (err.message.includes("required tasks")) {
+            myerror(
+              err.message +
+                " Please make sure all tasks are marked green before submitting.",
+              err
+            )
+          } else {
+            myerror(
+              "Error submitting HIT. Please try again or contact the organizers.",
+              err
+            )
+          }
+        })
+    } else {
+      showCompletionInfo()
+    }
   }, [args, showCompletionInfo])
 
   const gotoNextNode = React.useCallback(() => {
@@ -226,7 +242,14 @@ export const _JourneyPage: React.FC<Props> = (props) => {
         onClick={handleMenuClick}
         mode="horizontal"
         theme="dark"
-        style={{ position: "sticky", top: 0, width: "100%", zIndex: 1000 }}
+        style={{
+          position: "sticky",
+          top: 0,
+          width: "100%",
+          zIndex: 1000,
+          /* FIXME #CONFLAB: Force hiding for the mingle experiments using the continuous annotation task */
+          display: "none",
+        }}
       >
         <Menu.Item key="logo" disabled>
           <CovfeeMenuItem />
@@ -245,29 +268,35 @@ export const _JourneyPage: React.FC<Props> = (props) => {
           </Menu.Item>
         )}
       </Menu>
-      <SidebarContainer height={window.innerHeight}>
-        <Sidebar
-          nodes={journey.nodes}
-          currNode={currNodeIndex}
-          onChangeActiveTask={changeActiveNode}
-        >
-          {journey.submitted && (
-            <Button
-              type="primary"
-              style={{
-                width: "100%",
-                backgroundColor: "#5b8c00",
-                borderColor: "#5b8c00",
-              }}
-              onClick={showCompletionInfo}
-            >
-              Show completion code
-            </Button>
-          )}
-        </Sidebar>
-      </SidebarContainer>
+      {args.showSideBar && (
+        <SidebarContainer height={window.innerHeight}>
+          <Sidebar
+            nodes={journey.nodes}
+            currNode={currNodeIndex}
+            onChangeActiveTask={changeActiveNode}
+          >
+            {journey.submitted && (
+              <Button
+                type="primary"
+                style={{
+                  width: "100%",
+                  backgroundColor: "#5b8c00",
+                  borderColor: "#5b8c00",
+                }}
+                onClick={showCompletionInfo}
+              >
+                Show completion code
+              </Button>
+            )}
+          </Sidebar>
+        </SidebarContainer>
+      )}
 
-      <ContentContainer height={window.innerHeight}>
+      <ContentContainer
+        id="JourneyContentContainer"
+        showSideBar={args.showSideBar}
+        /*height={window.innerHeight}*/
+      >
         {hitExtra && (
           <></>
           // <Collapsible open={extraOpen}>
@@ -313,20 +342,28 @@ const SidebarContainer = styled.div<any>`
   position: sticky;
   display: inline-block;
   vertical-align: top;
-  top: 46px;
-  height: calc(100vh - 46px);
+  // top: 46px; // FIXME #CONFLAB: Force hiding for the mingle experiments using the continuous annotation task
+  height: calc(100vh);
   width: 25%;
   overflow: auto;
 `
 
-const ContentContainer = styled.div<any>`
+interface ContentContainerProps {
+  showSideBar: boolean
+  height?: number
+}
+
+const ContentContainer = styled.div<ContentContainerProps>`
   position: fixed;
-  top: 46px;
+  // top: 46px; // FIXME #CONFLAB: Force hiding for the mingle experiments using the continuous annotation task
   right: 0;
   display: inline-block;
   vertical-align: top;
-  height: calc(100vh - 46px);
-  width: calc(100% - 25%);
+  height: ${(props) =>
+    props.height
+      ? props.height
+      : "calc(100vh)"}; // FIXME #CONFLAB: Force hiding for the mingle experiments using the continuous annotation task
+  width: ${(props) => (props.showSideBar ? "calc(100% - 25%)" : "100%")};
   overflow: auto;
 `
 

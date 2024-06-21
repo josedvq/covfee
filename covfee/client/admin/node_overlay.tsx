@@ -1,8 +1,8 @@
 import * as React from "react"
 import { styled } from "styled-components"
 import { NodeLoader } from "../journey/node_loader"
-import { NodeType } from "../types/node"
 import { fetchNode } from "../models/Node"
+import { NodeType } from "../types/node"
 import { adminContext } from "./admin_context"
 
 export const NodeOverlay: React.FC<React.PropsWithChildren<{}>> = () => {

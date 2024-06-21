@@ -67,6 +67,20 @@ def response_submit(nid):
     return jsonify(res)
 
 
+@api.route("/nodes/<nid>/progress/<progress>")
+def set_progress(nid, progress: float):
+    node: NodeInstance = app.session.query(NodeInstance).get(int(nid))
+    node.progress = progress
+
+    if isinstance(node, TaskInstance):
+        payload = node.make_status_payload()
+        socketio.emit("status", payload, to=node.id)
+        socketio.emit("status", payload, namespace="/admin")
+
+    app.session.commit()
+    return "", 200
+
+
 # state management
 @api.route("/nodes/<nid>/manual/<status>")
 @admin_required
@@ -97,5 +111,4 @@ def restart_node(nid):
         socketio.emit("status", payload, namespace="/admin")
 
     app.session.commit()
-    return "", 200
     return "", 200

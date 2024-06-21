@@ -81,3 +81,12 @@ def node_ready(jid, nidx, value):
     socketio.emit("status", payload, namespace="/admin")
 
     return "", 200
+
+# Return the annotator data for the annotator working on this journey
+@api.route("/journeys/<jid>/annotator")
+@admin_required
+def annotator(jid):
+    res :JourneyInstance  = app.session.query(JourneyInstance).get(bytes.fromhex(jid))
+    if res.annotator is None:
+        return {}
+    return {"prolific_pid": res.annotator.prolific_id, "created_at": str(res.annotator.created_at)}

@@ -1,6 +1,6 @@
+import classNames from "classnames"
 import * as React from "react"
 import styled from "styled-components"
-import classNames from "classnames"
 
 import { NodeType } from "../types/node"
 
@@ -98,6 +98,12 @@ export const Sidebar: React.FC<Props> = (props) => {
             status={props.currNode === index ? "active" : "default"}
             active={props.currNode === index}
             onClickActivate={() => {
+              if (props.nodes[props.currNode].prerequisite) {
+                alert(
+                  "Please complete the current task before moving to the next one."
+                )
+                return
+              }
               props.onChangeActiveTask(index)
             }}
           />

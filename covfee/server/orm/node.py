@@ -177,6 +177,9 @@ class NodeInstance(Base):
     )
     status: Mapped[NodeInstanceStatus] = mapped_column(default=NodeInstanceStatus.INIT)
 
+    # Optional numeric [0-100] progress for the Node
+    progress: Mapped[Optional[float]] = mapped_column(default=None)
+
     dt_start: Mapped[Optional[datetime]]
     dt_pause: Mapped[Optional[datetime]]
     dt_count: Mapped[Optional[datetime]]
@@ -208,6 +211,10 @@ class NodeInstance(Base):
             stop_timer(self, "pause")
         except RuntimeError:
             pass
+
+    def reset_annotated_data(self) -> None:
+        # To be overriden by the respective TaskInstance
+        return
 
     def eval_expression(self, expression):
         var_values = {

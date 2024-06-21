@@ -1,7 +1,11 @@
+import { Action } from "@reduxjs/toolkit"
 import * as React from "react"
-import { io, Socket } from "socket.io-client"
+import { Socket } from "socket.io-client"
+import {
+  Action as ActionResponse,
+  State as StateResponse,
+} from "../server/socketio/types"
 import { UserContextMethods, UserState } from "./app_provider"
-import { UseChats } from "models/Chat"
 import { Chat, ChatMessage } from "./types/chat"
 import {
   JourneyAssoc,
@@ -9,14 +13,7 @@ import {
   NodeStatus,
   TaskResponseType,
 } from "./types/node"
-import {
-  State as StateResponse,
-  Action as ActionResponse,
-  ActionRequestPayload,
-  StateRequestPayload,
-} from "../server/socketio/types"
 import { UserConfig } from "./user_config"
-import { Action } from "@reduxjs/toolkit"
 
 export interface ServerToClientEvents {
   /**
@@ -63,6 +60,7 @@ export interface ServerToClientEvents {
     dt_count: string
     dt_finish: string
     t_elapsed: number
+    progress: number | null
   }) => void
 
   // for tasks with shared state

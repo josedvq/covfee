@@ -107,6 +107,10 @@ class TaskInstance(NodeInstance):
             return NotImplemented
         return hash(self) == hash(other)
 
+    def reset_annotated_data(self):
+        for annotation in self.annotations:
+            annotation.reset_data()
+
     def get_task_object(self):
         task_class = getattr(tasks, self.spec.spec["type"], BaseCovfeeTask)
         task_object = task_class(task=self, session=object_session(self))
@@ -146,6 +150,7 @@ class TaskInstance(NodeInstance):
             "dt_count": utils.datetime_to_str(self.dt_count),
             "dt_pause": utils.datetime_to_str(self.dt_pause),
             "t_elapsed": self.t_elapsed,
+            "progress": self.progress,
         }
 
     def pause(self, pause: bool):
@@ -154,9 +159,39 @@ class TaskInstance(NodeInstance):
         self.get_task_object().on_admin_pause()
 
     def make_results_dict(self):
-        return {
-            "responses": [response.make_results_dict() for response in self.responses]
-        }
+        results_list = []
+        for response in self.responses:
+            result_dict = response.make_results_dict()
+
+            # FIXME: #CONFLAB: do this loop for the getattr in the annotations class
+            result_dict["annotations"] = {}
+            for annotation in self.annotations:
+                annotation_dict = {
+                    "participant": annotation.participant,
+                    "category": annotation.category,
+                }
+                if annotation.data_json is not None:
+                    annotation_dict["data"] = utils.NoIndentJSON(annotation.data_json)
+                else:
+                    annotation_dict["data"] = None
+
+                result_dict["annotations"][annotation.id] = annotation_dict
+
+            result_dict["journeys"] = []
+            for journey in self.journeys:
+                journey_dict = {"global_unique_id": journey.spec.global_unique_id}
+                annotator = journey.annotator
+                if annotator is not None and annotator.prolific_id is not None:
+                    journey_dict["prolific_id"] = annotator.prolific_id
+                    journey_dict["prolific_study_id"] = annotator.prolific_study_id
+                else:
+                    journey_dict["prolific_id"] = None
+                    journey_dict["prolific_study_id"] = None
+                result_dict["journeys"].append(journey_dict)
+
+            results_list.append(result_dict)
+
+        return {"responses": results_list}
 
 
 # after a TaskInstance is inserted, we attach its

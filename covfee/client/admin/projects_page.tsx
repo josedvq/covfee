@@ -25,7 +25,6 @@ const ProjectsPage = (props: Props) => {
   const [projects, setProjects] = React.useState<ProjectType[]>(null)
   const [project, setProject] = React.useState<ProjectType>(null)
 
-  // const [instances, setInstances] = React.useState<HitInstanceType[]>();
   const { clearChats, addChats, clearChatListeners, addChatListeners } =
     React.useContext(chatContext)
 

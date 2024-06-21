@@ -34,8 +34,9 @@ class ContinuousAnnotationTask(BaseCovfeeTask):
             self.session.add(
                 Annotation(
                     task_id=self.task.id,
-                    name=annot["name"],
+                    category=annot["category"],
                     interface=annot["interface"],
+                    participant=annot["participant"],
                 )
             )
 
@@ -80,6 +81,8 @@ def update_annotation(annotid):
     updates = request.json
     for key, value in updates.items():
         if hasattr(annot, key):
+            if key in ["created_at", "updated_at"]:
+                continue
             setattr(annot, key, value)
 
     app.session.commit()
@@ -106,9 +109,10 @@ class Annotation(Base):
 
     # link to covfee node / task
     task_id: Mapped[int] = mapped_column(ForeignKey("nodeinstances.id"))
-    task: Mapped[TaskInstance] = relationship()
+    task: Mapped[TaskInstance] = relationship("TaskInstance", backref="annotations")
 
-    name: Mapped[str]
+    category: Mapped[str]
+    participant: Mapped[str]
     interface: Mapped[Dict[str, Any]]  # json column
     data_json: Mapped[Optional[Dict[str, Any]]]
 
@@ -116,3 +120,6 @@ class Annotation(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(
         default=datetime.datetime.now, onupdate=datetime.datetime.now
     )
+
+    def reset_data(self) -> None:
+        self.data_json = None
