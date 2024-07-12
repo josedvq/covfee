@@ -6,12 +6,14 @@ import hmac
 import binascii
 import hashlib
 import datetime
-from typing import List, TYPE_CHECKING
+import secrets
+from typing import List, TYPE_CHECKING, Optional, ClassVar
 from hashlib import sha256
 from pprint import pformat
 
 from flask import current_app as app
-from sqlalchemy import ForeignKey, UniqueConstraint
+
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 # from ..db import Base
@@ -20,13 +22,19 @@ from .base import Base
 from .journey import JourneySpec, JourneyInstance
 from .project import Project
 from .node import JourneyNode, NodeInstance, NodeSpec
+from .utils import NoIndentJSONEncoder
 
 
 class HITSpec(Base):
     __tablename__ = "hitspecs"
-    __table_args__ = (UniqueConstraint("project_id", "name"),)
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
+
+    # An optional id that the study administrator can attach to this HIT
+    # making it identifiable through multiple launches of "covfee make"
+    # and thus being able to add more hits/journeys without destroying
+    # the database. It's a string as it is intended to be human-readable
+    global_unique_id: Mapped[Optional[str]] = mapped_column(unique=True)
 
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
     # project_id = Column(Integer, ForeignKey("projects.name"))
@@ -52,10 +60,18 @@ class HITSpec(Base):
         if name is None:
             name = binascii.b2a_hex(os.urandom(8)).decode("utf-8")
         self.name = name
-        self.journeyspecs = journeyspecs
-        print(f"HIT: {len(journeyspecs)}")
-        self.nodespecs = [n for js in journeyspecs for n in js.nodespecs]
-        print(f"HIT: {len(self.nodespecs)}")
+        self.append_journeyspecs(journeyspecs)
+
+    def append_journeyspecs(self, journeyspecs: List[JourneySpec]):
+        self.journeyspecs += journeyspecs
+        print(
+            f"HIT - Appended {len(journeyspecs)} of {len(self.journeyspecs)} journeyspecs"
+        )
+        new_nodespecs = [n for js in journeyspecs for n in js.nodespecs]
+        self.nodespecs += new_nodespecs
+        print(
+            f"HIT: - Appended {len(new_nodespecs)} of {len(self.nodespecs)} nodespecs"
+        )
 
     def make_journey(self):
         journeyspec = JourneySpec()
@@ -65,16 +81,9 @@ class HITSpec(Base):
     def instantiate(self, n=1):
         for _ in range(n):
             instance = HITInstance(
-                # (id, index)
-                id=sha256(f"{self.id}_{len(self.journeyspecs)}".encode()).digest(),
                 journeyspecs=self.journeyspecs,
             )
             self.instances.append(instance)
-
-    def launch(self, num_instances=1):
-        if self.project is None:
-            self.project = Project()
-        self.project.launch(num_instances)
 
     def get_api_url(self):
         return f'{app.config["API_URL"]}/hits/{self.id}'
@@ -105,7 +114,8 @@ class HITSpec(Base):
 
 
 class HITInstance(Base):
-    """Represents an instance of a HIT, to be solved by one user
+    """Represents an instance of a HIT, to be solved by one or multiple users through their
+    respective journeys
     - one HIT instance maps to one URL that can be sent to a participant to access and solve the HIT.
     - a HIT instance is specified by the abstract HIT it is an instance of.
     - a HIT instance is linked to a list of tasks (instantiated task specifications),
@@ -134,15 +144,21 @@ class HITInstance(Base):
         default=datetime.datetime.now, onupdate=datetime.datetime.now
     )
 
-    def __init__(self, id: bytes, journeyspecs: List[JourneySpec] = []):
+    instance_counter: ClassVar[int] = 0
+
+    def __init__(self, journeyspecs: List[JourneySpec] = []):
         super().init()
-        self.id = id
-        self.preview_id = sha256((id + "preview".encode())).digest()
+        self.id = HITInstance.generate_new_id()
+        self.preview_id = sha256((self.id + "preview".encode())).digest()
         self.submitted = False
 
         # instantiate every node only once
+        self.instantiate_new_journeys(journeyspecs)
+
+    def instantiate_new_journeys(self, journeyspecs: List[JourneySpec]):
+        # instantiate every node only once
         nodespec_to_nodeinstance = dict()
-        for i, journeyspec in enumerate(journeyspecs):
+        for journeyspec in journeyspecs:
             journey = journeyspec.instantiate()
             journey.hit_id = self.id
 
@@ -160,12 +176,26 @@ class HITInstance(Base):
                     )
                 )
             self.journeys.append(journey)
-        self.nodes = list(nodespec_to_nodeinstance.values())
+        new_nodes = list(nodespec_to_nodeinstance.values())
+        self.nodes = self.nodes + new_nodes
 
         # call node.reset when the graph is ready
         # ie. when all the links are set in the ORM
-        for node in self.nodes:
+        for node in new_nodes:
             node.reset()
+
+    @staticmethod
+    def generate_new_id():
+        if os.environ.get("COVFEE_ENV") == "dev":
+            # return predictable id in dev mode
+            # so that ids don't change on every run
+            # Note, in a previous implementation, the id was a function of the associated
+            # len(HITSpec.journeyspecs). Unclear why.
+            id = hashlib.sha256((str(HITInstance.instance_counter).encode())).digest()
+            HITInstance.instance_counter += 1
+        else:
+            id = secrets.token_bytes(32)
+        return id
 
     def get_api_url(self):
         return f'{app.config["API_URL"]}/instances/{self.id.hex():s}'
@@ -213,6 +243,7 @@ class HITInstance(Base):
     def make_results_dict(self):
         return {
             "hit_id": self.id.hex(),
+            "global_unique_id": self.spec.global_unique_id,
             "nodes": {node.id: node.make_results_dict() for node in self.nodes},
             "journeys": [journey.make_results_dict() for journey in self.journeys],
         }
@@ -220,7 +251,10 @@ class HITInstance(Base):
     def stream_download(self, z, base_path):
         results_dict = self.make_results_dict()
         stream = BytesIO()
-        stream.write(json.dumps(results_dict).encode())
+
+        stream.write(
+            json.dumps(results_dict, indent=4, cls=NoIndentJSONEncoder).encode()
+        )
         stream.seek(0)
         z.write_iter(
             os.path.join(

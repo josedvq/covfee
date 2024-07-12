@@ -1,23 +1,22 @@
 import * as React from "react"
 import styled from "styled-components"
 
-import { ManualStatuses, NodeType } from "../../types/node"
-import { Modal } from "antd"
-const { confirm } = Modal
 import {
-  LinkOutlined,
+  EyeOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
   RedoOutlined,
   WechatOutlined,
-  EyeOutlined,
 } from "@ant-design/icons"
-import { useNodeFns } from "../../models/Node"
-import { NodeStatusToColor, StatusIcon, getNodeStatus } from "../utils"
+import { Modal } from "antd"
 import classNames from "classnames"
 import { chatContext } from "../../chat_context"
-import { ButtonsContainer, Row } from "./utils"
+import { useNodeFns } from "../../models/Node"
+import { NodeType } from "../../types/node"
 import { adminContext } from "../admin_context"
+import { NodeStatusToColor, StatusIcon, getNodeStatus } from "../utils"
+import { ButtonsContainer, Row } from "./utils"
+const { confirm } = Modal
 
 type NodeRowProps = {
   node: NodeType
@@ -46,6 +45,9 @@ export const NodeRow = ({
           <StatusIcon color={NodeStatusToColor[getNodeStatus(node)]} />
         </span>
         {node.name}[{node.id}] - {node.status}
+        {typeof node.progress === "number"
+          ? "(" + node.progress.toFixed(1) + "%)"
+          : ""}
       </a>
       <NodeButtons node={node} />
     </Row>

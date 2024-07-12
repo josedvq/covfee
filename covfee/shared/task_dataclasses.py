@@ -4,9 +4,11 @@ from .dataclass import CovfeeTask
 class ContinuousAnnotationTaskSpec(CovfeeTask):
     type: str = "ContinuousAnnotationTask"
     annotations: List[Any]
-    media: Any
+    media: List[Any]
     name: str
     userCanAdd: bool
+    # When specified: True, means audio on is mandatory, False means audio off (muted) is mandatory.
+    audioRequirement: bool
     # Seconds countdown after start condition met.
     countdown: float
     # Instructions to be displayed for the node
@@ -22,8 +24,10 @@ class ContinuousAnnotationTaskSpec(CovfeeTask):
     # Node is marked as a prerrequisite
     # Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
     prerequisite: bool
+    prolificCompletionCode: str
     # If true, this node must have a valid submission before the HIT can be submitted
     required: bool
+    taskVariantPopupBulletPoints: List[str]
     # Time to complete the task
     timer: float
     # Empty timer is started everytime the task is empty (no journeys online)
@@ -38,47 +42,53 @@ class ContinuousAnnotationTaskSpec(CovfeeTask):
     # This applies both to multiple clients in the same journey and across journeys.
     # Internally covfee uses socketio to synchronize task state.
     useSharedState: bool
+    videoTutorialUrl: str
     # If true, all journeys must click ready to start the task
     wait_for_ready: bool
-    def __init__(self, annotations, media, name, userCanAdd, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, wait_for_ready = None):
+    def __init__(self, annotations, media, name, userCanAdd, audioRequirement = None, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, n_pause = None, n_start = None, prerequisite = False, prolificCompletionCode = None, required = True, taskVariantPopupBulletPoints = None, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, videoTutorialUrl = None, wait_for_ready = None):
         """
         ### Parameters
         0. annotations : List[Any]
-        1. media : Any
+        1. media : List[Any]
         2. name : str
         3. userCanAdd : bool
-        4. countdown : float
+        4. audioRequirement : bool
+            - When specified: True, means audio on is mandatory, False means audio off (muted) is mandatory.
+        5. countdown : float
             - Seconds countdown after start condition met.
-        5. instructions : str
+        6. instructions : str
             - Instructions to be displayed for the node
-        6. instructions_type : str
+        7. instructions_type : str
             - How the instructions will be displayed
-        7. max_submissions : float
+        8. max_submissions : float
             - Maximum number of submissions a user can make for the task.
-        8. n_pause : float
+        9. n_pause : float
             - If the number of subjects is n_pause or less, the task will be paused
-        9. n_start : float
+        10. n_start : float
             - Number of jorneys required to start task
-        10. prerequisite : bool
+        11. prerequisite : bool
             - Node is marked as a prerrequisite
 Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
-        11. required : bool
+        12. prolificCompletionCode : str
+        13. required : bool
             - If true, this node must have a valid submission before the HIT can be submitted
-        12. timer : float
+        14. taskVariantPopupBulletPoints : List[str]
+        15. timer : float
             - Time to complete the task
-        13. timer_empty : float
+        16. timer_empty : float
             - Empty timer is started everytime the task is empty (no journeys online)
 If the timer reaches zero, the task is set to finished state.
-        14. timer_pausable : bool
+        17. timer_pausable : bool
             - If true, the timer will pause when the task is paused.
-        15. timer_pause : float
+        18. timer_pause : float
             - Pause timer is started every time the task enters paused state
 If timer reaches zero, the task is set to finished state.
-        16. useSharedState : bool
+        19. useSharedState : bool
             - If true, the task state will be synced between clients.
 This applies both to multiple clients in the same journey and across journeys.
 Internally covfee uses socketio to synchronize task state.
-        17. wait_for_ready : bool
+        20. videoTutorialUrl : str
+        21. wait_for_ready : bool
             - If true, all journeys must click ready to start the task
         """
 
@@ -88,6 +98,7 @@ Internally covfee uses socketio to synchronize task state.
         self.media = media
         self.name = name
         self.userCanAdd = userCanAdd
+        self.audioRequirement = audioRequirement
         self.countdown = countdown
         self.instructions = instructions
         self.instructions_type = instructions_type
@@ -95,12 +106,15 @@ Internally covfee uses socketio to synchronize task state.
         self.n_pause = n_pause
         self.n_start = n_start
         self.prerequisite = prerequisite
+        self.prolificCompletionCode = prolificCompletionCode
         self.required = required
+        self.taskVariantPopupBulletPoints = taskVariantPopupBulletPoints
         self.timer = timer
         self.timer_empty = timer_empty
         self.timer_pausable = timer_pausable
         self.timer_pause = timer_pause
         self.useSharedState = useSharedState
+        self.videoTutorialUrl = videoTutorialUrl
         self.wait_for_ready = wait_for_ready
 
 

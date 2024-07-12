@@ -15,6 +15,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from .annotator import Annotator
 from .base import Base
 from .chat import Chat, ChatJourney
 from .node import JourneyNode, JourneySpecNodeSpec
@@ -28,6 +29,18 @@ class JourneySpec(Base):
     __tablename__ = "journeyspecs"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[Optional[str]]
+
+    # An optional id that the study administrator can attach to this Journey
+    # making it identifiable through multiple launches of "covfee make"
+    # and thus being able to add more hits/journeys without destroying
+    # the database. It's a string as it is intended to be human-readable
+    global_unique_id: Mapped[Optional[str]] = mapped_column(unique=True)
+
+    # Indicates whether this journey will be linked to the given study id
+    # from prolific academic, such that when annotators are assigned journeys
+    # , it will only assign journeys corresponding to the same study id as the
+    # incoming annotator.
+    prolific_study_id: Mapped[Optional[str]] = mapped_column()
 
     # spec relationships
     # up
@@ -85,7 +98,12 @@ class JourneyInstanceStatus(enum.Enum):
 
 
 class JourneyInstance(Base):
-    """Represents an instance of a HIT, to be solved by one user"""
+    """Represents an instance of a journey, to be solved by one user
+    - one Journey instance maps to one URL that can be sent to a participant to access and solve the HIT.
+    - a Journey instance is specified by the abstract JourneySpec it is an instance of.
+    - a Journey instance is linked to a list of tasks (instantiated task specifications),
+    which hold the responses for the Journey
+    """
 
     __tablename__ = "journeyinstances"
 
@@ -105,6 +123,11 @@ class JourneyInstance(Base):
     # used to store info associated to (chat, journey) like read status
     chat_associations: Mapped[List[ChatJourney]] = relationship(
         back_populates="journey", cascade="all,delete"
+    )
+
+    # annotator associated to this journey
+    annotator: Mapped[Optional[Annotator]] = relationship(
+        back_populates="journey_instance", cascade="all,delete"
     )
 
     # down
@@ -150,7 +173,7 @@ class JourneyInstance(Base):
     )
 
     @staticmethod
-    def get_id():
+    def generate_new_id():
         if os.environ.get("COVFEE_ENV") == "dev":
             # return predictable id in dev mode
             # so that URLs don't change on every run
@@ -164,13 +187,17 @@ class JourneyInstance(Base):
 
     def __init__(self):
         super().init()
-        self.id = JourneyInstance.get_id()
+        self.id = JourneyInstance.generate_new_id()
         self.preview_id = hashlib.sha256((self.id + "preview".encode())).digest()
         self.submitted = False
         self.interface = {}
         self.aux = {}
         self.config = {}
         self.chat = Chat(self)
+
+    def reset_nodes_annotated_data(self):
+        for node in self.nodes:
+            node.reset_annotated_data()
 
     def get_url(self):
         return f'{app.config["APP_URL"]}/journeys/{self.id.hex():s}'
@@ -248,4 +275,7 @@ class JourneyInstance(Base):
         return instance_dict
 
     def make_results_dict(self):
-        return {"nodes": [node.id for node in self.nodes]}
+        return {
+            "nodes": [node.id for node in self.nodes],
+            "global_unique_id": self.spec.global_unique_id,
+        }

@@ -1,10 +1,10 @@
-import React, { useState } from "react"
-import { HitInstanceType } from "../types/hit"
-import { fetcher, throwBadResponse } from "../utils"
 import Constants from "Constants"
+import React, { useState } from "react"
 import { MainSocket, ServerToClientEvents } from "../app_context"
-import { JourneyType } from "./Journey"
+import { HitInstanceType } from "../types/hit"
 import { NodeType } from "../types/node"
+import { fetcher, throwBadResponse } from "../utils"
+import { JourneyType } from "./Journey"
 
 export const useHitInstances = (
   data: HitInstanceType[],
@@ -85,6 +85,7 @@ export const useHitInstances = (
         dt_count: data.dt_count,
         dt_finish: data.dt_finish,
         t_elapsed: data.t_elapsed,
+        progress: data.progress !== null ? +data.progress : null,
       })
     }
 
