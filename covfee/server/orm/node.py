@@ -262,6 +262,7 @@ class NodeInstance(Base):
                 NodeInstanceStatus.RUNNING,
             ]:
                 self.status = NodeInstanceStatus.PAUSED
+            # update the regular node status
             self.check_n()
 
         elif to_status == NodeInstanceManualStatus.PAUSED:
@@ -431,7 +432,6 @@ class NodeInstance(Base):
 
         elif self.status in [NodeInstanceStatus.RUNNING]:
             n_pause = self.spec.settings["n_pause"]
-            print(n_pause)
             if n_pause is not None and len(self.curr_journeys) <= n_pause:
                 self.set_status(NodeInstanceStatus.PAUSED, stop_timers=True)
 

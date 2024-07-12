@@ -554,6 +554,8 @@ class VideocallTaskSpec(CovfeeTask):
     prerequisite: bool
     # If true, this node must have a valid submission before the HIT can be submitted
     required: bool
+    # Recording options for OpenVIDU
+    serverRecording: Any
     # Time to complete the task
     timer: float
     # Empty timer is started everytime the task is empty (no journeys online)
@@ -573,7 +575,7 @@ class VideocallTaskSpec(CovfeeTask):
     videoOff: bool
     # If true, all journeys must click ready to start the task
     wait_for_ready: bool
-    def __init__(self, name, allowMute = True, allowScreenShare = True, allowStopVideo = True, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, muted = False, n_pause = None, n_start = None, prerequisite = False, required = True, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, videoOff = False, wait_for_ready = None):
+    def __init__(self, name, allowMute = True, allowScreenShare = True, allowStopVideo = True, countdown = 0, instructions = None, instructions_type = 'default', max_submissions = 0, muted = False, n_pause = None, n_start = None, prerequisite = False, required = True, serverRecording = None, timer = None, timer_empty = None, timer_pausable = None, timer_pause = None, useSharedState = None, videoOff = False, wait_for_ready = None):
         """
         ### Parameters
         0. name : str
@@ -602,24 +604,26 @@ class VideocallTaskSpec(CovfeeTask):
 Prerrequisite nodes must be completed before the rests of the nodes in the HIT are revealed.
         12. required : bool
             - If true, this node must have a valid submission before the HIT can be submitted
-        13. timer : float
+        13. serverRecording : Any
+            - Recording options for OpenVIDU
+        14. timer : float
             - Time to complete the task
-        14. timer_empty : float
+        15. timer_empty : float
             - Empty timer is started everytime the task is empty (no journeys online)
 If the timer reaches zero, the task is set to finished state.
-        15. timer_pausable : bool
+        16. timer_pausable : bool
             - If true, the timer will pause when the task is paused.
-        16. timer_pause : float
+        17. timer_pause : float
             - Pause timer is started every time the task enters paused state
 If timer reaches zero, the task is set to finished state.
-        17. useSharedState : bool
+        18. useSharedState : bool
             - If true, the task state will be synced between clients.
 This applies both to multiple clients in the same journey and across journeys.
 Internally covfee uses socketio to synchronize task state.
-        18. videoOff : bool
+        19. videoOff : bool
             - Call is audio only
 video is always off
-        19. wait_for_ready : bool
+        20. wait_for_ready : bool
             - If true, all journeys must click ready to start the task
         """
 
@@ -638,6 +642,7 @@ video is always off
         self.n_start = n_start
         self.prerequisite = prerequisite
         self.required = required
+        self.serverRecording = serverRecording
         self.timer = timer
         self.timer_empty = timer_empty
         self.timer_pausable = timer_pausable

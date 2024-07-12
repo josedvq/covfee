@@ -12,6 +12,11 @@ OPENVIDU_SECRET = "MY_SECRET"
 class VideocallTask(BaseCovfeeTask):
     def _request_session_id(self):
         # https://openvidu.discourse.group/t/session-lifecycle/103/2
+
+        recordingOptions = self.task.spec.spec["serverRecording"]
+        if recordingOptions is None:
+            recordingOptions = {}
+
         try:
             response = requests.post(
                 OPENVIDU_URL + "openvidu/api/sessions",
@@ -20,7 +25,8 @@ class VideocallTask(BaseCovfeeTask):
                 headers={"Content-type": "application/json"},
                 json={
                     "mediaMode": "ROUTED",
-                    "recordingMode": "MANUAL",
+                    "recordingMode": "ALWAYS",
+                    "defaultRecordingProperties": {**recordingOptions},
                     "customSessionId": str(self.task.id),
                 },
                 timeout=2,
@@ -49,11 +55,23 @@ class VideocallTask(BaseCovfeeTask):
         response.raise_for_status()
         return response.json()["token"]
 
+    def on_start(self):
+        logger.info("VideocallTask:on_start")
+        # start recording
+
+        # response = requests.post(
+        #     OPENVIDU_URL + "openvidu/api/recordings/start",
+        #     verify=False,
+        #     auth=("OPENVIDUAPP", OPENVIDU_SECRET),
+        #     headers={"Content-type": "application/json"},
+        #     json={"session": str(self.task.id), **recordingOptions},
+        #     timeout=2,
+        # )
+        # response.raise_for_status()
+
     def on_join(self, journey=None):
         logger.info("VideocallTask:on_join")
         # retrieve or request a session ID for the call / room
-
-        # return {"session_id": 235235, "connection_token": 25235}
 
         try:
             session_id = self._request_session_id()

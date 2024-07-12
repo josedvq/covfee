@@ -114,8 +114,8 @@ def on_join(data):
 
     # update the journey and node status
     curr_journey.set_curr_node(curr_node)
-
     join_payload = get_on_join_payload(curr_node, curr_journey)
+    curr_node.check_n()
 
     emit("join", join_payload)
     app.logger.info(f"socketio: join: {str(join_payload)}")

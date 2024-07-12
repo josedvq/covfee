@@ -32,9 +32,6 @@ spec_consent_form = {
             },
         ]
     },
-    # "wait_for_ready": True,
-    # "countdown": 3,
-    # "timer": 5,
 }
 
 spec_instructions = {
@@ -91,16 +88,10 @@ j2_final = tasks.QuestionnaireTaskSpec(**spec_final_survey)
 
 videocall_task = tasks.VideocallTaskSpec(**spec_videocall)
 
-# videocall_task = tasks.IncrementCounterTaskSpec(**spec_videocall)
 
-hit = HIT("Joint counter")
+hit = HIT("Dyadic videocall")
 j1 = hit.add_journey(nodes=[j1_consent, j1_instructions, videocall_task, j1_final])
 j1 = hit.add_journey(nodes=[j2_consent, j2_instructions, videocall_task, j2_final])
-
-# t1 = tasks.IncrementCounterTaskSpec(**spec_videocall)
-# t2 = tasks.IncrementCounterTaskSpec(**spec_videocall)
-# hit = HIT("Joint counter")
-# hit.add_journey(nodes=[t1, t2])
 
 projects = [Project("My Project", email="example@example.com", hits=[hit])]
 app = CovfeeApp(projects)

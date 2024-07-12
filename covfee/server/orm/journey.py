@@ -204,8 +204,6 @@ class JourneyInstance(Base):
 
     def set_curr_node(self, node):
         self.curr_node = node
-        if node is not None:
-            node.check_n()
 
     def set_curr_node_index(self, index):
         self.curr_node_index = index
