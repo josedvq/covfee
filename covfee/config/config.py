@@ -2,7 +2,6 @@ import os
 from urllib.parse import urlparse
 
 import flask
-import flask
 
 
 class Config(flask.Config):
@@ -10,13 +9,13 @@ class Config(flask.Config):
     Like a dict, but provides methods to load local, dev or prod configs
     """
 
-    def __init__(self, mode: str = None):
+    def __init__(self, mode: str = None, host=None, port=None):
         super().__init__("/")
         self.from_object("covfee.config.defaults")
         if mode is not None:
-            self.load_environment(mode)
+            self.load_environment(mode, host, port)
 
-    def load_environment(self, mode: str):
+    def load_environment(self, mode: str, host=None, port=None):
         # config = flask.Config('/')
         self["COVFEE_ENV"] = mode
         # load the base configuration object
@@ -38,7 +37,15 @@ class Config(flask.Config):
             raise Exception(f"Unrecognized application mode {mode}.")
 
         # check if SSL enabled
-        self["SSL_ENABLED"] = "SSL_KEY_FILE" in self and "SSL_CERT_FILE" in self
+        ssl_enabled = "SSL_KEY_FILE" in self and "SSL_CERT_FILE" in self
+
+        host = host or self.get("HOST", "localhost")
+        port = port or self.get("PORT", 5001)
+        
+
+        # make the base urlparse
+        self['BASE_URL'] = f"http{'s' if ssl_enabled else ''}://{host}:{port}"
+        self['SSL_ENABLED'] = ssl_enabled
 
         # apply extended config
         app_path = urlparse(self["BASE_URL"]).path
@@ -76,7 +83,7 @@ class Config(flask.Config):
         return {
             # frontend only has two environments: production and development
             "env": "production"
-            if self["COVFEE_ENV"] in ["local", "deploy"]
+            if self["COVFEE_ENV"] == 'deploy'
             else "development",
             "www_url": self["PROJECT_WWW_URL"],
             "app_url": self["APP_URL"],

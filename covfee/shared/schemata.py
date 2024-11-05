@@ -1,11 +1,12 @@
-import os
 import json
+import os
 from collections import Counter
 
-from json_ref_dict import materialize, RefDict
+from json_ref_dict import RefDict, materialize
 
 from covfee.cli.utils import working_directory
 from covfee.config import config
+
 from .dataclass_maker import DataclassMaker
 
 
@@ -185,10 +186,15 @@ class Schemata:
             sch
             for sch in self.schemata["definitions"].values()
             if sch["title"].endswith("TaskSpec")
+            and sch["title"] != 'TaskSpec'
         ]
         definitions = self.schemata["definitions"]
 
         dm = DataclassMaker(definitions)
+
+        print(json.dumps(task_specs, indent=4))
+
+        # print(task_specs)
         pfile = dm.make_dataclasses_file(task_specs, definitions)
 
         with open(config["DATACLASSES_PATH"], "w") as f:

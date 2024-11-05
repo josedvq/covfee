@@ -1,1 +1,2 @@
-BASE_URL = "http://localhost:5001"
+HOST = "localhost"
+PORT = 5001

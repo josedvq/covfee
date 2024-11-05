@@ -15,7 +15,8 @@ from colorama import init as colorama_init
 from covfee.cli.utils import NPMPackage, working_directory
 from covfee.config import Config
 from covfee.launcher import Launcher, ProjectExistsException, launch_webpack
-from covfee.shared.validator.validation_errors import JavascriptError, ValidationError
+from covfee.shared.validator.validation_errors import (JavascriptError,
+                                                       ValidationError)
 
 from ...loader import Loader
 
@@ -94,17 +95,27 @@ def get_start_message(url):
 @click.option("--safe", is_flag=True, help="Enable authentication in local mode.")
 @click.option("--rms", is_flag=True, help="Re-makes the schemata for validation.")
 @click.option(
+    "--host",
+    default='localhost',
+    help="Host to pass to socketio.run()",
+)
+@click.option(
+    "--port",
+    default=5001,
+    help="Port to pass to socketio.run()",
+)
+@click.option(
     "--no-launch", is_flag=True, help="Do not launch covfee, only make the DB"
 )
 @click.argument("project_spec_file")
-def make(force, dev, deploy, safe, rms, no_launch, project_spec_file):
+def make(force, dev, deploy, safe, rms, host, port, no_launch, project_spec_file):
     mode = "local"
     if dev:
         mode = "dev"
     if deploy:
         mode = "deploy"
     unsafe = False if mode == "deploy" else (not safe)
-    config = Config(mode)
+    config = Config(mode, host, port)
 
     install_npm_packages()
 
@@ -122,9 +133,9 @@ def make(force, dev, deploy, safe, rms, no_launch, project_spec_file):
                     url=config["ADMIN_URL"] if unsafe else config["LOGIN_URL"]
                 )
             )
-            launcher.launch()
+            launcher.launch(host=host, port=port)
     except FileNotFoundError:
-        pass
+        return print(f"File {project_spec_file} not found.")
     except JavascriptError as err:
         return print(
             "This is likely an issue with the Covfee app. Please contact the developers or post an issue with the following error message. \n"

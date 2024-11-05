@@ -4,7 +4,11 @@ import os
 # Can be overwritten via project config
 
 # GENERAL SETTINGS
-BASE_URL = "http://localhost:5000"
+HOST = 'localhost'
+PORT = 5001
+SSL = False
+
+
 
 #  Security: Used as salt used for generating hash links and for json web tokens (JWT_SECRET_KEY)
 COVFEE_SECRET_KEY = "CHANGE_ME"

@@ -3,14 +3,14 @@
 These commands meant as development tools only
 """
 import os
-import click
 
+import click
 from flask import current_app as app
 from halo.halo import Halo
 
 from covfee.cli.utils import working_directory
-from covfee.shared.schemata import Schemata
 from covfee.config import config
+from covfee.shared.schemata import Schemata
 
 
 @click.group(name="covfee-dev")

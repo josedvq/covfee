@@ -1,4 +1,5 @@
-BASE_URL = "http://localhost:5002"
+HOST = "localhost"
+PORT = 5002
 
 COVFEE_SECRET_KEY = "MY_SECRET"
 ADMIN_USERNAME = "admin"

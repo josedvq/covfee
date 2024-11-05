@@ -36,14 +36,13 @@ class DataclassMaker:
         ]
 
     def is_constant(self, prop):
-        if "enum" in prop and len(prop["enum"]) == 1:
-            return True
-        return False
+        return ('const' in prop)
 
     def get_constant(self, prop):
-        if prop["type"] == "string":
-            return f'"{prop["enum"][0]}"'
-        return prop["enum"][0]
+        value = prop['const']
+        if isinstance(value, str):
+            return f'"{value}"'
+        return value
 
     def get_type_annotation(self, prop):
         prop = self.deref(prop)

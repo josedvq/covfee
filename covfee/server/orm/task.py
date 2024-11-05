@@ -111,7 +111,8 @@ class TaskInstance(NodeInstance):
     def get_task_object(self):
         task_class = getattr(tasks, self.spec.spec["type"], BaseCovfeeTask)
         task_object = task_class(
-            task=self, session=object_session(self), config=app.config
+            task=self, session=object_session(self)
+            # , config=app.config
         )
         return task_object
 
