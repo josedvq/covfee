@@ -3,6 +3,7 @@ from __future__ import annotations
 from pprint import pformat
 from typing import Any, Dict, List
 
+from flask import current_app as app
 from sqlalchemy import event
 from sqlalchemy.orm import Mapped, object_session, relationship
 
@@ -109,7 +110,9 @@ class TaskInstance(NodeInstance):
 
     def get_task_object(self):
         task_class = getattr(tasks, self.spec.spec["type"], BaseCovfeeTask)
-        task_object = task_class(task=self, session=object_session(self))
+        task_object = task_class(
+            task=self, session=object_session(self), config=app.config
+        )
         return task_object
 
     def to_dict(self):

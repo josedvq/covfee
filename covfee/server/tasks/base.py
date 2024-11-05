@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class CriticalError(Exception):
     """When raised from a custom task callback will cause a critical error message to be shown to the user."""
 
-    def __ini__(self, load_task=False):
+    def __init__(self, load_task=False):
         """_summary_
 
         Args:
@@ -26,9 +26,10 @@ class CriticalError(Exception):
 
 
 class BaseCovfeeTask:
-    def __init__(self, task: TaskInstance = None, session=None):
+    def __init__(self, task: TaskInstance = None, session=None, config=None):
         self.task = task
         self.session = session
+        self.config = config
 
     @classmethod
     def get_blueprint(cls) -> Blueprint | None:

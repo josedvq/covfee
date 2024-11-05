@@ -5,11 +5,18 @@ from covfee.logger import logger
 
 from .base import BaseCovfeeTask, CriticalError
 
-OPENVIDU_URL = "http://192.168.0.22:4443/"
-OPENVIDU_SECRET = "MY_SECRET"
+# OPENVIDU_URL = "http://192.168.0.22:4443/"
+# OPENVIDU_SECRET = "MY_SECRET"
 
 
 class VideocallTask(BaseCovfeeTask):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        assert "OPENVIDU_URL" in self.config, "OPENVIDU_URL not found in config"
+        assert "OPENVIDU_SECRET" in self.config, "OPENVIDU_SECRET not found in config"
+        self.openvidu_url = self.config["OPENVIDU_URL"]
+        self.openvidu_secret = self.config["OPENVIDU_SECRET"]
+
     def _request_session_id(self):
         # https://openvidu.discourse.group/t/session-lifecycle/103/2
 
@@ -19,9 +26,9 @@ class VideocallTask(BaseCovfeeTask):
 
         try:
             response = requests.post(
-                OPENVIDU_URL + "openvidu/api/sessions",
+                self.openvidu_url + "openvidu/api/sessions",
                 verify=False,
-                auth=("OPENVIDUAPP", OPENVIDU_SECRET),
+                auth=("OPENVIDUAPP", self.openvidu_secret),
                 headers={"Content-type": "application/json"},
                 json={
                     "mediaMode": "ROUTED",
@@ -45,9 +52,9 @@ class VideocallTask(BaseCovfeeTask):
 
     def _request_connection_token(self, session_id, journey_id):
         response = requests.post(
-            OPENVIDU_URL + "openvidu/api/sessions/" + session_id + "/connection",
+            self.openvidu_url + "openvidu/api/sessions/" + session_id + "/connection",
             verify=False,
-            auth=("OPENVIDUAPP", OPENVIDU_SECRET),
+            auth=("OPENVIDUAPP", self.openvidu_secret),
             headers={"Content-type": "application/json"},
             json={"data": journey_id},
             timeout=2,
