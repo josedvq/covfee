@@ -1,23 +1,19 @@
-from flask import (
-    request,
-    jsonify,
-    redirect,
-    Response,
-    stream_with_context,
-    current_app as app,
-)
 import zipstream
+from flask import Response
+from flask import current_app as app
+from flask import jsonify, redirect, request, stream_with_context
 
+from covfee.server.orm.journey import JourneyInstanceStatus
+from covfee.server.socketio.socket import socketio
+
+from ..orm import JourneyInstance
 from .api import api
 from .auth import admin_required
 from .utils import jsonify_or_404
-from ..orm import JourneyInstance
-from covfee.server.socketio.socket import socketio
 
 # Journeys
 
 
-# return one HIT instance
 @api.route("/journeys/<jid>")
 def journey(jid):
     with_nodes = request.args.get("with_nodes", True)
@@ -27,32 +23,25 @@ def journey(jid):
         res, with_nodes=with_nodes, with_response_info=with_response_info
     )
 
-
-# return one HIT instance
-@api.route("/journeys/<jid>/pause/<pause>")
-@admin_required
-def journey_pause(jid, pause):
-    pause = bool(int(pause))
+@api.route("/journeys/<jid>/submit")
+def journey_submit(jid):
     journey = app.session.query(JourneyInstance).get(bytes.fromhex(jid))
+    journey.submit()
 
-    for node in journey.nodes:
-        node.paused = pause
-
-        # notify users and admins
-        payload = node.make_status_payload(node)
-        socketio.emit("status", payload, to=node.id)
-        socketio.emit("status", payload, namespace="/admin")
     app.session.commit()
-    return "", 200
+    payload = journey.make_status_payload()
+    socketio.emit("journey_status", payload, to=journey.id.hex())
+    socketio.emit("journey_status", payload, namespace="/admin")
+
+    return jsonify_or_404(journey, with_nodes=False, with_response_info=True)
 
 
-@api.route("/journeys/<jid>/disable/<disable>")
+@api.route("/journeys/<jid>/disable")
 @admin_required
-def journey_disable(jid, disable):
-    disable = bool(int(disable))
+def journey_disable(jid):
     journey = app.session.query(JourneyInstance).get(bytes.fromhex(jid))
 
-    journey.disabled = disable
+    journey.set_status(JourneyInstanceStatus.DISABLED)
     app.session.commit()
 
     payload = journey.make_status_payload()

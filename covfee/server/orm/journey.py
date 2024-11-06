@@ -9,7 +9,6 @@ import secrets
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from flask import current_app as app
-
 # from ..db import Base
 from sqlalchemy import ForeignKey
 from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
@@ -119,8 +118,6 @@ class JourneyInstance(Base):
 
     interface: Mapped[Dict[str, Any]] = mapped_column()
 
-    # submitted = Mapped[bool]
-
     # status
     # one NodeInstance -> many JourneyInstance
     curr_node_index: Mapped[Optional[int]]
@@ -143,30 +140,19 @@ class JourneyInstance(Base):
     config: Mapped[Dict[str, Any]]
 
     # dates
-    # submitted: Mapped[datetime.datetime] = mapped_column(nullable=True)
+    dt_first_join: Mapped[datetime.datetime] = mapped_column(nullable=True)
+    dt_submitted: Mapped[datetime.datetime] = mapped_column(nullable=True)
     dt_created: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
     dt_updated: Mapped[datetime.datetime] = mapped_column(
         default=datetime.datetime.now, onupdate=datetime.datetime.now
     )
 
-    @staticmethod
-    def get_id():
-        if os.environ.get("COVFEE_ENV") == "dev":
-            # return predictable id in dev mode
-            # so that URLs don't change on every run
-            id = hashlib.sha256(
-                (str(JourneyInstance.instance_counter).encode())
-            ).digest()
-            JourneyInstance.instance_counter += 1
-        else:
-            id = secrets.token_bytes(32)
-        return id
+    
 
     def __init__(self):
         super().init()
-        self.id = JourneyInstance.get_id()
+        self.id = self.make_random_id()
         self.preview_id = hashlib.sha256((self.id + "preview".encode())).digest()
-        self.submitted = False
         self.interface = {}
         self.aux = {}
         self.config = {}
@@ -174,18 +160,23 @@ class JourneyInstance(Base):
 
     def get_url(self):
         return f'{app.config["APP_URL"]}/journeys/{self.id.hex():s}'
+    
+    def set_status(self, to_status: JourneyInstanceStatus):
+        if (
+            self.status == JourneyInstanceStatus.FINISHED or self.status == to_status
+        ):
+            return
+        
+        self.status = to_status
+
 
     def set_curr_node(self, node):
         self.curr_node = node
 
-    def set_curr_node_index(self, index):
-        self.curr_node_index = index
-        if index is not None:
-            self.nodes[index].check_n()
 
     def get_completion_code(self):
         return self.config.get(
-            "completionCode",
+            "completion_code",
             hashlib.sha256((self.id.hex() + app.config["COVFEE_SECRET_KEY"]).encode())
             .digest()
             .hex()[:12],
@@ -193,9 +184,9 @@ class JourneyInstance(Base):
 
     def get_completion_info(self):
         completion = {
-            "completionCode": self.get_completion_code(),
-            "redirectName": self.config.get("redirectName", None),
-            "redirectUrl": self.config.get("redirectUrl", None),
+            "completion_code": self.get_completion_code(),
+            "redirect_name": self.config.get("redirect_name", None),
+            "redirect_url": self.config.get("redirect_url", None),
         }
         return completion
 
@@ -206,18 +197,15 @@ class JourneyInstance(Base):
         return h.hexdigest()
 
     def submit(self):
-        if any(
-            [
-                (task.spec.required and not task.has_valid_response())
-                for task in self.tasks
-            ]
-        ):
-            # cant submit if at least one required task has no valid submissions
-            return False, "Some required tasks have no valid responses."
-        else:
-            self.submitted = True
-            self.submitted_at = datetime.datetime.now()
-            return True, None
+        # TODO: check that all required tasks have been completed
+        # TODO: implement two modes:
+        #  - submit only if all required tasks have been completed
+        #  - submit even if some required tasks have not been completed. Leave these with null response.
+        # for now we just submit without checks
+
+        self.status = JourneyInstanceStatus.FINISHED
+        self.dt_submitted = datetime.datetime.now()
+        return True, None
 
     def to_dict(self, with_nodes=False, with_response_info=False):
         instance_dict = super().to_dict()
@@ -243,9 +231,23 @@ class JourneyInstance(Base):
             instance_dict["nodes"] = [n.id for n in self.nodes]
 
         if self.status == JourneyInstanceStatus.FINISHED:
-            instance_dict["completionInfo"] = self.get_completion_info()
+            instance_dict["completion_info"] = self.get_completion_info()
 
         return instance_dict
 
     def make_results_dict(self):
         return {"nodes": [node.id for node in self.nodes]}
+    
+    def make_status_payload(self):
+        payload = {
+            "journey_id": self.id.hex(),
+            "hit_id": self.hit_id.hex(),
+            "num_connections": self.num_connections,
+            "status": self.status,
+            "dt_submitted": str(self.dt_submitted),
+        }
+
+        if self.status == JourneyInstanceStatus.FINISHED:
+            payload["completion_info"] = self.get_completion_info()
+
+        return payload

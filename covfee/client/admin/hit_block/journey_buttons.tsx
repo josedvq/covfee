@@ -1,20 +1,19 @@
-import * as React from "react"
-import { JourneyType } from "../../types/journey"
-import { Modal } from "antd"
-const { confirm } = Modal
 import {
   ApiOutlined,
   DeleteOutlined,
   LinkOutlined,
-  PauseOutlined,
   WechatOutlined,
 } from "@ant-design/icons"
-import { useJourneyFns } from "../../models/Journey"
-import { JourneyStatusToColor, StatusIcon, getJourneyStatus } from "../utils"
+import { Modal } from "antd"
 import classNames from "classnames"
-import { chatContext } from "../../chat_context"
-import { ButtonsContainer } from "./utils"
+import * as React from "react"
 import { styled } from "styled-components"
+import { chatContext } from "../../chat_context"
+import { useJourneyFns } from "../../models/Journey"
+import { JourneyType } from "../../types/journey"
+import { JourneyStatusToColor, StatusIcon, getJourneyStatus } from "../utils"
+import { ButtonsContainer } from "./utils"
+const { confirm } = Modal
 
 type JourneyRowProps = {
   journey: JourneyType
@@ -29,7 +28,7 @@ export const JourneyRow = ({
   onBlur,
 }: JourneyRowProps) => {
   const { addChats } = React.useContext(chatContext)
-  const { getUrl } = useJourneyFns(journey)
+  const { getUrl, pause, disable } = useJourneyFns(journey)
 
   return (
     <li
@@ -47,8 +46,8 @@ export const JourneyRow = ({
                 journey.num_connections == 0
                   ? "gray"
                   : journey.num_connections == 1
-                    ? "green"
-                    : "red",
+                  ? "green"
+                  : "red",
             }}
           >
             <ApiOutlined />
@@ -67,28 +66,17 @@ export const JourneyRow = ({
             <WechatOutlined />
           </button>
         </li>
+
         <li>
           <button
             onClick={() => {
               confirm({
-                title: "Are you sure you want to pause this journey?",
-                content: "All nodes in the journey will be paused.",
-                onOk() {},
-                onCancel() {},
-              })
-            }}
-          >
-            <PauseOutlined />
-          </button>
-        </li>
-        <li>
-          <button
-            onClick={() => {
-              confirm({
-                title: "Are you sure you want to delete this journey?",
+                title: "Are you sure you want to disable this journey?",
                 content:
-                  "Deleted journeys will display a 404 error when opened. Current users will be stopped.",
-                onOk() {},
+                  "Disabled journeys will display an error when opened. Current users will be stopped. This operation is not reversible.",
+                onOk() {
+                  disable()
+                },
                 onCancel() {},
               })
             }}

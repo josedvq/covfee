@@ -68,10 +68,9 @@ task_feedback = tasks.QuestionnaireTaskSpec(
     }
 )
 
+
 hit = HIT("Basic annotation")
 j1 = hit.add_journey(nodes=[task_demographics, task_instructions, task_feedback])
-
-
 
 projects = [Project("My Project", email="example@example.com", hits=[hit])]
 app = CovfeeApp(projects)

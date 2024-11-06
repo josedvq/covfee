@@ -1,22 +1,22 @@
-import { TaskSpec } from "./task"
 import { JourneySpec } from "./journey"
+import { TaskSpec } from "./task"
 import { MarkdownContentSpec } from "./utils"
 
 type NodeSpec = TaskSpec[]
 
-export interface completionInfo {
+export interface completion_info {
   /**
    * Completion code to give back to participants. Used for crowdsourcing in eg. Prolific
    */
-  completionCode?: string
+  completion_code?: string
   /**
    * Name/label of the website to redirect to
    */
-  redirectName?: string
+  redirect_name?: string
   /**
    * Redirect URL. URL to redirect participants to after completing the HIT.
    */
-  redirectUrl?: string
+  redirect_url?: string
 }
 /**
  * @TJS-additionalProperties false
@@ -49,5 +49,5 @@ export interface HitSpec {
   /**
    * HIT configuration and other params
    */
-  config?: completionInfo
+  config?: completion_info
 }

@@ -1,19 +1,10 @@
 from typing import Any, List, Tuple
 
-import covfee.launcher as launcher
 from covfee.logger import logger
-from covfee.server.orm import (
-    HITSpec as OrmHit,
-)
-from covfee.server.orm import (
-    JourneySpec as OrmJourney,
-)
-from covfee.server.orm import (
-    Project as OrmProject,
-)
-from covfee.server.orm import (
-    TaskSpec as OrmTask,
-)
+from covfee.server.orm import HITSpec as OrmHit
+from covfee.server.orm import JourneySpec as OrmJourney
+from covfee.server.orm import Project as OrmProject
+from covfee.server.orm import TaskSpec as OrmTask
 
 
 class PostInitCaller(type):
@@ -128,6 +119,7 @@ class CovfeeApp(BaseDataclass):
         return orm_projects
 
     def launch(self, num_instances=1):
+        import covfee.launcher as launcher
         orm_projects = self.get_instantiated_projects(num_instances)
         l = launcher.Launcher("dev", orm_projects, folder=None)
         l.make_database()

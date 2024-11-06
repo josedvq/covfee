@@ -1,6 +1,7 @@
 import json
-from typing import Union
 from enum import Enum
+from typing import Union
+
 from flask import jsonify
 from flask.json.provider import JSONProvider
 

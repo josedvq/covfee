@@ -18,25 +18,6 @@ def nodes(nid):
     return jsonify_or_404(node)
 
 
-# @api.route("/nodes/<nid>/response")
-# def response(nid):
-#     """Will return the last response for a task"""
-#     task = app.session.query(NodeInstance).get(int(nid))
-#     if task is None or not isinstance(task, TaskInstance):
-#         return jsonify({"msg": "invalid task"}), 400
-
-#     responses = task.responses
-#     submitted = request.args.get("submitted", None)
-#     if submitted is not None:
-#         responses = [r for r in responses if r.submitted == bool(submitted)]
-
-#     if len(responses) == 0:
-#         return jsonify(msg="No submitted responses found."), 403
-
-#     response_dict = responses[-1].to_dict()
-#     return jsonify(response_dict)
-
-
 @api.route("/nodes/<nid>/make_response", methods=["POST"])
 def make_response(nid):
     submit = bool(request.args.get("submit", False))

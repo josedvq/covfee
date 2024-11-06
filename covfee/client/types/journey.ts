@@ -1,6 +1,6 @@
 import { JourneySpec } from "@covfee-spec/journey"
-import { NodeType } from "./node"
 import { MarkdownContentSpec } from "@covfee-spec/tasks/utils"
+import { NodeType } from "./node"
 
 export const JourneyApiStatuses = [
   "INIT",
@@ -18,7 +18,7 @@ export interface JourneyType extends Omit<JourneySpec, "nodes"> {
   nodes: NodeType[]
   extra: MarkdownContentSpec
   submitted: boolean
-  completionInfo?: any
+  completion_info?: any
   num_connections: number
   curr_node_id: number
   status: JourneyApiStatus

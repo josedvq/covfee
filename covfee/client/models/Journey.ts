@@ -1,14 +1,16 @@
 import * as React from "react"
 
-import { JourneyType as FullJourney } from "../types/journey"
-import { JourneyType as ReducedJourney } from "../types/hit"
-import { myerror, fetcher, myinfo, throwBadResponse } from "../utils"
-import download from "downloadjs"
 import Constants from "Constants"
+import download from "downloadjs"
+import { useEffect } from "react"
+import { MainSocket, ServerToClientEvents } from "../app_context"
+import { JourneyType as ReducedJourney } from "../types/hit"
+import { JourneyType as FullJourney } from "../types/journey"
+import { fetcher, myerror, myinfo, throwBadResponse } from "../utils"
 
 type JourneyType = FullJourney | ReducedJourney
 
-export type { JourneyType, FullJourney, ReducedJourney }
+export type { FullJourney, JourneyType, ReducedJourney }
 
 export const useJourneyFns = <T extends JourneyType>(journey: T) => {
   const getApiUrl = () => {
@@ -20,7 +22,17 @@ export const useJourneyFns = <T extends JourneyType>(journey: T) => {
     getUrl: () => {
       return Constants.app_url + "/journeys/" + journey.id
     },
+    disable: () => {
+      const journeyUrl = Constants.api_url + "/journeys/" + journey.id
+      const url = journeyUrl + "/disable"
+      return fetcher(url).then(throwBadResponse)
+    },
+    submit: () => {
+      const journeyUrl = Constants.api_url + "/journeys/" + journey.id
+      const url = journeyUrl + "/submit"
 
+      return fetcher(url).then(throwBadResponse)
+    },
     getDownloadHandler: (csv: boolean) => {
       const request_url = getApiUrl() + "/download" + (csv ? "?csv=1" : "")
       return () => {
@@ -50,15 +62,42 @@ export const useJourneyFns = <T extends JourneyType>(journey: T) => {
   }
 }
 
-export const useJourney = <T extends JourneyType>(data: T) => {
+export const useJourney = <T extends JourneyType>(
+  data: T,
+  socket: MainSocket = null
+) => {
   const [journey, setJourney] = React.useState<T>(data)
 
   const journeyFns = useJourneyFns(journey)
+
+  const submit = React.useCallback(async () => {
+    await journeyFns.submit()
+  }, [])
+
+  useEffect(() => {
+    const handleStatus: ServerToClientEvents["journey_status"] = (data) => {
+      console.log("IO: journey_status", data)
+      if (data.journey_id !== journey.id) return
+
+      setJourney((journey) => ({
+        ...journey,
+        ...data,
+      }))
+    }
+
+    if (socket) {
+      socket.on("journey_status", handleStatus)
+      return () => {
+        socket.off("journey_status", handleStatus)
+      }
+    }
+  }, [journey.id, socket])
 
   return {
     journey,
     setJourney,
     ...journeyFns,
+    submit,
   }
 }
 
@@ -73,15 +112,4 @@ export const fetchJourney = (id: string) => {
     })
 
   return fetcher(url).then(throwBadResponse)
-}
-
-export const submitJourney = (id: string) => {
-  const url = Constants.api_url + "/journeys/" + id + "/submit"
-  // submit HIT to get completion code
-  const requestOptions = {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ success: true }),
-  }
-  return fetcher(url, requestOptions).then(throwBadResponse)
 }

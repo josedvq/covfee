@@ -1,7 +1,11 @@
+import { Action } from "@reduxjs/toolkit"
 import * as React from "react"
-import { io, Socket } from "socket.io-client"
+import { Socket } from "socket.io-client"
+import {
+  Action as ActionResponse,
+  State as StateResponse,
+} from "../server/socketio/types"
 import { UserContextMethods, UserState } from "./app_provider"
-import { UseChats } from "models/Chat"
 import { Chat, ChatMessage } from "./types/chat"
 import {
   JourneyAssoc,
@@ -9,28 +13,18 @@ import {
   NodeStatus,
   TaskResponseType,
 } from "./types/node"
-import {
-  State as StateResponse,
-  Action as ActionResponse,
-  ActionRequestPayload,
-  StateRequestPayload,
-} from "../server/socketio/types"
 import { UserConfig } from "./user_config"
-import { Action } from "@reduxjs/toolkit"
 
 export interface ServerToClientEvents {
   /**
    * Journey events: emited to admin when a client opens/closes a journey page
    */
-  journey_connect: (arg0: {
-    hit_id: string
+  journey_status: (arg0: {
     journey_id: string
-    num_connections: number
-  }) => void
-  journey_disconnect: (arg0: {
     hit_id: string
-    journey_id: string
     num_connections: number
+    status: string
+    dt_submitted: string
   }) => void
 
   /**

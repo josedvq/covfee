@@ -1,3 +1,4 @@
+import datetime
 from typing import Union
 
 from flask import current_app as app
@@ -6,6 +7,7 @@ from flask_socketio import emit, join_room, leave_room, send
 
 from covfee.server.orm import JourneyInstance, NodeInstance
 from covfee.server.orm.chat import Chat
+from covfee.server.orm.journey import JourneyInstanceStatus
 from covfee.server.orm.task import TaskInstance
 from covfee.server.socketio.socket import socketio, store
 
@@ -59,15 +61,13 @@ def on_connect(data):
     if journey is None:
         return False
     journey.num_connections += 1
+    if journey.dt_first_join is None:
+        journey.set_status(JourneyInstanceStatus.RUNNING)
+        journey.dt_first_join = datetime.datetime.now()
     app.session.commit()
 
     session["journeyId"] = data["journeyId"]
-    payload = {
-        "hit_id": journey.hit_id.hex(),
-        "journey_id": data["journeyId"],
-        "num_connections": journey.num_connections,
-    }
-    emit("journey_connect", payload, namespace="/admin", broadcast=True)
+    emit("journey_status", journey.make_status_payload(), namespace="/admin", broadcast=True)
     join_room(journey.id.hex())
 
 
@@ -120,7 +120,6 @@ def on_join(data):
     emit("join", join_payload)
     app.logger.info(f"socketio: join: {str(join_payload)}")
 
-    print("app.session.commit()")
     app.session.commit()
 
     # update current node status
@@ -235,7 +234,7 @@ def disconnect():
         "journey_id": journey_id,
         "num_connections": journey.num_connections,
     }
-    emit("journey_connect", payload, namespace="/admin", broadcast=True)
+    emit("journey_status", payload, namespace="/admin", broadcast=True)
 
     # now update node
     if not isinstance(node, TaskInstance):

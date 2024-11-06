@@ -120,7 +120,7 @@ def make(force, dev, deploy, safe, rms, host, port, no_launch, project_spec_file
     install_npm_packages()
 
     try:
-        loader = Loader(project_spec_file)
+        loader = Loader(project_spec_file, config)
         projects = loader.process(with_spinner=True)
 
         launcher = Launcher(

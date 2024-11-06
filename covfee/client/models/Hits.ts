@@ -1,10 +1,10 @@
-import React, { useState } from "react"
-import { HitInstanceType } from "../types/hit"
-import { fetcher, throwBadResponse } from "../utils"
 import Constants from "Constants"
+import React, { useState } from "react"
 import { MainSocket, ServerToClientEvents } from "../app_context"
-import { JourneyType } from "./Journey"
+import { HitInstanceType } from "../types/hit"
 import { NodeType } from "../types/node"
+import { fetcher, throwBadResponse } from "../utils"
+import { JourneyType } from "./Journey"
 
 export const useHitInstances = (
   data: HitInstanceType[],
@@ -88,26 +88,27 @@ export const useHitInstances = (
       })
     }
 
-    const journeyConnectListener: ServerToClientEvents["journey_connect"] = ({
+    const journeyStatusListener: ServerToClientEvents["journey_status"] = ({
       hit_id,
       journey_id,
       num_connections,
+      status,
     }) => {
-      console.log("IO: journey_connect")
+      console.log("IO: journey_status")
 
       if (!(hit_id in hitIdToIndex)) return
       const hitIndex = hitIdToIndex[hit_id]
       const journeyIndex = journeyIdToIndex[hitIndex][journey_id]
-      setJourneyData(hitIndex, journeyIndex, { num_connections })
+      setJourneyData(hitIndex, journeyIndex, { num_connections, status })
     }
 
     if (socket) {
       socket.on("status", statusListener)
-      socket.on("journey_connect", journeyConnectListener)
+      socket.on("journey_status", journeyStatusListener)
     }
     return () => {
       socket.off("status", statusListener)
-      socket.off("journey_connect", journeyConnectListener)
+      socket.off("journey_status", journeyStatusListener)
     }
   }, [
     socket,

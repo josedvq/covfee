@@ -9,11 +9,12 @@ from click import Path
 from colorama import Fore
 from halo.halo import Halo
 
-import covfee.server.orm as orm
 from covfee.cli.utils import working_directory
 from covfee.config import Config
 from covfee.server.app import create_app_and_socketio
 from covfee.server.db import get_engine, get_session_local
+
+from .server.orm import Base, Project, User
 
 
 class ProjectExistsException(Exception):
@@ -29,19 +30,19 @@ class Launcher:
     2) commiting projects to DB (optional)
     3) launching covfee in 'local' or 'dev' mode
     """
-
     # holds valid projects
-    projects: List["orm.Project"]
+    projects: List["Project"]
 
     def __init__(
         self,
         environment,
-        projects: List["orm.Project"] = [],
+        projects: List["Project"] = [],
         folder: Path = None,
         auth_enabled: bool = True,
     ):
         self.environment = environment
         self.config = Config(environment)
+        
         self.projects = projects
         self.folder = folder
         self.auth_enabled = auth_enabled
@@ -80,8 +81,8 @@ class Launcher:
 
     def create_tables(self, drop=False):
         if drop:
-            orm.Base.metadata.drop_all(self.engine)
-        orm.Base.metadata.create_all(self.engine)
+            Base.metadata.drop_all(self.engine)
+        Base.metadata.create_all(self.engine)
 
     def create_admin(self):
         default_username = self.config["DEFAULT_ADMIN_USERNAME"]
@@ -99,10 +100,10 @@ class Launcher:
                     'Default admin credentials "admin:admin" have not been changed. Please change username and password in config when deploying with authentication.'
                 )
             with self.session_local() as session:
-                user = orm.User.by_username(session, username)
+                user = User.by_username(session, username)
                 if user is not None:
                     return
-                admin = orm.User.from_username_password(
+                admin = User.from_username_password(
                     username=username,
                     password=password,
                     secret=self.config["JWT_SECRET_KEY"],
@@ -141,14 +142,14 @@ class Launcher:
     def check_conficts(self, with_spinner=False):
         with self.session_local() as session:
             for project in self.projects:
-                existing_project = orm.Project.by_name(session, project.name)
+                existing_project = Project.by_name(session, project.name)
                 if existing_project:
                     raise ProjectExistsException(project.name)
 
     def commit(self):
         with self.session_local() as session:
             for project in self.projects:
-                existing_project = orm.Project.by_name(session, project.name)
+                existing_project = Project.by_name(session, project.name)
 
                 if existing_project:
                     session.delete(existing_project)

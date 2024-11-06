@@ -1,20 +1,20 @@
+import importlib
+import json
 import os
 import sys
-import json
-import importlib
 from pathlib import Path
 from typing import List
 
+from colorama import Fore
+from colorama import init as colorama_init
 from flask import current_app as app
 from halo import Halo
-from colorama import init as colorama_init, Fore
 
-
-from covfee.server.orm.user import User, password_hash
 from covfee.cli.utils import working_directory
+from covfee.server.orm.project import Project
+from covfee.server.orm.user import Base, User, password_hash
 from covfee.shared.schemata import Schemata
 from covfee.shared.validator.ajv_validator import AjvValidator
-from covfee.server.orm.project import Project
 
 colorama_init()
 
@@ -30,11 +30,12 @@ def cli_create_tables():
 class Loader:
     """Translates between different covfee file formats"""
 
-    def __init__(self, project_spec_file=None):
+    def __init__(self, project_spec_file=None, config=None):
         if not os.path.exists(project_spec_file):
             raise FileNotFoundError("covfee file not found.")
 
         self.project_spec_file = Path(project_spec_file)
+        self.config = config
         self.file_extension = self.project_spec_file.suffix
         if self.file_extension not in [".py", ".json"]:
             raise ValueError(f"Unsupported file extension {self.file_extension}")
@@ -97,6 +98,7 @@ class Loader:
         self.projects += app.get_instantiated_projects()
 
     def process(self, with_spinner=False) -> List[Project]:
+        Base._config = self.config
         if self.file_extension == ".py":
             self.python_load()
         else:

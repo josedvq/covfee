@@ -1,16 +1,6 @@
-import * as React from "react";
-const { Option } = Select;
-import {
-  /*
-    Supported input elements
-    */
-  Modal,
-  Input,
-  Select,
-  Form,
-  Button,
-  Alert,
-} from "antd";
+import { Button, Form, Input, Select } from "antd"
+import * as React from "react"
+const { Option } = Select
 
 /**
  * Allows the user to edit some fields of a hit specification.
@@ -19,53 +9,53 @@ interface Props {
   /**
    * Initial values to populate the form with.
    */
-  initialValues: any;
-  onUpdate?: (arg0: any) => void;
+  initialValues: any
+  onUpdate?: (arg0: any) => void
 }
 
 interface State {
-  values: any;
+  values: any
 }
 export class HitEditorForm extends React.Component<Props, State> {
   state: State = {
     values: {},
-  };
+  }
 
-  formRef = React.createRef();
+  formRef = React.createRef()
 
   constructor(props: Props) {
-    super(props);
+    super(props)
   }
 
   componentDidMount() {}
 
   handleValuesChange = (values: any) => {
-    this.setState({ values: { ...this.state.values, ...values } });
-  };
+    this.setState({ values: { ...this.state.values, ...values } })
+  }
 
   handleFinish = (values: any) => {
-    this.props.onUpdate({ config: values });
-  };
+    this.props.onUpdate({ config: values })
+  }
 
   render() {
     return (
       <Form
         style={{ margin: "1em" }}
         onValuesChange={(changedValues, allValues) => {
-          this.handleValuesChange(changedValues);
+          this.handleValuesChange(changedValues)
         }}
         initialValues={this.props.initialValues.config}
         onFinish={this.handleFinish}
       >
-        <Form.Item name="redirectName" label="Redirect name">
+        <Form.Item name="redirect_name" label="Redirect name">
           <Input></Input>
         </Form.Item>
 
-        <Form.Item name="redirectUrl" label="Redirect URL">
+        <Form.Item name="redirect_url" label="Redirect URL">
           <Input></Input>
         </Form.Item>
 
-        <Form.Item name="completionCode" label="Completion Code">
+        <Form.Item name="completion_code" label="Completion Code">
           <Input></Input>
         </Form.Item>
 
@@ -75,6 +65,6 @@ export class HitEditorForm extends React.Component<Props, State> {
           </Button>
         </Form.Item>
       </Form>
-    );
+    )
   }
 }

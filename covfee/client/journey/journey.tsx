@@ -1,12 +1,10 @@
-import * as React from "react"
-import styled from "styled-components"
-import { generatePath } from "react-router"
-import { ArrowRightOutlined, PlusOutlined } from "@ant-design/icons"
-import { Row, Col, Typography, Menu, Button, Modal, Progress } from "antd"
+import { ArrowRightOutlined } from "@ant-design/icons"
+import { Button, Menu, Progress, Row } from "antd"
 import "antd/dist/reset.css"
+import * as React from "react"
+import { generatePath } from "react-router"
+import styled from "styled-components"
 
-import { myerror } from "../utils"
-import { MarkdownLoader } from "../tasks/utils/markdown_loader"
 import { CovfeeMenuItem } from "../gui"
 import { Sidebar } from "./sidebar"
 
@@ -18,16 +16,16 @@ import {
 } from "./journey_context"
 import { NodeLoader } from "./node_loader"
 
-import "./journey.scss"
-import { FullJourney, fetchJourney, useJourney } from "../models/Journey"
-import { useState, useContext } from "react"
-import { AllPropsRequired } from "../types/utils"
-import { appContext } from "../app_context"
+import { useContext, useState } from "react"
 import { useParams } from "react-router-dom"
-import { ChatPopup } from "../chat/chat"
+import { appContext } from "../app_context"
 import { AppProvider } from "../app_provider"
+import { ChatPopup } from "../chat/chat"
 import { ChatProvider, chatContext } from "../chat_context"
+import { FullJourney, fetchJourney, useJourney } from "../models/Journey"
 import { Chat } from "../types/chat"
+import { AllPropsRequired } from "../types/utils"
+import "./journey.scss"
 import { Timer } from "./timer"
 
 type Props = {
@@ -64,7 +62,11 @@ export const _JourneyPage: React.FC<Props> = (props) => {
   const routeParams = useParams()
   const { socket, chocket } = useContext(appContext)
   const { addChats, removeChats, hasChat } = useContext(chatContext)
-  const { journey, setJourney } = useJourney<FullJourney>(args.journey)
+  const {
+    journey,
+    setJourney,
+    submit: submitJourney,
+  } = useJourney<FullJourney>(args.journey, socket)
 
   const [currNodeIndex, setCurrNodeIndex] = useState(
     routeParams.nodeId !== undefined ? parseInt(routeParams.nodeId) : 0
@@ -111,60 +113,10 @@ export const _JourneyPage: React.FC<Props> = (props) => {
     setCurrKey((k) => k + 1)
   }, [])
 
-  const showCompletionInfo = React.useCallback(() => {
-    const config = journey.completionInfo
-    return Modal.success({
-      title: "HIT submitted!",
-      content: (
-        <>
-          <p>Thank you! Your work has been submitted.</p>
-          {config.redirectUrl ? (
-            <>
-              <p>
-                If you came from{" "}
-                {config.redirectName ? config.redirectName : "another site"} you
-                may click here to be redirected:
-              </p>
-              <Button
-                type="primary"
-                icon={<ArrowRightOutlined />}
-                href={config.redirectUrl}
-              >
-                Back to {config.redirectName ? config.redirectName : "site"}
-              </Button>
-            </>
-          ) : (
-            <>
-              <p>Your completion code is:</p>
-              <pre>{config.completionCode}</pre>
-            </>
-          )}
-        </>
-      ),
-    })
-  }, [journey])
-
   const handleSubmit = React.useCallback(() => {
-    args
-      .onSubmit()
-      .then(() => {
-        showCompletionInfo()
-      })
-      .catch((err) => {
-        if (err.message.includes("required tasks")) {
-          myerror(
-            err.message +
-              " Please make sure all tasks are marked green before submitting.",
-            err
-          )
-        } else {
-          myerror(
-            "Error submitting HIT. Please try again or contact the organizers.",
-            err
-          )
-        }
-      })
-  }, [args, showCompletionInfo])
+    console.log("handleSubmit")
+    submitJourney()
+  }, [])
 
   const gotoNextNode = React.useCallback(() => {
     // if done with nodes
@@ -196,28 +148,7 @@ export const _JourneyPage: React.FC<Props> = (props) => {
     return canSubmit
   }
 
-  const getHitExtra = () => {
-    if (journey.extra) return <MarkdownLoader content={journey.extra} />
-    else return false
-  }
-
-  // return (
-  //   <Modal
-  //     title={
-  //       <Title level={4}>
-  //         <LoadingOutlined /> Loading tasks
-  //       </Title>
-  //     }
-  //     visible={true}
-  //     footer={null}
-  //     closable={false}
-  //   >
-  //     Please give a second..
-  //   </Modal>
-  // );
-
   const nodeProps = journey.nodes[currNodeIndex]
-  const hitExtra = getHitExtra()
 
   return (
     <JourneyContext.Provider value={journeyContext}>
@@ -239,71 +170,91 @@ export const _JourneyPage: React.FC<Props> = (props) => {
         <Menu.Item>
           <Timer />
         </Menu.Item>
-        {hitExtra && (
-          <Menu.Item key="extra" icon={<PlusOutlined />}>
-            Extra
-          </Menu.Item>
-        )}
       </Menu>
-      <SidebarContainer height={window.innerHeight}>
-        <Sidebar
-          nodes={journey.nodes}
-          currNode={currNodeIndex}
-          onChangeActiveTask={changeActiveNode}
-        >
-          {journey.submitted && (
-            <Button
-              type="primary"
-              style={{
-                width: "100%",
-                backgroundColor: "#5b8c00",
-                borderColor: "#5b8c00",
-              }}
-              onClick={showCompletionInfo}
-            >
-              Show completion code
-            </Button>
-          )}
-        </Sidebar>
-      </SidebarContainer>
 
-      <ContentContainer height={window.innerHeight}>
-        {hitExtra && (
-          <></>
-          // <Collapsible open={extraOpen}>
-          //   <Row>
-          //     <Col span={24}>{hitExtra}</Col>
-          //   </Row>
-          // </Collapsible>
-        )}
-        <Row style={{ height: "100%" }}>
-          {journey.interface.showProgress && (
-            <div style={{ margin: "5px 15px" }}>
-              {(() => {
-                const num_valid = journey.nodes.filter((t) => t.valid).length
-                const num_steps = journey.nodes.length
-                return (
-                  <Progress
-                    percent={(100 * num_valid) / num_steps}
-                    format={(p) => {
-                      return num_valid + "/" + num_steps
-                    }}
-                    trailColor={"#c0c0c0"}
-                  />
-                )
-              })()}
-            </div>
+      {journey.status == "DISABLED" && (
+        <div style={{ padding: "20px" }}>
+          <h1>Sorry, this task has been disabled.</h1>
+          <p>Please contact the requester if you believe this is an error.</p>
+        </div>
+      )}
+
+      {journey.status == "FINISHED" && (
+        <div style={{ padding: "20px" }}>
+          <p>Thank you! This work has been submitted.</p>
+          {journey.completion_info.redirect_url ? (
+            <>
+              <p>
+                If you came from{" "}
+                {journey.completion_info.redirect_name
+                  ? journey.completion_info.redirect_name
+                  : "another site"}{" "}
+                you may click here to be redirected:
+              </p>
+              <Button
+                type="primary"
+                icon={<ArrowRightOutlined />}
+                href={journey.completion_info.redirect_url}
+              >
+                Back to{" "}
+                {journey.completion_info.redirect_mame
+                  ? journey.completion_info.redirect_name
+                  : "site"}
+              </Button>
+            </>
+          ) : (
+            <>
+              <p>Your completion code is:</p>
+              <pre>{journey.completion_info.completion_code}</pre>
+            </>
           )}
-          <NodeLoader
-            key={currKey}
-            index={currNodeIndex}
-            node={nodeProps}
-            observer={args.previewMode}
-            // callbacks
-            onSubmit={handleNodeSubmitted}
-          />
-        </Row>
-      </ContentContainer>
+        </div>
+      )}
+
+      {(journey.status == "INIT" || journey.status == "RUNNING") && (
+        <>
+          <SidebarContainer height={window.innerHeight}>
+            <Sidebar
+              nodes={journey.nodes}
+              currNode={currNodeIndex}
+              onChangeActiveTask={changeActiveNode}
+            />
+          </SidebarContainer>
+
+          <ContentContainer height={window.innerHeight}>
+            <Row style={{ height: "100%" }}>
+              {journey.interface.showProgress && (
+                <div style={{ margin: "5px 15px" }}>
+                  {(() => {
+                    const num_valid = journey.nodes.filter(
+                      (t) => t.valid
+                    ).length
+                    const num_steps = journey.nodes.length
+                    return (
+                      <Progress
+                        percent={(100 * num_valid) / num_steps}
+                        format={(p) => {
+                          return num_valid + "/" + num_steps
+                        }}
+                        trailColor={"#c0c0c0"}
+                      />
+                    )
+                  })()}
+                </div>
+              )}
+
+              <NodeLoader
+                key={currKey}
+                index={currNodeIndex}
+                node={nodeProps}
+                observer={args.previewMode}
+                // callbacks
+                onSubmit={handleNodeSubmitted}
+              />
+            </Row>
+          </ContentContainer>
+        </>
+      )}
       {/* </ButtonEventManagerContext> */}
       <ChatPopup />
     </JourneyContext.Provider>
