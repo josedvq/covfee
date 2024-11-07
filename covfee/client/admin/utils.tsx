@@ -27,11 +27,28 @@ export const NodeStatusToColor: Record<NodeColorStatus, string> = {
   FINISHED: "#7dc238",
 }
 
+export const NodeStatusDescriptions: Record<NodeColorStatus, string> = {
+  INIT: "Task is not yet started.",
+  COUNTDOWN:
+    "Starting conditions have been met. Task is counting down and will start promptly.",
+  RUNNING: "Task is currently running.",
+  PAUSED:
+    "Task is paused. Either pause condition was met or admin paused the task.",
+  FINISHED: "Task has finished.",
+}
+
 export const JourneyStatusToColor: Record<JourneyColorStatus, string> = {
   INIT: "gray",
   RUNNING: "#6495ED",
   DISABLED: "red",
   FINISHED: "#7dc238",
+}
+
+export const JourneyStatusDescritions: Record<JourneyColorStatus, string> = {
+  INIT: "Journey is not yet started.",
+  RUNNING: "Journey is currently running.",
+  DISABLED: "Journey has been disabled by an admin.",
+  FINISHED: "Journey has been completed.",
 }
 
 export const getNodeStatus = (

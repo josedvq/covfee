@@ -1,18 +1,15 @@
+import classNames from "classnames"
 import * as React from "react"
 import styled from "styled-components"
-import classNames from "classnames"
 
-import { NodeType } from "../types/node"
+import { NodeStatus, NodeType } from "../types/node"
 
-interface NodeButtonSpec {
-  // index: number,
+interface NodeButtonProps {
   name: string
   active: boolean
-  status: "default" | "active" | "valid" | "invalid"
-}
-
-interface NodeButtonProps extends NodeButtonSpec {
-  innerRef: (el: HTMLDivElement) => void
+  disabled: boolean
+  status: NodeStatus
+  innerRef: (el: HTMLButtonElement) => void
   onClickActivate: () => void
   className?: object
 }
@@ -39,8 +36,11 @@ export const NodeButton: React.FunctionComponent<NodeButtonProps> = (props) => {
 
   return (
     <SidebarButton
+      disabled={args.disabled}
       ref={props.innerRef}
-      className={classNames("btn", `btn-${args.status}`, { ...args.className })}
+      className={classNames("btn", `btn-${args.status.toLowerCase()}`, {
+        ...args.className,
+      })}
       onClick={args.onClickActivate}
     >
       <div className="btn-name">{args.name}</div>
@@ -53,6 +53,10 @@ interface Props {
    * Id of the task that is currently active
    */
   currNode: number
+  /**
+   *
+   */
+  maxSubmittedNodeIndex: number
   /**
    * List of tasks to display in the list
    */
@@ -93,9 +97,10 @@ export const Sidebar: React.FC<Props> = (props) => {
           <NodeButton
             key={index}
             innerRef={(el) => (taskElementRefs.current[index] = el)}
-            name={node.name}
+            name={node.name + " - " + node.status}
             className={{ "btn-parent": true }}
-            status={props.currNode === index ? "active" : "default"}
+            status={node.status}
+            disabled={index > props.maxSubmittedNodeIndex + 1}
             active={props.currNode === index}
             onClickActivate={() => {
               props.onChangeActiveTask(index)
@@ -107,12 +112,15 @@ export const Sidebar: React.FC<Props> = (props) => {
   )
 }
 
-const SidebarButton = styled.nav`
+const SidebarButton = styled.button`
+  display: block;
+  width: calc(100% - 4px);
   border: 1px solid #d9d9d9;
   border-radius: 2px;
   margin: 2px;
   color: #363636;
   clear: both;
+  text-align: left;
 
   > .btn-name {
     width: calc(100% - 36px);
@@ -134,21 +142,36 @@ const SidebarButton = styled.nav`
     color: #d5d5d5;
   }
 
-  &.btn-default {
+  // Possible statuses
+  /* "INIT",
+  "COUNTDOWN",
+  "RUNNING",
+  "PAUSED",
+  "FINISHED", */
+  &.btn-init {
     background-color: #fafafa;
   }
 
-  &.btn-active {
+  &.btn-running {
     color: #fafafa;
     background-color: #2c70de;
   }
 
-  &.btn-valid {
-    background-color: #b2cf23;
+  &.btn-paused {
+    background-color: #887a14;
+    color: white;
   }
 
-  &.btn-invalid {
-    background-color: #cf6565;
+  &.btn-finished {
+    color: white;
+    background-color: #1cb51c;
+  }
+
+  &:disabled {
+    background-color: #a0a0a0;
+    > .btn-name {
+      cursor: default;
+    }
   }
 `
 

@@ -1,9 +1,13 @@
-import * as React from "react"
-import { ApiChat, Chat, ChatMessage, IoChatMessage } from "../types/chat"
-import { fetcher, throwBadResponse } from "../utils"
 import Constants from "Constants"
-import { ChatSocket, appContext } from "../app_context"
-import type { ChatClientToServerEvents } from "../app_context"
+import * as React from "react"
+import type {
+  ChatClientToServerEvents,
+  ChatServerToClientEvents,
+  ChatUpdatePayload,
+} from "../app_context"
+import { appContext } from "../app_context"
+import { ApiChat, ApiChatMessage, Chat, ChatMessage } from "../types/chat"
+import { fetcher, throwBadResponse } from "../utils"
 
 type Props = {
   /**
@@ -22,6 +26,26 @@ type Props = {
    * ID of the active chat in the chat window
    */
   initialActiveChatId?: number
+}
+
+function convertDates(chat: ChatUpdatePayload): Partial<Chat> {
+  return {
+    ...chat,
+    last_read: Object.fromEntries(
+      Object.entries(chat.last_read).map(([key, val]) => [key, new Date(val)])
+    ),
+    read_by_admin_at: new Date(chat.read_by_admin_at),
+    messages: null,
+  }
+}
+
+function convertMessageDates(message: ApiChatMessage): ChatMessage {
+  return {
+    ...message,
+    created_at: new Date(message.created_at),
+    read_by: [],
+    read_by_admin: false,
+  }
 }
 
 export const useChats = ({
@@ -48,8 +72,8 @@ export const useChats = ({
   // loaded chats, mapping from chat_id => chat object
   const [chats, setChats] = React.useState<Record<string, Chat>>({})
   // maps chatId -> journeyId -> readDate
-  const [journeyToReadBy, setJourneyToReadBy] =
-    React.useState<Record<string, Record<string, Date>>>(null)
+  // const [journeyToReadBy, setJourneyToReadBy] =
+  //   React.useState<Record<string, Record<string, Date>>>(null)
   // chat messages, mapping from message_id => message object
   const [messages, setMessages] = React.useState<Record<string, ChatMessage>>(
     {}
@@ -58,26 +82,62 @@ export const useChats = ({
   const [chatOpen, setChatOpen] = React.useState(initialChatOpen)
   const [activeChatId, setActiveChatId] = React.useState(0)
 
-  // count of unread messages in each chat, mapping chat_id => count
-  const [unreadCounts, setUnreadCounts] = React.useState<
-    Record<string, number>
-  >({})
-  const [totalUnreadMessages, setTotalUnreadMessages] = React.useState<number>()
+  /**
+   * DERIVED STATE TO KEEP TRACK OF MESSAGE COUNTS
+   */
+
+  const journeyToReadBy = React.useMemo(() => {
+    return Object.fromEntries(
+      Object.values(chats).map((chat) => [
+        chat.id,
+        chat.last_read,
+        // convert all the dates to Date objects
+      ])
+    )
+  }, [chats])
+
+  const unreadCounts = React.useMemo(() => {
+    if (journeyToReadBy === null || Object.keys(journeyToReadBy).length === 0)
+      return null
+    // mapping chat_id -> count of unread messages
+
+    const unreadCounts: Record<string, number> = Object.fromEntries(
+      Object.keys(journeyToReadBy).map((chat_id) => [chat_id, 0])
+    )
+
+    if (journeyId !== undefined) {
+      Object.values(messages).forEach((msg) => {
+        const chatReadBy = journeyToReadBy[msg.chat_id][journeyId]
+
+        if (!chatReadBy || chatReadBy < new Date(msg.created_at)) {
+          unreadCounts[msg.chat_id] += 1
+        }
+      })
+    } else {
+      // calculate admin unreadCounts
+      Object.values(messages).forEach((msg) => {
+        const chatReadBy = new Date(chats[msg.chat_id].read_by_admin_at)
+
+        if (!chatReadBy || chatReadBy < new Date(msg.created_at)) {
+          unreadCounts[msg.chat_id] += 1
+        }
+      })
+    }
+
+    return unreadCounts
+  }, [journeyId, journeyToReadBy, messages, chats])
+
+  const totalUnreadMessages = React.useMemo(() => {
+    if (unreadCounts === null) return 0
+    return Object.values(unreadCounts).reduce((acc, count) => {
+      return acc + count
+    }, 0)
+  }, [unreadCounts])
 
   const setChatData = (chatId: number, fn: (arg0: Chat) => Chat) => {
     setChats((chats) => ({
       ...chats,
       [chatId]: fn(chats[chatId]),
-    }))
-  }
-
-  const setMessageData = (
-    messageId: number,
-    fn: (arg0: ChatMessage) => ChatMessage
-  ) => {
-    setMessages((messages) => ({
-      ...messages,
-      [messageId]: fn(messages[messageId]),
     }))
   }
 
@@ -100,31 +160,14 @@ export const useChats = ({
   /**
    * Return all the messages for a given chat
    */
-  const getChatMessages = React.useCallback(
-    (chatId: number) => {
-      console.log(messages)
-      const chat = chats[chatId]
-      const chatMessages = Object.values(messages).filter(
-        (message) => message.chat_id == chatId
-      )
 
-      const dateReadByAdmin = new Date(chat.read_by_admin_at)
-      chatMessages.forEach((msg) => {
-        const dateCreated = new Date(msg.created_at)
-        msg.read_by_admin = dateCreated < dateReadByAdmin
-
-        msg.read_by = chat.assocs.reduce((acc, assoc) => {
-          if (new Date(assoc.read_at) > dateCreated) {
-            acc.push(assoc.journeyinstance_id)
-          }
-          return acc
-        }, [])
-      })
-
-      return chatMessages
-    },
-    [chats, messages]
-  )
+  const addMessages = React.useCallback((msgs: ChatMessage[]) => {
+    const newMessages = Object.fromEntries(msgs.map((msg) => [msg.id, msg]))
+    setMessages((messages) => ({
+      ...messages,
+      ...newMessages,
+    }))
+  }, [])
 
   const addChats = React.useCallback(
     (ids: number[]) => {
@@ -138,23 +181,18 @@ export const useChats = ({
       setChatIdsBeingFetched((s) => new Set([...s, ...idsToAdd]))
 
       return getChats(idsToAdd).then((res) => {
-        console.log(res)
         const newChats: Record<string, Chat> = Object.fromEntries(
           res.map((chat) => [
             chat.id,
-            {
+            convertDates({
               ...chat,
-              messages: undefined,
-            },
+              messages: null,
+            }) as Chat,
           ])
         )
 
-        const newMessages: Record<string, ChatMessage> = Object.fromEntries(
-          [].concat(
-            ...res.map((chat) =>
-              chat.messages.map((message) => [message.id, message])
-            )
-          )
+        const newMessages: ApiChatMessage[] = [].concat(
+          ...res.map((chat) => chat.messages)
         )
 
         const newChatIds = res.map((chat) => chat.id)
@@ -167,10 +205,7 @@ export const useChats = ({
           ...chats,
           ...newChats,
         }))
-        setMessages((messages) => ({
-          ...messages,
-          ...newMessages,
-        }))
+        addMessages(newMessages.map(convertMessageDates))
 
         idsToAdd.forEach((chat_id) => {
           console.log(`IO: join_chat ${chat_id}`)
@@ -207,7 +242,7 @@ export const useChats = ({
   }
 
   const emitMessage = (chatId: number, message: string) => {
-    chocket.emit("message", { chatId, message })
+    chocket.emit("message", { chatId, journeyId, message })
   }
 
   const markChatRead = (chatId: number) => {
@@ -217,20 +252,6 @@ export const useChats = ({
     chocket.emit("read", payload)
   }
 
-  const getTotalUnreadMessages = React.useCallback(
-    (chatId: number) => {
-      return unreadCounts[chatId]
-    },
-    [unreadCounts]
-  )
-
-  const getNumberUnreadMessages = React.useCallback(
-    (chatId: number) => {
-      return unreadCounts[chatId]
-    },
-    [unreadCounts]
-  )
-
   React.useEffect(() => {
     if (!init) return
     // will only run once
@@ -239,105 +260,30 @@ export const useChats = ({
   }, [init, addChats, initialChatIds])
 
   React.useEffect(() => {
-    setJourneyToReadBy(() =>
-      Object.fromEntries(
-        Object.values(chats).map((chat) => [
-          chat.id,
-          Object.fromEntries(
-            chat.assocs.map((assoc) => [
-              assoc.journeyinstance_id,
-              new Date(assoc.read_at),
-            ])
-          ),
-        ])
-      )
-    )
-  }, [chats])
+    const handleChatUpdate: ChatServerToClientEvents["chat_update"] = (
+      partialChat
+    ) => {
+      console.log(`IO: chat_update`, partialChat)
 
-  React.useEffect(() => {
-    console.log(journeyToReadBy)
-  }, [journeyToReadBy])
-
-  // Journey unread counts
-  React.useEffect(() => {
-    if (journeyToReadBy === null || Object.keys(journeyToReadBy).length === 0)
-      return
-    // mapping chat_id -> count of unread messages
-
-    const unreadCounts: Record<string, number> = Object.fromEntries(
-      Object.keys(journeyToReadBy).map((chat_id) => [chat_id, 0])
-    )
-
-    console.log(chats)
-    console.log(journeyToReadBy)
-    console.log(messages)
-
-    if (journeyId !== undefined) {
-      Object.values(messages).forEach((msg) => {
-        const chatReadBy = journeyToReadBy[msg.chat_id][journeyId]
-
-        if (!chatReadBy || chatReadBy < new Date(msg.created_at)) {
-          unreadCounts[msg.chat_id] += 1
-        }
-      })
-    } else {
-      // calculate admin unreadCounts
-      Object.values(messages).forEach((msg) => {
-        const chatReadBy = new Date(chats[msg.chat_id].read_by_admin_at)
-
-        if (!chatReadBy || chatReadBy < new Date(msg.created_at)) {
-          unreadCounts[msg.chat_id] += 1
-        }
-      })
+      if (partialChat.messages)
+        addMessages(partialChat.messages.map(convertMessageDates))
+      setChatData(partialChat.id, (chat) => ({
+        ...chat,
+        ...convertDates(partialChat),
+        messages: null,
+      }))
     }
-
-    console.log(unreadCounts)
-    setUnreadCounts(unreadCounts)
-  }, [journeyId, journeyToReadBy, chats, messages])
-
-  React.useEffect(() => {
-    setTotalUnreadMessages(() =>
-      Object.values(unreadCounts).reduce((acc, count) => {
-        return acc + count
-      }, 0)
-    )
-  }, [unreadCounts])
-
-  React.useEffect(() => {
     if (chocket) {
-      // listen to all messages here
-      chocket.removeAllListeners("message")
-      chocket.on("message", (message: IoChatMessage) => {
-        console.log(`IO: message: ${message}`)
-        if (message.chat_id in chats) {
-          // if the chat is open
-          setMessages((messages) => ({
-            ...messages,
-            [message.id]: message,
-          }))
-        } else {
-          // if we are listening to the chat, open it (this will fetch the new message)
-          if (
-            chatIdsToListen.size === 0 || // listen to all chats by default
-            chatIdsToListen.has(message.chat_id)
-          ) {
-            addChats([message.chat_id])
-          }
-        }
-      })
-
       chocket.removeAllListeners("chat_update")
-      chocket.on("chat_update", (partialChat: Partial<Chat>) => {
-        console.log(`IO: chat_update: ${partialChat}`)
-        setChatData(partialChat.id, (chat) => ({ ...chat, ...partialChat }))
-      })
+      chocket.on("chat_update", handleChatUpdate)
     }
   }, [addChats, chatIdsToListen, chats, chocket])
 
   return {
+    chatsStore: chats,
+    messagesStore: messages,
     chats: Object.values(chats),
     chatIds: Object.keys(chats),
-    getChatMessages,
     addChatListeners,
     clearChatListeners,
     hasChat,
@@ -348,7 +294,7 @@ export const useChats = ({
 
     // for dealing with unread messages
     totalUnreadMessages,
-    getNumberUnreadMessages,
+    unreadCounts,
     markChatRead,
 
     chatOpen,

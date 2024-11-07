@@ -1,23 +1,22 @@
 import * as React from "react"
 import styled from "styled-components"
 
-import { ManualStatuses, NodeType } from "../../types/node"
-import { Modal } from "antd"
-const { confirm } = Modal
 import {
-  LinkOutlined,
+  EyeOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
   RedoOutlined,
   WechatOutlined,
-  EyeOutlined,
 } from "@ant-design/icons"
-import { useNodeFns } from "../../models/Node"
-import { NodeStatusToColor, StatusIcon, getNodeStatus } from "../utils"
+import { Modal, Tooltip } from "antd"
 import classNames from "classnames"
 import { chatContext } from "../../chat_context"
-import { ButtonsContainer, Row } from "./utils"
+import { useNodeFns } from "../../models/Node"
+import { NodeType } from "../../types/node"
 import { adminContext } from "../admin_context"
+import { NodeStatusToColor, StatusIcon, getNodeStatus } from "../utils"
+import { ButtonsContainer, Row } from "./utils"
+const { confirm } = Modal
 
 type NodeRowProps = {
   node: NodeType
@@ -63,63 +62,72 @@ export const NodeButtons = ({ node }: NodeButtonsProps) => {
   return (
     <ButtonsContainer>
       <li>
-        <button
-          onClick={() => {
-            openNode(node.id)
-          }}
-        >
-          <EyeOutlined />
-        </button>
+        <Tooltip title="View the task without disrupting it. Note that updates may not be in real time depending on the task implementation.">
+          <button
+            onClick={() => {
+              openNode(node.id)
+            }}
+          >
+            <EyeOutlined />
+          </button>
+        </Tooltip>
       </li>
       <li>
-        <button
-          onClick={() => {
-            addChats([node.chat_id])
-          }}
-        >
-          <WechatOutlined />
-        </button>
+        <Tooltip title="Message the task's chat room. In this room, all subjects in the task will be able to see your messages and each others messages.">
+          <button
+            onClick={() => {
+              addChats([node.chat_id])
+            }}
+          >
+            <WechatOutlined />
+          </button>
+        </Tooltip>
       </li>
       <li>
-        <ButtonManualCtrl
-          disabled={node.status == "FINISHED"}
-          $active={node.manual == "PAUSED"}
-          onClick={() => {
-            confirm({
-              title:
-                node.manual == "PAUSED"
-                  ? "Are you sure you want to unpause?"
-                  : "Are you sure you want to pause this node?",
-              content: "Data collection might be affected.",
-              onOk() {
-                if (node.manual == "PAUSED") {
-                  setManualStatus("DISABLED")
-                } else {
-                  setManualStatus("PAUSED")
-                }
-              },
-              onCancel() {},
-            })
-          }}
-        >
-          {node.paused ? <PlayCircleOutlined /> : <PauseCircleOutlined />}
-        </ButtonManualCtrl>
+        <Tooltip title="Pause/play this task. During a pause no user input will be possible.">
+          <ButtonManualCtrl
+            disabled={node.status == "FINISHED"}
+            $active={node.manual == "PAUSED"}
+            onClick={() => {
+              confirm({
+                title:
+                  node.manual == "PAUSED"
+                    ? "Are you sure you want to unpause?"
+                    : "Are you sure you want to pause this node?",
+                content: "Data collection might be affected.",
+                onOk() {
+                  if (node.manual == "PAUSED") {
+                    setManualStatus("DISABLED")
+                  } else {
+                    setManualStatus("PAUSED")
+                  }
+                },
+                onCancel() {},
+              })
+            }}
+          >
+            {node.paused ? <PlayCircleOutlined /> : <PauseCircleOutlined />}
+          </ButtonManualCtrl>
+        </Tooltip>
       </li>
       <li>
-        <button
-          onClick={() => {
-            confirm({
-              title: "Are you sure you want to restart this node?",
-              content: "Data may be lost if the node is not in finished state.",
-              onOk() {
-                restart()
-              },
-              onCancel() {},
-            })
-          }}
-        >
-          <RedoOutlined />
-        </button>
+        <Tooltip title="Restart the node and discard any responses.">
+          <button
+            onClick={() => {
+              confirm({
+                title: "Are you sure you want to restart this node?",
+                content:
+                  "Data may be lost if the node is not in finished state.",
+                onOk() {
+                  restart()
+                },
+                onCancel() {},
+              })
+            }}
+          >
+            <RedoOutlined />
+          </button>
+        </Tooltip>
       </li>
     </ButtonsContainer>
   )

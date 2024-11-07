@@ -1,11 +1,11 @@
+import { Button, Tooltip } from "antd"
 import * as React from "react"
-import { Select, Typography, Empty, Button } from "antd"
 
 import Constants from "Constants"
-import { getAllProjects, getProject, useProject } from "../models/Project"
 import { ProjectType } from "types/project"
-import { HitBlock } from "./hit_block/hit_block"
 import { appContext } from "../app_context"
+import { useProject } from "../models/Project"
+import { HitBlock } from "./hit_block/hit_block"
 
 interface Props {
   project: ProjectType
@@ -18,19 +18,23 @@ export const Project = (props: Props) => {
   return (
     <>
       <div style={{ margin: "2em 1em" }}>
-        <Button
-          type="primary"
-          href={Constants.api_url + "/projects/" + project.id + "/csv"}
-        >
-          Download URLs
-        </Button>
-        <Button
-          href={
-            Constants.api_url + "/projects/" + project.id + "/download?csv=1"
-          }
-        >
-          Download results (JSON)
-        </Button>
+        <Tooltip title="Download a CSV file with journey names, URLs to journeys and completion codes. It may be useful for uploading HITs to crowd-sourcing platforms.">
+          <Button
+            type="primary"
+            href={Constants.api_url + "/projects/" + project.id + "/csv"}
+          >
+            Download URLs
+          </Button>
+        </Tooltip>
+        <Tooltip title="Download a JSON file with the data collected thus far for the current project.">
+          <Button
+            href={
+              Constants.api_url + "/projects/" + project.id + "/download?csv=1"
+            }
+          >
+            Download results (JSON)
+          </Button>
+        </Tooltip>
       </div>
 
       <div style={{ padding: "1em" }}>

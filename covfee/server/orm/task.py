@@ -138,7 +138,7 @@ class TaskInstance(NodeInstance):
         if prev_status is None:
             prev_status = self.status
         return {
-            "id": self.id,
+            "node_id": self.id,
             "hit_id": self.hit_id.hex(),
             "prev": prev_status,
             "new": self.get_masked_status(),

@@ -69,10 +69,11 @@ class Chat(Base):
         if "messages" not in exclude:
             chat_dict["messages"] = [message.to_dict() for message in self.messages]
 
-        if "assocs" not in exclude:
-            chat_dict["assocs"] = [
-                assoc.to_dict() for assoc in self.journey_associations
-            ]
+        if "last_read" not in exclude:
+            chat_dict["last_read"] = {
+                assoc.journeyinstance_id.hex(): str(assoc.read_at)
+                for assoc in self.journey_associations
+            }
 
         return chat_dict
 
@@ -105,3 +106,15 @@ class ChatMessage(Base):
     def __init__(self, message):
         super().init()
         self.message = message
+
+    def make_chat_update_payload(self):
+        return {
+            "id": self.chat_id,
+            "messages": [self.to_dict()],
+            "last_read": {
+                assoc.journeyinstance_id.hex(): str(assoc.read_at)
+                for assoc in self.chat.journey_associations
+            },
+            "read_by_admin_at": str(self.chat.read_by_admin_at),
+        }
+        

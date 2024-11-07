@@ -1,17 +1,18 @@
 from __future__ import annotations
+
 import datetime
-from typing import TYPE_CHECKING, Dict, Any, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import numpy as np
 from flask import current_app as app
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from covfee.server.orm.node import NodeInstanceStatus
 
 from .. import tasks
-from .base import Base
 from ..tasks.base import BaseCovfeeTask
+from .base import Base
 
 if TYPE_CHECKING:
     from .task import TaskInstance
@@ -86,6 +87,13 @@ class TaskResponse(Base):
         self.submitted_at = datetime.datetime.now()
         self.valid = valid
         self.task.status = NodeInstanceStatus.FINISHED
+
+        # update max_submitted_node_index for all journeys
+        for journey in self.task.journeys:
+            journey.max_submitted_node_index = max(
+                journey.max_submitted_node_index, journey.nodes.index(self.task)
+            )
+        
 
         res = {"status": "success", "valid": self.valid, "response": self.to_dict()}
 

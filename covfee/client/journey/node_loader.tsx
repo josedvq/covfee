@@ -50,12 +50,8 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
   const {
     node,
     journeyData,
-    numOnlineJourneys,
-    setNode,
     response,
     setResponse,
-    makeResponse,
-    setStatus: setNodeStatus,
     fetchResponse,
     submitResponse,
     setReady,
@@ -211,11 +207,10 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
 
   React.useEffect(() => {
     const handleStatus: ServerToClientEvents["status"] = (data) => {
-      console.log("IO: status", data)
-
-      if (data.id !== node.id) return
+      if (data.node_id !== node.id) return
 
       console.log("IO: status", data)
+
       if (response && data.response_id != response.id) {
         // the task was reset or a new response was created
         // fetch the new one and let the user know
@@ -288,12 +283,10 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
   const handleTaskSubmit = () => {
     submitResponse({ state: reduxStore.current.getState() })
       .then((data: any) => {
-        setNodeStatus("FINISHED")
         args.onSubmit()
       })
       .catch((error) => {
         myerror("Error submitting the task.", error)
-        setNodeStatus("FINISHED")
       })
   }
 

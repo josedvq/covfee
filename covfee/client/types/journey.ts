@@ -21,5 +21,6 @@ export interface JourneyType extends Omit<JourneySpec, "nodes"> {
   completion_info?: any
   num_connections: number
   curr_node_id: number
+  max_submitted_node_index: number
   status: JourneyApiStatus
 }

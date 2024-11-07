@@ -1,14 +1,13 @@
-import React, { useState, useCallback, useEffect } from "react"
+import Constants from "Constants"
+import React, { useCallback, useState } from "react"
+import { MainSocket } from "../app_context"
 import {
   ManualStatus,
   ManualStatuses,
-  NodeStatus,
   NodeType,
   TaskResponseType,
 } from "../types/node"
 import { fetcher, throwBadResponse } from "../utils"
-import { MainSocket, ServerToClientEvents } from "../app_context"
-import Constants from "Constants"
 
 export function useNodeFns(node: NodeType) {
   const fetchResponse = useCallback(() => {
@@ -94,8 +93,8 @@ export function useNodeFns(node: NodeType) {
   }
 }
 
-export function useNode(data: NodeType, socket: MainSocket = null) {
-  const [node, setNode] = useState<NodeType>(data)
+export function useNode(node: NodeType, socket: MainSocket = null) {
+  // const [node, setNode] = useState<NodeType>(data)
   const [response, setResponse] = useState<TaskResponseType>(null)
 
   // extract the journey association (JourneyNode) data
@@ -125,13 +124,6 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
     return trueCount
   }, [node.journeys])
 
-  const setStatus = (status: NodeStatus) => {
-    setNode((node) => ({
-      ...node,
-      status: status,
-    }))
-  }
-
   const fetchResponse = useCallback(() => {
     // const url = node.url + "/response?" + new URLSearchParams({})
     // const p = fetcher(url).then(throwBadResponse)
@@ -143,53 +135,52 @@ export function useNode(data: NodeType, socket: MainSocket = null) {
 
   const submitResponse = (data: any) => submitResponseFn(response.url, data)
 
-  useEffect(() => {
-    const handleStatus: ServerToClientEvents["status"] = (data) => {
-      if (data.id !== node.id) return
+  // useEffect(() => {
+  //   const handleStatus: ServerToClientEvents["status"] = (data) => {
+  //     if (data.id !== node.id) return
 
-      console.log("IO: status", data)
-      setNode((node) => ({
-        ...node,
-        status: data.new,
-        paused: data.paused,
-        manual: data.manual,
-        journeys: data.journeys,
-        dt_start: data.dt_start,
-        dt_play: data.dt_play,
-        dt_count: data.dt_count,
-        dt_finish: data.dt_finish,
-        t_elapsed: data.t_elapsed,
-      }))
-    }
+  //     console.log("IO: status", data)
+  //     setNode((node) => ({
+  //       ...node,
+  //       status: data.new,
+  //       paused: data.paused,
+  //       manual: data.manual,
+  //       journeys: data.journeys,
+  //       dt_start: data.dt_start,
+  //       dt_play: data.dt_play,
+  //       dt_count: data.dt_count,
+  //       dt_finish: data.dt_finish,
+  //       t_elapsed: data.t_elapsed,
+  //     }))
+  //   }
 
-    const handleJoin: ServerToClientEvents["join"] = (data) => {
-      console.log("IO: join", data)
+  //   const handleJoin: ServerToClientEvents["join"] = (data) => {
+  //     console.log("IO: join", data)
 
-      setNode((node) => ({
-        ...node,
-        taskData: data.task_data,
-      }))
-    }
+  //     setNode((node) => ({
+  //       ...node,
+  //       taskData: data.task_data,
+  //     }))
+  //   }
 
-    if (socket) {
-      socket.on("status", handleStatus)
-      socket.on("join", handleJoin)
-      return () => {
-        socket.off("status", handleStatus)
-        socket.off("join", handleJoin)
-      }
-    }
-  }, [node.id, socket])
+  //   if (socket) {
+  //     socket.on("status", handleStatus)
+  //     socket.on("join", handleJoin)
+  //     return () => {
+  //       socket.off("status", handleStatus)
+  //       socket.off("join", handleJoin)
+  //     }
+  //   }
+  // }, [node.id, socket])
 
   return {
     node,
     journeyData,
     numOnlineJourneys,
-    setNode,
+    // setNode,
     getUrl,
     response,
     setResponse,
-    setStatus,
     fetchResponse,
     submitResponse,
     makeResponse,

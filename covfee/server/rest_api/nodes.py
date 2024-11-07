@@ -42,9 +42,19 @@ def response_submit(nid):
 
     if task is None or not isinstance(task, TaskInstance):
         return jsonify({"msg": "invalid task"}), 400
+    
+    # check that the node is <= max_submitted_node_index + 1 for all journeys
+    journeys = task.journeys
+    if not all(journey.nodes.index(task) <= journey.max_submitted_node_index + 1 for journey in journeys):
+        return jsonify({"msg": "Task cannot be submitted because some of its journeys contain incoming unsubmitted nodes."}), 400
 
     res = task.responses[-1].submit(request.json)
     app.session.commit()
+
+    payload = task.make_status_payload()
+    socketio.emit("status", payload, to=task.id)
+    socketio.emit("status", payload, namespace="/admin")
+
     return jsonify(res)
 
 

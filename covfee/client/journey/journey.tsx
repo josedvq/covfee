@@ -1,5 +1,5 @@
 import { ArrowRightOutlined } from "@ant-design/icons"
-import { Button, Menu, Progress, Row } from "antd"
+import { Button, Menu, Row } from "antd"
 import "antd/dist/reset.css"
 import * as React from "react"
 import { generatePath } from "react-router"
@@ -23,6 +23,7 @@ import { AppProvider } from "../app_provider"
 import { ChatPopup } from "../chat/chat"
 import { ChatProvider, chatContext } from "../chat_context"
 import { FullJourney, fetchJourney, useJourney } from "../models/Journey"
+import { useNodes } from "../models/Nodes"
 import { Chat } from "../types/chat"
 import { AllPropsRequired } from "../types/utils"
 import "./journey.scss"
@@ -68,13 +69,20 @@ export const _JourneyPage: React.FC<Props> = (props) => {
     submit: submitJourney,
   } = useJourney<FullJourney>(args.journey, socket)
 
+  const nodeIds = React.useMemo(() => {
+    return journey.nodes.map((node) => node.id)
+  }, [journey.nodes])
+
+  const { store: nodesStore } = useNodes(journey.nodes, socket)
+
+  const nodes = React.useMemo(() => {
+    return nodeIds.map((id) => nodesStore[id])
+  }, [nodeIds, nodesStore])
+
   const [currNodeIndex, setCurrNodeIndex] = useState(
     routeParams.nodeId !== undefined ? parseInt(routeParams.nodeId) : 0
   )
 
-  const [extraOpen, setExtraOpen] = useState(false)
-
-  const [loadingNode, setLoadingNode] = useState(true)
   const [currKey, setCurrKey] = useState(0)
 
   const [timer, setTimer] = useState<TimerState>(defaultTimerState)
@@ -90,11 +98,11 @@ export const _JourneyPage: React.FC<Props> = (props) => {
   }, [addChats, hasChat, journey.chat_id])
 
   React.useEffect(() => {
-    if (!hasChat(journey.nodes[currNodeIndex].chat_id)) {
+    if (!hasChat(nodes[currNodeIndex].chat_id)) {
       removeChats((chat: Chat) => chat.node_id !== null)
-      addChats([journey.nodes[currNodeIndex].chat_id])
+      addChats([nodes[currNodeIndex].chat_id])
     }
-  }, [addChats, currNodeIndex, hasChat, journey.nodes, removeChats])
+  }, [addChats, currNodeIndex, hasChat, nodes, removeChats])
 
   React.useEffect(() => {
     window.history.pushState(
@@ -120,7 +128,7 @@ export const _JourneyPage: React.FC<Props> = (props) => {
 
   const gotoNextNode = React.useCallback(() => {
     // if done with nodes
-    if (currNodeIndex === journey.nodes.length - 1) {
+    if (currNodeIndex === nodes.length - 1) {
       handleSubmit()
     } else {
       // go to next node
@@ -129,11 +137,14 @@ export const _JourneyPage: React.FC<Props> = (props) => {
   }, [changeActiveNode, currNodeIndex, handleSubmit, journey])
 
   const handleNodeSubmitted = () => {
+    setJourney((j) => ({
+      ...j,
+      max_submitted_node_index: Math.max(
+        j.max_submitted_node_index,
+        currNodeIndex
+      ),
+    }))
     gotoNextNode()
-  }
-
-  const handleMenuClick = (e: any) => {
-    if (e.key == "extra") setExtraOpen((v) => !v)
   }
 
   /**
@@ -142,19 +153,18 @@ export const _JourneyPage: React.FC<Props> = (props) => {
    */
   const canSubmitHit = () => {
     let canSubmit = true
-    journey.nodes.forEach((node) => {
+    nodes.forEach((node) => {
       if (node.required && !node.valid) canSubmit = false
     })
     return canSubmit
   }
 
-  const nodeProps = journey.nodes[currNodeIndex]
+  const nodeProps = nodes[currNodeIndex]
 
   return (
     <JourneyContext.Provider value={journeyContext}>
       {/* <ButtonEventManagerContext> */}
       <Menu
-        onClick={handleMenuClick}
         mode="horizontal"
         theme="dark"
         style={{ position: "sticky", top: 0, width: "100%", zIndex: 1000 }}
@@ -215,21 +225,20 @@ export const _JourneyPage: React.FC<Props> = (props) => {
         <>
           <SidebarContainer height={window.innerHeight}>
             <Sidebar
-              nodes={journey.nodes}
+              nodes={nodes}
               currNode={currNodeIndex}
+              maxSubmittedNodeIndex={journey.max_submitted_node_index}
               onChangeActiveTask={changeActiveNode}
             />
           </SidebarContainer>
 
           <ContentContainer height={window.innerHeight}>
             <Row style={{ height: "100%" }}>
-              {journey.interface.showProgress && (
+              {/* {journey.interface.showProgress && (
                 <div style={{ margin: "5px 15px" }}>
                   {(() => {
-                    const num_valid = journey.nodes.filter(
-                      (t) => t.valid
-                    ).length
-                    const num_steps = journey.nodes.length
+                    const num_valid = nodes.filter((t) => t.valid).length
+                    const num_steps = nodes.length
                     return (
                       <Progress
                         percent={(100 * num_valid) / num_steps}
@@ -241,7 +250,7 @@ export const _JourneyPage: React.FC<Props> = (props) => {
                     )
                   })()}
                 </div>
-              )}
+              )} */}
 
               <NodeLoader
                 key={currKey}

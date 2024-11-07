@@ -1,27 +1,30 @@
 import * as React from "react"
 import styled from "styled-components"
 
+import { NodeIndexOutlined } from "@ant-design/icons"
+import { Tooltip } from "antd"
+import classNames from "classnames"
+import { appContext } from "../../app_context"
 import { HitInstanceType } from "../../types/hit"
 import { NodeStatus } from "../../types/node"
-import { NodeIndexOutlined } from "@ant-design/icons"
-import { appContext } from "../../app_context"
+import { ForceGraph } from "../force_graph"
 import {
   JourneyColorStatus,
   JourneyColorStatuses,
+  JourneyStatusDescritions,
   JourneyStatusToColor,
   NodeColorStatus,
   NodeColorStatuses,
+  NodeStatusDescriptions,
   NodeStatusToColor,
   StatusIcon,
   getJourneyStatus,
   getNodeStatus,
 } from "../utils"
-import classNames from "classnames"
-import { ForceGraph } from "../force_graph"
-import { NodeButtons, NodeRow } from "./node_buttons"
-import { HoveringButtons } from "./utils"
-import type { HoveringButtonsArgs } from "./utils"
 import { JourneyRow } from "./journey_buttons"
+import { NodeButtons, NodeRow } from "./node_buttons"
+import type { HoveringButtonsArgs } from "./utils"
+import { HoveringButtons } from "./utils"
 
 interface Props {
   hit: HitInstanceType
@@ -106,25 +109,40 @@ export const HitBlock = (props: Props) => {
         <NodeIndexOutlined />
         <span>{props.hit.id.substring(0, 10)}</span>{" "}
         <NodeStatusSummary>
-          <span>Nodes: </span>
+          <Tooltip title="Task counts by status">
+            <span>Tasks: </span>
+          </Tooltip>
           {Object.entries(nodesHist).map(([status, count], index) => (
-            <span key={index}>
-              <StatusIcon
-                color={NodeStatusToColor[status as NodeColorStatus]}
-              />
-              {count}
-            </span>
+            <Tooltip
+              key={index}
+              title={NodeStatusDescriptions[status as NodeColorStatus]}
+            >
+              <span>
+                <StatusIcon
+                  color={NodeStatusToColor[status as NodeColorStatus]}
+                />
+
+                {count}
+              </span>
+            </Tooltip>
           ))}
         </NodeStatusSummary>
         <JourneyStatusSummary>
-          <span>Journeys: </span>
+          <Tooltip title="Journey counts by status">
+            <span>Journeys: </span>
+          </Tooltip>
           {Object.entries(journeysHist).map(([status, count], index) => (
-            <span key={index}>
-              <StatusIcon
-                color={JourneyStatusToColor[status as JourneyColorStatus]}
-              />
-              {count}
-            </span>
+            <Tooltip
+              key={index}
+              title={JourneyStatusDescritions[status as JourneyColorStatus]}
+            >
+              <span>
+                <StatusIcon
+                  color={JourneyStatusToColor[status as JourneyColorStatus]}
+                />
+                {count}
+              </span>
+            </Tooltip>
           ))}
         </JourneyStatusSummary>
       </Header>
@@ -132,13 +150,19 @@ export const HitBlock = (props: Props) => {
         <div style={{ display: "flex", flexDirection: "row" }}>
           <div style={{ display: "flex", alignItems: "center", width: "60%" }}>
             <NodesList>
-              <h2>Nodes</h2>
+              <h2>Tasks</h2>
 
               <ul>
-                {props.hit.nodes.map((node, index) => {
-                  return (
+                {props.hit.nodes.map((node, index) => (
+                  <Tooltip
+                    key={index}
+                    title={
+                      NodeStatusDescriptions[node.status as NodeColorStatus]
+                    }
+                    placement="topLeft"
+                    open={focusedNode == index}
+                  >
                     <NodeRow
-                      key={index}
                       node={node}
                       focus={focusedNode == index}
                       danger={node.paused}
@@ -149,8 +173,8 @@ export const HitBlock = (props: Props) => {
                         setFocusedNode(null)
                       }}
                     />
-                  )
-                })}
+                  </Tooltip>
+                ))}
               </ul>
             </NodesList>
 

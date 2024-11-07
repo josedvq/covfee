@@ -4,7 +4,7 @@ import {
   LinkOutlined,
   WechatOutlined,
 } from "@ant-design/icons"
-import { Modal } from "antd"
+import { Modal, Tooltip } from "antd"
 import classNames from "classnames"
 import * as React from "react"
 import { styled } from "styled-components"
@@ -28,7 +28,7 @@ export const JourneyRow = ({
   onBlur,
 }: JourneyRowProps) => {
   const { addChats } = React.useContext(chatContext)
-  const { getUrl, pause, disable } = useJourneyFns(journey)
+  const { getUrl, disable } = useJourneyFns(journey)
 
   return (
     <li
@@ -58,31 +58,35 @@ export const JourneyRow = ({
       </a>
       <ButtonsContainer>
         <li>
-          <button
-            onClick={() => {
-              addChats([journey.chat_id])
-            }}
-          >
-            <WechatOutlined />
-          </button>
+          <Tooltip title="Chat with this journey/subject privately.">
+            <button
+              onClick={() => {
+                addChats([journey.chat_id])
+              }}
+            >
+              <WechatOutlined />
+            </button>
+          </Tooltip>
         </li>
 
         <li>
-          <button
-            onClick={() => {
-              confirm({
-                title: "Are you sure you want to disable this journey?",
-                content:
-                  "Disabled journeys will display an error when opened. Current users will be stopped. This operation is not reversible.",
-                onOk() {
-                  disable()
-                },
-                onCancel() {},
-              })
-            }}
-          >
-            <DeleteOutlined />
-          </button>
+          <Tooltip title="Disable this journey. The URL will be invalidated.">
+            <button
+              onClick={() => {
+                confirm({
+                  title: "Are you sure you want to disable this journey?",
+                  content:
+                    "Disabled journeys will display an error when opened. Current users will be stopped. This operation is not reversible.",
+                  onOk() {
+                    disable()
+                  },
+                  onCancel() {},
+                })
+              }}
+            >
+              <DeleteOutlined />
+            </button>
+          </Tooltip>
         </li>
       </ButtonsContainer>
     </li>

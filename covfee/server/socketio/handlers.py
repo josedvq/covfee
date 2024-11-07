@@ -48,7 +48,7 @@ def get_on_join_payload(node: TaskInstance, journey: JourneyInstance):
     else:
         payload = {}
 
-    payload = {"response": response, **payload}
+    payload = {"node_id": node.id, "response": response, **payload}
 
     return payload
 

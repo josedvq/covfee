@@ -6,7 +6,7 @@ import {
   State as StateResponse,
 } from "../server/socketio/types"
 import { UserContextMethods, UserState } from "./app_provider"
-import { Chat, ChatMessage } from "./types/chat"
+import { ApiChat } from "./types/chat"
 import {
   JourneyAssoc,
   ManualStatus,
@@ -14,6 +14,9 @@ import {
   TaskResponseType,
 } from "./types/node"
 import { UserConfig } from "./user_config"
+
+type SomeRequired<T, Keys extends keyof T> = Required<Pick<T, Keys>> &
+  Partial<Omit<T, Keys>>
 
 export interface ServerToClientEvents {
   /**
@@ -34,6 +37,7 @@ export interface ServerToClientEvents {
   // response to client-to-server 'join' event
   // latest response / state is included
   join: (arg0: {
+    node_id: number
     response: TaskResponseType
     error?: string
     load_task?: boolean
@@ -45,7 +49,7 @@ export interface ServerToClientEvents {
   // - a timer is triggered
   // - admin actions
   status: (arg0: {
-    id: number
+    node_id: number
     hit_id: string
     new: NodeStatus
     manual: ManualStatus
@@ -85,13 +89,20 @@ export interface ClientToServerEvents {
   }) => void
 }
 
+export type ChatUpdatePayload = SomeRequired<
+  ApiChat,
+  "id" | "last_read" | "read_by_admin_at"
+>
 export interface ChatServerToClientEvents {
-  message: (msg: ChatMessage) => void
-  chat_update: (chat: Partial<Chat>) => void
+  chat_update: (chat: ChatUpdatePayload) => void
 }
 
 export interface ChatClientToServerEvents {
-  message: (arg0: { message: string; chatId: number }) => void
+  message: (arg0: {
+    message: string
+    chatId: number
+    journeyId: string
+  }) => void
   read: (arg0: { chatId: number; journeyId?: string }) => void
   join_chat: (arg0: { chatId: number }) => void
 }

@@ -34,7 +34,8 @@ task_demographics = tasks.QuestionnaireTaskSpec(
             }
         }
         ]
-    }
+    },
+    timer=5
 )
 
 task_instructions = tasks.InstructionsTaskSpec(

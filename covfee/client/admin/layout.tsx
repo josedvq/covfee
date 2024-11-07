@@ -80,7 +80,7 @@ export const AdminLayout: React.FC<React.PropsWithChildren<LayoutProps>> = (
     ...props,
   }
 
-  const { logged, roles, chats } = React.useContext(appContext)
+  const { logged, roles } = React.useContext(appContext)
 
   const renderContentForbidden = (
     reason: "not_logged" | "roles" | "default"
@@ -164,7 +164,7 @@ export const AdminLayout: React.FC<React.PropsWithChildren<LayoutProps>> = (
         </Text>
       </Footer>
 
-      {logged && <ChatPopup chats={chats} />}
+      {(Constants.admin.unsafe_mode_on || logged) && <ChatPopup admin={true} />}
     </Layout>
   )
 }

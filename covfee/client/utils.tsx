@@ -1,6 +1,5 @@
-import * as React from "react"
+import { message } from "antd"
 import log from "loglevel"
-import { message, Result } from "antd"
 
 import Constants from "Constants"
 if (Constants.env == "development") {
@@ -160,9 +159,7 @@ const timeFormatter = new Intl.DateTimeFormat([], {
 // - "yesterday @ 11:00 CST"
 // - "Fri, 22 May 2020 @ 10:00 PST"
 //
-export function getHumanFriendlyDateString(iso8601_date_string: string) {
-  const date = new Date(Date.parse(iso8601_date_string))
-
+export function getHumanFriendlyDateString(date: Date) {
   // When are today and yesterday?
   const today = new Date()
   const yesterday = new Date().setDate(today.getDate() - 1)

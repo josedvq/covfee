@@ -1,25 +1,30 @@
-import React, { useContext } from "react"
-import { Chat, ChatMessage, IoChatMessage } from "../types/chat"
-import { AllPropsRequired } from "../types/utils"
-import { styled } from "styled-components"
 import { SendOutlined, WechatOutlined } from "@ant-design/icons"
-import classNames from "classnames"
 import { Empty } from "antd"
-import { appContext } from "../app_context"
-import { getHumanFriendlyDateString } from "../utils"
+import classNames from "classnames"
+import React, { useContext } from "react"
+import { styled } from "styled-components"
 import { chatContext } from "../chat_context"
+import { Chat } from "../types/chat"
+import { AllPropsRequired } from "../types/utils"
+import { getHumanFriendlyDateString } from "../utils"
 
-const getChatName = (chat: Chat) => {
+const getChatName = (chat: Chat, admin: boolean = false) => {
   if (chat.journey_id) {
-    return chat.journey_id.substring(0, 10)
+    return admin ? `Subject ${chat.journey_id.substring(0, 10)}` : "Admin"
   }
   if (chat.node_id) {
-    return `Node ${chat.node_id}`
+    return admin ? `Node ${chat.node_id}` : "Task chat"
   }
+  return "Unknown"
 }
 
-export const ChatPopup: React.FC<{}> = (props) => {
-  const args: AllPropsRequired<{}> = {
+interface Props {
+  admin?: boolean
+}
+
+export const ChatPopup: React.FC<Props> = (props) => {
+  const args: AllPropsRequired<Props> = {
+    admin: false,
     ...props,
   }
 
@@ -27,7 +32,7 @@ export const ChatPopup: React.FC<{}> = (props) => {
     chats,
     chatOpen,
     setChatOpen,
-    getNumberUnreadMessages,
+    unreadCounts,
     totalUnreadMessages,
     markChatRead,
   } = useContext(chatContext)
@@ -40,7 +45,7 @@ export const ChatPopup: React.FC<{}> = (props) => {
       if (chatOpen && chats.length) {
         const id = setTimeout(() => {
           markChatRead(chats[currChat].id)
-        }, 3000)
+        }, 1000)
 
         return () => {
           clearTimeout(id)
@@ -63,7 +68,7 @@ export const ChatPopup: React.FC<{}> = (props) => {
                   changeChat(index)
                 }}
               >
-                {getChatName(chat)} ({getNumberUnreadMessages(chat.id)})
+                {getChatName(chat, args.admin)} ({unreadCounts[chat.id]})
               </button>
             ))}
           </ChatSelection>
@@ -83,12 +88,98 @@ export const ChatPopup: React.FC<{}> = (props) => {
   )
 }
 
+type ChatboxProps = {
+  chat: Chat
+}
+
+export const Chatbox: React.FC<ChatboxProps> = (props) => {
+  const args: AllPropsRequired<ChatboxProps> = {
+    ...props,
+  }
+
+  const { chatsStore, messagesStore, emitMessage, unreadCounts, markChatRead } =
+    React.useContext(chatContext)
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+
+  // filter the messages for this chat
+  // messagesStore is not a dependency to avoid unneccessary recomputations
+  const messages = React.useMemo(() => {
+    const chat = chatsStore[args.chat.id]
+    const chatMessages = Object.values(messagesStore).filter(
+      (message) => message.chat_id == chat.id
+    )
+
+    chatMessages.forEach((msg) => {
+      const dateCreated = msg.created_at
+      msg.read_by_admin = dateCreated < args.chat.read_by_admin_at
+
+      msg.read_by = Object.entries(chat.last_read)
+        .filter(([journeyId, lastReadDate]) => {
+          return lastReadDate > dateCreated
+        })
+        .map(([journeyId, _]) => journeyId)
+    })
+
+    return chatMessages
+  }, [chatsStore])
+
+  React.useEffect(() => {
+    if (unreadCounts[args.chat.id] > 0) {
+      console.log("marking chat as read")
+      markChatRead(args.chat.id)
+    }
+  }, [unreadCounts, args.chat.id])
+
+  return (
+    <ChatboxContainer>
+      {messages.length ? (
+        <ul>
+          {messages.map((message, index) => (
+            <li key={index}>
+              <span>{message.message}</span>
+              <span className="date">
+                {getHumanFriendlyDateString(message.created_at)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div id="empty">
+          <Empty />
+        </div>
+      )}
+
+      <div id="chat-input">
+        <textarea
+          ref={textareaRef}
+          onKeyDown={(e) => {
+            if (e.key == "Enter") {
+              emitMessage(args.chat.id, textareaRef.current.value)
+              textareaRef.current.value = ""
+            }
+          }}
+        />
+        <button
+          onClick={() => {
+            emitMessage(args.chat.id, textareaRef.current.value)
+            textareaRef.current.value = ""
+          }}
+        >
+          <SendOutlined />
+        </button>
+      </div>
+    </ChatboxContainer>
+  )
+}
+
 const PopupContainer = styled.div<any>`
   position: fixed;
   right: 1vw;
   bottom: calc(50px + 0.2vw);
   height: 500px;
   width: 600px;
+
+  display: flex;
 
   background-color: #ddd;
   border: 1px solid gray;
@@ -97,6 +188,8 @@ const PopupContainer = styled.div<any>`
 `
 
 const ChatButton = styled.button<{ $chatOpen: boolean; $numUnread: number }>`
+  display: flex;
+  align-items: center;
   cursor: pointer;
   position: fixed;
   right: 1vw;
@@ -125,14 +218,15 @@ const ChatButton = styled.button<{ $chatOpen: boolean; $numUnread: number }>`
     vertical-align: middle;
     text-align: center;
     border-top-left-radius: 8px;
+
+    display: ${(props) =>
+      props.$numUnread > 0 ? "flex" : "none"}; /* Enable flexbox on ::before */
+    align-items: center;
+    justify-content: center; /* Optional: centers text horizontally */
   }
 `
 
 const ChatSelection = styled.div<any>`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-
   width: 40%;
   height: 100%;
   overflow-y: auto;
@@ -155,65 +249,16 @@ const ChatSelection = styled.div<any>`
   }
 `
 
-type ChatboxProps = {
-  chat: Chat
-}
-
-export const Chatbox: React.FC<ChatboxProps> = (props) => {
-  const args: AllPropsRequired<ChatboxProps> = {
-    ...props,
-  }
-
-  const { emitMessage, getChatMessages } = React.useContext(chatContext)
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
-
-  const messages = getChatMessages(props.chat.id)
-
-  return (
-    <ChatboxContainer>
-      {messages.length ? (
-        <ul>
-          {messages.map((message, index) => (
-            <li key={index}>
-              <span>{message.message}</span>
-              <span className="date">
-                {getHumanFriendlyDateString(message.created_at)}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div id="empty">
-          <Empty />
-        </div>
-      )}
-
-      <div id="chat-input">
-        <textarea ref={textareaRef} />
-        <button
-          onClick={() => {
-            emitMessage(args.chat.id, textareaRef.current.value)
-            textareaRef.current.value = ""
-          }}
-        >
-          <SendOutlined />
-        </button>
-      </div>
-    </ChatboxContainer>
-  )
-}
-
 const ChatboxContainer = styled.div<any>`
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 60%;
-  height: 100%;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
 
   > ul {
+    flex-grow: 1;
     list-style-type: none;
+    margin: 0;
     padding: 0;
-    height: calc(100% - 60px);
     overflow-y: scroll;
   }
   #empty {
@@ -232,25 +277,17 @@ const ChatboxContainer = styled.div<any>`
     font-size: 0.8em;
   }
   > #chat-input {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: calc(100% - 5px);
     height: 60px;
+    display: flex;
+    flex-direction: row;
 
     button {
-      position: absolute;
-      right: 0;
-      bottom: 0;
       width: 60px;
       height: 100%;
     }
 
     textarea {
-      position: absolute;
-      left: 0;
-      bottom: 0;
-      width: calc(100% - 60px);
+      flex-grow: 1;
       height: 100%;
     }
   }

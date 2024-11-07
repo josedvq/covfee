@@ -127,6 +127,23 @@ class JourneyInstance(Base):
     num_connections: Mapped[int] = mapped_column(default=0)
     curr_node: Mapped[NodeInstance] = relationship(back_populates="curr_journeys")
 
+    # index of the last submitted node
+    # used to keep track of progress
+    # TODO: nodes can only be submitted in order without gaps
+    # TODO: nodes can only be visited in order without gaps
+    # visiting the next node will return an error if previous nodes are not submitted successfully
+    # admin can reset nodes to allow for resubmission
+    # user can go back to those nodes and resubmit
+    # solution: keep track of the last submitted node index
+    # user can visit nodes up to last submitted only
+    # when a node is submitted, its index must be <= last submitted index + 1
+    # TODO: change the task submit endpoint to be journeys/jid/nodes/nid with id the index of the node within the journey
+    # - check if this node can be submitted 
+    # problem: how to reconcile this with the n_start condition? 
+    # n_start allows nodes to be started with only some of the journeys present. 
+    # how to handle disconnected users / journeys? Don't want to stop everything because one is missing.
+    max_submitted_node_index: Mapped[int] = mapped_column(default=-1)
+
     # status code
     status: Mapped[JourneyInstanceStatus] = mapped_column(
         default=JourneyInstanceStatus.INIT

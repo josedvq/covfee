@@ -12,6 +12,7 @@ from sqlalchemy.orm import scoped_session
 
 from covfee.config import Config
 from covfee.server import tasks
+from covfee.server.orm.base import Base
 from covfee.server.tasks.base import BaseCovfeeTask
 
 from .scheduler.apscheduler import scheduler
@@ -41,6 +42,7 @@ def create_app_and_socketio(mode="deploy", session_local=None):
         )
 
     app.sessionmaker = session_local
+    Base.sessionmaker = session_local
     app.session = scoped_session(session_local)
 
     from .socketio import chat, handlers  # noqa: F401
@@ -71,11 +73,8 @@ def create_app_and_socketio(mode="deploy", session_local=None):
     Session(app)
     jwt = JWTManager(app)
 
-    from .rest_api import (
-        add_claims_to_access_token,
-        user_identity_lookup,
-        user_loader_callback,
-    )
+    from .rest_api import (add_claims_to_access_token, user_identity_lookup,
+                           user_loader_callback)
 
     jwt.additional_claims_loader(add_claims_to_access_token)
     jwt.user_identity_loader(user_identity_lookup)

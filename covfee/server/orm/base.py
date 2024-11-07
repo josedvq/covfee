@@ -32,6 +32,8 @@ class Base(DeclarativeBase):
         }
 
         return instance_dict
+    
+    
 
     @classmethod
     def make_random_id(cls):
