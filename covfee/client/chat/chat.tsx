@@ -30,21 +30,22 @@ export const ChatPopup: React.FC<Props> = (props) => {
 
   const {
     chats,
+    chatsStore,
     chatOpen,
     setChatOpen,
     unreadCounts,
     totalUnreadMessages,
     markChatRead,
+    activeChatId: currChatId,
+    setActiveChatId: setCurrChatId,
   } = useContext(chatContext)
 
-  const [currChat, setCurrChat] = React.useState(0)
-
   const changeChat = React.useCallback(
-    (index: number) => {
-      setCurrChat(index)
-      if (chatOpen && chats.length) {
+    (chatId: number) => {
+      setCurrChatId(chatId)
+      if (chatOpen) {
         const id = setTimeout(() => {
-          markChatRead(chats[currChat].id)
+          markChatRead(chatsStore[chatId].id)
         }, 1000)
 
         return () => {
@@ -52,8 +53,12 @@ export const ChatPopup: React.FC<Props> = (props) => {
         }
       }
     },
-    [chatOpen, chats, currChat, markChatRead]
+    [chatOpen, chats, currChatId, markChatRead]
   )
+
+  React.useEffect(() => {
+    console.log(chatsStore, currChatId)
+  }, [chatsStore, currChatId])
 
   return (
     <>
@@ -63,16 +68,16 @@ export const ChatPopup: React.FC<Props> = (props) => {
             {chats.map((chat, index) => (
               <button
                 key={index}
-                className={classNames({ active: currChat == index })}
+                className={classNames({ active: currChatId == chat.id })}
                 onClick={() => {
-                  changeChat(index)
+                  changeChat(chat.id)
                 }}
               >
                 {getChatName(chat, args.admin)} ({unreadCounts[chat.id]})
               </button>
             ))}
           </ChatSelection>
-          {!!chats.length && <Chatbox chat={chats[currChat]} />}
+          {!!currChatId && <Chatbox chat={chatsStore[currChatId]} />}
         </PopupContainer>
       )}
       <ChatButton
@@ -121,7 +126,7 @@ export const Chatbox: React.FC<ChatboxProps> = (props) => {
     })
 
     return chatMessages
-  }, [chatsStore])
+  }, [args.chat.id, chatsStore])
 
   React.useEffect(() => {
     if (unreadCounts[args.chat.id] > 0) {

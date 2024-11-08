@@ -1,9 +1,4 @@
-import {
-  ApiOutlined,
-  DeleteOutlined,
-  LinkOutlined,
-  WechatOutlined,
-} from "@ant-design/icons"
+import { ApiOutlined, LinkOutlined, WechatOutlined } from "@ant-design/icons"
 import { Modal, Tooltip } from "antd"
 import classNames from "classnames"
 import * as React from "react"
@@ -27,8 +22,16 @@ export const JourneyRow = ({
   onFocus,
   onBlur,
 }: JourneyRowProps) => {
-  const { addChats } = React.useContext(chatContext)
+  const { addChats, setActiveChatId, setChatOpen } =
+    React.useContext(chatContext)
   const { getUrl, disable } = useJourneyFns(journey)
+
+  const onChatSelect = React.useCallback(() => {
+    addChats([journey.chat_id]).then(() => {
+      setActiveChatId(journey.chat_id)
+      setChatOpen(true)
+    })
+  }, [journey.chat_id])
 
   return (
     <li
@@ -59,17 +62,13 @@ export const JourneyRow = ({
       <ButtonsContainer>
         <li>
           <Tooltip title="Chat with this journey/subject privately.">
-            <button
-              onClick={() => {
-                addChats([journey.chat_id])
-              }}
-            >
+            <button onClick={onChatSelect}>
               <WechatOutlined />
             </button>
           </Tooltip>
         </li>
 
-        <li>
+        {/* <li>
           <Tooltip title="Disable this journey. The URL will be invalidated.">
             <button
               onClick={() => {
@@ -87,7 +86,7 @@ export const JourneyRow = ({
               <DeleteOutlined />
             </button>
           </Tooltip>
-        </li>
+        </li> */}
       </ButtonsContainer>
     </li>
   )

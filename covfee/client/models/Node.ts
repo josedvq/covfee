@@ -1,6 +1,6 @@
 import Constants from "Constants"
-import React, { useCallback, useState } from "react"
-import { MainSocket } from "../app_context"
+import React, { useCallback, useEffect, useState } from "react"
+import { MainSocket, ServerToClientEvents } from "../app_context"
 import {
   ManualStatus,
   ManualStatuses,
@@ -8,6 +8,7 @@ import {
   TaskResponseType,
 } from "../types/node"
 import { fetcher, throwBadResponse } from "../utils"
+import { useNodes } from "./Nodes"
 
 export function useNodeFns(node: NodeType) {
   const fetchResponse = useCallback(() => {
@@ -36,7 +37,7 @@ export function useNodeFns(node: NodeType) {
   }, [node.url])
 
   const submitResponse = useCallback(
-    (responseUrl: string, data: any) => {
+    (data: any) => {
       const url = node.url + "/submit?" + new URLSearchParams({})
 
       const requestOptions = {
@@ -93,9 +94,16 @@ export function useNodeFns(node: NodeType) {
   }
 }
 
-export function useNode(node: NodeType, socket: MainSocket = null) {
+export function useNode(nodeProp: NodeType, socket: MainSocket = null) {
   // const [node, setNode] = useState<NodeType>(data)
+
+  const { store, updateItem: _updateNode } = useNodes([nodeProp], socket)
   const [response, setResponse] = useState<TaskResponseType>(null)
+
+  const node = React.useMemo(() => store[nodeProp.id], [store, nodeProp.id])
+  const updateNode = (newNode: Partial<NodeType>) => {
+    _updateNode(newNode.id, newNode)
+  }
 
   // extract the journey association (JourneyNode) data
   // includes ready status
@@ -133,45 +141,37 @@ export function useNode(node: NodeType, socket: MainSocket = null) {
     })
   }, [fetchResponseFn])
 
-  const submitResponse = (data: any) => submitResponseFn(response.url, data)
+  const submitResponse = (data: any) => submitResponseFn(data)
 
-  // useEffect(() => {
-  //   const handleStatus: ServerToClientEvents["status"] = (data) => {
-  //     if (data.id !== node.id) return
+  useEffect(() => {
+    const handleStatus: ServerToClientEvents["status"] = (data) => {
+      if (data.node_id !== node.id) return
 
-  //     console.log("IO: status", data)
-  //     setNode((node) => ({
-  //       ...node,
-  //       status: data.new,
-  //       paused: data.paused,
-  //       manual: data.manual,
-  //       journeys: data.journeys,
-  //       dt_start: data.dt_start,
-  //       dt_play: data.dt_play,
-  //       dt_count: data.dt_count,
-  //       dt_finish: data.dt_finish,
-  //       t_elapsed: data.t_elapsed,
-  //     }))
-  //   }
+      console.log("IO: status", data)
+      updateNode({
+        ...data,
+        status: data.new,
+      })
+    }
 
-  //   const handleJoin: ServerToClientEvents["join"] = (data) => {
-  //     console.log("IO: join", data)
+    const handleJoin: ServerToClientEvents["join"] = (data) => {
+      console.log("IO: join", data)
 
-  //     setNode((node) => ({
-  //       ...node,
-  //       taskData: data.task_data,
-  //     }))
-  //   }
+      updateNode({
+        ...node,
+        taskData: data.task_data,
+      })
+    }
 
-  //   if (socket) {
-  //     socket.on("status", handleStatus)
-  //     socket.on("join", handleJoin)
-  //     return () => {
-  //       socket.off("status", handleStatus)
-  //       socket.off("join", handleJoin)
-  //     }
-  //   }
-  // }, [node.id, socket])
+    if (socket) {
+      socket.on("status", handleStatus)
+      socket.on("join", handleJoin)
+      return () => {
+        socket.off("status", handleStatus)
+        socket.off("join", handleJoin)
+      }
+    }
+  }, [node.id, socket])
 
   return {
     node,

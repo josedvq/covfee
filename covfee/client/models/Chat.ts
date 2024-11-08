@@ -86,30 +86,18 @@ export const useChats = ({
    * DERIVED STATE TO KEEP TRACK OF MESSAGE COUNTS
    */
 
-  const journeyToReadBy = React.useMemo(() => {
-    return Object.fromEntries(
-      Object.values(chats).map((chat) => [
-        chat.id,
-        chat.last_read,
-        // convert all the dates to Date objects
-      ])
-    )
-  }, [chats])
-
   const unreadCounts = React.useMemo(() => {
-    if (journeyToReadBy === null || Object.keys(journeyToReadBy).length === 0)
-      return null
-    // mapping chat_id -> count of unread messages
-
     const unreadCounts: Record<string, number> = Object.fromEntries(
-      Object.keys(journeyToReadBy).map((chat_id) => [chat_id, 0])
+      Object.keys(chats).map((chat_id) => [chat_id, 0])
     )
 
     if (journeyId !== undefined) {
       Object.values(messages).forEach((msg) => {
-        const chatReadBy = journeyToReadBy[msg.chat_id][journeyId]
+        const chatReadBy = chats[msg.chat_id].last_read[journeyId]
 
-        if (!chatReadBy || chatReadBy < new Date(msg.created_at)) {
+        console.log(msg, chatReadBy, new Date(msg.created_at))
+
+        if (isNaN(chatReadBy) || chatReadBy < new Date(msg.created_at)) {
           unreadCounts[msg.chat_id] += 1
         }
       })
@@ -124,8 +112,10 @@ export const useChats = ({
       })
     }
 
+    console.log("unreadCounts", unreadCounts)
+
     return unreadCounts
-  }, [journeyId, journeyToReadBy, messages, chats])
+  }, [journeyId, chats, messages])
 
   const totalUnreadMessages = React.useMemo(() => {
     if (unreadCounts === null) return 0
@@ -134,17 +124,18 @@ export const useChats = ({
     }, 0)
   }, [unreadCounts])
 
-  const setChatData = (chatId: number, fn: (arg0: Chat) => Chat) => {
-    setChats((chats) => ({
-      ...chats,
-      [chatId]: fn(chats[chatId]),
-    }))
-  }
+  const setChatData = React.useCallback(
+    (chatId: number, fn: (arg0: Chat) => Chat) => {
+      setChats((chats) => ({
+        ...chats,
+        [chatId]: fn(chats[chatId]),
+      }))
+    },
+    []
+  )
 
   const addChatListeners = React.useCallback(
     (ids: number[]) => {
-      console.log("addChatListeners")
-      console.log(ids)
       setChatIdsToListen(new Set([...chatIdsToListen, ...ids]))
     },
     [chatIdsToListen]
@@ -152,9 +143,12 @@ export const useChats = ({
 
   const hasChat = React.useCallback(
     (id: number) => {
-      return Object.keys(chats).includes(id.toString())
+      return (
+        chatIdsBeingFetched.has(id) ||
+        Object.keys(chats).includes(id.toString())
+      )
     },
-    [chats]
+    [chats, chatIdsBeingFetched]
   )
 
   /**
@@ -163,10 +157,12 @@ export const useChats = ({
 
   const addMessages = React.useCallback((msgs: ChatMessage[]) => {
     const newMessages = Object.fromEntries(msgs.map((msg) => [msg.id, msg]))
-    setMessages((messages) => ({
-      ...messages,
-      ...newMessages,
-    }))
+    setMessages((messages) => {
+      return {
+        ...messages,
+        ...newMessages,
+      }
+    })
   }, [])
 
   const addChats = React.useCallback(
@@ -178,7 +174,9 @@ export const useChats = ({
       )
       if (idsToAdd.length === 0) return Promise.resolve()
 
-      setChatIdsBeingFetched((s) => new Set([...s, ...idsToAdd]))
+      setChatIdsBeingFetched((s) => {
+        return new Set([...s, ...idsToAdd])
+      })
 
       return getChats(idsToAdd).then((res) => {
         const newChats: Record<string, Chat> = Object.fromEntries(
@@ -195,17 +193,21 @@ export const useChats = ({
           ...res.map((chat) => chat.messages)
         )
 
-        const newChatIds = res.map((chat) => chat.id)
+        addMessages(newMessages.map(convertMessageDates))
+        setChats((chats) => {
+          return {
+            ...chats,
+            ...newChats,
+          }
+        })
+
+        // remove chat ids from being fetched
         setChatIdsBeingFetched(
           (ids) =>
-            new Set(Array.from(ids).filter((id) => idsToAdd.includes(id)))
+            new Set(Array.from(ids).filter((id) => !idsToAdd.includes(id)))
         )
+        const newChatIds = res.map((chat) => chat.id)
         addChatListeners(newChatIds)
-        setChats((chats) => ({
-          ...chats,
-          ...newChats,
-        }))
-        addMessages(newMessages.map(convertMessageDates))
 
         idsToAdd.forEach((chat_id) => {
           console.log(`IO: join_chat ${chat_id}`)
@@ -213,25 +215,45 @@ export const useChats = ({
         })
       })
     },
-    [chocket, addChatListeners, chats, chatIdsBeingFetched]
+    [
+      chocket,
+      addChatListeners,
+      chats,
+      setChats,
+      setMessages,
+      chatIdsBeingFetched,
+    ]
   )
 
   type ChatFilterFn = (arg0: Chat) => boolean
-  const removeChats = React.useCallback((ids: number[] | ChatFilterFn) => {
-    const filterFn: ChatFilterFn = Array.isArray(ids)
-      ? (chat) => !ids.includes(chat.id)
-      : (chat) => !ids(chat)
-    setChats((chats) => {
-      const filtered = Object.values(chats).filter(filterFn)
+  const removeChats = React.useCallback(
+    (ids: number[] | ChatFilterFn) => {
+      const idsToRemove = Array.isArray(ids)
+        ? ids
+        : Object.values(chats)
+            .filter((chat) => ids(chat))
+            .map((chat) => chat.id)
 
-      if (filtered.length === Object.values(chats).length) {
-        // noting to remove
-        return chats
-      } else {
+      console.log("removeChats", idsToRemove)
+
+      setChats((chats) => {
+        const filtered = Object.values(chats).filter(
+          (chat) => !idsToRemove.includes(chat.id)
+        )
+
         return Object.fromEntries(filtered.map((chat) => [chat.id, chat]))
-      }
-    })
-  }, [])
+      })
+
+      setMessages((messages) => {
+        const filtered = Object.values(messages).filter(
+          (msg) => !idsToRemove.includes(msg.chat_id)
+        )
+
+        return Object.fromEntries(filtered.map((msg) => [msg.id, msg]))
+      })
+    },
+    [chats, setChats]
+  )
 
   const clearChatListeners = () => {
     setChatIdsToListen(new Set())
@@ -252,12 +274,12 @@ export const useChats = ({
     chocket.emit("read", payload)
   }
 
-  React.useEffect(() => {
-    if (!init) return
-    // will only run once
-    addChats(initialChatIds)
-    setInit(false)
-  }, [init, addChats, initialChatIds])
+  // React.useEffect(() => {
+  //   if (!init) return
+  //   // will only run once
+  //   addChats(initialChatIds)
+  //   setInit(false)
+  // }, [init, addChats, initialChatIds])
 
   React.useEffect(() => {
     const handleChatUpdate: ChatServerToClientEvents["chat_update"] = (

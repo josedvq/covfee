@@ -70,6 +70,7 @@ export interface BaseNodeSpec {
 
   /**
    * If true, all journeys must click ready to start the task
+   * @default false
    */
   wait_for_ready?: boolean
 

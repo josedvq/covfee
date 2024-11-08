@@ -60,6 +60,9 @@ spec_instructions = {
 
 spec_videocall = {
     "name": "Videocall",
+    "wait_for_ready": True,
+    "countdown": 10,
+    "timer": 10
 }
 
 spec_final_survey = {
@@ -87,7 +90,6 @@ j2_instructions = tasks.InstructionsTaskSpec(**spec_instructions)
 j2_final = tasks.QuestionnaireTaskSpec(**spec_final_survey)
 
 videocall_task = tasks.VideocallTaskSpec(**spec_videocall)
-
 
 hit = HIT("Dyadic videocall")
 j1 = hit.add_journey(nodes=[j1_consent, j1_instructions, videocall_task, j1_final])

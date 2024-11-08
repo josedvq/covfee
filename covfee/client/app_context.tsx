@@ -28,6 +28,7 @@ export interface ServerToClientEvents {
     num_connections: number
     status: string
     dt_submitted: string
+    max_submitted_node_index: number
   }) => void
 
   /**

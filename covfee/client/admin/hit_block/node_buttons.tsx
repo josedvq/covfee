@@ -55,9 +55,17 @@ type NodeButtonsProps = {
   node: NodeType
 }
 export const NodeButtons = ({ node }: NodeButtonsProps) => {
-  const { addChats } = React.useContext(chatContext)
+  const { addChats, setActiveChatId, setChatOpen } =
+    React.useContext(chatContext)
   const { setNodeId: openNode } = React.useContext(adminContext)
   const { setManualStatus, restart } = useNodeFns(node)
+
+  const onChatSelect = React.useCallback(() => {
+    addChats([node.chat_id]).then(() => {
+      setActiveChatId(node.chat_id)
+      setChatOpen(true)
+    })
+  }, [node.chat_id])
 
   return (
     <ButtonsContainer>
@@ -74,11 +82,7 @@ export const NodeButtons = ({ node }: NodeButtonsProps) => {
       </li>
       <li>
         <Tooltip title="Message the task's chat room. In this room, all subjects in the task will be able to see your messages and each others messages.">
-          <button
-            onClick={() => {
-              addChats([node.chat_id])
-            }}
-          >
+          <button onClick={onChatSelect}>
             <WechatOutlined />
           </button>
         </Tooltip>
@@ -113,6 +117,7 @@ export const NodeButtons = ({ node }: NodeButtonsProps) => {
       <li>
         <Tooltip title="Restart the node and discard any responses.">
           <button
+            disabled={node.status == "INIT"}
             onClick={() => {
               confirm({
                 title: "Are you sure you want to restart this node?",

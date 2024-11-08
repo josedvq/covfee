@@ -62,7 +62,7 @@ export const _JourneyPage: React.FC<Props> = (props) => {
 
   const routeParams = useParams()
   const { socket, chocket } = useContext(appContext)
-  const { addChats, removeChats, hasChat } = useContext(chatContext)
+  const { addChats, removeChats, hasChat, chatsStore } = useContext(chatContext)
   const {
     journey,
     setJourney,
@@ -94,15 +94,21 @@ export const _JourneyPage: React.FC<Props> = (props) => {
   }
 
   React.useEffect(() => {
-    if (!hasChat(journey.chat_id)) addChats([journey.chat_id])
+    console.log("USEFFECT JOURNEY", journey.chat_id)
+    if (!hasChat(journey.chat_id)) {
+      console.log("USEFFECT ADDING JOURNEY CHAT", journey.chat_id)
+      addChats([journey.chat_id])
+    }
   }, [addChats, hasChat, journey.chat_id])
 
   React.useEffect(() => {
+    console.log("USEFFECT", nodes[currNodeIndex].chat_id, chatsStore)
     if (!hasChat(nodes[currNodeIndex].chat_id)) {
+      console.log("USEFFECT ADDING NODE CHAT", nodes[currNodeIndex].chat_id)
       removeChats((chat: Chat) => chat.node_id !== null)
       addChats([nodes[currNodeIndex].chat_id])
     }
-  }, [addChats, currNodeIndex, hasChat, nodes, removeChats])
+  }, [addChats, currNodeIndex, hasChat, chatsStore, nodes, removeChats])
 
   React.useEffect(() => {
     window.history.pushState(

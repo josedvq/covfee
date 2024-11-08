@@ -48,7 +48,7 @@ class Launcher:
         self.auth_enabled = auth_enabled
 
         self.engine = get_engine(
-            in_memory=(environment == "dev"), db_path=self.config["DATABASE_PATH"]
+            in_memory=False, db_path=self.config["DATABASE_PATH"]
         )
         self.session_local = get_session_local(self.engine)
 
@@ -124,7 +124,7 @@ class Launcher:
         if self.environment == "local":
             socketio.run(app, host=host, port=port, **ssl_options)
         elif self.environment == "dev":
-            socketio.run(app, host=host, port=port, debug=True, **ssl_options)
+            socketio.run(app, host=host, port=port, **ssl_options)
         elif self.environment == "deploy":
             socketio.run(app, host=host, port=port, **ssl_options)
         else:

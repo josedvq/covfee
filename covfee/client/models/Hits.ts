@@ -73,7 +73,7 @@ export const useHitInstances = (
       console.log("IO: status", data)
       if (!(data.hit_id in hitIdToIndex)) return
       const hitIndex = hitIdToIndex[data.hit_id]
-      const nodeIndex = nodeIdToIndex[hitIndex][data.id]
+      const nodeIndex = nodeIdToIndex[hitIndex][data.node_id]
 
       setNodeData(hitIndex, nodeIndex, {
         status: data.new,

@@ -85,7 +85,7 @@ class VideocallTask(BaseCovfeeTask):
             connection_token = self._request_connection_token(
                 session_id, journey.id.hex() if journey is not None else None
             )
-        except Exception:
-            raise CriticalError(load_task=True)
+        except Exception as ex:
+            raise CriticalError(load_task=True) from ex
 
         return {"session_id": session_id, "connection_token": connection_token}

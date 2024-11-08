@@ -9,7 +9,8 @@ from sqlalchemy import ForeignKey, event
 from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from covfee.server.scheduler.timers import TimerName, schedule_timer, stop_timer
+from covfee.server.scheduler.timers import (TimerName, schedule_timer,
+                                            stop_timer)
 
 from .base import Base
 from .chat import Chat
@@ -366,6 +367,9 @@ class NodeInstance(Base):
             if datetime.now() > self.dt_start + timedelta(seconds=timer_finish):
                 return True
         return False
+    
+    def submit_and_finish(self):
+        self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
 
     def check_timer(self, timer: TimerName):
         """State transitions caused by timers."""
@@ -377,7 +381,7 @@ class NodeInstance(Base):
         # check timers
         if timer == "finish":
             if self.check_timer_finish():
-                self.set_status(NodeInstanceStatus.FINISHED, stop_timers=False)
+                self.submit_and_finish()
 
         elif timer == "count":
             timer_countdown = self.spec.settings.get("countdown", 0)

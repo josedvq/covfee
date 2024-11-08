@@ -1,8 +1,10 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Literal
+
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING, Literal
 
 from covfee.server.socketio.socket import socketio
+
 from .apscheduler import scheduler
 
 if TYPE_CHECKING:
@@ -15,7 +17,7 @@ def update_status_job(timer: TimerName, node_id):
     from covfee.server.orm.node import NodeInstance
 
     with NodeInstance.sessionmaker() as session:
-        node = session.query(NodeInstance).get(node_id)
+        node: NodeInstance = session.query(NodeInstance).get(node_id)
         if node is None:
             return print(f"update_status_job could not find node with id {node_id}")
 
@@ -23,8 +25,14 @@ def update_status_job(timer: TimerName, node_id):
         session.commit()
         payload = node.make_status_payload()
 
-    socketio.emit("status", payload, to=node.id)
-    socketio.emit("status", payload, namespace="/admin")
+        # notify the node's journeys in case the journey status has changed.
+        # it can change when the node is paused or finished
+        for journey in node.journeys:
+            socketio.emit("journey_status", journey.make_status_payload(), to=journey.id.hex())
+            socketio.emit("journey_status", journey.make_status_payload(), namespace="/admin")
+
+        socketio.emit("status", payload, to=node.id)
+        socketio.emit("status", payload, namespace="/admin")
 
 
 def schedule_timer(node: NodeInstance, timer: TimerName):

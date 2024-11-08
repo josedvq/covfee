@@ -111,7 +111,7 @@ class TaskInstance(NodeInstance):
     def get_task_object(self):
         task_class = getattr(tasks, self.spec.spec["type"], BaseCovfeeTask)
         task_object = task_class(
-            task=self, session=object_session(self)
+            task=self
             # , config=app.config
         )
         return task_object
@@ -156,6 +156,9 @@ class TaskInstance(NodeInstance):
         super().pause(pause)
         self.paused = pause
         self.get_task_object().on_admin_pause()
+
+    def submit_and_finish(self):
+        self.responses[-1].submit()
 
     def make_results_dict(self):
         return {

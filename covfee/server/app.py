@@ -45,6 +45,12 @@ def create_app_and_socketio(mode="deploy", session_local=None):
     Base.sessionmaker = session_local
     app.session = scoped_session(session_local)
 
+    def log_session_closed(session):
+        print(f"Session closed: {session}")
+
+    from sqlalchemy import event
+
+    # event.listen(app.session, 'after_close', log_session_closed)
     from .socketio import chat, handlers  # noqa: F401
     from .socketio.socket import socketio
 

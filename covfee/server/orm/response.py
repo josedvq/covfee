@@ -93,14 +93,6 @@ class TaskResponse(Base):
             journey.max_submitted_node_index = max(
                 journey.max_submitted_node_index, journey.nodes.index(self.task)
             )
-        
-
-        res = {"status": "success", "valid": self.valid, "response": self.to_dict()}
-
-        if not self.valid:
-            res["reason"] = reason
-
-        return res
 
     def make_results_dict(self):
         return {

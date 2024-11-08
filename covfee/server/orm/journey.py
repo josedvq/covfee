@@ -262,6 +262,7 @@ class JourneyInstance(Base):
             "num_connections": self.num_connections,
             "status": self.status,
             "dt_submitted": str(self.dt_submitted),
+            "max_submitted_node_index": self.max_submitted_node_index,
         }
 
         if self.status == JourneyInstanceStatus.FINISHED:

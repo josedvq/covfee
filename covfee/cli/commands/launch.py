@@ -15,6 +15,7 @@ from colorama import init as colorama_init
 from covfee.cli.utils import NPMPackage, working_directory
 from covfee.config import Config
 from covfee.launcher import Launcher, ProjectExistsException, launch_webpack
+from covfee.server.tasks.base import BaseCovfeeTask
 from covfee.shared.validator.validation_errors import (JavascriptError,
                                                        ValidationError)
 
@@ -116,6 +117,7 @@ def make(force, dev, deploy, safe, rms, host, port, no_launch, project_spec_file
         mode = "deploy"
     unsafe = False if mode == "deploy" else (not safe)
     config = Config(mode, host, port)
+    BaseCovfeeTask.config = config
 
     install_npm_packages()
 

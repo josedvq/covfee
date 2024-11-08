@@ -61,7 +61,6 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
   const [instructionsVisible, setInstructionsVisible] = React.useState(false)
   const [reloadCount, setReloadCount] = React.useState<number>(0)
   const [reloadMessage, setReloadMessage] = React.useState<string>(null)
-  const [overlayVisible, setOverlayVisible] = React.useState(false)
   const [error, setError] = React.useState<{
     error: boolean
     show?: boolean
@@ -282,9 +281,7 @@ export const NodeLoader: React.FC<Props> = (props: Props) => {
 
   const handleTaskSubmit = () => {
     submitResponse({ state: reduxStore.current.getState() })
-      .then((data: any) => {
-        args.onSubmit()
-      })
+      .then(args.onSubmit)
       .catch((error) => {
         myerror("Error submitting the task.", error)
       })

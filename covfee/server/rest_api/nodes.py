@@ -48,14 +48,14 @@ def response_submit(nid):
     if not all(journey.nodes.index(task) <= journey.max_submitted_node_index + 1 for journey in journeys):
         return jsonify({"msg": "Task cannot be submitted because some of its journeys contain incoming unsubmitted nodes."}), 400
 
-    res = task.responses[-1].submit(request.json)
+    task.responses[-1].submit(request.json)
     app.session.commit()
 
     payload = task.make_status_payload()
     socketio.emit("status", payload, to=task.id)
     socketio.emit("status", payload, namespace="/admin")
 
-    return jsonify(res)
+    return "", 200
 
 
 # state management
@@ -88,5 +88,4 @@ def restart_node(nid):
         socketio.emit("status", payload, namespace="/admin")
 
     app.session.commit()
-    return "", 200
     return "", 200

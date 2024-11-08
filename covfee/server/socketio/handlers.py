@@ -1,4 +1,6 @@
 import datetime
+import threading
+import traceback
 from typing import Union
 
 from flask import current_app as app
@@ -30,24 +32,26 @@ def get_on_join_payload(node: TaskInstance, journey: JourneyInstance):
     response = node.responses[-1].to_dict()
     task_object = node.get_task_object()
     if task_object is not None:
+        
         try:
             payload = {"task_data": task_object.on_join(journey)}
         except CriticalError as ex:
+            print(traceback.format_exc())
             payload = {
-                "error": ex.msg,
+                "error": 'Critical error when executing on_join for task',
                 "load_task": ex.load_task,
             }
         except Exception:
+            print(traceback.format_exc())
             payload = {
                 "error": f"Unknown exception while executing on_join for task {task_object.__class__.__name__}",
                 "load_task": True,
             }
-            app.logger.error(
-                f"Error running on_join for task {task_object.__class__.__name__}"
-            )
+            
     else:
         payload = {}
 
+    print('PAYLOAD:', payload)
     payload = {"node_id": node.id, "response": response, **payload}
 
     return payload
@@ -116,10 +120,10 @@ def on_join(data):
     curr_journey.set_curr_node(curr_node)
     join_payload = get_on_join_payload(curr_node, curr_journey)
     curr_node.check_n()
-
+    
     emit("join", join_payload)
     app.logger.info(f"socketio: join: {str(join_payload)}")
-
+    
     app.session.commit()
 
     # update current node status

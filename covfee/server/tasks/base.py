@@ -26,10 +26,10 @@ class CriticalError(Exception):
 
 
 class BaseCovfeeTask:
-    def __init__(self, task: TaskInstance = None, session=None, config=None):
+    config: dict
+
+    def __init__(self, task: TaskInstance = None):
         self.task = task
-        self.session = session
-        self.config = config
 
     @classmethod
     def get_blueprint(cls) -> Blueprint | None:

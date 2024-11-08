@@ -45,7 +45,7 @@ def journey_disable(jid):
     app.session.commit()
 
     payload = journey.make_status_payload()
-    socketio.emit("journey_status", payload, to=journey.id)
+    socketio.emit("journey_status", payload, to=journey.id.hex())
     socketio.emit("journey_status", payload, namespace="/admin")
 
     return "", 200
