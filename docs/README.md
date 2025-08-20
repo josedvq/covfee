@@ -4,7 +4,12 @@ This website is built using [Docusaurus 2](https://v2.docusaurus.io/), a modern 
 
 ## Installation
 
+Install conda, [miniforge](https://conda-forge.org/download/) is recommended, and then install the dependencies a new environment:
+
 ```console
+conda create --name covfee-docs
+conda activate covfee-docs
+conda install -c conda-forge nodejs=18 yarn
 yarn install
 ```
 

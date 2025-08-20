@@ -13,6 +13,7 @@ docs/node_modules
 yarn.lock
 yarn-error.log
 lerna-debug.log
+.yarn/
 
 # generated files
 covfee/shared/schemata.json
