@@ -9,7 +9,8 @@ Install conda, [miniforge](https://conda-forge.org/download/) is recommended, an
 ```console
 conda create --name covfee-docs
 conda activate covfee-docs
-conda install -c conda-forge nodejs=18 yarn
+conda install -y -c conda-forge nodejs=18
+conda install -y yarn
 yarn install
 ```
 
