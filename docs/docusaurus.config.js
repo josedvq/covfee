@@ -11,7 +11,7 @@ module.exports = {
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
   favicon: "img/favicon.ico",
-  organizationName: "josedvq", // Usually your GitHub org/user name.
+  organizationName: "TUDelft-SPC-Lab", // Usually your GitHub org/user name.
   projectName: "covfee", // Usually your repo name.
   scripts: [],
   stylesheets: [],
@@ -31,7 +31,7 @@ module.exports = {
     announcementBar: {
       id: "support_us",
       content:
-        '<a href="https://github.com/josedvq/covfee">⭐ If you like covfee, give it a star on GitHub!</a>',
+        '<a href="https://github.com/TUDelft-SPC-Lab/covfee">⭐ If you like covfee, give it a star on GitHub!</a>',
       backgroundColor: "#fafbfc",
       textColor: "#091E42",
       isCloseable: true,
@@ -50,7 +50,7 @@ module.exports = {
           position: "left",
         },
         {
-          href: "https://github.com/josedvq/covfee",
+          href: "https://github.com/TUDelft-SPC-Lab/covfee",
           label: "GitHub",
           position: "right",
         },
@@ -71,10 +71,10 @@ module.exports = {
         {
           title: "Community",
           items: [
-            {
-              label: "Twitter",
-              href: "https://twitter.com/josedvq",
-            },
+            // {
+            //   label: "Twitter",
+            //   href: "https://twitter.com/josedvq",
+            // },
           ],
         },
         {
@@ -82,7 +82,7 @@ module.exports = {
           items: [
             {
               label: "GitHub",
-              href: "https://github.com/josedvq/covfee",
+              href: "https://github.com/TUDelft-SPC-Lab/covfee",
             },
           ],
         },
