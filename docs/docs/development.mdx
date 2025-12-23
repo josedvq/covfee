@@ -57,7 +57,7 @@ To run one of the covfee samples:
 
 ```
 cd samples/basic
-covfee make . --no-launch
+covfee make ./basic.py --no-launch --force --dev
 ```
 
 2. Start the webpack server from the same folder:
@@ -71,10 +71,15 @@ This will start a [Webpack development server](https://webpack.js.org/guides/dev
 3. In another terminal, at the same folder, start the flask server in dev mode. This will start the Python backend server with hot-reloading:
 
 ```
-covfee start --dev
+covfee start
 ```
 
+4. Open your browser at [http://localhost:5000/admin#](http://localhost:5000/admin#) to access the covfee admin panel.
+
 You should now be able to access the admin panel and open the covfee HITs. Any changes made to Python or Javascript code should be immediately hot-reloaded.
+
+You can also make and launch the project directly with `covfee make ./basic.py --launch --dev`.
+Note that this will delete the database.
 
 ## Schemata updates
 
