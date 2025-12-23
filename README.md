@@ -2,7 +2,7 @@
 
 Covfee was created to provide an easily extensible tool for video perception and annotation experiments, especially those requiring continuous feedback from the user.
 
-Full documentation: [covfee docs](https://tudelft-spc-lab.github.io)
+Full documentation: [covfee docs](https://tudelft-spc-lab.github.io/covfee/docs)
 
 ## Quick start
 
