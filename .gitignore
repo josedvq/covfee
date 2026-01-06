@@ -41,8 +41,8 @@ samples/*/covfee_constants.json
 samples/conflab/media/*
 samples/memory/media/*
 samples/memory/media.zip
-covfee/samples/continuous_annotation/art/cam-multiview.svg
-covfee/samples/continuous_annotation/art/conflab-gallery.svg
+cam-multiview.svg
+conflab-gallery.svg
 
 # FIXME: #CONFLAB ignore the deployment files that now live in the private gitlab repo
 samples/continuous_annotation/*
