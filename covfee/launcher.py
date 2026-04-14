@@ -30,6 +30,7 @@ class Launcher:
     2) commiting projects to DB (optional)
     3) launching covfee in 'local' or 'dev' mode
     """
+
     # holds valid projects
     projects: List["Project"]
 
@@ -42,14 +43,12 @@ class Launcher:
     ):
         self.environment = environment
         self.config = Config(environment)
-        
+
         self.projects = projects
         self.folder = folder
         self.auth_enabled = auth_enabled
 
-        self.engine = get_engine(
-            in_memory=False, db_path=self.config["DATABASE_PATH"]
-        )
+        self.engine = get_engine(in_memory=False, db_path=self.config["DATABASE_PATH"])
         self.session_local = get_session_local(self.engine)
 
     def make_database(self, force=False, with_spinner=False):
@@ -172,7 +171,7 @@ class Launcher:
         if not os.path.exists(master_bundle_path):
             raise Exception("Master bundles not found.")
         bundle_path = os.path.join(self.config["PROJECT_WWW_PATH"], "main.js")
-        if os.path.exists(bundle_path):
+        if os.path.lexists(bundle_path):
             os.remove(bundle_path)
         # windows requires admin rights for symlinking -> fall back to copying
         if platform.system() == "Windows":
