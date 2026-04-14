@@ -180,7 +180,7 @@ class Launcher:
             os.symlink(master_bundle_path, bundle_path)
 
         admin_bundle_path = os.path.join(self.config["PROJECT_WWW_PATH"], "admin.js")
-        if os.path.exists(admin_bundle_path):
+        if os.path.lexists(admin_bundle_path):
             os.remove(admin_bundle_path)
         if platform.system() == "Windows":
             shutil.copyfile(
