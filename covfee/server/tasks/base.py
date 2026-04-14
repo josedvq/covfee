@@ -8,6 +8,8 @@ from ...logger import logger
 from ..orm.journey import JourneyInstance
 
 if TYPE_CHECKING:
+    from sqlalchemy.engine import Connection
+
     from covfee.server.orm.response import TaskResponse
     from covfee.server.orm.task import TaskInstance
 
@@ -77,7 +79,7 @@ class BaseCovfeeTask:
         """Called when the task is paused by an admin"""
         logger.info("BaseCovfeeTask: on_admin_pause")
 
-    def on_create(self):
+    def on_create(self, connection: Connection | None = None):
         """Called when the task is created
         (for socketio-enabled tasks)
         """

@@ -1,6 +1,5 @@
-from setuptools import find_packages, setup
-
 import versioneer
+from setuptools import find_packages, setup
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -38,17 +37,18 @@ setup(
         "flask_cors == 3.0.10",
         "flask-socketio == 5.3.6",
         "flask-jwt-extended == 4.4.4",
-        "pyzmq == 22.3.0",
+        "pyzmq == 27.1.0",
         "APScheduler == 3.10.4",
         # common utils (fixed major versions)
         "click ==  8.*",
-        "numpy == 1.*",
-        "pandas == 1.*",
+        "numpy == 2.*",
+        "pandas == 2.*",
         "requests == 2.*",
         # small utils (fixed versions)
         "jsonschema == 3.2.0",
         "halo == 0.0.31",
         "colorama == 0.4.6",
+        "python-dotenv",
         "zipstream-new == 1.1.8",
         "pyparsing == 3.1.1",
         "json-ref-dict == 0.7.2",

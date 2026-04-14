@@ -170,4 +170,4 @@ class TaskInstance(NodeInstance):
 @event.listens_for(TaskInstance, "after_insert")
 def create_permissions(mapper, connection, instance: TaskInstance):
     obj = instance.get_task_object()
-    obj.on_create()
+    obj.on_create(connection)

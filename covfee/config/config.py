@@ -2,6 +2,7 @@ import os
 from urllib.parse import urlparse
 
 import flask
+from dotenv import dotenv_values, load_dotenv
 
 
 class Config(flask.Config):
@@ -12,29 +13,44 @@ class Config(flask.Config):
     def __init__(self, mode: str = None, host=None, port=None):
         super().__init__("/")
         self.from_object("covfee.config.defaults")
+        self._loaded_env_keys = set()
+        self._loaded_config_keys = set()
         if mode is not None:
             self.load_environment(mode, host, port)
 
-    def load_environment(self, mode: str, host=None, port=None):
-        # config = flask.Config('/')
-        self["COVFEE_ENV"] = mode
-        # load the base configuration object
-
-        # update with the custom project config files
+    def _get_env_file_name(self, mode: str) -> str:
         if mode == "local":
-            self.from_pyfile(
-                os.path.join(os.getcwd(), "covfee.local.config.py"), silent=True
-            )
-        elif mode == "dev":
-            self.from_pyfile(
-                os.path.join(os.getcwd(), "covfee.development.config.py"), silent=True
-            )
-        elif mode == "deploy":
-            self.from_pyfile(
-                os.path.join(os.getcwd(), "covfee.deployment.config.py"), silent=True
-            )
-        else:
-            raise Exception(f"Unrecognized application mode {mode}.")
+            return "local.env"
+        if mode == "dev":
+            return "development.env"
+        if mode == "deploy":
+            return "deployment.env"
+        raise Exception(f"Unrecognized application mode {mode}.")
+
+    def _load_env_file(self, mode: str) -> None:
+        for key in self._loaded_env_keys:
+            os.environ.pop(key, None)
+        self._loaded_env_keys = set()
+
+        env_file = os.path.join(os.getcwd(), self._get_env_file_name(mode))
+        env_values = dotenv_values(env_file)
+        if env_values:
+            load_dotenv(env_file, override=True)
+            self._loaded_env_keys = {key for key in env_values if key is not None}
+
+    def load_environment(self, mode: str, host=None, port=None):
+        for key in self._loaded_config_keys:
+            self.pop(key, None)
+        self._loaded_config_keys = set()
+        self.from_object("covfee.config.defaults")
+        self["COVFEE_ENV"] = mode
+        self._load_env_file(mode)
+        self.from_prefixed_env(prefix="COVFEE")
+        self._loaded_config_keys = {
+            key[len("COVFEE_"):]
+            for key in self._loaded_env_keys
+            if key.startswith("COVFEE_")
+        }
 
         # check if SSL enabled
         ssl_enabled = "SSL_KEY_FILE" in self and "SSL_CERT_FILE" in self

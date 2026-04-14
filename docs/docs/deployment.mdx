@@ -10,32 +10,34 @@ If you are developing new task interfaces in Typescript it is more convenient to
 
 ## 1. Deployment configuration
 
-covfee reads its configuration from the folder in which it is run (ie. the project folder). When ran in deployment mode, covfee will look for the file `covfee.deployment.config.py` for its configuration.
+covfee reads its configuration from the folder in which it is run (ie. the project folder). When run in deployment mode, covfee will look for `deployment.env` in that folder.
 
 ### Basic configuration
 
-If you are deploying covfee in a typical server, add a configuration file like the following to your project folder:
+If you are deploying covfee in a typical server, add a `deployment.env` file like the following to your project folder:
 
 ```
-HOST="my-domain.com"
-PORT=5000
+COVFEE_HOST=my-domain.com
+COVFEE_PORT=5000
 
-COVFEE_SECRET_KEY = "MY_SECRET"
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "admin"
+COVFEE_COVFEE_SECRET_KEY=MY_SECRET
+COVFEE_ADMIN_USERNAME=admin
+COVFEE_ADMIN_PASSWORD=admin
 ```
 
-The `BASE_URL` option should point to the address where you plan to serve covfee.
+Covfee loads this file with `python-dotenv` and then reads values with Flask `from_prefixed_env()`. Most keys therefore use the `COVFEE_` prefix. The one exception that looks a little redundant is `COVFEE_COVFEE_SECRET_KEY`, which maps to Covfee's internal `COVFEE_SECRET_KEY` setting.
+
+The `BASE_URL` option is derived from `COVFEE_HOST` and `COVFEE_PORT`.
 
 The username and password will be used by covfee to authenticate users of the admin panel. It is therefore important to set them to something secure.
 
 ### Hosting media files externally
 
-The `MEDIA_URL` option allows you to customize the location of your media files. By default, covfee will serve media files from a folder called `www` in your project folder. Anything in this folder will be made public. If you want to host your media files externally, you can disable this behavior by setting `MEDIA_SERVER` to `False` and pointing `MEDIA_URL` to your files' location:
+The `MEDIA_URL` option allows you to customize the location of your media files. By default, covfee will serve media files from a folder called `www` in your project folder. Anything in this folder will be made public. If you want to host your media files externally, you can disable this behavior by setting `COVFEE_MEDIA_SERVER=false` and pointing `COVFEE_MEDIA_URL` to your files' location:
 
 ```
-MEDIA_URL = 'http://example.com/covfee-media'
-MEDIA_SERVER = False
+COVFEE_MEDIA_URL=http://example.com/covfee-media
+COVFEE_MEDIA_SERVER=false
 ```
 
 ## 2. Deployment Installation

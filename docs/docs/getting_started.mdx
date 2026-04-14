@@ -2,216 +2,164 @@
 title: Getting Started
 ---
 
-import useBaseUrl from '@docusaurus/useBaseUrl'
+This guide takes you through the process of creating a simple Covfee study with four tasks:
 
-This guide takes you through the process of creating a simple covfee interface which gathers continuous data from subjects. 
+1. a demographics questionnaire
+2. an instructions screen loaded from a Markdown file
+3. a continuous annotation task on a video
+4. a final feedback questionnaire
 
-:::caution
-Covfee makes use of [Dict[str, Any]](https://en.wikipedia.org/wiki/JSON) as input format. In this guide we assume that you are familiar with the JSON syntax.
-:::
-
-## 1. Install covfee
+## 1. Install Covfee
 
 Follow the [installation instructions](installation) if you have not done so already.
 
-## 2. Specify your HITs
+## 2. Create the project folder
 
-In this example project, we will assume that we have three annotators that will be performing the same HIT (separately). The HIT consists in four tasks: 1) filling a questionnaire where we ask for demographic information, 2) reading the instructions for affect annotation, 3) annotating affect in a video and 4) filling a questionnaire where we ask them for feedback on their experience during the annotation process.
+First create a folder for your Covfee project. This folder may be anywhere in the file system. Inside it, create the following structure:
 
-This can be set up by creating a covfee project containing the HIT as follows:
-
-<img src={useBaseUrl('/img/covfee_project.png')}/>
-
-Covfee will produce multiple URLs per HIT, which can be sent to the three annotators. Covfee projects may contain multiple HITs (like HIT2 in the picture) but this project only requires a single HIT. Covfee tasks can also be very diverse, and you can even implement your own if you know Javascript. You can see live examples of the tasks available in covfee in the Playground section.
-
-You make use of covfee by first creating a JSON file specifying your HITs. First create a folder for your covfee project and a file `example.covfee.json` with the following content:
-
-```
-{
-  "id": "getting_started",
-  "name": "My Covfee Project",
-  "email": "example@example.com",
-  "hits": [
-    {
-      "id": "hit1",
-      "name": "HIT1",
-      "tasks": [
-        ...
-      ],
-      "interface": {
-        "type": "timeline"
-      }
-    }
-  ]
-}
-```
-
-This is the skeleton of a covfee project and `example.covfee.json` will contain the full specification of it. It starts with the `name` and `email` of the contact person in charge of the study, which will be available to participants. The `hits` section contains an object per HIT, in this case a single one. We will specify our tasks next.
-
-### Task 1. Questionnaire
-
-We will start by specifying the form / questionnaire that we want annotators to fill in in Task 1. We will ask them for their age (number input), sex (select input) and nationality (free text input):
-
-```
-{
-  "name": "Demographics",
-  "type": "QuestionnaireTask",
-  "form": {
-    "fields": [
-      {
-        "name": "age",
-        "label": "Your age:",
-        "input": {
-          "inputType": "InputNumber"
-        }
-      },
-      {
-        "name": "sex",
-        "label": "Your sex:",
-        "input": {
-          "inputType": "Select",
-          "options": [
-            {"label": "Male", "value": "m"},
-            {"label": "Female", "value": "f"}
-          ]
-        }
-      },
-      {
-        "name": "nationality",
-        "label": "Your nationality:",
-        "input": {
-          "inputType": "Input"
-        }
-      }
-    ]
-  }
-}
-```
-
-Go ahead and paste the text above into the `tasks` section of the project specification.
-
-### Task 2. Instructions
-
-Next we will specify the instructions task. Covfee's `InstructionTask` supports linking to a [Markdown](https://about.gitlab.com/handbook/markdown-guide/) file with instructions. A Markdown file may contain rich text, images, audio and even videos. We will make use of it for our instructions:
-
-```
-{
-  "name": "Instructions",
-  "type": "InstructionsTask",
-  "content": {
-    "type": "link",
-    "url": "$$www$$/instructions.md"
-  }
-}
-```
-
-Now we only need to create our `instructions.md` file with the following content:
-
-```
-# Instructions
-
-You will be shown a video of a person. Please rate their arousal using your keyboard up/down arrows.
-```
-
-An important matter is where to place this file. Covfee is able to read local files placed in a specific location: a folder named `www` located directly under your covfee project folder. Go ahead and create this folder and place your `instructions.md` file inside. After, this your file structure should look like:
-
-```
+```text
 myproject
-    example.covfee.json
+    getting_started.py
+    local.env
     www
         instructions.md
+```
+
+Covfee expects local project assets to live in a folder named `www` directly under the project folder.
+
+If you want to override the default host, port, admin credentials, or other settings, create a `local.env` file in the project root. Covfee loads `local.env` automatically for the default local mode.
+
+## 3. Add the study file
+
+Paste the following into `getting_started.py`:
+
+```python
+from covfee import HIT, CovfeeApp, Project, tasks
+
+
+task_demographics = tasks.QuestionnaireTaskSpec(
+    name="Demographics",
+    form={
+        "fields": [
+            {
+                "name": "age",
+                "label": "Your age:",
+                "input": {"inputType": "InputNumber"},
+            },
+            {
+                "name": "sex",
+                "label": "Your sex:",
+                "input": {
+                    "inputType": "Select",
+                    "options": [
+                        {"label": "Male", "value": "m"},
+                        {"label": "Female", "value": "f"},
+                    ],
+                },
+            },
+            {
+                "name": "nationality",
+                "label": "Your nationality:",
+                "input": {"inputType": "Input"},
+            },
+        ]
+    },
+)
+
+task_instructions = tasks.InstructionsTaskSpec(
+    name="Instructions",
+    content={"type": "link", "url": "$$www$$/instructions.md"},
+)
+
+task_annotation = tasks.ContinuousAnnotationTaskSpec(
+    name="Arousal annotation",
+    annotations=[{"name": "Arousal", "interface": "RankTrace"}],
+    media={
+        "type": "video",
+        "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/keypoints/www/person_reading.mp4",
+    },
+    userCanAdd=False,
+)
+
+task_feedback = tasks.QuestionnaireTaskSpec(
+    name="Feedback",
+    form={
+        "fields": [
+            {
+                "name": "rating",
+                "label": "How would you rate your experience in completing this experiment?",
+                "required": True,
+                "input": {"inputType": "Rate", "allowHalf": True},
+            },
+            {
+                "name": "feedback",
+                "label": "Do you have any comments that can help us improve the experience?",
+                "input": {"inputType": "Input.TextArea"},
+            },
+        ]
+    },
+)
+
+hit = HIT("Basic annotation")
+hit.add_journey(
+    nodes=[
+        task_demographics,
+        task_instructions,
+        task_annotation,
+        task_feedback,
+    ]
+)
+
+projects = [Project("My Covfee Project", email="example@example.com", hits=[hit])]
+app = CovfeeApp(projects)
+```
+
+Covfee looks for a module-level object named `app`, so that name is important.
+
+## 4. Add the instructions file
+
+Paste the following into `www/instructions.md`:
+
+```md
+# Instructions
+
+You will be shown a short video. Please rate the speaker's arousal using your keyboard up and down arrows.
+```
+
+The `$$www$$` variable in the Python file points to this special `www` folder.
+
+Optional `local.env`:
+
+```bash
+COVFEE_HOST=localhost
+COVFEE_PORT=5001
 ```
 
 :::tip
-The `$$www$$` special variable above is used to point to the special `www` folder. Note that this is the only way to work with local files unless you set up a file server yourself.
+This example uses a publicly hosted sample video so the project stays lightweight. If you prefer a local file, place it in `www/` and change the media URL to something like `$$www$$/person_reading.mp4`.
 :::
 
-### Task 3. Annotation
+## 5. Run Covfee
 
-Next, we will add the continuous task in which subjects must annotate a one dimensional variable: the arousal of the subject, in a video of a person reading:
+From the project folder, run:
 
-```
-{
-  "name": "Arousal annotation",
-  "type": "Continuous1DTask",
-  "media": {
-    "type": "video",
-    "url": "$$www$$/person_reading.mp4"
-  },
-  "intensityInput": {
-    "mode": "ranktrace"
-  }
-}
-```
-
-Here again we want to provide a local video to covfee by placing it in the `www` folder. You can [download this video](https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/keypoints/www/person_reading.mp4) to use as a sample. 
-
-Alternatively, you can provide the URL of a publicly hosted video like:
-
-```
-      ...
-      "url": "https://cdn.jsdelivr.net/gh/josedvq/covfee@master/samples/keypoints/www/person_reading.mp4"
-      ...
-```
-
-### Task 4. Questionnaire
-
-Finally, we will ask annotators to give their feedback about the annotation process, to know if we can improve something.
-
-```
-{
-  "name": "Feedback",
-  "type": "QuestionnaireTask",
-  "form": {
-    "fields": [
-        {
-            "name": "rating",
-            "label": "How would you rate your experience in completing this experiment?",
-            "required": true,
-            "input": {
-                "inputType": "Rate",
-                "half": true
-            }
-        },{
-            "name": "feedback",
-            "label": "Do you have any comments that can help us improve the experience?",
-            "input": {
-                "inputType": "Input.TextArea"
-            }
-        }
-    ]
-  }
-}
-```
-
-:::info
-By now your covfee specification (`example.covfee.json` file) should contain four tasks whithin its `tasks` section and look exactly [like this file](https://github.com/josedvq/covfee/blob/master/samples/getting_started/example.covfee.json). Your project folder should look like this:
-
-```
-myproject
-    example.covfee.json
-    www
-        instructions.md
-        myvideo.mp4
-```
-:::
-
-## 2. Run covfee
-Covfee uses the previous JSON specification to create a database that will store the responses to the tasks. 
-
-All you need to do now is to run `covfee make .` from the project folder:
-
-```
+```bash
 cd myproject
-covfee make .
+covfee make getting_started.py
 ```
 
-`covfee make .` will read all the `.covfee.json` files in the folder, initialize a database for covfee, run covfee, and launch a browser window where you can access the admin panel. You should now see your web browser open and take you to covfee's admin panel.
+This will parse the study, initialize the database, and start Covfee. The admin panel should be available at [http://localhost:5001/admin#](http://localhost:5001/admin#) by default.
 
-## 3. Annotate!
+If you edit the study and want to rebuild the database, rerun:
 
-You can get URLs for your HITs from covfee's admin panel, as well as download completed annotations. 
+```bash
+covfee make getting_started.py --force
+```
+
+## 6. Annotate
+
+You can now use the admin panel to open HIT URLs, monitor progress, and download completed annotations.
 
 ## More
 
-For more samples, please check the [samples folder in Github](https://github.com/josedvq/covfee/tree/master/samples)
+For more samples, please check the [samples folder in Github](https://github.com/josedvq/covfee/tree/master/samples).

@@ -5,13 +5,15 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from flask import Blueprint, jsonify, request
 from flask import current_app as app
-from sqlalchemy import ForeignKey, select
+from sqlalchemy import ForeignKey, insert, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from covfee.server.orm import Base
 from covfee.server.tasks.base import BaseCovfeeTask
 
 if TYPE_CHECKING:
+    from sqlalchemy.engine import Connection
+
     from covfee.server.orm.task import TaskInstance
 
 
@@ -27,17 +29,23 @@ class ContinuousAnnotationTask(BaseCovfeeTask):
     def get_blueprint(cls):
         return bp
 
-    def on_create(self):
-        # we read the spec and add the provided annotations to the database
-        spec = self.task.spec.spec
-        for annot in spec["annotations"]:
-            self.session.add(
-                Annotation(
-                    task_id=self.task.id,
-                    name=annot["name"],
-                    interface=annot["interface"],
-                )
-            )
+    def on_create(self, connection: Connection) -> None:
+        """Create annotation rows declared in the task spec."""
+        annotations = self.task.spec.spec.get("annotations", [])
+        if not annotations:
+            return
+
+        connection.execute(
+            insert(Annotation),
+            [
+                {
+                    "task_id": self.task.id,
+                    "name": annot["name"],
+                    "interface": annot["interface"],
+                }
+                for annot in annotations
+            ],
+        )
 
 
 bp = Blueprint("ContinuousAnnotationTask", __name__)
