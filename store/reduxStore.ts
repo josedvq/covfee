@@ -2,7 +2,7 @@
 import { configureStore, Slice, Store } from "@reduxjs/toolkit"
 import winston from "winston"
 const zmq = require("zeromq")
-import slices from "../../client/tasks/slices"
+import slices from "../covfee/client/tasks/slices"
 import type {
   Request,
   JoinResponse,
@@ -112,7 +112,7 @@ class StoreService {
   async action(responseId: number, action: Action): Promise<ActionResponse> {
     if (!(responseId in this.rooms)) return { err: "Task store not found." }
 
-    const dispatchedAction = this.rooms[responseId].store.dispatch(action)
+    this.rooms[responseId].store.dispatch(action)
     return {
       actionIndex: this.rooms[responseId].actionIndex++,
     }
@@ -128,7 +128,7 @@ class StoreService {
     }
   }
 
-  async run(port) {
+  async run(port: number) {
     const sock = new zmq.Reply()
     await sock.bind(`tcp://*:${port}`)
     logger.info(`Running at tcp://localhost:${port}`)
@@ -163,7 +163,7 @@ class StoreService {
 }
 
 const args = process.argv.slice(2)
-const port = parseInt(args[0])
+const port = parseInt(args[0], 10)
 
 const store = new StoreService()
 store.run(port)

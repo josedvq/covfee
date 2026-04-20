@@ -2,128 +2,100 @@
 title: Deploying to a server
 ---
 
-Deploying covfee is necessary when you want to make your HITs available to others over the internet.
+Deploying covfee for a new study starts from a clone of the external `covfee_project` starter repository. The intended workflow is:
 
-:::info
-If you are developing new task interfaces in Typescript it is more convenient to create your HIT specifications locally, deploy covfee, and then run `covfee make` on the deployed instance to initialize your database.
-:::
+1. clone `covfee_project`
+2. modify the project files in that clone
+3. test locally against a local checkout of the main `covfee` repository
+4. build the Docker deployment from that same project repository
 
-## 1. Deployment configuration
+In other words, end-user studies should live in the external `covfee_project` repository, not inside the main `covfee` framework repository.
 
-covfee reads its configuration from the folder in which it is run (ie. the project folder). When run in deployment mode, covfee will look for `deployment.env` in that folder.
+Deploying that project means building a ready-to-run image and starting a small multi-service stack:
 
-### Basic configuration
+1. the Flask/SocketIO backend
+2. the standalone Node Redux store service
+3. a static file server for `www/` assets
 
-If you are deploying covfee in a typical server, add a `deployment.env` file like the following to your project folder:
+## 1. Clone the starter project
 
+Start by cloning the external `covfee_project` repository:
+
+```bash
+git clone <your-covfee_project-repo-url> myproject
+cd myproject
 ```
+
+Replace `<your-covfee_project-repo-url>` with the actual Git URL of the external `covfee_project` repository. Edit `app.py`, `www/`, and `docker/.env` in that cloned project. Test locally before deploying. The rest of this page assumes you are running commands from that cloned project repository.
+
+## 2. Project configuration
+
+Deployment settings live in `docker/.env`.
+
+Example:
+
+```bash
 COVFEE_HOST=my-domain.com
 COVFEE_PORT=5000
+COVFEE_PROJECT_WWW_URL=https://static.my-domain.com
+COVFEE_REDUX_STORE_HOST=store
+COVFEE_REDUX_STORE_PORT=5555
+COVFEE_DATABASE_PATH=/var/lib/covfee/database.covfee.db
 
 COVFEE_COVFEE_SECRET_KEY=MY_SECRET
 COVFEE_ADMIN_USERNAME=admin
-COVFEE_ADMIN_PASSWORD=admin
+COVFEE_ADMIN_PASSWORD=change-me
 ```
 
-Covfee loads this file with `python-dotenv` and then reads values with Flask `from_prefixed_env()`. Most keys therefore use the `COVFEE_` prefix. The one exception that looks a little redundant is `COVFEE_COVFEE_SECRET_KEY`, which maps to Covfee's internal `COVFEE_SECRET_KEY` setting.
+Docker Compose injects the `COVFEE_` variables from `docker/.env` into the build and runtime containers, and Covfee reads them directly from the environment.
 
-The `BASE_URL` option is derived from `COVFEE_HOST` and `COVFEE_PORT`.
+## 3. Build-time initialization
 
-The username and password will be used by covfee to authenticate users of the admin panel. It is therefore important to set them to something secure.
+Deploy images built from `covfee_project` are expected to:
 
-### Hosting media files externally
+1. clone the `covfee` repository into the image and install it from that checkout, or copy in a local checkout during development
+2. install the Node dependencies for `covfee/shared`, `covfee/client`, and `store`
+3. build the production frontend bundles
+4. copy the project code, including `app.py`, into the image
+5. run `covfee make . --deploy --no-launch`
 
-The `MEDIA_URL` option allows you to customize the location of your media files. By default, covfee will serve media files from a folder called `www` in your project folder. Anything in this folder will be made public. If you want to host your media files externally, you can disable this behavior by setting `COVFEE_MEDIA_SERVER=false` and pointing `COVFEE_MEDIA_URL` to your files' location:
+That means the image already contains an initialized deployment database before the runtime services start.
 
-```
-COVFEE_MEDIA_URL=http://example.com/covfee-media
-COVFEE_MEDIA_SERVER=false
-```
+The `covfee_project` and `openvimo_project` starter repositories each include both a default `docker/Dockerfile` that clones `covfee` from GitHub and a `docker/Dockerfile.local` variant for testing local changes from a sibling `covfee/` checkout. Their `docker/docker-compose.local.yml` overrides switch the `covfee` and `store` services to that local-source build while leaving the other services unchanged.
 
-## 2. Deployment Installation
+## 4. Runtime services
 
-Start by installing covfee in the server. If you are using a development version / fork follow the _Setup_ section of the [Development instructions] to install covfee in the server.
+At runtime, `covfee start . --deploy` starts only the backend. The Node Redux store now lives in the dedicated `store/` package and should run as a separate service alongside the `www` fileserver. The starter repositories include Docker Compose examples for this split deployment model:
 
-Next, build the schemata and bundles:
+- `covfee_project/docker/docker-compose.yml`
+- `openvimo_project/docker/docker-compose.yml`
 
-```
-covfee-dev schemata
-covfee-dev build
-```
+In those stacks, nginx serves the mounted `www/` directory while the backend serves the application and API routes.
 
-The second step here builds the production bundles (_compiled_ Javascript) that is served in production. Errors here might indicate problems with your custom task.
+For the default remote-clone workflow, run these commands from the starter-project repository you are using:
 
-Now run **covfee make** in the server:
-
-```
-covfee make tutorial.py --no-launch --deploy
-```
-
-This will initialize the database for deployment without starting the server.
-
-## 3. Starting the server
-
-There are several options for starting covfee in deployment. **In the server too, it is important covfee is started from the project folder.**
-
-### Embedded server
-
-Here we use the production-ready embedded server from [flask-socketio](https://flask-socketio.readthedocs.io/en/latest/deployment.html) to start covfee. To run the server you may use:
-
-```
-covfee start --host 0.0.0.0 --port 80 --deploy
+```bash
+docker compose --env-file docker/.env -f docker/docker-compose.yml build
+docker compose --env-file docker/.env -f docker/docker-compose.yml up
+docker compose --env-file docker/.env -f docker/docker-compose.yml down
 ```
 
-This will serve covfee in deployment mode using the specified host and port.
+For local-source testing with a sibling `covfee/` checkout, use the override file:
 
-### gunicorn
-
-gunicorn is the most common deployment option for Flask applications. To run covfee using gunicorn:
-
-```
-gunicorn --worker-class eventlet -w 4 'covfee.server.app:create_app()' --bind 0.0.0.0:5000
+```bash
+docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/docker-compose.local.yml build
+docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/docker-compose.local.yml up
+docker compose --env-file docker/.env -f docker/docker-compose.yml -f docker/docker-compose.local.yml down
 ```
 
-### Apache mod_wsgi
+In the local-source workflow, the override changes the Docker build context to the monorepo root, so it expects either `covfee_project/` and `covfee/` or `openvimo_project/` and `covfee/` to be sibling directories.
 
-covfee can be run under Apache by using [mod_wsgi](https://modwsgi.readthedocs.io/en/master/). This option can be more involved and is only recommended for advanced users.
+## 5. Mounted data
 
-First, `mod_wsgi` must be installed for Python 3:
+The deploy model no longer mounts the whole project folder. The only host mount in the starter-repo Compose examples is the `www/` folder attached to the static fileserver service.
 
-```
-sudo apt-get install libapache2-mod-wsgi-py3
-```
+The deploy database path is expected to be internal to the image/container, for example `/var/lib/covfee/database.covfee.db`.
 
-Next, add a file `covfee.wsgi` with the following to your project directory:
+## 6. Rebuilding
 
-```
-import sys
-import os
-sys.stdout = sys.stderr
-activate_this = '/path/to/virtualenv/bin/activate_this.py'
-with open(activate_this) as file_:
-    exec(file_.read(), dict(__file__=activate_this))
-os.chdir('/path/to/covfee-project')
-from covfee.server.app import create_app
-application = create_app()
-```
-
-This code will allow Apache to create your app instance. `/path/to/virtualenv` is the path to your virtual environment where covfee is installed.
-
-Finally, Apache must know about your site. For this add lines like the following to your apache site configuration:
-
-```
-WSGIDaemonProcess covfee user=me group=me threads=3
-WSGIProcessGroup covfee
-WSGIScriptAlias /covfee /path/to/covfee-project/covfee.wsgi
-```
-
-`WSGIScriptAlias` must point to the `covfee.wsgi` file you created in the previous step. The first parameter `/covfee` is the url path under which covfee will be accesible.
-
-### More deployment options
-
-Covfee is built with Flask and is therefore easy to deploy using any of the options supported by Flask. Take a look at the [Flask deployment options](https://flask.palletsprojects.com/en/1.1.x/deploying/) for more.
-
-## Restarting covfee
-
-Covfee can be safely stopped and started using any of the approaches above. Beware of the use of `covfee make` in production, as the `--force` option will overwrite the entire database, potentially causing data loss.
-In its current form covfee does not allow modification of the task specification once it has been moved to production. HITs can be duplicated using the admin panel to collect more data or deal with failed HITs, but the specification of a HIT cannot be changed without re-creating the database.
+Whenever you change `app.py`, `docker/.env`, or the bundled project code, rebuild the image so `covfee make . --deploy --no-launch` runs again during the image build. Changes inside `www/` only require restarting the fileserver service if that folder is mounted from the host.

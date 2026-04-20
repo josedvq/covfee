@@ -5,6 +5,9 @@ build
 dist
 **/*/flask_session
 
+# env files
+dev/dev.env
+
 #js
 node_modules
 # covfee/client/bundles

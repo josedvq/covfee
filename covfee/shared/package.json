@@ -7,6 +7,6 @@
     "lodash": "4.17.21",
     "typescript-json-schema": "0.65.1",
     "yargs": "16.2.0",
-    "zeromq": "6.1.1"
+    "zeromq": "6.5.0"
   }
 }

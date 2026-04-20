@@ -4,7 +4,7 @@ import { Socket } from "socket.io-client"
 import {
   Action as ActionResponse,
   State as StateResponse,
-} from "../server/socketio/types"
+} from "../../store/types"
 import { UserContextMethods, UserState } from "./app_provider"
 import { ApiChat } from "./types/chat"
 import {

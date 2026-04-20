@@ -246,48 +246,38 @@ covfee-dev build
 
 ## Running the task
 
-The task is ready to be used. To do this in a dev environment, create a folder for the covfee project. This folder may be anywhere in the file system. The we will create the following structure:
+To use the task in development, create a project folder with an `app.py` entrypoint:
 
-```
+```text
 my_folder
-    - tutorial.py
+└── app.py
 ```
 
-The naming is not relevant. Paste the following into the `tutorial.py`:
+Paste the following into `app.py`:
 
 ```python
 from covfee import tasks, HIT, Project
-from covfee.config import config
 from covfee.shared.dataclass import CovfeeApp
 
-config.load_environment("local")
 
 my_task_1 = tasks.TutorialTaskSpec(name="My Task 1", showPhoneField=True)
 my_task_2 = tasks.TutorialTaskSpec(name="My Task 2", showPhoneField=False)
 
 hit = HIT("Joint counter")
-j1 = hit.add_journey(nodes=[my_task_1, my_task_2])
+hit.add_journey(nodes=[my_task_1, my_task_2])
 
 projects = [Project("My Project", email="example@example.com", hits=[hit])]
-app = CovfeeApp(projects)   # we must always create an app object of class CovfeeApp
+app = CovfeeApp(projects)
 ```
 
-Here we import the necessary classes, create two task objects using the same (auto-generated) `TutorialTaskSpec` class, and link them together in a journey. We create a HIT with a single journey, and a project with a single HIT. Finally, we create the `app` object. Covfee internally looks for this object by name (important that it is called `app`) and uses it as starting point to read the specification.
+Covfee looks for the module-level `app` object and uses it as the project entrypoint.
 
-We can now start covfee with:
+Then run the Procfile-based dev workflow from the main repository:
 
-```
-covfee make tutorial.py --force --dev
-```
-
-This will parse the specification, create the database, and start the covfee server.
-
-In development mode, we need to run the webpack server separately. To do it, in another terminal run:
-
-```
-covfee webpack
+```bash
+cd /path/to/my_folder
+# Edit covfee/dev/dev.env and set PROJECT_DIR=/path/to/my_folder
+covfee-dev run
 ```
 
-After this the Covfee admin panel should be accessible in the URL displayed when running the Covfee server (http://localhost:5000/admin# by default). The links to the Journey (with the two tasks) should be available in the admin panel (under _Journeys_).
-
-With this development setup, any changes to the client or server will be hot-reloaded. Therefore it should be possible and convenient to edit the task's React component or the backend while running the app.
+That starts webpack, the Flask backend, the Node Redux store service, and the standalone `www` fileserver together. The admin panel should then be available at the URL printed by the backend process.

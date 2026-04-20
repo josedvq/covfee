@@ -2,36 +2,39 @@
 title: Getting Started
 ---
 
-This guide takes you through the process of creating a simple Covfee study with four tasks:
+This guide customizes a cloned `covfee_project` starter repository to create a simple Covfee study with:
 
 1. a demographics questionnaire
-2. an instructions screen loaded from a Markdown file
+2. an instructions screen loaded from `www/instructions.md`
 3. a continuous annotation task on a video
 4. a final feedback questionnaire
 
-## 1. Install Covfee
+## 1. Clone the starter project
 
-Follow the [installation instructions](installation) if you have not done so already.
+To create a new Covfee project, start from the external `covfee_project` repository instead of creating a project folder from scratch:
 
-## 2. Create the project folder
+```bash
+git clone <your-covfee_project-repo-url> myproject
+cd myproject
+```
 
-First create a folder for your Covfee project. This folder may be anywhere in the file system. Inside it, create the following structure:
+Replace `<your-covfee_project-repo-url>` with the actual Git URL of the external `covfee_project` repository. Clone that starter repository, modify the files in your clone, test the project locally, and then build the Docker deployment from that same project directory.
+
+The cloned repository should have a layout similar to:
 
 ```text
 myproject
-    getting_started.py
-    local.env
-    www
-        instructions.md
+├── app.py
+├── docker/
+└── www
+    └── instructions.md
 ```
 
-Covfee expects local project assets to live in a folder named `www` directly under the project folder.
+Covfee expects the study entrypoint to be `app.py`. Project assets that should be publicly available belong in `www/`.
 
-If you want to override the default host, port, admin credentials, or other settings, create a `local.env` file in the project root. Covfee loads `local.env` automatically for the default local mode.
+## 2. Update the study file
 
-## 3. Add the study file
-
-Paste the following into `getting_started.py`:
+Edit `app.py` in your cloned project and replace it with:
 
 ```python
 from covfee import HIT, CovfeeApp, Project, tasks
@@ -114,11 +117,11 @@ projects = [Project("My Covfee Project", email="example@example.com", hits=[hit]
 app = CovfeeApp(projects)
 ```
 
-Covfee looks for a module-level object named `app`, so that name is important.
+Covfee looks for a module-level object named `app`.
 
-## 4. Add the instructions file
+## 3. Update the instructions file
 
-Paste the following into `www/instructions.md`:
+Edit `www/instructions.md` in your cloned project and replace it with:
 
 ```md
 # Instructions
@@ -126,11 +129,12 @@ Paste the following into `www/instructions.md`:
 You will be shown a short video. Please rate the speaker's arousal using your keyboard up and down arrows.
 ```
 
-The `$$www$$` variable in the Python file points to this special `www` folder.
+The `$$www$$` variable resolves to the standalone `www` file server configured for the project.
 
-Optional `local.env`:
+Optional entries in `covfee/dev/dev.env`:
 
 ```bash
+PROJECT_DIR=/path/to/myproject
 COVFEE_HOST=localhost
 COVFEE_PORT=5001
 ```
@@ -139,27 +143,33 @@ COVFEE_PORT=5001
 This example uses a publicly hosted sample video so the project stays lightweight. If you prefer a local file, place it in `www/` and change the media URL to something like `$$www$$/person_reading.mp4`.
 :::
 
-## 5. Run Covfee
+## 4. Test locally
 
-From the project folder, run:
-
-```bash
-cd myproject
-covfee make getting_started.py
-```
-
-This will parse the study, initialize the database, and start Covfee. The admin panel should be available at [http://localhost:5001/admin#](http://localhost:5001/admin#) by default.
-
-If you edit the study and want to rebuild the database, rerun:
+For local development, install the main `covfee` framework repository and use it to run your cloned project with hot reload:
 
 ```bash
-covfee make getting_started.py --force
+git clone https://github.com/josedvq/covfee.git
+cd covfee
+python3 -m venv ./env
+source ./env/bin/activate
+python3 -m pip install -e .
+dev/dev-setup.sh
+
+cd /path/to/myproject
+# Edit covfee/dev/dev.env and set PROJECT_DIR=/path/to/myproject
+covfee-dev run
 ```
 
-## 6. Annotate
+This keeps your study code in the external `covfee_project` clone while using the main `covfee` repository only for framework development and the local runtime.
 
-You can now use the admin panel to open HIT URLs, monitor progress, and download completed annotations.
+## 5. Annotate
+
+The admin panel should be available at [http://localhost:5001/admin#](http://localhost:5001/admin#) by default. From there you can open HIT URLs, monitor progress, and download completed annotations.
+
+## 6. Deploy with Docker
+
+When you are happy with the local result, build and deploy the Docker stack from the same cloned project repository. The `docker/` folder in your `covfee_project` clone contains the deployment files. See [Deploying to a server](deployment).
 
 ## More
 
-For more samples, please check the [samples folder in Github](https://github.com/josedvq/covfee/tree/master/samples).
+For more examples, see the [samples folder on GitHub](https://github.com/josedvq/covfee/tree/master/samples).

@@ -40,6 +40,10 @@ JWT_COOKIE_CSRF_PROTECT = False
 # dev mode setting
 WEBPACK_DEVSERVER_HOST = "localhost"
 DEV_BUNDLES_URL = "http://localhost:8085"
+REDUX_STORE_HOST = "127.0.0.1"
+REDUX_STORE_PORT = 5555
+WWW_SERVER_HOST = "127.0.0.1"
+WWW_SERVER_PORT = 8000
 
 # PROJECT FOLDER PATHS
 
@@ -49,9 +53,6 @@ DATABASE_PATH = os.path.join(os.getcwd(), DATABASE_RELPATH)
 
 # project www and bundle location
 PROJECT_WWW_PATH = os.path.join(os.getcwd(), "www")
-
-# enables the www server
-SERVE_WWW = True
 
 DEFAULT_ADMIN_USERNAME = "admin"
 DEFAULT_ADMIN_PASSWORD = "admin"

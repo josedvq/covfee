@@ -1,21 +1,9 @@
 import json
 import os
-import subprocess
 
 import zmq
-from flask import current_app as app
-
-from covfee.cli.utils import working_directory
 
 context = zmq.Context()
-
-
-class ReduxStoreService:
-    def run(self):
-        with working_directory(
-            os.path.join(app.config["COVFEE_SERVER_PATH"], "socketio")
-        ):
-            subprocess.Popen(["node", "reduxStore.js", "5555"])
 
 
 class ReduxStoreClient:
@@ -32,7 +20,9 @@ class ReduxStoreClient:
         #  Socket to talk to server
         self.socket = context.socket(zmq.REQ)
         self.socket.setsockopt(zmq.RCVTIMEO, 500)
-        self.socket.connect("tcp://127.0.0.1:5555")
+        host = os.environ.get("COVFEE_REDUX_STORE_HOST", "127.0.0.1")
+        port = os.environ.get("COVFEE_REDUX_STORE_PORT", "5555")
+        self.socket.connect(f"tcp://{host}:{port}")
 
     def socket_request(self, payload):
         self.socket.send_json(payload)

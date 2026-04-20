@@ -1,9 +1,6 @@
-# from covfee import Task, HIT
 from covfee import HIT, Project, tasks
-from covfee.config import config
 from covfee.shared.dataclass import CovfeeApp
 
-config.load_environment("local")
 
 spec_meeting = {
     "name": "Videocall",

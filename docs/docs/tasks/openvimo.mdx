@@ -32,21 +32,18 @@ In covfee experiments (HITs) are always specified by a list of nodes or tasks, a
   <img src={useBaseUrl("/img/g_meeting.png")} width="250" />
 </div>
 
-First we will create a folder for the covfee project. This folder may be anywhere in the file system. Then we will create the following structure:
+First create a folder for the covfee project. This folder may be anywhere in the file system. Then create the following structure:
 
 ```
 my_folder
-    - meeting.py
+    - app.py
 ```
 
-The naming is not relevant. Paste the following into the `meeting.py`:
+Paste the following into `app.py`:
 
 ```python
 from covfee import HIT, Project, tasks
-from covfee.config import config
 from covfee.shared.dataclass import CovfeeApp
-
-config.load_environment("local")
 
 spec_meeting = {
     "name": "Videocall",
@@ -72,18 +69,12 @@ Here we import the necessary classes, create a VideocallTaskSpecs object holding
 That is all! We are now ready to start Covfee. To run it in development mode:
 
 ```
-covfee make meeting.py --force --dev
+cd /path/to/my_folder
+# Edit covfee/dev/dev.env and set PROJECT_DIR=/path/to/my_folder
+covfee-dev run
 ```
 
-This will parse the specification, create the database, and start the covfee server.
-
-And make sure to start webpack on another tab ([more info](../development)):
-
-```
-covfee webpack
-```
-
-After this the Covfee admin panel should be accessible in the URL displayed when running the Covfee server (http://localhost:5000/admin# by default).
+This starts webpack, the Flask backend, the Node Redux store service, and the standalone `www` fileserver together. After this the Covfee admin panel should be accessible in the URL displayed when running the backend process.
 
 For more information about running Covfee in development mode [see here](../development).
 
@@ -100,10 +91,7 @@ We can code this structure with the following code:
 ```python
 # from covfee import Task, HIT
 from covfee import HIT, Project, tasks
-from covfee.config import config
 from covfee.shared.dataclass import CovfeeApp
-
-config.load_environment("local")
 
 spec_consent_form = {
     "name": "Consent",

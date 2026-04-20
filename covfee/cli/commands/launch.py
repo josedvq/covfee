@@ -1,10 +1,5 @@
-"""Launch commands
+"""Launch commands for preparing and running a covfee backend."""
 
-These commands launch or build covfee and are supported for the typical use case.
-"""
-
-import os
-import subprocess
 import traceback
 from pathlib import Path
 
@@ -12,70 +7,38 @@ import click
 from colorama import Fore
 from colorama import init as colorama_init
 
-from covfee.cli.utils import NPMPackage, working_directory
+from covfee.cli.utils import working_directory
 from covfee.config import Config
-from covfee.launcher import Launcher, ProjectExistsException, launch_webpack
+from covfee.launcher import Launcher, ProjectExistsException
 from covfee.server.tasks.base import BaseCovfeeTask
-from covfee.shared.validator.validation_errors import (JavascriptError,
-                                                       ValidationError)
+from covfee.shared.validator.validation_errors import JavascriptError, ValidationError
 
 from ...loader import Loader
 
 colorama_init()
 
 
-@click.group(name="covfee")
-def covfee_cli():
-    pass
+def resolve_mode(dev: bool, deploy: bool) -> str:
+    """Return the selected runtime mode."""
+    if dev and deploy:
+        raise click.ClickException("Choose either --dev or --deploy, not both.")
+    return "deploy" if deploy else "dev"
 
 
-@covfee_cli.command()
-@click.option(
-    "--host",
-    default=None,
-    help="Specify the IP address to serve webpack dev server. Use for testing in a local network.",
-)
-def webpack(host):
-    """
-    Launches a webpack instance for use in dev mode
-    """
-    config = Config("dev")
-
-    host = (
-        host if host is not None else config.get("WEBPACK_DEVSERVER_HOST", "localhost")
-    )
-    launch_webpack(config["COVFEE_CLIENT_PATH"], host)
+def resolve_project_spec_path(project_path: Path) -> Path:
+    """Resolve a project directory to its hard-coded app.py entrypoint."""
+    if project_path.is_dir():
+        return project_path / "app.py"
+    return project_path
 
 
-@covfee_cli.command()
-@click.option(
-    "--port",
-    default=5555,
-    help="Port for the redux store service",
-)
-@click.option("--daemon", is_flag=True, help="Run as a daemon.")
-def store(port, daemon):
-    """
-    Launches a webpack instance for use in dev mode
-    """
-    config = Config("dev")
-
-    with working_directory(os.path.join(config["COVFEE_SERVER_PATH"], "socketio")):
-        if daemon:
-            res = subprocess.Popen(
-                ["npx", "ts-node", "reduxStore.ts", str(port)],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.STDOUT,
-                stdin=subprocess.DEVNULL,
-                start_new_session=True,
-            )
-            print(f"Running reduxStore. PID = {res.pid}")
-        else:
-            res = subprocess.Popen(["npx", "ts-node", "reduxStore.ts", str(port)])
-            res.wait()
+def resolve_project_root(project_path: Path) -> Path:
+    """Return the project root directory for a given project input."""
+    return project_path if project_path.is_dir() else project_path.parent
 
 
-def get_start_message(url):
+def get_start_message(url: str) -> str:
+    """Return the terminal banner shown before launching the backend."""
     msg = (
         Fore.GREEN
         + r"""
@@ -89,55 +52,105 @@ def get_start_message(url):
     return msg
 
 
-@covfee_cli.command()
-@click.option("--force", is_flag=True, help="Specify to overwrite existing databases.")
-@click.option("--dev", is_flag=True, help="Run in dev mode.")
-@click.option("--deploy", is_flag=True, help="Run covfee in deployment mode")
-@click.option("--safe", is_flag=True, help="Enable authentication in local mode.")
-@click.option("--rms", is_flag=True, help="Re-makes the schemata for validation.")
-@click.option(
-    "--host",
-    default='localhost',
-    help="Host to pass to socketio.run()",
-)
-@click.option(
-    "--port",
-    default=5001,
-    help="Port to pass to socketio.run()",
-)
-@click.option(
-    "--no-launch", is_flag=True, help="Do not launch covfee, only make the DB"
-)
-@click.argument("project_spec_file")
-def make(force, dev, deploy, safe, rms, host, port, no_launch, project_spec_file):
-    mode = "local"
-    if dev:
-        mode = "dev"
-    if deploy:
-        mode = "deploy"
-    unsafe = False if mode == "deploy" else (not safe)
+def build_config(mode: str, host: str, port: int) -> Config:
+    """Create the runtime config for a specific project directory."""
     config = Config(mode, host, port)
     BaseCovfeeTask.config = config
+    return config
 
-    install_npm_packages()
 
-    try:
-        loader = Loader(project_spec_file, config)
+def make_project(
+    project_path: Path,
+    mode: str,
+    force: bool,
+    host: str,
+    port: int,
+    no_launch: bool,
+    auth_enabled: bool,
+) -> None:
+    """Initialize a project and optionally launch the backend."""
+    project_root = resolve_project_root(project_path)
+    with working_directory(project_root):
+        config = build_config(mode, host, port)
+        loader = Loader(project_path, config)
         projects = loader.process(with_spinner=True)
-
         launcher = Launcher(
-            mode, projects, Path(project_spec_file).parent, auth_enabled=not unsafe
+            mode,
+            projects,
+            project_root,
+            config=config,
+            auth_enabled=auth_enabled,
         )
         launcher.make_database(force, with_spinner=True)
         if not no_launch:
+            unsafe = not auth_enabled
             print(
                 get_start_message(
                     url=config["ADMIN_URL"] if unsafe else config["LOGIN_URL"]
                 )
             )
             launcher.launch(host=host, port=port)
+
+
+def start_backend(
+    project_path: Path,
+    mode: str,
+    host: str,
+    port: int,
+    auth_enabled: bool,
+) -> None:
+    """Start only the backend for an existing project."""
+    project_root = resolve_project_root(project_path)
+    with working_directory(project_root):
+        config = build_config(mode, host, port)
+        launcher = Launcher(
+            mode,
+            [],
+            project_root,
+            config=config,
+            auth_enabled=auth_enabled,
+        )
+        launcher.launch(host=host, port=port)
+
+
+@click.group(name="covfee")
+def covfee_cli():
+    pass
+
+
+@covfee_cli.command()
+@click.option("--force", is_flag=True, help="Specify to overwrite existing databases.")
+@click.option("--dev", is_flag=True, help="Run in development mode.")
+@click.option("--deploy", is_flag=True, help="Run in deployment mode.")
+@click.option("--safe", is_flag=True, help="Enable authentication in development mode.")
+@click.option(
+    "--host",
+    default="localhost",
+    help="Public host to use for generated URLs.",
+)
+@click.option(
+    "--port",
+    default=5001,
+    help="Public port to use for generated URLs.",
+)
+@click.option(
+    "--no-launch", is_flag=True, help="Do not launch covfee, only make the DB."
+)
+@click.argument(
+    "project_path",
+    required=False,
+    default=".",
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, path_type=Path),
+)
+def make(force, dev, deploy, safe, host, port, no_launch, project_path):
+    mode = resolve_mode(dev, deploy)
+    auth_enabled = mode == "deploy" or safe
+
+    try:
+        make_project(project_path, mode, force, host, port, no_launch, auth_enabled)
     except FileNotFoundError:
-        return print(f"File {project_spec_file} not found.")
+        missing_path = resolve_project_spec_path(project_path)
+        return print(f"File {missing_path} not found.")
     except JavascriptError as err:
         return print(
             "This is likely an issue with the Covfee app. Please contact the developers or post an issue with the following error message. \n"
@@ -157,38 +170,26 @@ def make(force, dev, deploy, safe, rms, host, port, no_launch, project_spec_file
 
 
 @covfee_cli.command()
-@click.option("--host", default="0.0.0.0", help="Server hostname.")
-@click.option("--port", default=5000, help="Port to serve the app on.")
-@click.option("--deploy", is_flag=True, help="Run covfee in deployment mode")
-@click.option("--safe", is_flag=True, help="Enable authentication in local mode.")
-def start(host, port, deploy, safe):
-    """
-    Starts covfee in local mode by default. Use --deploy to start deployment server.
-    """
-    mode = "local"
-    if deploy:
-        mode = "deploy"
-    unsafe = False if mode == "deploy" else (not safe)
-    config = Config(mode)
+@click.option("--host", default="0.0.0.0", help="Backend hostname.")
+@click.option("--port", default=5000, help="Backend port.")
+@click.option("--dev", is_flag=True, help="Run in development mode.")
+@click.option("--deploy", is_flag=True, help="Run in deployment mode.")
+@click.option("--safe", is_flag=True, help="Enable authentication in development mode.")
+@click.argument(
+    "project_path",
+    required=False,
+    default=".",
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, path_type=Path),
+)
+def start(host, port, dev, deploy, safe, project_path):
+    """Start only the backend service for a project."""
+    mode = resolve_mode(dev, deploy)
+    auth_enabled = mode == "deploy" or safe
 
     try:
-        launcher = Launcher(mode, [], auth_enabled=not unsafe)
-        launcher.launch(host=host, port=port)
+        start_backend(project_path, mode, host, port, auth_enabled)
     except Exception as err:
         print(traceback.format_exc())
         if "js_stack_trace" in dir(err):
             print(err.js_stack_trace)
         return
-
-
-def install_npm_packages(force=False):
-    config = Config()
-    server_path = config["COVFEE_SERVER_PATH"]
-    npm_package = NPMPackage(server_path)
-    if force or not npm_package.is_installed():
-        npm_package.install()
-
-    shared_path = config["COVFEE_SHARED_PATH"]
-    npm_package = NPMPackage(shared_path)
-    if force or not npm_package.is_installed():
-        npm_package.install()

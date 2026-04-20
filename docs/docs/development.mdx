@@ -2,88 +2,63 @@
 title: Development install
 ---
 
-This guide explains how to install covfee for development. This type of install is recommended for modifying covfee's Javascript code, including the implementation of custom tasks, covfee documentation, or the Pyton backend. A good understanding of Javascript and/or Python is recommended.
+This guide explains how to install covfee for framework development. The development runtime now consists of four separate processes managed through a Procfile:
+
+1. webpack dev server with hot reload
+2. Flask/SocketIO backend with Python reload
+3. standalone Node Redux store service
+4. lightweight `www/` file server for project assets
 
 ## Setup
 
 :::caution
-Covfee runs on **Linux, Mac OS X and Windows**, but you are more likely to encounter bugs on Windows. We recommend that you use [WSL](https://docs.microsoft.com/en-us/windows/wsl/install) on Windows.
+Covfee runs on Linux, macOS, and Windows, but development tends to be smoother on Unix-like environments. On Windows we recommend [WSL](https://docs.microsoft.com/en-us/windows/wsl/install).
 :::
 
-Covfee's frontend is built using [webpack](https://webpack.js.org/), which has a convenient [hot-reloading development server](https://webpack.js.org/guides/development/). The [Flask server](https://flask.palletsprojects.com/en/2.0.x/) used for the backend also supports reloading on changes. This guide will get you to run backend and frontend development servers:
+1. Install [node.js](https://nodejs.org/en/download/).
 
-1. Install the latest version of [node.js](https://nodejs.org/en/download/). Make sure that the `npm` command is available in your terminal.
+2. Install covfee in editable mode:
 
-:::tip
-**We strongly recommend that you install covfee in a Python virtual environment**. To create and activate one using _venv_:
-
-```
-python3 -m venv ./env
-source ./env/bin/activate
-```
-
-:::
-
-2. Install the covfee Python package in editable mode:
-
-```
+```bash
 git clone git@github.com:josedvq/covfee.git
 cd covfee
+python3 -m venv ./env
+source ./env/bin/activate
 python3 -m pip install -e .
 ```
 
-The `covfee` command should now be available in the terminal. Type `covfee --help` to make sure.
+3. Install the JavaScript dependencies and the Procfile runner:
 
-3. Install Javascript dependencies:
-
-```
-yarn install
+```bash
+dev/dev-setup.sh
 ```
 
-4. Generate schemata (for validation) and build webpack bundles:
+4. If you changed task specs in `covfee/shared`, regenerate schemata:
 
-```
+```bash
 covfee-dev schemata
+```
+
+## Running a project in dev mode
+
+Projects now use a folder-based layout with an `app.py` entrypoint. To run one of the bundled samples:
+
+```bash
+cd ./samples/basic
+# Edit covfee/dev/dev.env and set PROJECT_DIR=./samples/basic
+covfee-dev run
+```
+
+That single command starts all four development processes and streams their logs together. `covfee-dev run` uses the shared `covfee/dev/dev.env` file for development settings, and it uses the current working directory as `PROJECT_DIR` unless you pass an explicit project directory like `covfee-dev run ./samples/basic`.
+
+## Production bundles
+
+When you need to rebuild the compiled frontend bundles used by deploy images:
+
+```bash
 covfee-dev build
 ```
 
-The development install is ready.
-
-## Running a covfee project in dev mode
-
-Covfee requires a project folder with at least one project file to run. Covfee provides sample projects, or see [Getting Started](getting_started) for instructions on how to create your own project folder and specification.
-
-To run one of the covfee samples:
-
-1. Move to the sample project folder:
-
-```
-cd samples/basic
-covfee make . --no-launch
-```
-
-2. Start the webpack server from the same folder:
-
-```
-covfee webpack
-```
-
-This will start a [Webpack development server](https://webpack.js.org/guides/development/) with hot-reloading.
-
-3. In another terminal, at the same folder, start the flask server in dev mode. This will start the Python backend server with hot-reloading:
-
-```
-covfee start --dev
-```
-
-You should now be able to access the admin panel and open the covfee HITs. Any changes made to Python or Javascript code should be immediately hot-reloaded.
-
 ## Schemata updates
 
-The covfee schemata file created previously (`covfee-dev schemata`) is used by `covfee make` for validating covfee specifications. Therefore, if you make changes to covfee's Typescript interfaces in `covfee/shared` during development (by, for, example, adding a new task specification), the schemata file must be re-generated for covfee validate your new interfaces correctly. To regenerate covfee schemata run:
-
-```
-covfee-dev schemata
-```
-
-This command may also need to be called when switching branches if the Typescript specification differs between branches.
+The schemata file created by `covfee-dev schemata` is used by `covfee make` for validating project specifications. Re-run it whenever you change the shared task interfaces or switch branches with different task specs.

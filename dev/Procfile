@@ -1,0 +1,4 @@
+frontend: ./dev/frontend.sh
+backend: ./dev/backend.sh
+store: ./dev/store.sh
+www: ./dev/fileserver.sh

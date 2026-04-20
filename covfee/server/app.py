@@ -18,14 +18,16 @@ from covfee.server.tasks.base import BaseCovfeeTask
 from .scheduler.apscheduler import scheduler
 
 
-def create_app_and_socketio(mode="deploy", session_local=None):
+def create_app_and_socketio(
+    mode="deploy", session_local=None, config: Config | None = None
+):
     # called once per process
     # but reused across threads
 
     app = Flask(__name__, static_folder=None)
 
     # load custom config to app.config
-    config = Config(mode)
+    config = config or Config(mode)
     config.update(app.config)
     app.config = config
 
@@ -47,8 +49,6 @@ def create_app_and_socketio(mode="deploy", session_local=None):
 
     def log_session_closed(session):
         print(f"Session closed: {session}")
-
-    from sqlalchemy import event
 
     # event.listen(app.session, 'after_close', log_session_closed)
     from .socketio import chat, handlers  # noqa: F401
@@ -130,12 +130,6 @@ def admin():
         constants=json.dumps(app.config.get_frontend_config()),
         bundle_url=app.config["BUNDLES_URL"],
     )
-
-
-# project www server
-@frontend.route("/www/<path:filename>")
-def project_www_file(filename):
-    return send_from_directory(app.config["PROJECT_WWW_PATH"], filename)
 
 
 @frontend.route("/bundles/<path:filename>")

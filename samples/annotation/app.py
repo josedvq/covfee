@@ -1,8 +1,6 @@
 from covfee import HIT, Project, tasks
-from covfee.config import config
 from covfee.shared.dataclass import CovfeeApp
 
-config.load_environment("local")
 
 my_task_1 = tasks.ContinuousAnnotationTaskSpec(
     name="My Task 1",
@@ -15,7 +13,7 @@ my_task_1 = tasks.ContinuousAnnotationTaskSpec(
 )
 
 hit = HIT("Joint counter")
-j1 = hit.add_journey(nodes=[my_task_1])
+hit.add_journey(nodes=[my_task_1])
 
 projects = [Project("My Project", email="example@example.com", hits=[hit])]
-app = CovfeeApp(projects)  # we must always create an app object of class CovfeeApp
+app = CovfeeApp(projects)

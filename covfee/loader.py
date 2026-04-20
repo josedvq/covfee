@@ -5,14 +5,11 @@ import sys
 from pathlib import Path
 from typing import List
 
-from colorama import Fore
 from colorama import init as colorama_init
-from flask import current_app as app
 from halo import Halo
 
-from covfee.cli.utils import working_directory
 from covfee.server.orm.project import Project
-from covfee.server.orm.user import Base, User, password_hash
+from covfee.server.orm.user import Base
 from covfee.shared.schemata import Schemata
 from covfee.shared.validator.ajv_validator import AjvValidator
 
@@ -31,17 +28,28 @@ class Loader:
     """Translates between different covfee file formats"""
 
     def __init__(self, project_spec_file=None, config=None):
-        if not os.path.exists(project_spec_file):
+        self.project_spec_file = self._resolve_project_spec_path(project_spec_file)
+        if not self.project_spec_file.exists():
             raise FileNotFoundError("covfee file not found.")
-
-        self.project_spec_file = Path(project_spec_file)
         self.config = config
         self.file_extension = self.project_spec_file.suffix
         if self.file_extension not in [".py", ".json"]:
             raise ValueError(f"Unsupported file extension {self.file_extension}")
+        if self.file_extension == ".py" and self.project_spec_file.name != "app.py":
+            raise ValueError('Python project entrypoints must be named "app.py".')
 
         self.working_dir = self.project_spec_file.parent
         self.projects = []
+
+    def _resolve_project_spec_path(self, project_spec_file: str | os.PathLike | None) -> Path:
+        """Resolve a project directory or explicit spec path to a concrete file."""
+        if project_spec_file is None:
+            raise FileNotFoundError("covfee file not found.")
+
+        path = Path(project_spec_file)
+        if path.is_dir():
+            return path / "app.py"
+        return path
 
     def json_parse(self, with_spinner=True):
         with Halo(
@@ -94,8 +102,8 @@ class Loader:
         if os.getcwd() not in sys.path:
             sys.path.append(os.getcwd())
         module = importlib.import_module(self.project_spec_file.stem)
-        app = getattr(module, "app")
-        self.projects += app.get_instantiated_projects()
+        covfee_app = getattr(module, "app")
+        self.projects += covfee_app.get_instantiated_projects()
 
     def process(self, with_spinner=False) -> List[Project]:
         Base._config = self.config
@@ -108,6 +116,6 @@ class Loader:
                 schema.make()
 
             self.json_parse(with_spinner)
-            self.validate(with_spinner)
+            self.json_validate(with_spinner)
             self.json_make(with_spinner)
         return self.projects
